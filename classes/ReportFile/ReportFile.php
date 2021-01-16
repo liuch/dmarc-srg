@@ -132,7 +132,7 @@ class ReportFile
             $this->fd = $fd;
         }
         if ($this->type === 'gz' && !$this->filepath) {
-            ReportFile::ensureRegisterFilter('report_gzfile_cut_filter', 'ReportGZFileCutFilter');
+            ReportFile::ensureRegisterFilter('report_gzfile_cut_filter', 'Liuch\DmarcSrg\ReportFile\ReportGZFileCutFilter');
             $this->enableGzFilter(true);
         }
         return $this->fd;

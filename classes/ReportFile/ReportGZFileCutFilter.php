@@ -22,6 +22,8 @@
 
 namespace Liuch\DmarcSrg\ReportFile;
 
+use php_user_filter;
+
 class ReportGZFileCutFilter extends php_user_filter
 {
     private $head        = true;
