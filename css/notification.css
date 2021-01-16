@@ -1,0 +1,51 @@
+#notifications-block {
+	position: fixed;
+	top: 2rem;
+	right: 1em;
+	width: 15em;
+}
+.notification {
+	overflow: hidden;
+	font-size: 0.9rem;
+	opacity: 0.9;
+	background-clip: padding-box;
+	border: 1px solid rgba(0, 0, 0, 1);
+	border-radius: 0.25rem;
+	box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.2);
+	position: relative;
+	padding: 0.75rem 2rem 0.75rem 0.75rem;
+	overflow-wrap: break-word;
+	word-break: normal;
+}
+.notification:not(:last-child) {
+	margin-bottom: 0.5rem;
+}
+.notif-close {
+	position: absolute;
+	top: 0;
+	right: 0.3rem;
+	padding: 0;
+	border: 0;
+	float: right;
+	cursor: pointer;
+	font-size: 1.2rem;
+	font-weight: 700;
+	line-height: 1;
+	color: #000;
+	text-shadow: 0 1px 0 #fff;
+	opacity: 0.6;
+	background-color: transparent;
+	margin: 0;
+	border-radius: 0;
+}
+.notif-error {
+	background-color: #f88;
+}
+.notif-warn {
+	background-color: #ff8;
+}
+.notif-info {
+	background-color: #8f8;
+	
+}
+

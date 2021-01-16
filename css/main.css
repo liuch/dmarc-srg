@@ -1,0 +1,413 @@
+h1 {
+	margin: 1.6rem 0 1.3rem 0;
+	display: inline-block;
+}
+h4, h5 {
+	margin: 0 0 0.5rem 0;
+	text-transform: uppercase;
+}
+h4:not(:first-child) {
+	margin-top: 1rem;
+}
+input[type=file] {
+	display: block;
+	margin-bottom: 0.5em;
+}
+input[type=reset] {
+	margin-left: 0.5em;
+}
+fieldset {
+	display: block;
+	margin: 0.7em;
+	padding: 0.7em;
+	border: 0.07rem solid gray;
+}
+legend {
+	margin: 0;
+	padding: 0 0.2em;
+}
+#main-menu {
+	position: fixed;
+	top: 0;
+	margin: 0;
+	padding: 0.2rem 1rem 0.2rem 1rem;
+	list-style-type: none;
+	background-color: #f6f6f6;
+}
+#main-menu li {
+	display: inline;
+	margin: 0 0.5rem 0 0.5rem;
+}
+#main-menu, .bottom-border {
+	border-bottom: 0.07rem solid gray;
+}
+#stat-block {
+	float: right;
+}
+#stat-block ul, .popup-menu ul {
+	display: block;
+	margin: 0;
+	padding: 0;
+	list-style-type: none;
+}
+#stat-block li {
+	margin: 0;
+	padding: 0;
+	display: inline-flex;
+}
+#stat-block li div {
+	display: inline-grid;
+	margin: 0.5em;
+	width: 6em;
+	height: 6em;
+	text-align: center;
+	font-size: 0.7em;
+}
+#stat-block .stat-msg {
+	margin: 0 1px;
+}
+.disabled {
+	color: gray;
+	cursor: default;
+	pointer-events: none;
+}
+.round-border, #stat-block li div {
+	border: 0.07em solid gray;
+	border-radius: 0.4em;
+}
+.wait {
+	margin: 1em 0 1em 0;
+}
+.dialog .wait {
+	color: green;
+	text-align: center;
+}
+.dialog .error-message {
+	text-align: center;
+}
+.hidden {
+	display: none;
+}
+#main-block {
+	clear: both;
+}
+.error-message {
+	color: red;
+	margin: 0.3rem;
+}
+.stat-val {
+	display: block;
+	height: 50%;
+	line-height: 180%;
+	font-size: 1.8em;
+	font-weight: bold;
+}
+#main-table-container {
+	position: fixed;
+	overflow-x: hidden;
+	overflow-y: auto;
+	top: 6rem;
+	left: 0.5rem;
+	right: 0.5rem;
+	bottom: 0.5rem;
+	border: 0.1rem solid #eee;
+	border-radius: 0.4rem;
+}
+.main-table {
+	color: #666;
+	text-align: left;
+	border-spacing: 0;
+	width: 100%;
+}
+.main-table th {
+	top: 0;
+	position: sticky;
+	background-color: #eee;
+}
+.main-table td {
+	border-top: 0.1em solid #eee;
+}
+.main-table th, .main-table td {
+	padding: 0.3em 0.3em 0.3em 1em;
+}
+.main-table tbody tr {
+	cursor: pointer;
+}
+.main-table tbody tr:hover {
+	background-color: #eef;
+}
+.focused {
+	outline: none;
+}
+.main-table tbody tr td:first-child {
+	border-left: 0.2em solid #0000;
+}
+.main-table tbody tr.focused td:first-child {
+	border-left: 0.2em solid #66f;
+}
+.main-table tbody tr.selected {
+	background-color: #eef;
+	color: #000;
+}
+.main-table.focused tbody tr.selected {
+	background-color: #ccf;
+}
+.state-red .state-text {
+	color: red;
+}
+.state-red .state-background {
+	background-color: red;
+}
+.state-green .state-text {
+	color: green;
+}
+.state-green .state-background {
+	background-color: green;
+}
+.state-yellow .state-text {
+	color: darkorange;
+}
+.state-yellow .state-background {
+	background-color: darkorange;
+}
+.state-gray .state-text {
+	color: gray;
+}
+.state-gray .state-background {
+	background-color: gray;
+}
+.state-blue .state-text {
+	color: darkblue;
+}
+.state-blue .state-background {
+	background-color: darkblue;
+}
+.panel-container {
+	margin: 0.5rem 0;
+	padding: 1rem;
+}
+.block-list-item {
+	width: 100%;
+	height: 3.25rem;
+	margin: 0 0 1rem 0;
+	display: inline-flex;
+	background-color: #f6f6f6;
+}
+.block-item-column {
+	display: flex;
+	margin: auto 0 auto 0.5rem;
+}
+.block-item-column .value {
+	margin-left: 0.5em;
+}
+.root-list-block {
+	width: 100%;
+	display: inline-flex;
+	min-height: 4rem;
+	font-size: 1.3rem;
+	cursor: pointer;
+}
+.list-container {
+	margin: 1rem 0.8rem 0 1.5rem;
+}
+.title-item-wrap {
+	min-width: 17%;
+}
+.status-indicator {
+	width: 1rem;
+	margin: auto 0.5rem auto 0;
+	height: 1rem;
+	border-radius: 50%;
+	background: radial-gradient(circle farthest-corner at 35% 35%, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0));
+}
+.root-list-block .status-indicator {
+	width: 1.2rem;
+	height: 1.2rem;
+}
+.message-item {
+	min-width: 40%;
+	width: 40%;
+}
+.dbtable-records, .db-type {
+	min-width: 15%;
+}
+.db-location {
+	margin-right: auto;
+}
+.db-menu-button {
+	width: 1.7em;
+	margin-right: 0.7em;
+	position: relative;
+}
+.db-menu-button span[role="button"] {
+	font-weight: bold;
+	color: gray;
+}
+.db-menu-button>div>span:hover {
+	color: blue;
+}
+.mailbox-location {
+	min-width: 20%;
+}
+.mailbox-host {
+	margin-right: auto;
+}
+.source-check-button {
+	margin-right: 0.7em;
+}
+.popup-menu {
+	position: absolute;
+	top: 130%;
+	left: -5.3em;
+	width: 7em;
+	text-align: center;
+	background-color: white;
+}
+.popup-menu:after {
+	content: "";
+	display: block;
+	position: absolute;
+	top: -0.3em;
+	bottom: auto;
+	right: auto;
+	left: 5.4em;
+	width: 0;
+	border-width: 0 0.4em 0.4em;
+	border-style: solid;
+	border-color: white transparent;
+}
+.popup-menu:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: -0.4em;
+	bottom: auto;
+	right: auto;
+	left: 5.4em;
+	width: 0;
+	border-width: 0 0.4em 0.4em;
+	border-style: solid;
+	border-color: gray transparent;
+}
+.popup-menu li {
+	margin: 0.2em 0 0.2em 0;
+}
+.popup-menu li:hover {
+	color: blue;
+}
+.report-result {
+	display: inline-block;
+	border-color: gray;
+	border-style: solid;
+	border-width: 0.07em;
+	border-radius: 0.4em;
+	padding: 0.2em;
+	margin: 0 0.2em 0 0.2em;
+}
+.main-table .report-result {
+	font-size: 75%;
+}
+.report-result-pass {
+	color: green;
+}
+.report-result-unknown {
+	color: grey;
+}
+.report-result-fail {
+	color: red;
+}
+.report-modal {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	background: #fff;
+	text-align: center;
+	transition: all 600ms cubic-bezier(0.86, 0, 0.07, 1);
+	overflow: auto;
+}
+.report-modal > .report-header {
+	position: sticky;
+	top: 0;
+	padding: 1rem;
+	cursor: pointer;
+	border-bottom: solid 0.1rem #ddd;
+	background-color: #ddd;
+}
+.report-modal > .report-header > .header-text {
+	padding: 0.5rem;
+	cursor: auto;
+}
+.report-record > .header {
+	padding: 0.3em 0;
+	border-bottom: solid 0.1rem #ddd;
+	border-radius: 0.3em 0.3em 0 0;
+	background-color: #eee;
+}
+.report-modal > .body {
+	padding: 1rem;
+}
+.report-modal.report-hidden {
+	top: 100%;
+}
+.report-modal .close-btn {
+	position: relative;
+	display: inline-block;
+	padding: 0.7em 1.5em;
+	background: #eee;
+	border: solid 0.07rem gray;
+	border-radius: 1.8em;
+	cursor: pointer;
+	transition: all .4s ease;
+}
+.report-modal .content {
+	width: 50rem;
+	max-width: 100%;
+	margin: 0 auto;
+}
+.report-modal .close-btn:hover {
+	box-shadow: 0 3px 15px rgba(0,0,0,0.2);
+}
+.report-records {
+	margin-top: 1rem;
+	padding-top: 1rem;
+	border-top: solid 0.1rem #ddd;
+}
+.report-record {
+	margin: 0 0 1rem 0;
+	border-color: #ddd;
+}
+.report-item {
+	display: inline-flex;
+	width: 98%;
+	margin: 0.2em 0;
+}
+.report-item .title {
+	min-width: 30%;
+}
+.report-item .title, .report-item .value {
+	text-align: left;
+	margin: auto 0;
+}
+th.report-id, td.report-id {
+	max-width: 15em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.unseen {
+	font-weight: bold;
+}
+#list-settings-btn {
+	color: gray;
+	font-size: 80%;
+	margin-left: 0.3em;
+	cursor: pointer;
+}
+#list-settings-btn:hover, #list-settings-btn.active {
+	color: green;
+}
+
