@@ -368,7 +368,7 @@ class ReportTableRow extends ITableRow {
 
 class ReportListSettingsDialog extends ModalDialog {
 	constructor(params) {
-		super({ buttons: [ "apply" ] });
+		super({ buttons: [ "apply", "reset" ] });
 		this._data    = params || {};
 		this._content = null;
 		this._ui_data = [
@@ -444,7 +444,7 @@ class ReportListSettingsDialog extends ModalDialog {
 		remove_all_children(sl);
 		let no = document.createElement("option");
 		no.setAttribute("value", "");
-		no.appendChild(document.createTextNode("None"));
+		no.appendChild(document.createTextNode("Any"));
 		sl.appendChild(no);
 		if (d) {
 			let f = false;

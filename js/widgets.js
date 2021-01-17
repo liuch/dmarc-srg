@@ -686,6 +686,10 @@ class ModalDialog {
 				name = "Apply";
 				type = "submit";
 			}
+			else if (bt == "reset") {
+				name = "Reset";
+				type = "reset";
+			}
 			else if (bt == "login") {
 				name = "Log in";
 				type = "submit";
