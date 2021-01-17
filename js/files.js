@@ -35,7 +35,7 @@ class Files {
 	}
 
 	title() {
-		return "Files";
+		return "Report Files";
 	}
 
 	_create_local_file_uploading_element() {
