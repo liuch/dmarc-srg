@@ -256,6 +256,8 @@ class ITable {
 	clear() {
 		this._frames = [];
 		remove_all_children(this._body);
+		this._focused_row = null;
+		this._selected_rows = [];
 	}
 
 	focus() {
