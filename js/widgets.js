@@ -581,8 +581,9 @@ class ITableColumn extends ITableCell {
 	}
 
 	element() {
-		super.element();
-		this._update_sorted();
+		if (this._element !== super.element()) {
+			this._update_sorted();
+		}
 		return this._element;
 	}
 
@@ -610,20 +611,24 @@ class ITableColumn extends ITableCell {
 	_update_sorted() {
 		if (this._sortable) {
 			this._element.classList.add("sortable");
+			let c_act = {
+				asc: "remove",
+				des: "remove"
+			};
 			if (this._sorted) {
 				this._element.classList.add("arrows");
-				if (this._sorted == "ascent") {
-					this._element.classList.add("sorted-asc");
-					this._element.classList.remove("sorted-des");
+				if (this._sorted === "ascent") {
+					c_act["asc"] = "add";
 				}
-				else if (this._sorted == "descent") {
-					this._element.classList.add("sorted-des");
-					this._element.classList.remove("sorted-asc");
+				else if (this._sorted === "descent") {
+					c_act["des"] = "add";
 				}
-				else {
-					this._element.classList.remove("sorted-asc");
-					this._element.classList.remove("sorted-des");
-				}
+			}
+			else {
+				this._element.classList.remove("arrows");
+			}
+			for (let key in c_act) {
+				this._element.classList[c_act[key]]("sorted-" + key);
 			}
 		}
 	}
