@@ -81,3 +81,18 @@ function create_report_result_element(name, value, long_rec, result) {
 	return span;
 }
 
+function scroll_to_element(element, container) { // because scrollIntoView is poorly supported by browsers
+	let diff = null;
+	let e_rect = element.getBoundingClientRect();
+	let c_rect = container.getBoundingClientRect();
+	if (e_rect.top < c_rect.top + e_rect.height * 2) {
+		diff = e_rect.top - c_rect.top - e_rect.height * 2;
+	}
+	else if (e_rect.bottom > c_rect.bottom - e_rect.height) {
+		diff = e_rect.bottom - c_rect.bottom + e_rect.height;
+	}
+	if (diff) {
+		container.scrollBy(0, diff);
+	}
+}
+

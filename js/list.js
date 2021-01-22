@@ -171,7 +171,7 @@ class ReportList {
 				this.update();
 			}.bind(this),
 			onfocus: function(el) {
-				this._scroll_to_element(el);
+				scroll_to_element(el, this._scroll);
 			}.bind(this)
 		});
 		[
@@ -272,20 +272,6 @@ class ReportList {
 			fr.appendChild(create_report_result_element("SPF", d.spf_align));
 		rd.cells.push({ content: fr });
 		return rd;
-	}
-
-	_scroll_to_element(el) {
-		let diff = null;
-		let e_rect = el.getBoundingClientRect();
-		let s_rect = this._scroll.getBoundingClientRect();
-		if (e_rect.top < s_rect.top + e_rect.height * 2) {
-			diff = e_rect.top - s_rect.top - e_rect.height * 2;
-		}
-		else if (e_rect.bottom > s_rect.bottom - e_rect.height) {
-			diff = e_rect.bottom - s_rect.bottom + e_rect.height;
-		}
-		if (diff)
-			this._scroll.scrollBy(0, diff);
 	}
 
 	_display_settings_dialog() {
