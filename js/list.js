@@ -165,7 +165,7 @@ class ReportList {
 			}.bind(this),
 			onsort: function(col) {
 				let dir = col.sorted() && "toggle" || "descent";
-				this._table.sort(col.name(), dir);
+				this._table.set_sorted(col.name(), dir);
 				this._sort.column = col.name();
 				this._sort.direction = col.sorted();
 				this.update();

@@ -272,6 +272,23 @@ class ITable {
 	}
 
 	sort(col_name, direction) {
+		if (this._frames.length == 1) {
+			for (let i = 0; i < this._columns.length; ++i) {
+				let col = this._columns[i];
+				if (col.is_sortable() && col.name() === col_name) {
+					let fr = this._frames[0];
+					fr.sort(i, direction);
+					if (this._body) {
+						remove_all_children(this._body);
+						this._body.appendChild(fr.element());
+					}
+					return;
+				}
+			}
+		}
+	}
+
+	set_sorted(col_name, direction) {
 		this._columns.forEach(function(col) {
 			if (col.is_sortable()) {
 				if (col.name() !== col_name) {
@@ -407,6 +424,24 @@ class ITableFrame {
 		return fr;
 	}
 
+	sort(col_idx, direction) {
+		let dir = (direction === "ascent" && 1) || (direction === "descent" && 2) || 0;
+		if (dir) {
+			this._rows.sort(function(a, b) {
+				let a_val = a.cell(col_idx).value();
+				let b_val = b.cell(col_idx).value();
+				if (dir === 1) {
+					return a_val > b_val;
+				}
+				return a_val < b_val;
+			});
+			let id = this._pos;
+			this._rows.forEach(function(row) {
+				row.id(id++);
+			});
+		}
+	}
+
 	_add_row(row, id) {
 		this._rows.push(new ITableRow(row, id));
 	}
@@ -466,8 +501,18 @@ class ITableRow {
 			this._update_select();
 	}
 
-	id() {
+	id(new_id) {
+		if (new_id !== undefined && new_id !== this._id) {
+			this._id = new_id;
+			if (this._element) {
+				this._element.setAttribute("data-id", this._id);
+			}
+		}
 		return this._id;
+	}
+
+	cell(index) {
+		return this._cells[index] || null;
 	}
 
 	_update_focus() {
@@ -518,6 +563,10 @@ class ITableCell {
 			}
 		}
 		return this._element;
+	}
+
+	value() {
+		return typeof(this._content) !== "object" && this._content || null;
 	}
 }
 
