@@ -364,19 +364,6 @@ class ReportListSettingsDialog extends ModalDialog {
 		];
 	}
 
-	show() {
-		let res = super.show();
-		if (this._title)
-			this._title.querySelector("button.close-btn").classList.add("active");
-		return res;
-	}
-
-	hide() {
-		if (this._title)
-			this._title.querySelector("button.close-btn").classList.remove("active");
-		super.hide();
-	}
-
 	_gen_content() {
 		let fs = document.createElement("fieldset");
 		fs.setAttribute("class", "round-border table");

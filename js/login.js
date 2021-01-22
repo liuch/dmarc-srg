@@ -29,19 +29,6 @@ class LoginDialog extends ModalDialog {
 		this._msg_el = null;
 	}
 
-	show() {
-		let res = super.show();
-		if (this._title)
-			this._title.querySelector("button.close-btn").classList.add("active");
-		return res;
-	}
-
-	hide() {
-		if (this._title)
-			this._title.querySelector("button.close-btn").classList.remove("active");
-		super.hide();
-	}
-
 	remove() {
 		if (this._element) {
 			this._element.remove();

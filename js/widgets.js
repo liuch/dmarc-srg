@@ -712,9 +712,11 @@ class ModalDialog {
 
 	show() {
 		if (this._element) {
+			this._title.querySelector("button.close-btn").classList.add("active");
 			this._element.classList.remove("hidden");
-			if (this._first)
+			if (this._first) {
 				this._first.focus();
+			}
 		}
 		let that = this;
 		return new Promise(function(resolve, reject) {
@@ -724,6 +726,7 @@ class ModalDialog {
 
 	hide() {
 		if (this._element) {
+			this._title.querySelector("button.close-btn").classList.remove("active");
 			this._element.classList.add("hidden");
 		}
 		this._callback && this._callback(this._result);
