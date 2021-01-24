@@ -784,7 +784,7 @@ class ModalDialog {
 		let list = this._element.querySelector("form").elements;
 		for (let i = 0; i < list.length; ++i) {
 			let el = list[i];
-			if (!el.elements) {
+			if (!el.elements && !el.disabled) {
 				if (!this._first)
 					this._first = el;
 				this._last = el;
