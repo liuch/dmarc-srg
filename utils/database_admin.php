@@ -41,7 +41,6 @@ use Exception;
 use Liuch\DmarcSrg\Database\Database;
 use Liuch\DmarcSrg\Database\DatabaseUpgrader;
 
-require 'debug.php';
 require 'init.php';
 
 if (php_sapi_name() !== 'cli') {

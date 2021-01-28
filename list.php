@@ -25,7 +25,6 @@ namespace Liuch\DmarcSrg;
 use Exception;
 use Liuch\DmarcSrg\Report\ReportList;
 
-require 'debug.php';
 require 'init.php';
 
 if (Core::isJson()) {

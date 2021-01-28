@@ -24,7 +24,6 @@ namespace Liuch\DmarcSrg;
 
 use Exception;
 
-require 'debug.php';
 require 'init.php';
 
 if (Core::isJson()) {

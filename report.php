@@ -25,7 +25,6 @@ namespace Liuch\DmarcSrg;
 use Exception;
 use Liuch\DmarcSrg\Report\Report;
 
-require 'debug.php';
 require 'init.php';
 
 if (!empty($_GET['report_id']) && !empty($_GET['domain'])) {

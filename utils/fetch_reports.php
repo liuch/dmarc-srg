@@ -41,7 +41,6 @@ use Liuch\DmarcSrg\Report\Report;
 use Liuch\DmarcSrg\ReportFile\ReportFile;
 use Liuch\DmarcSrg\ReportLog\ReportLogItem;
 
-require 'debug.php';
 require 'init.php';
 
 if (php_sapi_name() !== 'cli') {

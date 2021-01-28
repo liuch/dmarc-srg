@@ -37,7 +37,6 @@ namespace Liuch\DmarcSrg;
 use Exception;
 use Liuch\DmarcSrg\ReportLog\ReportLog;
 
-require 'debug.php';
 require 'init.php';
 
 if (php_sapi_name() !== 'cli') {
