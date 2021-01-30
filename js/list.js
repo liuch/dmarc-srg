@@ -415,24 +415,25 @@ class ReportListSettingsDialog extends ModalDialog {
 	_update_select_element(el, d, v) {
 		let sl = el.querySelector("select");
 		remove_all_children(sl);
-		let no = document.createElement("option");
-		no.setAttribute("value", "");
-		no.appendChild(document.createTextNode("Any"));
-		sl.appendChild(no);
+		let ao = document.createElement("option");
+		ao.setAttribute("value", "");
+		ao.setAttribute("selected", "selected");
+		ao.appendChild(document.createTextNode("Any"));
+		sl.appendChild(ao);
+		let v2 = "";
 		if (d) {
-			let f = false;
 			let op = null;
 			d.forEach(function(fs) {
 				op = document.createElement("option");
 				op.setAttribute("value", fs);
 				op.appendChild(document.createTextNode(fs));
-				if (fs === v)
-					op.setAttribute("selected", "selected");
+				if (fs === v) {
+					v2 = v;
+				}
 				sl.appendChild(op);
 			}, this);
-			if (!f)
-				no.setAttribute("selected", "selected");
 		}
+		sl.value = v2;
 	}
 
 	_submit() {
