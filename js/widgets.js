@@ -711,13 +711,13 @@ class ModalDialog {
 	}
 
 	show() {
-		if (this._element) {
-			this._title.querySelector("button.close-btn").classList.add("active");
-			this._element.classList.remove("hidden");
-			if (this._first) {
-				this._first.focus();
-			}
+		this.element();
+		this._title.querySelector("button.close-btn").classList.add("active");
+		this._element.classList.remove("hidden");
+		if (this._first) {
+			this._first.focus();
 		}
+
 		let that = this;
 		return new Promise(function(resolve, reject) {
 			that._callback = resolve;

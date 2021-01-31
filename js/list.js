@@ -364,6 +364,11 @@ class ReportListSettingsDialog extends ModalDialog {
 		];
 	}
 
+	show() {
+		this._update_ui();
+		return super.show();
+	}
+
 	_gen_content() {
 		let fs = document.createElement("fieldset");
 		fs.setAttribute("class", "round-border table");
@@ -376,7 +381,6 @@ class ReportListSettingsDialog extends ModalDialog {
 			ud.element = el;
 		}, this);
 		this._content.appendChild(fs);
-		this._update_ui();
 		if (!this._data.loaded_filters)
 			this._fetch_data();
 	}
@@ -438,11 +442,14 @@ class ReportListSettingsDialog extends ModalDialog {
 
 	_submit() {
 		let res = {};
+		let fdata = {};
 		this._ui_data.forEach(function(ud) {
 			let el = ud.element.querySelector("select");
 			let val = el.options[el.selectedIndex].value;
 			res[ud.name] = val;
+			fdata[ud.name] = val;
 		});
+		this._data.filter = fdata;
 		this._result = res;
 		this.hide();
 	}
