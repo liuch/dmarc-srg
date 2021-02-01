@@ -25,7 +25,8 @@ namespace Liuch\DmarcSrg\Report;
 use PDO;
 use Exception;
 use Liuch\DmarcSrg\Common;
-use Liuch\DmarcSrg\Domain;
+use Liuch\DmarcSrg\Domains\Domain;
+use Liuch\DmarcSrg\Domains\DomainList;
 use Liuch\DmarcSrg\Database\Database;
 
 class Report
@@ -126,20 +127,28 @@ class Report
         $db = Database::connection();
         $db->beginTransaction();
         try {
-            $dom = new Domain($this->data['domain']);
-            if (!$dom->exists()) {
+            $fqdn = $this->data['domain'];
+            $domain = new Domain($fqdn);
+            if (!$domain->exists()) {
                 // The domain is not found.
                 // It will automatically added a new domain if there are no domains in the table
                 // or will throw an error otherwise.
-                if (Domain::count() !== 0) {
-                    throw new Exception('Unknown domain', -1);
+                if (DomainList::count() !== 0) {
+                    throw new Exception('Failed to add an incoming report: unknown domain', -1);
                 }
 
-                $dom->save();
+                $domain = new Domain([
+                    'fqdn'        => $fqdn,
+                    'active'      => true,
+                    'description' => 'The domain was added automatically.'
+                ]);
+                $domain->save();
+            } elseif (!$domain->active()) {
+                throw new Exception('Failed to add an incoming report: the domain is inactive', -1);
             }
 
             $st = $db->prepare('INSERT INTO `reports` (`domain_id`, `begin_time`, `end_time`, `loaded_time`, `org`, `external_id`, `email`, `extra_contact_info`, `error_string`, `policy_adkim`, `policy_aspf`, `policy_p`, `policy_sp`, `policy_pct`, `policy_fo`, `seen`) VALUES (?, FROM_UNIXTIME(?), FROM_UNIXTIME(?), NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)');
-            $st->bindValue(1, $dom->id(), PDO::PARAM_INT);
+            $st->bindValue(1, $domain->id(), PDO::PARAM_INT);
             $st->bindValue(2, $this->data['begin_time'], PDO::PARAM_INT);
             $st->bindValue(3, $this->data['end_time'], PDO::PARAM_INT);
             $st->bindValue(4, $this->data['org'], PDO::PARAM_STR);

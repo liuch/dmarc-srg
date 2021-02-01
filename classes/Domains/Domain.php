@@ -29,11 +29,12 @@
  * @license  https://www.gnu.org/licenses/gpl-3.0.html GNU/GPLv3
  */
 
-namespace Liuch\DmarcSrg;
+namespace Liuch\DmarcSrg\Domains;
 
 use PDO;
 use Exception;
 use Liuch\DmarcSrg\Database\Database;
+use Liuch\DmarcSrg\Report\ReportList;
 
 /**
  * It's a class for accessing to stored domains data
@@ -45,7 +46,10 @@ class Domain
 {
     private $id   = null;
     private $fqdn = null;
+    private $actv = null;
     private $desc = null;
+    private $c_tm = null;
+    private $u_tm = null;
     private $ex_f = null;
 
     /**
@@ -60,8 +64,10 @@ class Domain
      * @param int|string|array $data Some domain data to identify it
      *                               int value is treated as domain id
      *                               string value is treated as a FQDN
-     *                               array has these fields: `id`, `fqdn`, `description`
+     *                               array has these fields: `id`, `fqdn`, `active`, `description`
      *                               and usually uses for creating a new domain item.
+     *                               Note: The values of the fields `created_time` and `updated_time`
+     *                               will be ignored while saving to the database.
      *
      * @return void
      */
@@ -89,30 +95,37 @@ class Domain
                     $this->fqdn = $data['fqdn'];
                     $this->checkFqdn();
                 }
+                if (isset($data['active'])) {
+                    if (gettype($data['active']) !== 'boolean') {
+                        break;
+                    }
+                    $this->actv = $data['active'];
+                } else {
+                    $this->actv = false;
+                }
                 if (isset($data['description'])) {
                     if (gettype($data['description']) !== 'string') {
                         break;
                     }
                     $this->desc = $data['description'];
                 }
+                if (isset($data['created_time'])) {
+                    if (gettype($data['created_time']) !== 'integer') {
+                        break;
+                    }
+                    $this->c_tm = $data['created_time'];
+                }
+                if (isset($data['updated_time'])) {
+                    if (gettype($data['updated_time']) !== 'integer') {
+                        break;
+                    }
+                    $this->u_tm = $data['updated_time'];
+                }
                 if (!is_null($this->id) || !is_null($this->fqdn)) {
                     return;
                 }
         }
         throw new Exception('Wrong domain data', -1);
-    }
-
-    /**
-     * Returns total number of domains in the database
-     *
-     * @return int Total number of domains
-     */
-    public static function count(): int
-    {
-        $st = Database::connection()->query('SELECT COUNT(*) FROM `domains`', PDO::FETCH_NUM);
-        $res = intval($st->fetchColumn(0));
-        $st->closeCursor();
-        return $res;
     }
 
     /**
@@ -165,6 +178,22 @@ class Domain
     }
 
     /**
+     * Whether the domain is active or not
+     *
+     * When the domain is inactive, all incoming reports for it are ignored
+     * but the domain will still be included in summary reports.
+     *
+     * @return bool
+     */
+    public function active(): bool
+    {
+        if (is_null($this->actv)) {
+            $this->fetchData();
+        }
+        return $this->actv;
+    }
+
+    /**
      * Returns the domain's description
      *
      * @return string|null The description of the domain if it exists or null otherwise
@@ -178,6 +207,25 @@ class Domain
     }
 
     /**
+     * Returns an array with domain data
+     *
+     * @return array Domain data
+     */
+    public function toArray(): array
+    {
+        if (is_null($this->id) || is_null($this->fqdn)) {
+            $this->fetchData();
+        }
+        return [
+            'fqdn'         => $this->fqdn,
+            'active'       => $this->actv,
+            'description'  => $this->desc,
+            'created_time' => $this->c_tm,
+            'updated_time' => $this->u_tm
+        ];
+    }
+
+    /**
      * Saves the domain to the database
      *
      * Updates the domain's description in the database if the domain exists or insert a new record otherwise.
@@ -188,29 +236,90 @@ class Domain
     public function save(): void
     {
         $db = Database::connection();
+        $this->u_tm = time();
         if ($this->exists()) {
-            $st = $db->prepare('UPDATE `domains` SET `description` = ? WHERE `id` = ?');
-            $st->bindValue(1, $this->desc, PDO::PARAM_STR);
-            $st->bindValue(2, $this->id, PDO::PARAM_INT);
-            $st->execute();
-            $st->closeCursor();
-        } else {
-            if (is_null($this->desc)) {
-                $sql1 = '';
-                $sql2 = '';
-            } else {
-                $sql1 = ', `description`';
-                $sql2 = ', ?';
-            }
-            $st = $db->prepare('INSERT INTO `domains` (`fqdn`' . $sql1 . ') VALUES (?' . $sql2 . ')');
-            $st->bindValue(1, $this->fqdn, PDO::PARAM_STR);
-            if (!is_null($this->desc)) {
+            try {
+                $st = $db->prepare('UPDATE `domains` SET `active` = ?, `description` = ?, `updated_time` = FROM_UNIXTIME(?) WHERE `id` = ?');
+                $st->bindValue(1, $this->actv, PDO::PARAM_BOOL);
                 $st->bindValue(2, $this->desc, PDO::PARAM_STR);
+                $st->bindValue(3, $this->u_tm, PDO::PARAM_INT);
+                $st->bindValue(4, $this->id, PDO::PARAM_INT);
+                $st->execute();
+                $st->closeCursor();
+            } catch (Exception $e) {
+                throw new Execption('Failed to update the domain data', -1);
             }
+        } else {
+            try {
+                $actv = $this->actv ?? false;
+                $this->c_tm = $this->u_tm;
+                if (is_null($this->desc)) {
+                    $sql1 = '';
+                    $sql2 = '';
+                } else {
+                    $sql1 = ', `description`';
+                    $sql2 = ', ?';
+                }
+                $st = $db->prepare('INSERT INTO `domains` (`fqdn`, `active`' . $sql1 . ', `created_time`, `updated_time`) VALUES (?, ?' . $sql2 . ', FROM_UNIXTIME(?), FROM_UNIXTIME(?))');
+                $idx = 0;
+                $st->bindValue(++$idx, $this->fqdn, PDO::PARAM_STR);
+                $st->bindValue(++$idx, $actv, PDO::PARAM_BOOL);
+                if (!is_null($this->desc)) {
+                    $st->bindValue(++$idx, $this->desc, PDO::PARAM_STR);
+                }
+                $st->bindValue(++$idx, $this->c_tm, PDO::PARAM_INT);
+                $st->bindValue(++$idx, $this->u_tm, PDO::PARAM_INT);
+                $st->execute();
+                $st->closeCursor();
+                $this->id = $db->lastInsertId();
+                $this->ex_f = true;
+                $this->actv = $actv;
+            } catch (Exception $e) {
+                throw new Execption('Failed to insert the domain data', -1);
+            }
+        }
+    }
+
+    /**
+     * Deletes the domain from the database
+     *
+     * Deletes the domain if there are no reports for this domain in the database.
+     * If you want to stop handling reports for this domain, just make it inactive.
+     *
+     * @return void
+     */
+    public function delete(): void
+    {
+        if (is_null($this->id)) {
+            $this->fetchData();
+        }
+
+        $db = Database::connection();
+        $db->beginTransaction();
+        try {
+            $rlist = new ReportList(1);
+            $rlist->setFilter([ 'domain' => $this ]);
+            $rcnt = $rlist->count();
+            if ($rcnt > 0) {
+                $s1 = 'are';
+                $s2 = 's';
+                if ($rcnt == 1) {
+                    $s1 = 'is';
+                    $s2 = '';
+                }
+                $msg = "Failed to delete: there $s1 $rcnt incoming report$s2 for this domain";
+                throw new Exception($msg, -1);
+            }
+
+            $st = $db->prepare('DELETE FROM `domains` WHERE `id` = ?');
+            $st->bindValue(1, $this->id, PDO::PARAM_STR);
             $st->execute();
             $st->closeCursor();
-            $this->id = $db->lastInsertId();
-            $this->ex_f = true;
+
+            $db->commit();
+        } catch (Exception $e) {
+            $db->rollBack();
+            throw $e;
         }
     }
 
@@ -237,7 +346,11 @@ class Domain
      */
     private function fetchData(): void
     {
-        $st = Database::connection()->prepare('SELECT `id`, `fqdn`, `description` FROM `domains` WHERE ' . $this->sqlCondition());
+        if ($this->ex_f === false) {
+            return;
+        }
+
+        $st = Database::connection()->prepare('SELECT `id`, `fqdn`, `active`, `description`, `created_time`, `updated_time` FROM `domains` WHERE ' . $this->sqlCondition());
         $this->sqlBindValue($st, 1);
         $st->execute();
         $res = $st->fetch(PDO::FETCH_NUM);
@@ -246,8 +359,12 @@ class Domain
         }
         $this->id   = $res[0];
         $this->fqdn = $res[1];
-        $this->desc = $res[2];
+        $this->actv = boolval($res[2]);
+        $this->desc = $res[3];
+        $this->c_tm = strtotime($res[4]);
+        $this->u_tm = strtotime($res[5]);
         $st->closeCursor();
+        $this->ex_f = true;
     }
 
     /**

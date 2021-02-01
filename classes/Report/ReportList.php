@@ -25,7 +25,7 @@ namespace Liuch\DmarcSrg\Report;
 use PDO;
 use Exception;
 use Liuch\DmarcSrg\Common;
-use Liuch\DmarcSrg\Domain;
+use Liuch\DmarcSrg\Domains\Domain;
 use Liuch\DmarcSrg\Database\Database;
 
 class ReportList
@@ -161,6 +161,10 @@ class ReportList
                         }
                         $uses = true;
                     }
+                } elseif (gettype($fv) == "object") {
+                    $a_str[] = '`reports`.`domain_id` = ?';
+                    $bindings[] = [ $fv->id(), PDO::PARAM_INT ];
+                    $uses = true;
                 }
             }
         }

@@ -49,6 +49,8 @@
 
 namespace Liuch\DmarcSrg;
 
+use Liuch\DmarcSrg\Domains\Domain;
+
 require 'init.php';
 
 date_default_timezone_set('GMT');
