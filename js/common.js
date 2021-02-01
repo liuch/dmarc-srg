@@ -96,3 +96,12 @@ function scroll_to_element(element, container) { // because scrollIntoView is po
 	}
 }
 
+function unixtime2date(utime) {
+	let dt = null;
+	if (typeof(utime) == "number") {
+		dt = new Date(utime * 1000);
+		dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset());
+	}
+	return dt;
+}
+

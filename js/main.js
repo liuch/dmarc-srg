@@ -180,6 +180,11 @@ Router._modules = {
 		start: function(m) {
 			m.pointer = new Files();
 		}
+	},
+	domains: {
+		start: function(m) {
+			m.pointer = new DomainList();
+		}
 	}
 };
 
@@ -193,7 +198,8 @@ Router._routes = {
 	"list.php": "list",
 	"admin.php": "admin",
 	"files.php": "files",
-	"report.php": "report"
+	"report.php": "report",
+	"domains.php": "domains"
 };
 
 window.onload = Router.start;

@@ -413,4 +413,15 @@ th.report-id, td.report-id {
 #list-settings-btn:hover, #list-settings-btn.active {
 	color: green;
 }
+th.domain-status {
+	width: 1em;
+}
+.dialog .row.description textarea {
+	width: 25em;
+	height: 7em;
+}
+tr.virtual-item {
+	color: gray;
+	font-style: italic;
+}
 

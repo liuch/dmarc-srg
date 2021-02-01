@@ -559,19 +559,19 @@ class ITableCell {
 	element() {
 		if (!this._element) {
 			this._element = document.createElement(this._element_name);
-			if (this._title)
+			if (this._title) {
 				this._element.setAttribute("title", this._title);
-			if (this._class)
+			}
+			if (this._class) {
 				this._element.setAttribute("class", this._class);
-			if (this._content) {
-				let content = this.value("dom");
-				if (content !== null) {
-					if (typeof(content) === "object") {
-						this._element.appendChild(content)
-					}
-					else {
-						this._element.appendChild(document.createTextNode(content));
-					}
+			}
+			let content = this.value("dom");
+			if (content !== null) {
+				if (typeof(content) === "object") {
+					this._element.appendChild(content)
+				}
+				else {
+					this._element.appendChild(document.createTextNode(content));
 				}
 			}
 		}
