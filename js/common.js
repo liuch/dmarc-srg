@@ -35,7 +35,7 @@ function remove_all_children(el) {
 
 function set_wait_status(el, text) {
 	let wait = document.createElement("div");
-	wait.setAttribute("class", "wait");
+	wait.setAttribute("class", "wait-message");
 	wait.appendChild(document.createTextNode(text || "Getting data..."));
 	if (el) {
 		remove_all_children(el);

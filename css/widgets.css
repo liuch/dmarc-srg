@@ -45,6 +45,7 @@
 	display: table-cell;
 	margin: 0.2em 0;
 	padding-right: 0.5em;
+	vertical-align: middle;
 }
 .dialog .close-btn {
 	position: relative;

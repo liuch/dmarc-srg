@@ -145,7 +145,7 @@ class ReportList {
 	_gen_content_container() {
 		let that = this;
 		let el = document.createElement("div");
-		el.setAttribute("id", "main-table-container");
+		el.setAttribute("class", "main-table-container");
 		el.addEventListener("scroll", function() {
 			if (!that._fetching && el.scrollTop + el.clientHeight >= el.scrollHeight * 0.95) {
 				if (that._table.frames_count() === 0 || that._table.more()) {
@@ -477,7 +477,7 @@ class ReportListSettingsDialog extends ModalDialog {
 			console.warn(err.message);
 			that._content.appendChild(set_error_status());
 		}).finally(function() {
-			that._content.querySelector(".wait").remove();
+			that._content.querySelector(".wait-message").remove();
 		});
 	}
 }

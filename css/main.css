@@ -75,10 +75,13 @@ legend {
 	border: 0.07em solid gray;
 	border-radius: 0.4em;
 }
-.wait {
-	margin: 1em 0 1em 0;
+.wait-message {
+	margin: 0.3em;
 }
-.dialog .wait {
+.panel-container .wait-message, .panel-container .error-message {
+	margin: 1em;
+}
+.dialog .wait-message {
 	color: green;
 	text-align: center;
 }
@@ -102,7 +105,7 @@ legend {
 	font-size: 1.8em;
 	font-weight: bold;
 }
-#main-table-container {
+.main-table-container {
 	position: fixed;
 	overflow-x: hidden;
 	overflow-y: auto;
