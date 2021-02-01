@@ -177,6 +177,7 @@ class ITable {
 	add_column(data) {
 		let col = new ITableColumn(data.content, {
 			name:     data.name,
+			class:    data.class,
 			sortable: data.sortable,
 			sorted:   data.sorted
 		});
@@ -380,12 +381,15 @@ class ITable {
 class ITableFrame {
 	constructor(data, pos) {
 		this._pos = pos;
-		this._rows = [];
 		this._more = data.more && true || false;
 		let id = pos;
-		data.rows.forEach(function(row) {
-			this._add_row(row, id++);
-		}, this);
+		this._rows = data.rows.map(function(rd) {
+			if (!(rd instanceof ITableRow)) {
+				rd = new ITableRow(rd);
+			}
+			rd.id(id++);
+			return rd;
+		});
 	}
 
 	count() {
@@ -427,13 +431,14 @@ class ITableFrame {
 	sort(col_idx, direction) {
 		let dir = (direction === "ascent" && 1) || (direction === "descent" && 2) || 0;
 		if (dir) {
+			let that = this;
 			this._rows.sort(function(a, b) {
-				let a_val = a.cell(col_idx).value();
-				let b_val = b.cell(col_idx).value();
+				let c1 = a.cell(col_idx);
+				let c2 = b.cell(col_idx);
 				if (dir === 1) {
-					return a_val > b_val;
+					return that._compare_cells(c2, c1);
 				}
-				return a_val < b_val;
+				return that._compare_cells(c1, c2);
 			});
 			let id = this._pos;
 			this._rows.forEach(function(row) {
@@ -442,26 +447,29 @@ class ITableFrame {
 		}
 	}
 
-	_add_row(row, id) {
-		this._rows.push(new ITableRow(row, id));
+	_compare_cells(c1, c2) {
+		return c1.value("sort") < c2.value("sort");
 	}
 }
 
 class ITableRow {
-	constructor(data, id) {
-		this._id = id;
+	constructor(data) {
+		this._id = -1;
 		this._focused = false;
 		this._tabindex = -1;
 		this._selected = false;
 		this._element = null;
 		this._userdata = data.userdata || null;
-		this._cells = [];
-		data.cells.forEach(function(col) {
+		this._cells = data.cells.map(function(col) {
+			if (col instanceof ITableCell) {
+				return col;
+			}
 			let props = null;
-			if (col.title || col.class)
+			if (col.title || col.class) {
 				props = { title: col.title || null, class: col.class || null };
-			this._cells.push(new ITableCell(col.content, props));
-		}, this);
+			}
+			return new ITableCell(col.content, props);
+		});
 	}
 
 	userdata() {
@@ -556,16 +564,21 @@ class ITableCell {
 			if (this._class)
 				this._element.setAttribute("class", this._class);
 			if (this._content) {
-				if (typeof(this._content) === "object")
-					this._element.appendChild(this._content)
-				else
-					this._element.appendChild(document.createTextNode(this._content));
+				let content = this.value("dom");
+				if (content !== null) {
+					if (typeof(content) === "object") {
+						this._element.appendChild(content)
+					}
+					else {
+						this._element.appendChild(document.createTextNode(content));
+					}
+				}
 			}
 		}
 		return this._element;
 	}
 
-	value() {
+	value(target) {
 		return typeof(this._content) !== "object" && this._content || null;
 	}
 }
@@ -756,6 +769,14 @@ class ModalDialog {
 			else if (bt == "cancel") {
 				name = "Cancel";
 				type = "close";
+			}
+			else if (bt == "close") {
+				name = "Close";
+				type = "close";
+			}
+			else {
+				name = bt;
+				type = bt;
 			}
 			this._add_button(container, name, type);
 		}, this);

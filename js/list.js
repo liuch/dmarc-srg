@@ -241,11 +241,11 @@ class ReportList {
 			that._table.display_status(null);
 			if (data.error_code !== undefined && data.error_code !== 0)
 				throw new Error(data.message || "Unknown error");
-			let d = { rows: [], more: data.more };
-			data.reports.forEach(function(it) {
-				d.rows.push(that._make_row_data(it));
+			let d = { more: data.more };
+			d.rows = data.reports.map(function(it) {
+				return new ReportTableRow(that._make_row_data(it));
 			});
-			let fr = new ReportTableFrame(d, pos);
+			let fr = new ITableFrame(d, pos);
 			that._table.add_frame(fr);
 			return fr;
 		}).catch(function(err) {
@@ -315,15 +315,9 @@ class ReportTable extends ITable {
 	}
 }
 
-class ReportTableFrame extends ITableFrame {
-	_add_row(row, id) {
-		this._rows.push(new ReportTableRow(row, id));
-	}
-}
-
 class ReportTableRow extends ITableRow {
-	constructor(data, id) {
-		super(data, id);
+	constructor(data) {
+		super(data);
 		this._seen = data.seen && true || false;
 	}
 
