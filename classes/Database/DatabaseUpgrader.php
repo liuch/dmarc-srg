@@ -22,6 +22,7 @@
 
 namespace Liuch\DmarcSrg\Database;
 
+use PDO;
 use Exception;
 
 class DatabaseUpgrader
@@ -43,7 +44,8 @@ class DatabaseUpgrader
     }
 
     private static $upways = [
-        'ver_null' => 'upNull'
+        'ver_null' => 'upNull',
+        'ver_0.1'  => 'up01'
     ];
 
     private static function upNull()
@@ -53,11 +55,47 @@ class DatabaseUpgrader
         try {
             $db->query('INSERT INTO `system` (`key`, `value`) VALUES ("version", "0.1")');
             $db->commit();
-            return '0.1';
         } catch (Exception $e) {
             $db->rollBack();
             throw $e;
         }
+        return '0.1';
+    }
+
+    private static function up01()
+    {
+        $db = Database::connection();
+        $db->beginTransaction();
+        try {
+            if (!self::columnExists($db, 'domains', 'active')) {
+                $db->query('ALTER TABLE `domains` ADD COLUMN `active` boolean NOT NULL AFTER `fqdn`');
+            }
+            if (!self::columnExists($db, 'domains', 'created_time')) {
+                $db->query('ALTER TABLE `domains` ADD COLUMN `created_time` datetime NOT NULL');
+            }
+            if (!self::columnExists($db, 'domains', 'updated_time')) {
+                $db->query('ALTER TABLE `domains` ADD COLUMN `updated_time` datetime NOT NULL');
+            }
+            $db->query('UPDATE `domains` SET `active` = TRUE, `created_time` = NOW(), `updated_time` = NOW()');
+            $db->query('UPDATE `system` SET `value` = "1.0" WHERE `key` = "version"');
+            $db->commit();
+        } catch (Exception $e) {
+            $db->rollBack();
+            throw $e;
+        }
+        return '1.0';
+    }
+
+    private static function columnExists($db, $table, $column)
+    {
+        $st = $db->prepare('SELECT NULL FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `table_schema` = ? AND `table_name` = ? AND `column_name` = ?');
+        $st->bindValue(1, Database::name(), PDO::PARAM_STR);
+        $st->bindValue(2, $table, PDO::PARAM_STR);
+        $st->bindValue(3, $column, PDO::PARAM_STR);
+        $st->execute();
+        $res = $st->fetch(PDO::FETCH_NUM);
+        $st->closeCursor();
+        return $res ? true : false;
     }
 }
 

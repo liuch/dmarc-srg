@@ -80,6 +80,9 @@ Router.go = function(url) {
 						Router.update_title(p.title());
 				}
 			}
+			if (d.state && d.state !== "Ok") {
+				Notification.add({ type: "warn", text: d.message, delay: 20000 });
+			}
 			if (d.version !== Router._app_ver) {
 				Router._app_ver = d.version;
 				Router.update_title();

@@ -27,7 +27,7 @@ use Exception;
 
 class Database
 {
-    public const REQUIRED_VERSION = '0.1';
+    public const REQUIRED_VERSION = '1.0';
 
     private $conn;
     private static $instance = null;
@@ -153,8 +153,20 @@ class Database
                     'definition' => 'varchar(255) NOT NULL'
                 ],
                 [
+                    'name' => 'active',
+                    'definition' => 'boolean NOT NULL'
+                ],
+                [
                     'name' => 'description',
                     'definition' => 'TEXT NULL'
+                ],
+                [
+                    'name' => 'created_time',
+                    'definition' => 'datetime NOT NULL'
+                ],
+                [
+                    'name' => 'updated_time',
+                    'definition' => 'datetime NOT NULL'
                 ]
             ],
             'additional' => 'PRIMARY KEY (`id`), UNIQUE KEY `fqdn` (`fqdn`)',
