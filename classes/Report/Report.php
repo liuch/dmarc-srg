@@ -73,10 +73,10 @@ class Report
                 }
                 $id = $res[0];
                 $this->data['date'] = [
-                    'begin' => $res[1] . 'Z',
-                    'end'   => $res[2] . 'Z'
+                    'begin' => strtotime($res[1]),
+                    'end'   => strtotime($res[2])
                 ];
-                $this->data['loaded_time']  = $res[3] . 'Z';
+                $this->data['loaded_time']  = strtotime($res[3]);
                 $this->data['org_name']     = $res[4];
                 $this->data['email']        = $res[5];
                 $this->data['extra_contact_info'] = $res[6];

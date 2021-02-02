@@ -64,8 +64,8 @@ class ReportList
                     $list[] = [
                         'org_name'    => $res[0],
                         'date'        => [
-                            'begin' => $res[1] . 'Z',
-                            'end'   => $res[2] . 'Z'
+                            'begin' => strtotime($res[1]),
+                            'end'   => strtotime($res[2])
                         ],
                         'domain'      => $res[3],
                         'report_id'   => $res[4],
