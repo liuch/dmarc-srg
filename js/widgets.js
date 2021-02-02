@@ -579,7 +579,7 @@ class ITableCell {
 	}
 
 	value(target) {
-		return typeof(this._content) !== "object" && this._content || null;
+		return (target === "dom" || typeof(this._content) !== "object") && this._content || null;
 	}
 }
 
