@@ -265,12 +265,7 @@ class ReportList {
 		rd.cells.push({ content: d.org_name });
 		rd.cells.push({ content: d.report_id, class: "report-id" });
 		rd.cells.push({ content: d.messages });
-		let fr = document.createDocumentFragment();
-		if (d.dkim_align)
-			fr.appendChild(create_report_result_element("DKIM", d.dkim_align));
-		if (d.spf_align)
-			fr.appendChild(create_report_result_element("SPF", d.spf_align));
-		rd.cells.push({ content: fr });
+		rd.cells.push(new StatusColumn({ dkim_align: d.dkim_align, spf_align: d.spf_align }));
 		return rd;
 	}
 
@@ -343,6 +338,23 @@ class ReportTableRow extends ITableRow {
 			this._element.classList.remove("unseen");
 		else
 			this._element.classList.add("unseen");
+	}
+}
+
+class StatusColumn extends ITableCell {
+	value(target) {
+		if (target === "dom") {
+			let d = this._content;
+			let fr = document.createDocumentFragment();
+			if (d.dkim_align) {
+				fr.appendChild(create_report_result_element("DKIM", d.dkim_align));
+			}
+			if (d.spf_align) {
+				fr.appendChild(create_report_result_element("SPF", d.spf_align));
+			}
+			return fr;
+		}
+		return super.value(target);
 	}
 }
 
