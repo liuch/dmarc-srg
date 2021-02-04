@@ -119,6 +119,10 @@ class ITable {
 								let n_id = Math.max(c_id - Math.floor(s_ht / r_ht) - 1, f_id);
 								row = that._get_row(n_id);
 							}
+							else {
+								let f_frame = that._frames[0];
+								row = f_frame.row(f_frame.first_index());
+							}
 						}
 						break;
 					case "PageDown":
@@ -133,6 +137,10 @@ class ITable {
 								let s_ht = s_el.getBoundingClientRect().height;
 								let n_id = Math.min(c_id + Math.floor(s_ht / r_ht) - 1, l_id);
 								row = that._get_row(n_id);
+							}
+							else {
+								let l_frame = that._frames[that._frames.length - 1];
+								row = l_frame.row(l_frame.last_index());
 							}
 						}
 						break;
@@ -372,8 +380,10 @@ class ITable {
 		let p_elem = this._table.parentElement;
 		while (p_elem) {
 			let p_rect = p_elem.getBoundingClientRect();
-			if (t_rect.top < p_rect.top || t_rect.bottom > p_rect.bottom)
+			if (t_rect.top < p_rect.top || t_rect.bottom > p_rect.bottom) {
 				return p_elem;
+			}
+			p_elem = p_elem.paretnElement;
 		}
 	}
 }
