@@ -469,6 +469,7 @@ class DomainEditDialog extends ModalDialog {
 			that._content.appendChild(set_error_status(null, err.message));
 		}).finally(function() {
 			that._content.querySelector(".wait-message").remove();
+			that._enable_ui(true);
 		});
 	}
 }
