@@ -109,7 +109,8 @@ class ITable {
 					case "PageUp":
 						if (that._focused_row && that._frames.length > 0) {
 							let c_id = that._focused_row.id();
-							let f_id = that._frames[0].first_index();
+							let f_fr = that._frames[0];
+							let f_id = f_fr.first_index();
 							if (c_id == f_id)
 								break;
 							let s_el = that._get_scroll_element();
@@ -120,15 +121,15 @@ class ITable {
 								row = that._get_row(n_id);
 							}
 							else {
-								let f_frame = that._frames[0];
-								row = f_frame.row(f_frame.first_index());
+								row = f_fr.row(f_id);
 							}
 						}
 						break;
 					case "PageDown":
 						if (that._focused_row && that._frames.length > 0) {
 							let c_id = that._focused_row.id();
-							let l_id = that._frames[that._frames.length - 1].last_index();
+							let l_fr = that._frames[that._frames.length - 1];
+							let l_id = l_fr.last_index();
 							if (c_id == l_id)
 								break;
 							let s_el = that._get_scroll_element();
@@ -139,8 +140,7 @@ class ITable {
 								row = that._get_row(n_id);
 							}
 							else {
-								let l_frame = that._frames[that._frames.length - 1];
-								row = l_frame.row(l_frame.last_index());
+								row = l_fr.row(l_id);
 							}
 						}
 						break;
