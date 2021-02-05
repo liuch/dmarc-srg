@@ -28,9 +28,17 @@
 	background-color: white;
 }
 .dialog .title {
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	min-height: 2em;
 	background-color: #ddd;
 	white-space: nowrap;
+}
+.dialog .title-text {
+	display: flex;
+	margin: auto;
+	padding-left: 0.7em;
 }
 .dialog form {
 	padding: 0.7em;
@@ -48,12 +56,8 @@
 	vertical-align: middle;
 }
 .dialog .close-btn {
-	position: relative;
-	float: right;
-	top: 0.1em;
-	right: 0.5em;
-	padding: 0;
-	margin: 0;
+	display: flex;
+	margin-right: 0.1em;
 	color: #000;
 	font-size: 1.2rem;
 	font-weight: 700;

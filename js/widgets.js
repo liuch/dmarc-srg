@@ -680,18 +680,30 @@ class ModalDialog {
 			con.setAttribute("class", "container");
 			this._title = document.createElement("div");
 			this._title.setAttribute("class", "title");
-			let cbt = document.createElement("button");
-			cbt.setAttribute("type", "button");
-			cbt.setAttribute("class", "close-btn");
-			cbt.appendChild(document.createTextNode("x"));
-			this._title.appendChild(cbt);
+			{
+				let tt = document.createElement("div");
+				tt.setAttribute("class", "title-text");
+				tt.appendChild(document.createTextNode(this._params.title || ""));
+				this._title.appendChild(tt);
+			}
+			let that = this;
+			{
+				let cbt = document.createElement("button");
+				cbt.setAttribute("type", "button");
+				cbt.setAttribute("class", "close-btn");
+				cbt.appendChild(document.createTextNode("x"));
+				this._title.appendChild(cbt);
+				this._buttons = [ cbt ];
+				cbt.addEventListener("click", function(event) {
+					that.hide();
+				});
+			}
 			con.appendChild(this._title);
 			let frm = document.createElement("form");
 			this._content = document.createElement("div");
 			frm.appendChild(this._content);
 			let bdv = document.createElement("div");
 			bdv.setAttribute("class", "dialog-buttons");
-			this._buttons = [ cbt ];
 			this._add_buttons(bdv);
 			frm.appendChild(bdv);
 			con.appendChild(frm);
@@ -700,10 +712,6 @@ class ModalDialog {
 			this._element = ovl;
 			this._gen_content();
 			this._update_first_last();
-			let that = this;
-			cbt.addEventListener("click", function(event) {
-				that.hide();
-			});
 			this._element.addEventListener("click", function(event) {
 				if (event.target === this && that._params.overlay_click !== "ignore") {
 					that.hide();
