@@ -23,6 +23,7 @@ class LoginDialog extends ModalDialog {
 		super();
 		this._params = params || {};
 		this._params.buttons = [ "ok", "cancel" ];
+		this._params.title = "Authentication";
 		this._params.overlay_click = "ignore";
 		this._user   = null;
 		this._pass   = null;
@@ -107,6 +108,7 @@ class LoginDialog extends ModalDialog {
 			that.hide();
 			Notification.add({ type: "info", text: data.message || "Successfully!" });
 		}).catch(function(err) {
+			that._pass.value = "";
 			console.warn(err.message);
 			set_error_status(that._msg_el, err.message);
 		}).finally(function() {
