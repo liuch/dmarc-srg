@@ -86,7 +86,7 @@ class Domain
                     if (gettype($data['id']) !== 'integer') {
                         break;
                     }
-                    $this->id = $data;
+                    $this->id = $data['id'];
                 }
                 if (isset($data['fqdn'])) {
                     if (gettype($data['fqdn']) !== 'string') {
@@ -355,6 +355,7 @@ class Domain
         $st->execute();
         $res = $st->fetch(PDO::FETCH_NUM);
         if (!$res) {
+            $this->ex_f = false;
             throw new Exception('There is no such domain', -1);
         }
         $this->id   = $res[0];
