@@ -57,7 +57,7 @@ class Domain
      *
      * Some examples of using:
      * (new Domain(1))->fqdn(); - will return the fully qualified domain name for the domain with id = 1
-     * (new Domain('example.com'))->description(); - will return the description for then domain example.com
+     * (new Domain('example.com'))->description(); - will return the description for the domain example.com
      * (new Domain([ 'fqdn' => 'example.com', 'description' => 'an expample domain' ])->save(); - will add
      * this domain to the database if it does not exist in it.
      *
