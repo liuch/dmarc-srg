@@ -59,7 +59,7 @@ class Core
     /**
      * Sets of gets the current user's id
      *
-     * In case $id is not null, the method returns the current user's id.
+     * In case $id is null, the method returns the current user's id.
      * In case $id is integer value, the method sets this value as the current user's id.
      * It returns false if there is an error.
      *
