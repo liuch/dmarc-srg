@@ -41,6 +41,12 @@ Router.start = function() {
 				m.classList.add("hidden");
 			});
 		}
+		let mm_toggle = document.getElementById("main-menu-toggle");
+		if (mm_toggle.checked) {
+			if (event.target.tagName == "A" || !event.target.closest("#main-menu-button")) {
+				mm_toggle.checked = false;
+			}
+		}
 	});
 
 	window.addEventListener("popstate", function(event) {

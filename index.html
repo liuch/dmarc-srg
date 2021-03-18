@@ -5,6 +5,7 @@
 	<meta charset="UTF-8" />
 	<link rel="stylesheet" href="css/main.css" type="text/css" />
 	<link rel="stylesheet" href="css/widgets.css" type="text/css" />
+	<link rel="stylesheet" href="css/mainmenu.css" type="text/css" />
 	<link rel="stylesheet" href="css/notification.css" type="text/css" />
 	<script type="text/javascript" src="js/common.js"></script>
 	<script type="text/javascript" src="js/widgets.js"></script>
@@ -19,13 +20,19 @@
 	<script type="text/javascript" src="js/notification.js"></script>
 </head>
 <body>
+	<div id="main-menu-button">
+		<input id="main-menu-toggle" class="menu-toggle" type="checkbox" />
+		<label class="toggle-button" for="main-menu-toggle">
+			<span />
+		</label>
+		<ul id="main-menu" class="menu-box">
+			<li><a href="./">Main page</a></li>
+			<li><a href="domains.php">Domains</a></li>
+			<li><a href="files.php">Files</a></li>
+			<li><a href="admin.php">Admin panel</a></li>
+		</ul>
+	</div>
 	<h1>DMARC Reports</h1>
-	<ul id="main-menu">
-		<li><a href="./">Main page</a></li>
-		<li><a href="domains.php">Domains</a></li>
-		<li><a href="files.php">Files</a></li>
-		<li><a href="admin.php">Admin panel</a></li>
-	</ul>
 	<div id="stat-block"></div>
 	<div id="main-block"></div>
 	<div id="detail-block"></div>

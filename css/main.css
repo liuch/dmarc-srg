@@ -1,5 +1,5 @@
 h1 {
-	margin: 1.6rem 0 1.3rem 0;
+	margin: 0 0.6rem 0.6rem 0.8rem;
 	display: inline-block;
 }
 h4, h5 {
@@ -26,19 +26,7 @@ legend {
 	margin: 0;
 	padding: 0 0.2em;
 }
-#main-menu {
-	position: fixed;
-	top: 0;
-	margin: 0;
-	padding: 0.2rem 1rem 0.2rem 1rem;
-	list-style-type: none;
-	background-color: #f6f6f6;
-}
-#main-menu li {
-	display: inline;
-	margin: 0 0.5rem 0 0.5rem;
-}
-#main-menu, .bottom-border {
+.bottom-border {
 	border-bottom: 0.07rem solid gray;
 }
 #stat-block {
