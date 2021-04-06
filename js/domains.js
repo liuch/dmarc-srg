@@ -172,7 +172,7 @@ class DomainTimeCell extends ITableCell {
 		if (target === "sort") {
 			return this._content && this._content.valueOf() || "";
 		}
-		super.value(type);
+		super.value(target);
 	}
 }
 
