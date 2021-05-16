@@ -401,7 +401,7 @@ th.report-id, td.report-id {
 #list-settings-btn:hover, #list-settings-btn.active {
 	color: green;
 }
-th.domain-status {
+th.cell-status {
 	width: 1em;
 }
 .dialog .row.description textarea {

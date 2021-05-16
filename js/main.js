@@ -191,6 +191,11 @@ Router._modules = {
 		start: function(m) {
 			m.pointer = new DomainList();
 		}
+	},
+	logs: {
+		start: function(m) {
+			m.pointer = new Logs();
+		}
 	}
 };
 
@@ -202,6 +207,7 @@ Router._url2module = function(url) {
 Router._routes = {
 	"": "list",
 	"list.php": "list",
+	"logs.php": "logs",
 	"admin.php": "admin",
 	"files.php": "files",
 	"report.php": "report",

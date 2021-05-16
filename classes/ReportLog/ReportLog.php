@@ -34,7 +34,8 @@ class ReportLog
     private $from_time = null;
     private $till_time = null;
     private $direction = self::ORDER_ASCENT;
-    private $rec_count = 0;
+    private $rec_limit = 0;
+    private $position  = null;
 
     public function __construct($from_time, $till_time)
     {
@@ -49,7 +50,7 @@ class ReportLog
 
     public function setMaxCount(int $n)
     {
-        $this->rec_count = $n;
+        $this->rec_limit = $n;
     }
 
     public function count()
@@ -57,8 +58,8 @@ class ReportLog
         $cnt = 0;
         $db = Database::connection();
         try {
-            $st = $db->prepare('SELECT COUNT(*) FROM `reportlog`' . $this->sqlCondition() . $this->sqlLimit());
-            $this->sqlBindValues($st);
+            $st = $db->prepare('SELECT COUNT(*) FROM `reportlog`' . $this->sqlCondition() . $this->sqlLimit(false));
+            $this->sqlBindValues($st, 0);
             $st->execute();
             $cnt = $st->fetch(PDO::FETCH_NUM)[0];
             $st->closeCursor();
@@ -68,12 +69,63 @@ class ReportLog
         return $cnt;
     }
 
+    public function getList(int $pos)
+    {
+        $this->position = $pos;
+        $def_limit = false;
+        if ($this->rec_limit === 0) {
+            $this->rec_limit = 25;
+            $def_limit = true;
+        }
+
+        $db = Database::connection();
+        try {
+            $st = $db->prepare('SELECT `id`, `domain`, `event_time`, `source`, `success`, `message` FROM `reportlog`'
+                . $this->sqlCondition()
+                . $this->sqlOrder()
+                . $this->sqlLimit(true));
+            $this->sqlBindValues($st, 1);
+            $st->execute();
+            $r_cnt = 0;
+            $list = [];
+            $more = false;
+            while ($res = $st->fetch(PDO::FETCH_NUM)) {
+                if (++$r_cnt <= $this->rec_limit) {
+                    $list[] = [
+                        'id'         => intval($res[0]),
+                        'domain'     => $res[1],
+                        'event_time' => strtotime($res[2]),
+                        'source'     => ReportLogItem::sourceToString(intval($res[3])),
+                        'success'    => boolval($res[4]),
+                        'message'    => $res[5]
+                    ];
+                } else {
+                    $more = true;
+                }
+            }
+            $st->closeCursor();
+        } catch (Exception $e) {
+            throw new Exception('Failed to get the logs', -1);
+        } finally {
+            if ($def_limit) {
+                $this->rec_limit = 0;
+            }
+        }
+        return [
+            'items' => $list,
+            'more'  => $more
+        ];
+    }
+
     public function delete()
     {
         $db = Database::connection();
         try {
-            $st = $db->prepare('DELETE FROM `reportlog`' . $this->sqlCondition() . $this->sqlOrder() . $this->sqlLimit());
-            $this->sqlBindValues($st);
+            $st = $db->prepare('DELETE FROM `reportlog`'
+                . $this->sqlCondition()
+                . $this->sqlOrder()
+                . $this->sqlLimit(false));
+            $this->sqlBindValues($st, 0);
             $st->execute();
             $st->closeCursor();
         } catch (Exception $e) {
@@ -104,26 +156,32 @@ class ReportLog
         return ' ORDER BY `event_time` ' . ($this->direction === self::ORDER_ASCENT ? 'ASC' : 'DESC');
     }
 
-    private function sqlLimit()
+    private function sqlLimit(bool $with_position)
     {
         $res = '';
-        if ($this->rec_count > 0) {
+        if ($this->rec_limit > 0) {
             $res = ' LIMIT ?';
+            if ($with_position) {
+                $res .= ', ?';
+            }
         }
         return $res;
     }
 
-    private function sqlBindValues($st)
+    private function sqlBindValues($st, int $inc_limit)
     {
-        $pos = 1;
+        $pos = 0;
         if (!is_null($this->from_time)) {
-            $st->bindValue($pos++, $this->from_time, PDO::PARAM_INT);
+            $st->bindValue(++$pos, $this->from_time, PDO::PARAM_INT);
         }
         if (!is_null($this->till_time)) {
-            $st->bindValue($pos++, $this->till_time, PDO::PARAM_INT);
+            $st->bindValue(++$pos, $this->till_time, PDO::PARAM_INT);
         }
-        if ($this->rec_count > 0) {
-            $st->bindValue($pos, $this->rec_count, PDO::PARAM_INT);
+        if ($this->rec_limit > 0 && $inc_limit >= 0) {
+            if (!is_null($this->position)) {
+                $st->bindValue(++$pos, $this->position, PDO::PARAM_INT);
+            }
+            $st->bindValue(++$pos, $this->rec_limit + $inc_limit, PDO::PARAM_INT);
         }
     }
 }

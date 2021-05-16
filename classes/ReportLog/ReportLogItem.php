@@ -41,13 +41,15 @@ class ReportLogItem
     private $success = false;
     private $message = null;
 
-    private function __construct(int $source, $filename)
+    private function __construct($source, $filename)
     {
-        if ($source <= 0 || $source >= self::SOURCE_LAST_) {
-            throw new Exception('Invalid parameter passed', -1);
+        if (!is_null($source)) {
+            if (gettype($source) !== 'integer' || $source <= 0 || $source >= static::SOURCE_LAST_) {
+                throw new Exception('Invalid parameter passed', -1);
+            }
         }
-        $this->filename = gettype($filename) == "string" ? $filename : null;
         $this->source = $source;
+        $this->filename = gettype($filename) == 'string' ? $filename : null;
     }
 
     public static function success(int $source, $report, $filename, $message)
@@ -75,6 +77,76 @@ class ReportLogItem
         }
         $li->message = $message;
         return $li;
+    }
+
+    /**
+     * Returns an instance of ReportLogItem with the passed Id
+     *
+     * @param int $id an Id of item to return
+     *
+     * @return ReportLogItem an instance of ReportLogItem with the specified Id.
+     */
+    public static function byId(int $id)
+    {
+        $li = new ReportLogItem(null, null);
+        $li->id = $id;
+
+        $db = Database::connection();
+        $st = $db->prepare('SELECT `domain`, `external_id`, `event_time`, `filename`, `source`, `success`, `message` FROM `reportlog` WHERE `id` = ?');
+        $st->bindValue(1, $id, PDO::PARAM_INT);
+        $st->execute();
+        $row = $st->fetch(PDO::FETCH_NUM);
+        if (!$row) {
+            throw new Exception('The log item is not found', -1);
+        }
+        $li->domain      = $row[0];
+        $li->external_id = $row[1];
+        $li->event_time  = strtotime($row[2]);
+        $li->filename    = $row[3];
+        $li->source      = intval($row[4]);
+        $li->success     = boolval($row[5]);
+        $li->message     = $row[6];
+        $st->closeCursor();
+        return $li;
+    }
+
+    /**
+     * Converts an integer source value to a string representation
+     *
+     * Returns a string with the source name or an empty string if the integer value is incorrect.
+     *
+     * @param int $source - an integer value to convert
+     *
+     * @return string A string value of the passed source
+     */
+    public static function sourceToString(int $source): string
+    {
+        switch ($source) {
+            case ReportLogItem::SOURCE_UPLOADED_FILE:
+                return 'uploaded_file';
+            case ReportLogItem::SOURCE_EMAIL:
+                return 'email';
+        }
+        return '';
+    }
+
+    /**
+     * Returns an array with log item data
+     *
+     * @return array Log item data
+     */
+    public function toArray(): array
+    {
+        return [
+            'id'         => $this->id,
+            'domain'     => $this->domain,
+            'report_id'  => $this->external_id,
+            'event_time' => $this->event_time,
+            'filename'   => $this->filename,
+            'source'     => static::sourceToString($this->source),
+            'success'    => $this->success,
+            'message'    => $this->message
+        ];
     }
 
     public function save()

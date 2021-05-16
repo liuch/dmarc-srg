@@ -106,7 +106,7 @@ class DomainList {
 			}.bind(this)
 		});
 		[
-			{ content: "", sortable: true, name: "status", class: "domain-status" },
+			{ content: "", sortable: true, name: "status", class: "cell-status" },
 			{ content: "FQDN", sortable: true, name: "fqdn" },
 			{ content: "Description" },
 			{ content: "Updated", sortable: true, name: "date" }
