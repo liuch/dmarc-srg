@@ -65,6 +65,13 @@ Router.start = function() {
 		}
 	});
 
+	document.getElementById("main-menu").addEventListener("click", function(event) {
+		let el = event.target.closest("ul>li");
+		if (el) {
+			el.classList.toggle("closed");
+		}
+	});
+
 	Router.go();
 };
 
@@ -113,8 +120,41 @@ Router.update_title = function(str) {
 Router._update_menu = function(authenticated) {
 	let m_el = document.getElementById("main-menu");
 	let l_el = m_el.querySelector("#auth-action");
-	if (l_el)
+	if (l_el) {
 		l_el.remove();
+	}
+	{
+		let subs = m_el.querySelectorAll(".submenu .selected")
+		for (let i = 0; i < subs.length; ++i) {
+			subs[i].classList.remove("selected");
+		}
+		let href = document.location.origin + document.location.pathname;
+		let f1 = false;
+		for (let i = 0; i < m_el.children.length; ++i) {
+			let smenu = m_el.children[i];
+			if (smenu !== l_el) {
+				let f2 = false;
+				if (!f1) {
+					let a_ls = smenu.querySelectorAll("ul>li>a");
+					for (let k = 0; k < a_ls.length; ++k) {
+						let a = a_ls[k];
+						if (a.href === href) {
+							f1 = true;
+							f2 = true;
+							a.parentElement.classList.add("selected")
+							break;
+						}
+					}
+				}
+				if (f2) {
+					smenu.classList.remove("closed");
+				}
+				else {
+					smenu.classList.add("closed");
+				}
+			}
+		}
+	}
 	l_el = document.createElement("li");
 	l_el.setAttribute("id", "auth-action");
 	let a_el = document.createElement("a");

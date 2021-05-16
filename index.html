@@ -27,10 +27,26 @@
 			<span />
 		</label>
 		<ul id="main-menu" class="menu-box">
-			<li><a href="./">Main page</a></li>
-			<li><a href="domains.php">Domains</a></li>
-			<li><a href="files.php">Files</a></li>
-			<li><a href="admin.php">Admin panel</a></li>
+			<li class="closed">
+				<span>Reports</span>
+				<ul class="submenu">
+					<li><a href="./">Incoming reports</a></li>
+					<li><a href="files.php">Files</a></li>
+				</ul>
+			</li>
+			<li class="closed">
+				<span>Administration</span>
+				<ul class="submenu">
+					<li><a href="admin.php">Admin panel</a></li>
+					<li><a href="logs.php">Logs</a></li>
+				</ul>
+			</li>
+			<li class="closed">
+				<span>Settings</span>
+				<ul class="submenu">
+					<li><a href="domains.php">Domains</a></li>
+				</ul>
+			</li>
 		</ul>
 	</div>
 	<h1>DMARC Reports</h1>
