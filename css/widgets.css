@@ -52,6 +52,7 @@
 .dialog .table .cell {
 	display: table-cell;
 	margin: 0.2em 0;
+	min-width: 5em;
 	padding-right: 0.5em;
 	vertical-align: middle;
 }

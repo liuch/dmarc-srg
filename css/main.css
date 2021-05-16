@@ -31,6 +31,7 @@ legend {
 }
 #stat-block {
 	float: right;
+	margin-bottom: 0.5rem;
 }
 #stat-block ul, .popup-menu ul {
 	display: block;
