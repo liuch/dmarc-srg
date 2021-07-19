@@ -33,7 +33,31 @@ if (Core::method() == 'GET') {
     if (Core::isJson()) {
         try {
             Core::auth()->isAllowed();
-            throw new Exception('Under construction', -1);
+            $res = [];
+            $up_max = ini_get('max_file_uploads');
+            if ($up_max) {
+                $res['upload_max_file_count'] = intval($up_max);
+            }
+            $up_size = ini_get('upload_max_filesize');
+            if ($up_size) {
+                if (!empty($up_size)) {
+                    $ch = strtolower($up_size[strlen($up_size) - 1]);
+                    $up_size = intval($up_size);
+                    switch ($ch) {
+                        case 'g':
+                            $up_size *= 1024;
+                            // no break
+                        case 'm':
+                            $up_size *= 1024;
+                            // no break
+                        case 'k':
+                            $up_size *= 1024;
+                            // no break
+                    }
+                    $res['upload_max_file_size'] = $up_size;
+                }
+            }
+            Core::sendJson($res);
         } catch (Exception $e) {
             Core::sendJson(
                 [

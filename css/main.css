@@ -6,7 +6,7 @@ h4, h5 {
 	margin: 0 0 0.5rem 0;
 	text-transform: uppercase;
 }
-h4:not(:first-child) {
+h4:not(:first-child), .info-block {
 	margin-top: 1rem;
 }
 input[type=file] {
