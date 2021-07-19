@@ -8,7 +8,7 @@ A php parser, viewer and summary report generator for incoming DMARC reports.
 * View DKIM/SPF details for each report;
 * Password protection of the web interface (can be disabled);
 * Receiving and processing incoming DMARC reports from specified mailboxes;
-* Downloading and processing incoming DMARC reports by using the web interface;
+* Uploading and processing incoming DMARC reports by using the web interface;
 * Ability to configure deletion of old reports from the database and mailboxes;
 * Generation of summary reports for the last week, last month or last N days and sending them to the specified mailbox;
 * Uses AJAX calls to the backend; no external Javascript libraries are needed;
