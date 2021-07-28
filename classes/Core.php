@@ -57,6 +57,16 @@ class Core
     }
 
     /**
+     * Returns array of request headers in lowercase mode.
+     *
+     * @return array
+     */
+    public static function getHeaders(): array
+    {
+        return array_change_key_case(getallheaders(), CASE_LOWER);
+    }
+
+    /**
      * Sets of gets the current user's id
      *
      * In case $id is null, the method returns the current user's id.
@@ -120,8 +130,8 @@ class Core
      */
     public static function isJson(): bool
     {
-        $headers = getallheaders();
-        return (isset($headers['Accept']) && $headers['Accept'] === 'application/json');
+        $headers = self::getHeaders();
+        return (isset($headers['accept']) && $headers['accept'] === 'application/json');
     }
 
     /**
@@ -183,8 +193,8 @@ class Core
     public static function getJsonData()
     {
         $res = null;
-        $headers = getallheaders();
-        if (isset($headers['Content-Type']) && $headers['Content-Type'] === 'application/json') {
+        $headers = self::getHeaders();
+        if (isset($headers['content-type']) && $headers['content-type'] === 'application/json') {
             $str = file_get_contents('php://input');
             if ($str) {
                 $res = json_decode($str, true);
