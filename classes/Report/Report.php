@@ -92,7 +92,7 @@ class Report
             } finally {
                 $st->closeCursor();
             }
-            $st = $db->prepare('SELECT `report_id`, `ip`, `rcount`, `disposition`, `reason`, `dkim_auth` , `spf_auth`, `dkim_align`, `spf_align`, `envelope_to`, `envelope_from`, `header_from` FROM `rptrecords` WHERE `report_id` = ? ORDER BY `ip`');
+            $st = $db->prepare('SELECT `report_id`, `ip`, `rcount`, `disposition`, `reason`, `dkim_auth` , `spf_auth`, `dkim_align`, `spf_align`, `envelope_to`, `envelope_from`, `header_from` FROM `rptrecords` WHERE `report_id` = ? ORDER BY `rcount` DESC');
             $st->bindValue(1, $id, PDO::PARAM_INT);
             $st->execute();
             try {
