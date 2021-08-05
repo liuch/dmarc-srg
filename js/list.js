@@ -366,7 +366,10 @@ class ReportListSettingsDialog extends ModalDialog {
 		this._ui_data = [
 			{ name: "domain", title: "Domain" },
 			{ name: "month", title: "Month" },
-			{ name: "organization", title: "Organization" }
+			{ name: "organization", title: "Organization" },
+			{ name: "dkim", title: "DKIM result" },
+			{ name: "spf", title: "SPF result" },
+			{ name: "status", title: "Status" }
 		];
 	}
 
