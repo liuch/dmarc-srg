@@ -18,6 +18,15 @@
  *
  * You should have received a copy of the GNU General Public License along with
  * this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * =========================
+ *
+ * This file contains ReportList class
+ *
+ * @category API
+ * @package  DmarcSrg
+ * @author   Aleksey Andreev (liuch)
+ * @license  https://www.gnu.org/licenses/gpl-3.0.html GNU/GPLv3
  */
 
 namespace Liuch\DmarcSrg\Report;
@@ -28,6 +37,12 @@ use Liuch\DmarcSrg\Common;
 use Liuch\DmarcSrg\Domains\Domain;
 use Liuch\DmarcSrg\Database\Database;
 
+/**
+ * It's the main class for working with the incoming reports, such as:
+ *  - getting a list of reports
+ *  - deleting several reports at once
+ *  - getting the number of reports in the database
+ */
 class ReportList
 {
     public const ORDER_NONE       = 0;
@@ -40,7 +55,21 @@ class ReportList
     private $filters   = [];
     private $order     = null;
 
-    public function getList(int $pos)
+    /**
+     * Returns a list of reports with specified parameters from position $pos
+     *
+     * This method returns a list of reports that depends on the filter and order.
+     * The filter, order, and limit for the list can be set using the setFilter, setOrder and setMaxCount methods.
+     *
+     * @param int $pos The starting position from which the list will be passed
+     *
+     * @return array An array with keys `reports` and `more`.
+     *               `reports` is an array of incoming reports which contains maximum 25 records by default.
+     *                         Another value of the number of records can be specified by calling
+     *                         the method setMaxCount.
+     *               `more`    is true if there are more records in the database, false otherwise.
+     */
+    public function getList(int $pos): array
     {
         $this->position = $pos;
         $def_limit = false;
@@ -95,7 +124,15 @@ class ReportList
         ];
     }
 
-    public function setOrder(int $field, int $direction)
+    /**
+     * Sets the sort order for the list and for deleting several reports at once
+     *
+     * @param int $field     The field to sort by. Currently only ORDER_BEGIN_TIME is available.
+     * @param int $direction The sorting direction. ORDER_ASCENT or ORDER_DESCENT must be used here.
+     *
+     * @return void
+     */
+    public function setOrder(int $field, int $direction): void
     {
         $this->order = null;
         if ($field > self::ORDER_NONE && $field < self::ORDER_ASCENT) {
@@ -109,7 +146,14 @@ class ReportList
         }
     }
 
-    public function setMaxCount(int $num)
+    /**
+     * Sets maximum numbers of records in the list and for deleting reports
+     *
+     * @param int $num Maximum number of records in the list
+     *
+     * @return void
+     */
+    public function setMaxCount(int $num): void
     {
         if ($num > 0) {
             $this->limit = $num;
@@ -118,7 +162,22 @@ class ReportList
         }
     }
 
-    public function setFilter(array $filter)
+    /**
+     * Sets filter values for the list and for deleting reports
+     *
+     * @param array $filter An key-value array:
+     *                      'before_time'  => int, unix timestamp
+     *                      'dkim'         => string, 'fail' or 'pass'
+     *                      'domain'       => string or instance of Domain class
+     *                      'month'        => string, yyyy-mm format
+     *                      'organization' => string
+     *                      'spf'          => string, 'fail' or 'pass'
+     *                      'status'       => string, 'read' or 'unread'
+     *                      Note! 'dkim' and 'spf' do not affect the delete and count methods
+     *
+     * @return void
+     */
+    public function setFilter(array $filter): void
     {
         $this->filters = [];
         $filters = [];
@@ -200,9 +259,11 @@ class ReportList
                         }
                         break;
                     case 'object':
-                        $filters[0]['a_str'][] = '`reports`.`domain_id` = ?';
-                        $filters[0]['bindings'][] = [ $fv->id(), PDO::PARAM_INT ];
-                        break;
+                        if ($fn == 'domain') {
+                            $filters[0]['a_str'][] = '`reports`.`domain_id` = ?';
+                            $filters[0]['bindings'][] = [ $fv->id(), PDO::PARAM_INT ];
+                            break;
+                        }
                 }
             }
         }
@@ -218,7 +279,15 @@ class ReportList
         }
     }
 
-    public function count()
+    /**
+     * Returns the number of reports in the database
+     *
+     * It returns the number of reports in the database.
+     * The limit and some filter items (`dkim`, `spf`) do not affect this.
+     *
+     * @return int The number of reports in the database
+     */
+    public function count(): int
     {
         $cnt = 0;
         $db = Database::connection();
@@ -244,7 +313,14 @@ class ReportList
         return $cnt;
     }
 
-    public function delete()
+    /**
+     * Deletes reports from the database
+     *
+     * It deletes repors form the database. The filter items `dkim` and `spf` do not affect this.
+     *
+     * @return void
+     */
+    public function delete(): void
     {
         $db = Database::connection();
         $db->beginTransaction();
@@ -270,7 +346,13 @@ class ReportList
         }
     }
 
-    public static function getFilterList()
+    /**
+     * Returns a list of values for each filter item except for `before_time`
+     *
+     * @return array An key-value array, where the key is the filter item name
+     *               and the value is an array of possible values for the item
+     */
+    public static function getFilterList(): array
     {
         $res = [];
         $db = Database::connection();
@@ -309,6 +391,9 @@ class ReportList
         return $res;
     }
 
+    /**
+     * The valid filter item names
+     */
     private static $filters_available = [
         'domain', 'month', 'before_time', 'organization', 'dkim', 'spf', 'status'
     ];
@@ -327,7 +412,12 @@ class ReportList
         return isset($this->filters[$f_idx]) ? ($prefix . $this->filters[$f_idx]['str']) : '';
     }
 
-    private function sqlOrder()
+    /**
+     * Returns `ORDER BY ...` part of the SQL query
+     *
+     * @return string
+     */
+    private function sqlOrder(): string
     {
         if (!$this->order) {
             return '';
@@ -344,7 +434,12 @@ class ReportList
         return " ORDER BY `{$fname}` {$dir}";
     }
 
-    private function sqlLimit()
+    /**
+     * Returns `LIMIT ...` part of the SQL query
+     *
+     * @return string
+     */
+    private function sqlLimit(): string
     {
         $res = '';
         if (!is_null($this->limit)) {
@@ -357,7 +452,7 @@ class ReportList
     }
 
     /**
-     * Binds values of the filters and limit to SQL query
+     * Binds the values of the filter and the limit to SQL query
      *
      * @param PDOStatement $st        Prepared SQL statement to bind to
      * @param int          $inc_limit Value by which the number of result rows in the limit experssion
@@ -384,7 +479,7 @@ class ReportList
     }
 
     /**
-     * Binds a filter values to SQL query
+     * Binds the values of the specified filter item to SQL query
      *
      * @param PDOStatement $st         Prepared SQL statement to bind to
      * @param int          $filter_idx Index of the filter to bind to
