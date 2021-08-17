@@ -21,7 +21,7 @@
  *
  * =========================
  *
- * This file contains the class Domain
+ * This file contains the class DomainList
  *
  * @category API
  * @package  DmarcSrg

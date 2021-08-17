@@ -23,7 +23,6 @@ class DomainList {
 		this._table = null;
 		this._scroll = null;
 		this._element = document.getElementById("main-block");
-		this._fetching = false;
 		this._sort = { column: "fqdn", direction: "ascent" };
 	}
 
