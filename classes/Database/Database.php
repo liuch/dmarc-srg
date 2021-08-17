@@ -27,7 +27,7 @@ use Exception;
 
 class Database
 {
-    public const REQUIRED_VERSION = '1.0';
+    public const REQUIRED_VERSION = '2.0';
 
     private $conn;
     private static $instance = null;
@@ -132,7 +132,7 @@ class Database
             'columns' => [
                 [
                     'name' => 'key',
-                    'definition' => 'varchar(25) NOT NULL'
+                    'definition' => 'varchar(64) NOT NULL'
                 ],
                 [
                     'name' => 'value',

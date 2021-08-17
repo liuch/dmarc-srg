@@ -45,7 +45,8 @@ class DatabaseUpgrader
 
     private static $upways = [
         'ver_null' => 'upNull',
-        'ver_0.1'  => 'up01'
+        'ver_0.1'  => 'up01',
+        'ver_1.0'  => 'up10'
     ];
 
     private static function upNull()
@@ -84,6 +85,21 @@ class DatabaseUpgrader
             throw $e;
         }
         return '1.0';
+    }
+
+    private static function up10()
+    {
+        $db = Database::connection();
+        $db->beginTransaction();
+        try {
+            $db->query('ALTER TABLE `system` MODIFY COLUMN `key` varchar(64) NOT NULL');
+            $db->query('UPDATE `system` SET `value` = "2.0" WHERE `key` = "version"');
+            $db->commit();
+        } catch (Exception $d) {
+            $db->rollBack();
+            throw $e;
+        }
+        return '2.0';
     }
 
     private static function columnExists($db, $table, $column)
