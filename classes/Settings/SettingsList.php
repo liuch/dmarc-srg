@@ -152,6 +152,12 @@ class SettingsList
      * List of the possible setting items that must be returned in getList method, their types and other data
      */
     public static $schema = [
+        'status.emails-for-last-n-days' => [
+            'type'    => 'integer',
+            'minimum' => 1,
+            'maximum' => 365,
+            'default' => 30
+        ]
     ];
 }
 

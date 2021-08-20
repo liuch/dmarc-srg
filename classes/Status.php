@@ -31,6 +31,8 @@
 
 namespace Liuch\DmarcSrg;
 
+use Liuch\DmarcSrg\Settings\SettingsList;
+
 /**
  * This class is designed to get the general state of DmarcSrg
  */
@@ -68,10 +70,12 @@ class Status
         }
 
         if (!isset($res['error_code']) || $res['error_code'] === 0) {
+            $days = SettingsList::getSettingByName('status.emails-for-last-n-days')->value();
             $date2 = strtotime('midnight');
-            $date1 = strtotime('-30 days', $date2);
+            $date1 = strtotime("-{$days} days", $date2);
             $stat = Statistics::fromTo(null, $date1, $date2 - 1);
             $res['emails'] = $stat->summary()['emails'];
+            $res['emails']['days'] = $days;
         }
 
         $auth = null;

@@ -80,12 +80,14 @@ class Status {
 		}
 		if (!this._data.emails) {
 			this._data.emails = {
+				days: 0,
 				total: -1,
 				spf_aligned: 0,
 				dkim_aligned: 0,
 				dkim_spf_aligned: 0
 			};
 		}
+		let days = this._data.emails.days;
 		let total = this._data.emails.total;
 		let passed = this._data.emails.dkim_spf_aligned;
 		let forwarded = this._data.emails.dkim_aligned + this._data.emails.spf_aligned;
@@ -94,6 +96,15 @@ class Status {
 		this._set_element_data("passed", this._formatted_statistic(passed, total), total !== -1 && "state-green" || null);
 		this._set_element_data("forwarded", this._formatted_statistic(forwarded, total), total !== -1 && "state-green" || null);
 		this._set_element_data("failed", this._formatted_statistic(failed, total), total !== -1 && "state-red" || null);
+		{
+			let el = document.getElementById("stat-block");
+			if (days > 0) {
+				el.setAttribute("title", "Statistics for the last " + days + " days");
+			}
+			else {
+				el.removeAttribute("title");
+			}
+		}
 	}
 
 	_formatted_statistic(val, total) {
@@ -125,9 +136,6 @@ class Status {
 				let li = document.createElement("li");
 				let div = document.createElement("div");
 				div.setAttribute("id", "stat-" + id);
-				if (Status._element_data[id].title) {
-					div.setAttribute("title", Status._element_data[id].title);
-				}
 				let val = document.createElement("span");
 				val.setAttribute("class", "stat-val state-text");
 				val.appendChild(document.createTextNode("?"));
@@ -154,8 +162,7 @@ Status._element_list = [ "processed", "passed", "forwarded", "failed" ];
 
 Status._element_data = {
 	processed: {
-		text:  "Emails processed",
-		title: "for the last 30 days"
+		text:  "Emails processed"
 	},
 	passed: {
 		text: "Fully aligned"
