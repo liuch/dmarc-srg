@@ -87,6 +87,7 @@ class Database
                     $st->execute();
                     $res = $st->fetch(PDO::FETCH_NUM);
                     $st->closeCursor();
+                    $st = null;
                     if (intval($res[0]) == 0) {
                         $st = $db->prepare('INSERT INTO `system` (`key`, `value`) VALUES (?, ?)');
                         $st->bindValue(1, strval($key), PDO::PARAM_STR);
