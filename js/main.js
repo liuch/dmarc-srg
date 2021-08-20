@@ -236,6 +236,11 @@ Router._modules = {
 		start: function(m) {
 			m.pointer = new Logs();
 		}
+	},
+	settings: {
+		start: function(m) {
+			m.pointer = new Settings();
+		}
 	}
 };
 
@@ -251,7 +256,8 @@ Router._routes = {
 	"admin.php": "admin",
 	"files.php": "files",
 	"report.php": "report",
-	"domains.php": "domains"
+	"domains.php": "domains",
+	"settings.php": "settings"
 };
 
 window.onload = Router.start;
