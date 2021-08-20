@@ -28,6 +28,7 @@ use Liuch\DmarcSrg\Common;
 use Liuch\DmarcSrg\Domains\Domain;
 use Liuch\DmarcSrg\Domains\DomainList;
 use Liuch\DmarcSrg\Database\Database;
+use Liuch\DmarcSrg\Settings\SettingsList;
 
 class Report
 {
@@ -92,7 +93,8 @@ class Report
             } finally {
                 $st->closeCursor();
             }
-            $st = $db->prepare('SELECT `report_id`, `ip`, `rcount`, `disposition`, `reason`, `dkim_auth` , `spf_auth`, `dkim_align`, `spf_align`, `envelope_to`, `envelope_from`, `header_from` FROM `rptrecords` WHERE `report_id` = ? ORDER BY `ip`');
+            $order_str = $this->sqlOrder();
+            $st = $db->prepare("SELECT `report_id`, `ip`, `rcount`, `disposition`, `reason`, `dkim_auth` , `spf_auth`, `dkim_align`, `spf_align`, `envelope_to`, `envelope_from`, `header_from` FROM `rptrecords` WHERE `report_id` = ?{$order_str}");
             $st->bindValue(1, $id, PDO::PARAM_INT);
             $st->execute();
             try {
@@ -221,6 +223,28 @@ class Report
             throw new Exception('Failed to update the DB record', -1);
         }
         return [ 'message' => 'Ok' ];
+    }
+
+    /**
+     * Returns `ORDER BY ...` part of the SQL query for report records
+     *
+     * @return string
+     */
+    private function sqlOrder(): string
+    {
+        $o_set = explode(',', SettingsList::getSettingByName('report-view.sort-records-by')->value());
+        switch ($o_set[0]) {
+            case 'ip':
+                $fname = 'ip';
+                break;
+            case 'message-count':
+            default:
+                $fname = 'rcount';
+                break;
+        }
+        $dir = $o_set[1] === 'descent' ? 'DESC' : 'ASC';
+
+        return " ORDER BY `{$fname}` {$dir}";
     }
 }
 

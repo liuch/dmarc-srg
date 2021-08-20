@@ -157,6 +157,11 @@ class SettingsList
             'minimum' => 1,
             'maximum' => 365,
             'default' => 30
+        ],
+        'report-view.sort-records-by'   => [
+            'type'    => 'select',
+            'options' => [ 'ip,ascent', 'ip,descent', 'message-count,ascent', 'message-count,descent' ],
+            'default' => 'message-count,descent'
         ]
     ];
 }
