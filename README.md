@@ -1,4 +1,4 @@
-# DmarkSrg
+# DmarcSrg
 A php parser, viewer and summary report generator for incoming DMARC reports.
 
 ### Features
