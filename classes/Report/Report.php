@@ -101,6 +101,7 @@ class Report
                 while ($res = $st->fetch(PDO::FETCH_NUM)) {
                     $this->data['records'][] = [
                         'ip'            => inet_ntop($res[1]),
+                        'hostname'      => gethostbyaddr(inet_ntop($res[1])),
                         'count'         => intval($res[2]),
                         'disposition'   => Common::$disposition[$res[3]],
                         'reason'        => json_decode($res[4], true),

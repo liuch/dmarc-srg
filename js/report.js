@@ -286,7 +286,7 @@ class Report {
 			tl.setAttribute("class", "report-record round-border");
 			let hd = document.createElement("div");
 			hd.setAttribute("class", "header");
-			hd.appendChild(this._create_data_fragment("IP-address", rec.ip));
+			hd.appendChild(this._create_data_fragment("IP-address", rec.ip + " (" + rec.hostname + ")"));
 			tl.appendChild(hd);
 			tl.appendChild(this._create_data_item("Message count", rec.count));
 			tl.appendChild(this._create_data_item("Policy evaluated", this._create_ev_policy_fragment(rec)));
