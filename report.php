@@ -54,8 +54,8 @@ if (!empty($_GET['report_id']) && !empty($_GET['domain'])) {
                             ]
                         );
                         Core::sendJson($rep->set($name, $value));
+                        return;
                     }
-                    return;
                 }
             }
         } catch (Exception $e) {

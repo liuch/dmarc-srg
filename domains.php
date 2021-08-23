@@ -78,42 +78,44 @@ if (Core::isJson()) {
         } elseif (Core::method() == 'POST' && Core::isJson()) {
             Core::auth()->isAllowed();
             $data = Core::getJsonData();
-            $domain = new Domain([
-                'fqdn'        => $data['fqdn'] ?? null,
-                'active'      => $data['active'] ?? null,
-                'description' => $data['description'] ?? null
-            ]);
-            $action = $data['action'] ?? '';
-            switch ($action) {
-                case 'add':
-                    if ($domain->exists()) {
-                        throw new Exception('The domain already exists', -1);
-                    }
-                    $domain->save();
-                    break;
-                case 'update':
-                    if (!$domain->exists()) {
-                        throw new Exception('The domain does not exist', -1);
-                    }
-                    $domain->save();
-                    break;
-                case 'delete':
-                    $domain->delete();
-                    unset($domain);
-                    break;
-                default:
-                    throw new Exception('Bad request', -1);
-            }
+            if ($data) {
+                $domain = new Domain([
+                    'fqdn'        => $data['fqdn'] ?? null,
+                    'active'      => $data['active'] ?? null,
+                    'description' => $data['description'] ?? null
+                ]);
+                $action = $data['action'] ?? '';
+                switch ($action) {
+                    case 'add':
+                        if ($domain->exists()) {
+                            throw new Exception('The domain already exists', -1);
+                        }
+                        $domain->save();
+                        break;
+                    case 'update':
+                        if (!$domain->exists()) {
+                            throw new Exception('The domain does not exist', -1);
+                        }
+                        $domain->save();
+                        break;
+                    case 'delete':
+                        $domain->delete();
+                        unset($domain);
+                        break;
+                    default:
+                        throw new Exception('Bad request', -1);
+                }
 
-            $res = [
-                'error_code' => 0,
-                'message'    => 'Successfully'
-            ];
-            if (isset($domain)) {
-                $res['domain'] = $domain->toArray();
+                $res = [
+                    'error_code' => 0,
+                    'message'    => 'Successfully'
+                ];
+                if (isset($domain)) {
+                    $res['domain'] = $domain->toArray();
+                }
+                Core::sendJson($res);
+                return;
             }
-            Core::sendJson($res);
-            return;
         }
     } catch (Exception $e) {
         Core::sendJson(

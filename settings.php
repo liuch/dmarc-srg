@@ -77,21 +77,23 @@ if (Core::isJson()) {
         if (Core::method() == 'POST' && Core::isJson()) {
             Core::auth()->isAllowed();
             $data = Core::getJsonData();
-            $sett = SettingsList::getSettingByName($data['name'] ?? '');
-            $action = $data['action'] ?? '';
-            switch ($action) {
-                case 'update':
-                    $sett->setValue($data['value']);
-                    $sett->save();
-                    Core::sendJson([
-                        'error_code' => 0,
-                        'message'    => 'Successfully updated'
-                    ]);
-                    break;
-                default:
-                    throw new Exception('Bad request', -1);
+            if ($data) {
+                $sett = SettingsList::getSettingByName($data['name'] ?? '');
+                $action = $data['action'] ?? '';
+                switch ($action) {
+                    case 'update':
+                        $sett->setValue($data['value']);
+                        $sett->save();
+                        Core::sendJson([
+                            'error_code' => 0,
+                            'message'    => 'Successfully updated'
+                        ]);
+                        break;
+                    default:
+                        throw new Exception('Bad request', -1);
+                }
+                return;
             }
-            return;
         }
     } catch (Exception $e) {
         Core::sendJson(
