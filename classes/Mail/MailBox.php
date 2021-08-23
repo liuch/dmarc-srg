@@ -57,7 +57,11 @@ class MailBox
         }
         $this->mbox = $params['mailbox'];
         $this->host = $params['host'];
-        $this->server = sprintf('{%s/imap}', $this->host);
+        $flags = '';
+        if (isset($params['novalidate-cert']) && $params['novalidate-cert'] === true) {
+            $flags = '/ssl/novalidate-cert';
+        }
+        $this->server = sprintf('{%s/imap%s}', $this->host, $flags);
         $this->expunge = false;
     }
 
