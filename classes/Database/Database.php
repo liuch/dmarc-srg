@@ -64,53 +64,6 @@ class Database
         return $database['host'];
     }
 
-    public static function parameter($key, $value = null)
-    {
-        $db = self::connection();
-        $st = null;
-        try {
-            if ($value === null) {
-                try {
-                    $st = $db->prepare('SELECT `value` FROM `system` WHERE `key` = ?');
-                    $st->bindValue(1, strval($key), PDO::PARAM_STR);
-                    $st->execute();
-                    $res = $st->fetch(PDO::FETCH_NUM);
-                    return $res ? $res[0] : null;
-                } catch (Exception $e) {
-                    throw new Exception('Failed to get a system parameter', -1);
-                }
-            } else {
-                $db->beginTransaction();
-                try {
-                    $st = $db->prepare('SELECT COUNT(*) FROM `system` WHERE `key` = ?');
-                    $st->bindValue(1, strval($value), PDO::PARAM_STR);
-                    $st->execute();
-                    $res = $st->fetch(PDO::FETCH_NUM);
-                    $st->closeCursor();
-                    $st = null;
-                    if (intval($res[0]) == 0) {
-                        $st = $db->prepare('INSERT INTO `system` (`key`, `value`) VALUES (?, ?)');
-                        $st->bindValue(1, strval($key), PDO::PARAM_STR);
-                        $st->bindValue(2, strval($value), PDO::PARAM_STR);
-                    } else {
-                        $st = $db->prepare('UPDATE `system` SET `value` = ? WHERE `key` = ?');
-                        $st->bindValue(1, strval($value), PDO::PARAM_STR);
-                        $st->bindValue(2, strval($key), PDO::PARAM_STR);
-                    }
-                    $st->execute();
-                    $db->commit();
-                } catch (Exception $e) {
-                    $db->rollBack();
-                    throw new Exception('Failed to set a system parameter', -1);
-                }
-            }
-        } finally {
-            if ($st) {
-                $st->closeCursor();
-            }
-        }
-    }
-
     private function establishConnection()
     {
         global $database;

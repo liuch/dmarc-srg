@@ -43,7 +43,7 @@ class SettingsList
     /**
      * Returns a list of the settings
      *
-     * It returns a list of the settings.
+     * It returns a list of the settings that are marked public.
      * The value is taken from the database, if any, or the default.
      *
      * @return array Array with instances of Setting class
@@ -57,29 +57,33 @@ class SettingsList
         while ($row = $st->fetch(PDO::FETCH_NUM)) {
             $name = $row[0];
             if (isset(static::$schema[$name])) {
-                $value = $row[1];
-                switch (static::$schema[$name]['type']) {
-                    case 'select':
-                        $list[] = new SettingStringSelect([
-                            'name'  => $name,
-                            'value' => $value
-                        ], true);
-                        $fmap[$name] = true;
-                        break;
-                    case 'integer':
-                        $list[] = new SettingInteger([
-                            'name'  => $name,
-                            'value' => intval($value)
-                        ], true);
-                        $fmap[$name] = true;
-                        break;
+                $sch_data = &static::$schema[$name];
+                if (!empty($sch_data['public'])) {
+                    $value = $row[1];
+                    switch ($sch_data['type']) {
+                        case 'select':
+                            $list[] = new SettingStringSelect([
+                                'name'  => $name,
+                                'value' => $value
+                            ], true);
+                            $fmap[$name] = true;
+                            break;
+                        case 'integer':
+                            $list[] = new SettingInteger([
+                                'name'  => $name,
+                                'value' => intval($value)
+                            ], true);
+                            $fmap[$name] = true;
+                            break;
+                    }
                 }
             }
         }
         $st->closeCursor();
+        unset($sch_data);
 
         foreach (static::$schema as $sch_name => &$sch_data) {
-            if (!isset($fmap[$sch_name])) {
+            if (!isset($fmap[$sch_name]) && !empty($sch_data['public'])) {
                 $sch_def = $sch_data['default'];
                 switch ($sch_data['type']) {
                     case 'select':
@@ -131,6 +135,8 @@ class SettingsList
     /**
      * Returns an instance of the Setting class by its name
      *
+     * It returns an instance of the Setting class but only if it is marked public.
+     *
      * @param string $name Setting name
      *
      * @return Setting
@@ -138,6 +144,10 @@ class SettingsList
     public static function getSettingByName(string $name)
     {
         self::checkName($name);
+        if (empty(self::$schema[$name]['public'])) {
+            throw new Exception('Attempt to access an internal variable', -1);
+        }
+
         switch (self::$schema[$name]['type']) {
             case 'string':
                 return new SettingString($name);
@@ -152,14 +162,20 @@ class SettingsList
      * List of the possible setting items that must be returned in getList method, their types and other data
      */
     public static $schema = [
+        'version' => [
+            'type'    => 'string',
+            'default' => ''
+        ],
         'status.emails-for-last-n-days' => [
             'type'    => 'integer',
+            'public'  => true,
             'minimum' => 1,
             'maximum' => 365,
             'default' => 30
         ],
         'report-view.sort-records-by'   => [
             'type'    => 'select',
+            'public'  => true,
             'options' => [ 'ip,ascent', 'ip,descent', 'message-count,ascent', 'message-count,descent' ],
             'default' => 'message-count,descent'
         ]

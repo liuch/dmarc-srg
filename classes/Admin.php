@@ -36,6 +36,7 @@ use Exception;
 use PDOException;
 use Liuch\DmarcSrg\Mail\MailBoxes;
 use Liuch\DmarcSrg\Database\Database;
+use Liuch\DmarcSrg\Settings\SettingString;
 
 /**
  * It's the main class for accessing administration functions.
@@ -103,7 +104,7 @@ class Admin
                 $tables_res[] = $t;
             }
             $this->st['database']['tables'] = $tables_res;
-            $ver = $exist_sys ? Database::parameter('version') : null;
+            $ver = $exist_sys ? (new SettingString('version'))->value() : null;
             if ($exist_sys && $ver !== Database::REQUIRED_VERSION) {
                 $this->setDbMessage('The database structure needs upgrading', 0);
                 $this->st['database']['needs_upgrade'] = true;

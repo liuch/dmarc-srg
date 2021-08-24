@@ -40,6 +40,7 @@ namespace Liuch\DmarcSrg;
 use Exception;
 use Liuch\DmarcSrg\Database\Database;
 use Liuch\DmarcSrg\Database\DatabaseUpgrader;
+use Liuch\DmarcSrg\Settings\SettingString;
 
 require 'init.php';
 
@@ -68,7 +69,10 @@ try {
             $res = Core::admin()->initDb();
             break;
         case 'upgrade':
-            $cur_ver = Database::parameter('version') ?? 'n/a';
+            $cur_ver = (new SettingString('version'))->value();
+            if ($cur_ver === '') {
+                $cur_ver = 'n/a';
+            }
             echo "Current version:  ${cur_ver}\n";
             echo 'Required version: ' . Database::REQUIRED_VERSION . "\n";
             if ($cur_ver !== Database::REQUIRED_VERSION) {

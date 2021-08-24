@@ -24,12 +24,13 @@ namespace Liuch\DmarcSrg\Database;
 
 use PDO;
 use Exception;
+use Liuch\DmarcSrg\Settings\SettingString;
 
 class DatabaseUpgrader
 {
     public static function go()
     {
-        $ver = Database::parameter('version');
+        $ver = (new SettingString('version'))->value();
         if ($ver == '') {
             $ver = 'null';
         }
