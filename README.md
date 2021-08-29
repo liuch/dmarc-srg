@@ -36,7 +36,7 @@ Ensure that all the files are in their own sub-folder.
 
 ### Requirements
 * MariaDB or MySQL
-* Php v7.1 or higher
+* PHP 7.3 or higher
 * Installed php-mysql, php-xml, php-zip, and php-imap
 * A working webserver (not necessary)
 
