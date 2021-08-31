@@ -364,7 +364,10 @@ class ReportList
             }
             $st->closeCursor();
             $res['domain'] = $domains;
-
+        } catch (Exception $e) {
+            throw new Exception('Failed to get a list of domains', -1);
+        }
+        try {
             $months = [];
             $st = $db->query('SELECT DISTINCT DATE_FORMAT(`date`, "%Y-%m") AS `month` FROM ((SELECT DISTINCT `begin_time` AS `date` FROM `reports`) UNION (SELECT DISTINCT `end_time` AS `date` FROM `reports`)) AS `r` ORDER BY `month` DESC');
             while ($r = $st->fetch(PDO::FETCH_NUM)) {
@@ -372,7 +375,10 @@ class ReportList
             }
             $st->closeCursor();
             $res['month'] = $months;
-
+        } catch (Exception $e) {
+            throw new Exception('Failed to get a list of months', -1);
+        }
+        try {
             $orgs = [];
             // TODO оптимизировать индексом!
             $st = $db->query('SELECT DISTINCT `org` FROM `reports` ORDER BY `org`');
@@ -386,7 +392,7 @@ class ReportList
             $res['spf']    = [ 'pass', 'fail' ];
             $res['status'] = [ 'read', 'unread' ];
         } catch (Exception $e) {
-            throw new Exception('Failed to get a list of domains', -1);
+            throw new Exception('Failed to get a list of organizations', -1);
         }
         return $res;
     }
