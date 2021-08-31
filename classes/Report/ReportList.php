@@ -366,7 +366,7 @@ class ReportList
             $res['domain'] = $domains;
 
             $months = [];
-            $st = $db->query('SELECT DISTINCT DATE_FORMAT(`date`, "%Y-%m") FROM ((SELECT DISTINCT `begin_time` AS `date` FROM `reports`) UNION (SELECT DISTINCT `end_time` AS `date` FROM `reports`)) AS `r` ORDER BY `date` DESC');
+            $st = $db->query('SELECT DISTINCT DATE_FORMAT(`date`, "%Y-%m") AS `month` FROM ((SELECT DISTINCT `begin_time` AS `date` FROM `reports`) UNION (SELECT DISTINCT `end_time` AS `date` FROM `reports`)) AS `r` ORDER BY `month` DESC');
             while ($r = $st->fetch(PDO::FETCH_NUM)) {
                 $months[] = $r[0];
             }
