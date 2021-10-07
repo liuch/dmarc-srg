@@ -123,11 +123,10 @@ class MailMessage
     private function getAttribute($params, $name)
     {
         foreach ($params as &$obj) {
-            if ($obj->attribute === $name) {
+            if (strcasecmp($obj->attribute, $name) === 0) {
                 return $obj->value;
             }
         }
         return null;
     }
 }
-
