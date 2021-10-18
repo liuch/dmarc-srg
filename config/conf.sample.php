@@ -15,11 +15,22 @@ $database = [
 // In order to collect reports from several mailboxes, you should put each
 // mailbox settings in an array.
 $mailboxes = [
-    'name'            => 'Dmarc-Rua', // Just for displaying in web-admin. Not necessary.
-    'host'            => 'yourdomain.net', // Host of the email server.
-    'novalidate-cert' => false, // Set true if you want to connect to the IMAP server without certificate validation
-    'username'        => 'dmarc-rua@yourdomain.net', // Mailbox user name.
-    'password'        => 'password', // Mailbox password.
+    // Just for displaying in web-admin. Not necessary.
+    'name'            => 'Dmarc-Rua',
+    // Host of the email server. You can specify a port separated by a colon.
+    'host'            => 'yourdomain.net',
+     // Connection encryption method. The valid values are:
+     // 'none'     - without encryption (strongly not recommend).
+     // 'ssl'      - SSl/TLS on a separate port, for IMAP it is usually port 993.
+     // 'starttls' - STARTTLS method, usually on the standard IMAP port 143. Default value.
+    'encryption'      => 'starttls',
+    // Set true if you want to connect to the IMAP server without certificate validation
+    'novalidate-cert' => false,
+    // Mailbox user name.
+    'username'        => 'dmarc-rua@yourdomain.net',
+    // Mailbox password.
+    'password'        => 'password',
+    // Mailbox name
     'mailbox'         => 'INBOX'
 ];
 

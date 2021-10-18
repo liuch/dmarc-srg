@@ -57,10 +57,24 @@ class MailBox
         }
         $this->mbox = $params['mailbox'];
         $this->host = $params['host'];
-        $flags = '';
-        if (isset($params['novalidate-cert']) && $params['novalidate-cert'] === true) {
-            $flags = '/ssl/novalidate-cert';
+
+        $flags = $params['encryption'] ?? '';
+        switch ($flags) {
+            case 'ssl':
+                $flags = '/ssl';
+                break;
+            case 'none':
+                $flags = '/notls';
+                break;
+            case 'starttls':
+            default:
+                $flags = '/tls';
+                break;
         }
+        if (isset($params['novalidate-cert']) && $params['novalidate-cert'] === true) {
+            $flags .= '/novalidate-cert';
+        }
+
         $this->server = sprintf('{%s/imap%s}', $this->host, $flags);
         $this->expunge = false;
     }
