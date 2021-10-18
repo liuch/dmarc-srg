@@ -325,7 +325,7 @@ class DatabaseListBox extends DropdownListBox {
 	}
 
 	_make_root_columns(data) {
-		this._root_content.set_state(data.correct && "green" || "red");
+		this._root_content.state(data.correct && "green" || "red");
 		this._root_content.add_column(new StatusIndicator(data.name, data.message, "title-item-wrap"));
 		this._root_content.add_column(new ListBoxColumn(data.message, null, "message-item state-text"));
 		this._root_content.add_column(new ListBoxColumn(data.type, null, "db-type"));
@@ -340,7 +340,7 @@ class DatabaseListBox extends DropdownListBox {
 			let d = data.tables[i];
 			let it = this._items[i];
 			let state = d.error_code && "red" || (d.message === "Ok" && "green" || "yellow");
-			it.set_state(state);
+			it.state(state);
 			it.add_column(new StatusIndicator(d.name, d.message, "title-item-wrap"));
 			it.add_column(new ListBoxColumn(d.engine || d.message, null, "message-item state-text"));
 			it.add_column(new ListBoxColumn(d.rows || 0, "Records", "dbtable-records"));
@@ -380,7 +380,7 @@ class SourceListBox extends DropdownListBox {
 
 	_make_root_columns(data) {
 		let enabled = (data.length > 0);
-		this._root_content.set_state(enabled && "green" || "gray");
+		this._root_content.state(enabled && "green" || "gray");
 		this._root_content.add_column(new StatusIndicator("Total sources: " + data.length, enabled && "Enabled" || "Disabled"));
 	}
 
@@ -394,7 +394,7 @@ class SourceListBox extends DropdownListBox {
 	_make_list_items(data) {
 		this._items = data.map(function(di) {
 			let it = new SourceListItem({ id: di.id, type: "mailbox" });
-			it.set_state("green");
+			it.state("green");
 			it.add_column(new StatusIndicator(di.name, null, "title-item-wrap"));
 			it.add_column(new ListBoxColumn(di.mailbox, null, "mailbox-location"));
 			it.add_column(new ListBoxColumn(di.host, "Host", "mailbox-host"));
@@ -446,9 +446,19 @@ class SourceListBox extends DropdownListBox {
 		}).finally(function() {
 			btn.textContent = btn_text;
 			btn.disabled = false;
-			that._items[0].set_state(state);
-			if (state !== "green")
-				that._root_content.set_state(state);
+			let item_f = false;
+			let gstate = "green";
+			for (let i = 0; i < that._items.length; ++i) {
+				let it = that._items[i];
+				if (!item_f && it.id() === id && it.type() === type) {
+					it.state(state);
+					item_f = true;
+				}
+				if (gstate === "green") {
+					gstate = it.state();
+				}
+			}
+			that._root_content.state(gstate);
 		});
 	}
 }
@@ -477,7 +487,11 @@ class ListBoxItem {
 		return this._element;
 	}
 
-	set_state(state) {
+	state(state) {
+		if (!state) {
+			return this._state;
+		}
+
 		if (this._element) {
 			if (this._state) {
 				this._element.classList.remove("state-" + this._state);
@@ -499,6 +513,14 @@ class SourceListItem extends ListBoxItem {
 		super();
 		this._id = data.id;
 		this._type = data.type;
+	}
+
+	id() {
+		return this._id;
+	}
+
+	type() {
+		return this._type;
 	}
 
 	element() {
