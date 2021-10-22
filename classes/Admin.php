@@ -54,14 +54,23 @@ class Admin
     {
         $this->st = [ 'database' => [ 'tables' => [] ] ];
         try {
+            $prefix = Database::tablePrefix();
+            $p_len = strlen($prefix);
+            if ($p_len > 0) {
+                $like_str  = ' WHERE NAME LIKE "' . str_replace('_', '\\_', $prefix) . '%"';
+            } else {
+                $like_str  = '';
+            }
             $db = Database::connection();
             $db_tables = [];
-            $st = $db->query('SHOW TABLE STATUS FROM `' . str_replace('`', '', Database::name()) . '`');
+            $st = $db->query(
+                'SHOW TABLE STATUS FROM `' . str_replace('`', '', Database::name()) . '`' . $like_str
+            );
             while ($row = $st->fetch(PDO::FETCH_ASSOC)) {
                 $tnm = $row['Name'];
                 $st2 = $db->query('SELECT COUNT(*) FROM `' . $tnm . '`');
                 $rows = $st2->fetch(PDO::FETCH_NUM)[0];
-                $db_tables[$tnm] = [
+                $db_tables[substr($tnm, $p_len)] = [
                     'engine'       => $row['Engine'],
                     'rows'         => intval($rows),
                     'data_length'  => intval($row['Data_length']),
@@ -146,7 +155,7 @@ class Admin
      * Inites the database.
      *
      * This method creates needed tables and indexes in the database.
-     * The method will fail if the database is not empty.
+     * The method will fail if the database already have tables with the table prefix.
      *
      * @return array Result array with `error_code` and `message` fields.
      */
@@ -154,14 +163,20 @@ class Admin
     {
         try {
             $db = Database::connection();
-            $st = $db->query('SHOW TABLES');
+            $st = $db->query(self::sqlShowTablesQuery());
             if ($st->fetch()) {
-                throw new Exception('The database is not empty', -4);
+                if (empty(Database::tablePrefix())) {
+                    throw new Exception('The database is not empty', -4);
+                } else {
+                    throw new Exception('Database tables already exist with the given prefix', -4);
+                }
             }
             foreach (array_keys(Database::$schema) as $table) {
-                $this->createDbTable($table, Database::$schema[$table]);
+                $this->createDbTable(Database::tablePrefix($table), Database::$schema[$table]);
             }
-            $st = $db->prepare('INSERT INTO `system` (`key`, `value`) VALUES ("version", ?)');
+            $st = $db->prepare(
+                'INSERT INTO `' . Database::tablePrefix('system') . '` (`key`, `value`) VALUES ("version", ?)'
+            );
             $st->bindValue(1, Database::REQUIRED_VERSION, PDO::PARAM_STR);
             $st->execute();
             $st->closeCursor();
@@ -175,7 +190,9 @@ class Admin
     }
 
     /**
-     * Drops all tables in the database, thus clearing it up.
+     * Cleans up the database.
+     *
+     * Drops tables with the table prefix in the database or all tables in the database if no table prefix is set.
      *
      * @return array Result array with `error_code` and `message` fields.
      */
@@ -184,7 +201,7 @@ class Admin
         try {
             $db = Database::connection();
             $db->query('SET foreign_key_checks = 0');
-            $st = $db->query('SHOW TABLES');
+            $st = $db->query(self::sqlShowTablesQuery());
             while ($table = $st->fetchColumn(0)) {
                 $db->query('DROP TABLE `' . $table . '`');
             }
@@ -265,5 +282,20 @@ class Admin
             $this->st['database']['error_code'] = $err_code;
         }
     }
-}
 
+    /**
+     * Return SHOW TABLES SQL query string for tables with the table prefix
+     *
+     * @return string
+     */
+    private static function sqlShowTablesQuery(): string
+    {
+        $res = 'SHOW TABLES';
+        $prefix = Database::tablePrefix();
+        if (strlen($prefix) > 0) {
+            $res .= ' WHERE `tables_in_' . str_replace('`', '', Database::name())
+                . '` LIKE "' . str_replace('_', '\\_', $prefix) . '%"';
+        }
+        return $res;
+    }
+}

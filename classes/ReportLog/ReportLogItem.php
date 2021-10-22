@@ -92,7 +92,10 @@ class ReportLogItem
         $li->id = $id;
 
         $db = Database::connection();
-        $st = $db->prepare('SELECT `domain`, `external_id`, `event_time`, `filename`, `source`, `success`, `message` FROM `reportlog` WHERE `id` = ?');
+        $st = $db->prepare(
+            'SELECT `domain`, `external_id`, `event_time`, `filename`, `source`, `success`, `message` FROM `'
+            . Database::tablePrefix('reportlog') . '` WHERE `id` = ?'
+        );
         $st->bindValue(1, $id, PDO::PARAM_INT);
         $st->execute();
         $row = $st->fetch(PDO::FETCH_NUM);
@@ -154,9 +157,17 @@ class ReportLogItem
         $db = Database::connection();
         $st = null;
         if (is_null($this->id)) {
-            $st = $db->prepare('INSERT INTO `reportlog` (`domain`, `external_id`, `event_time`, `filename`, `source`, `success`, `message`) VALUES (?, ?, FROM_UNIXTIME(?), ?, ?, ?, ?)');
+            $st = $db->prepare(
+                'INSERT INTO `' . Database::tablePrefix('reportlog')
+                . '` (`domain`, `external_id`, `event_time`, `filename`, `source`, `success`, `message`)'
+                . ' VALUES (?, ?, FROM_UNIXTIME(?), ?, ?, ?, ?)'
+            );
         } else {
-            $st = $db->prepare('UPDATE `reportlog` SET `domain` = ?, `external_id` = ?, `event_time` = FROM_UNIXTIME(?), `filename` = ?, `source` = ?, `success` = ?, `message` = ? WHERE `id` = ?');
+            $st = $db->prepare(
+                'UPDATE `' . Database::tablePrefix('reportlog')
+                . '` SET `domain` = ?, `external_id` = ?, `event_time` = FROM_UNIXTIME(?), `filename` = ?,'
+                . ' `source` = ?, `success` = ?, `message` = ? WHERE `id` = ?'
+            );
         }
         $st->bindValue(1, $this->domain, PDO::PARAM_STR);
         $st->bindValue(2, $this->external_id, PDO::PARAM_STR);
@@ -175,4 +186,3 @@ class ReportLogItem
         $st->closeCursor();
     }
 }
-

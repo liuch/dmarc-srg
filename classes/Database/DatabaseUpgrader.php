@@ -55,7 +55,9 @@ class DatabaseUpgrader
         $db = Database::connection();
         $db->beginTransaction();
         try {
-            $db->query('INSERT INTO `system` (`key`, `value`) VALUES ("version", "0.1")');
+            $db->query(
+                'INSERT INTO `' . Database::tablePrefix('system') . '` (`key`, `value`) VALUES ("version", "0.1")'
+            );
             $db->commit();
         } catch (Exception $e) {
             $db->rollBack();
@@ -69,17 +71,18 @@ class DatabaseUpgrader
         $db = Database::connection();
         $db->beginTransaction();
         try {
-            if (!self::columnExists($db, 'domains', 'active')) {
-                $db->query('ALTER TABLE `domains` ADD COLUMN `active` boolean NOT NULL AFTER `fqdn`');
+            $dom_tn = Database::tablePrefix('domains');
+            if (!self::columnExists($db, $dom_tn, 'active')) {
+                $db->query('ALTER TABLE `' . $dom_tn . '` ADD COLUMN `active` boolean NOT NULL AFTER `fqdn`');
             }
-            if (!self::columnExists($db, 'domains', 'created_time')) {
-                $db->query('ALTER TABLE `domains` ADD COLUMN `created_time` datetime NOT NULL');
+            if (!self::columnExists($db, $dom_tn, 'created_time')) {
+                $db->query('ALTER TABLE `' . $dom_tn . '` ADD COLUMN `created_time` datetime NOT NULL');
             }
-            if (!self::columnExists($db, 'domains', 'updated_time')) {
-                $db->query('ALTER TABLE `domains` ADD COLUMN `updated_time` datetime NOT NULL');
+            if (!self::columnExists($db, $dom_tn, 'updated_time')) {
+                $db->query('ALTER TABLE `' . $dom_tn . '` ADD COLUMN `updated_time` datetime NOT NULL');
             }
-            $db->query('UPDATE `domains` SET `active` = TRUE, `created_time` = NOW(), `updated_time` = NOW()');
-            $db->query('UPDATE `system` SET `value` = "1.0" WHERE `key` = "version"');
+            $db->query('UPDATE `' . $dom_tn . '` SET `active` = TRUE, `created_time` = NOW(), `updated_time` = NOW()');
+            $db->query('UPDATE `' . Database::tablePrefix('system') . '` SET `value` = "1.0" WHERE `key` = "version"');
             $db->commit();
         } catch (Exception $e) {
             $db->rollBack();
@@ -93,8 +96,9 @@ class DatabaseUpgrader
         $db = Database::connection();
         $db->beginTransaction();
         try {
-            $db->query('ALTER TABLE `system` MODIFY COLUMN `key` varchar(64) NOT NULL');
-            $db->query('UPDATE `system` SET `value` = "2.0" WHERE `key` = "version"');
+            $sys_tn = Database::tablePrefix('system');
+            $db->query('ALTER TABLE `' . $sys_tn . '` MODIFY COLUMN `key` varchar(64) NOT NULL');
+            $db->query('UPDATE `' . $sys_tn . '` SET `value` = "2.0" WHERE `key` = "version"');
             $db->commit();
         } catch (Exception $d) {
             $db->rollBack();
@@ -115,4 +119,3 @@ class DatabaseUpgrader
         return $res ? true : false;
     }
 }
-

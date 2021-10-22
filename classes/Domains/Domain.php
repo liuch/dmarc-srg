@@ -136,7 +136,9 @@ class Domain
     public function exists(): bool
     {
         if (is_null($this->ex_f)) {
-            $st = Database::connection()->prepare('SELECT `id` FROM `domains` WHERE ' . $this->sqlCondition());
+            $st = Database::connection()->prepare(
+                'SELECT `id` FROM `' . Database::tablePrefix('domains') . '` WHERE ' . $this->sqlCondition()
+            );
             $this->sqlBindValue($st, 1);
             $st->execute();
             $res = $st->fetch(PDO::FETCH_NUM);
@@ -239,7 +241,10 @@ class Domain
         $this->u_tm = time();
         if ($this->exists()) {
             try {
-                $st = $db->prepare('UPDATE `domains` SET `active` = ?, `description` = ?, `updated_time` = FROM_UNIXTIME(?) WHERE `id` = ?');
+                $st = $db->prepare(
+                    'UPDATE `' . Database::tablePrefix('domains')
+                    . '` SET `active` = ?, `description` = ?, `updated_time` = FROM_UNIXTIME(?) WHERE `id` = ?'
+                );
                 $st->bindValue(1, $this->actv, PDO::PARAM_BOOL);
                 $st->bindValue(2, $this->desc, PDO::PARAM_STR);
                 $st->bindValue(3, $this->u_tm, PDO::PARAM_INT);
@@ -260,7 +265,11 @@ class Domain
                     $sql1 = ', `description`';
                     $sql2 = ', ?';
                 }
-                $st = $db->prepare('INSERT INTO `domains` (`fqdn`, `active`' . $sql1 . ', `created_time`, `updated_time`) VALUES (?, ?' . $sql2 . ', FROM_UNIXTIME(?), FROM_UNIXTIME(?))');
+                $st = $db->prepare(
+                    'INSERT INTO `' . Database::tablePrefix('domains')
+                    . '` (`fqdn`, `active`' . $sql1 . ', `created_time`, `updated_time`)'
+                    . ' VALUES (?, ?' . $sql2 . ', FROM_UNIXTIME(?), FROM_UNIXTIME(?))'
+                );
                 $idx = 0;
                 $st->bindValue(++$idx, $this->fqdn, PDO::PARAM_STR);
                 $st->bindValue(++$idx, $actv, PDO::PARAM_BOOL);
@@ -311,7 +320,7 @@ class Domain
                 throw new Exception($msg, -1);
             }
 
-            $st = $db->prepare('DELETE FROM `domains` WHERE `id` = ?');
+            $st = $db->prepare('DELETE FROM `' . Database::tablePrefix('domains') . '` WHERE `id` = ?');
             $st->bindValue(1, $this->id, PDO::PARAM_STR);
             $st->execute();
             $st->closeCursor();
@@ -350,7 +359,10 @@ class Domain
             return;
         }
 
-        $st = Database::connection()->prepare('SELECT `id`, `fqdn`, `active`, `description`, `created_time`, `updated_time` FROM `domains` WHERE ' . $this->sqlCondition());
+        $st = Database::connection()->prepare(
+            'SELECT `id`, `fqdn`, `active`, `description`, `created_time`, `updated_time` FROM `'
+            . Database::tablePrefix('domains') . '` WHERE ' . $this->sqlCondition()
+        );
         $this->sqlBindValue($st, 1);
         $st->execute();
         $res = $st->fetch(PDO::FETCH_NUM);
@@ -398,4 +410,3 @@ class Domain
         }
     }
 }
-

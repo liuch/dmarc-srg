@@ -62,7 +62,13 @@ class Report
         $this->data = [ 'domain' => $domain, 'report_id' => $report_id, 'records' => [] ];
         $db = Database::connection();
         try {
-            $st = $db->prepare('SELECT `reports`.`id`, `begin_time`, `end_time`, `loaded_time`, `org`, `email`, `extra_contact_info`, `error_string`, `policy_adkim`, `policy_aspf`, `policy_p`, `policy_sp`, `policy_pct`, `policy_fo` FROM `reports` INNER JOIN `domains` ON `domains`.`id` = `reports`.`domain_id` WHERE `fqdn` = ? AND `external_id` = ?');
+            $st = $db->prepare(
+                'SELECT `rp`.`id`, `begin_time`, `end_time`, `loaded_time`, `org`, `email`, `extra_contact_info`,'
+                . ' `error_string`, `policy_adkim`, `policy_aspf`, `policy_p`, `policy_sp`, `policy_pct`, `policy_fo`'
+                . ' FROM `' . Database::tablePrefix('reports') . '` AS `rp`'
+                . ' INNER JOIN `' . Database::tablePrefix('domains') . '` AS `dom` ON `dom`.`id` = `rp`.`domain_id`'
+                . ' WHERE `fqdn` = ? AND `external_id` = ?'
+            );
             $st->bindValue(1, $domain, PDO::PARAM_STR);
             $st->bindValue(2, $report_id, PDO::PARAM_STR);
             $st->execute();
@@ -94,7 +100,11 @@ class Report
                 $st->closeCursor();
             }
             $order_str = $this->sqlOrder();
-            $st = $db->prepare("SELECT `report_id`, `ip`, `rcount`, `disposition`, `reason`, `dkim_auth` , `spf_auth`, `dkim_align`, `spf_align`, `envelope_to`, `envelope_from`, `header_from` FROM `rptrecords` WHERE `report_id` = ?{$order_str}");
+            $st = $db->prepare(
+                'SELECT `report_id`, `ip`, `rcount`, `disposition`, `reason`, `dkim_auth` , `spf_auth`, `dkim_align`,'
+                . ' `spf_align`, `envelope_to`, `envelope_from`, `header_from`'
+                . ' FROM `' . Database::tablePrefix('rptrecords') . '` WHERE `report_id` = ?' . $order_str
+            );
             $st->bindValue(1, $id, PDO::PARAM_INT);
             $st->execute();
             try {
@@ -149,7 +159,13 @@ class Report
                 throw new Exception('Failed to add an incoming report: the domain is inactive', -1);
             }
 
-            $st = $db->prepare('INSERT INTO `reports` (`domain_id`, `begin_time`, `end_time`, `loaded_time`, `org`, `external_id`, `email`, `extra_contact_info`, `error_string`, `policy_adkim`, `policy_aspf`, `policy_p`, `policy_sp`, `policy_pct`, `policy_fo`, `seen`) VALUES (?, FROM_UNIXTIME(?), FROM_UNIXTIME(?), NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)');
+            $st = $db->prepare(
+                'INSERT INTO `' . Database::tablePrefix('reports')
+                . '` (`domain_id`, `begin_time`, `end_time`, `loaded_time`, `org`, `external_id`, `email`,'
+                . ' `extra_contact_info`, `error_string`, `policy_adkim`, `policy_aspf`, `policy_p`,'
+                . ' `policy_sp`, `policy_pct`, `policy_fo`, `seen`)'
+                . ' VALUES (?, FROM_UNIXTIME(?), FROM_UNIXTIME(?), NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)'
+            );
             $st->bindValue(1, $domain->id(), PDO::PARAM_INT);
             $st->bindValue(2, $this->data['begin_time'], PDO::PARAM_INT);
             $st->bindValue(3, $this->data['end_time'], PDO::PARAM_INT);
@@ -168,7 +184,12 @@ class Report
             $new_id = $db->lastInsertId();
             $st->closeCursor();
 
-            $st = $db->prepare('INSERT INTO `rptrecords` (`report_id`, `ip`, `rcount`, `disposition`, `reason`, `dkim_auth`, `spf_auth`, `dkim_align`, `spf_align`, `envelope_to`, `envelope_from`, `header_from`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+            $st = $db->prepare(
+                'INSERT INTO `' . Database::tablePrefix('rptrecords')
+                . '` (`report_id`, `ip`, `rcount`, `disposition`, `reason`, `dkim_auth`, `spf_auth`, `dkim_align`,'
+                . ' `spf_align`, `envelope_to`, `envelope_from`, `header_from`)'
+                . ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            );
             foreach ($this->data['records'] as &$rec_data) {
                 $st->bindValue(1, $new_id, PDO::PARAM_INT);
                 $st->bindValue(2, inet_pton($rec_data['ip']), PDO::PARAM_STR);
@@ -213,7 +234,11 @@ class Report
 
         $db = Database::connection();
         try {
-            $st = $db->prepare('UPDATE `reports` INNER JOIN `domains` ON `reports`.`domain_id` = `domains`.`id` SET `seen` = ? WHERE `fqdn` = ? AND `external_id` = ?');
+            $st = $db->prepare(
+                'UPDATE `' . Database::tablePrefix('reports') . '` AS `rp`'
+                . ' INNER JOIN `' . Database::tablePrefix('domains') . '` AS `dom`'
+                . ' ON `rp`.`domain_id` = `dom`.`id` SET `seen` = ? WHERE `fqdn` = ? AND `external_id` = ?'
+            );
             $st->bindValue(1, $value, PDO::PARAM_BOOL);
             $st->bindValue(2, $this->data['domain'], PDO::PARAM_STR);
             $st->bindValue(3, $this->data['report_id'], PDO::PARAM_STR);
@@ -247,4 +272,3 @@ class Report
         return " ORDER BY `{$fname}` {$dir}";
     }
 }
-

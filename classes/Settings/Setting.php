@@ -208,16 +208,22 @@ abstract class Setting
         $st = null;
         $db->beginTransaction();
         try {
-            $st = $db->prepare('SELECT COUNT(*) FROM `system` WHERE `key` = ?');
+            $st = $db->prepare(
+                'SELECT COUNT(*) FROM `' . Database::tablePrefix('system') . '` WHERE `key` = ?'
+            );
             $st->bindValue(1, $this->name, PDO::PARAM_STR);
             $st->execute();
             $res = $st->fetch(PDO::FETCH_NUM);
             $st->closeCursor();
             $st = null;
             if (intval($res[0]) == 0) {
-                $st = $db->prepare('INSERT INTO `system` (`value`, `key`) VALUES (?, ?)');
+                $st = $db->prepare(
+                    'INSERT INTO `' . Database::tablePrefix('system') . '` (`value`, `key`) VALUES (?, ?)'
+                );
             } else {
-                $st = $db->prepare('UPDATE `system` SET `value` = ? WHERE `key` = ?');
+                $st = $db->prepare(
+                    'UPDATE `' . Database::tablePrefix('system') . '` SET `value` = ? WHERE `key` = ?'
+                );
             }
             switch ($this->type()) {
                 case self::TYPE_INTEGER:
@@ -247,7 +253,9 @@ abstract class Setting
      */
     private function fetchData(): void
     {
-        $st = Database::connection()->prepare('SELECT `value` FROM `system` WHERE `key` = ?');
+        $st = Database::connection()->prepare(
+            'SELECT `value` FROM `' . Database::tablePrefix('system') . '` WHERE `key` = ?'
+        );
         $st->bindValue(1, $this->name, PDO::PARAM_STR);
         $st->execute();
         $res = $st->fetch(PDO::FETCH_NUM);
@@ -272,4 +280,3 @@ abstract class Setting
         $this->value = SettingsList::$schema[$this->name]['default'];
     }
 }
-

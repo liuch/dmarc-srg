@@ -58,7 +58,10 @@ class ReportLog
         $cnt = 0;
         $db = Database::connection();
         try {
-            $st = $db->prepare('SELECT COUNT(*) FROM `reportlog`' . $this->sqlCondition() . $this->sqlLimit(false));
+            $st = $db->prepare(
+                'SELECT COUNT(*) FROM `' . Database::tablePrefix('reportlog') . '`'
+                . $this->sqlCondition() . $this->sqlLimit(false)
+            );
             $this->sqlBindValues($st, 0);
             $st->execute();
             $cnt = $st->fetch(PDO::FETCH_NUM)[0];
@@ -80,10 +83,13 @@ class ReportLog
 
         $db = Database::connection();
         try {
-            $st = $db->prepare('SELECT `id`, `domain`, `event_time`, `source`, `success`, `message` FROM `reportlog`'
+            $st = $db->prepare(
+                'SELECT `id`, `domain`, `event_time`, `source`, `success`, `message` FROM `'
+                . Database::tablePrefix('reportlog') . '`'
                 . $this->sqlCondition()
                 . $this->sqlOrder()
-                . $this->sqlLimit(true));
+                . $this->sqlLimit(true)
+            );
             $this->sqlBindValues($st, 1);
             $st->execute();
             $r_cnt = 0;
@@ -121,10 +127,12 @@ class ReportLog
     {
         $db = Database::connection();
         try {
-            $st = $db->prepare('DELETE FROM `reportlog`'
+            $st = $db->prepare(
+                'DELETE FROM `' . Database::tablePrefix('reportlog') . '`'
                 . $this->sqlCondition()
                 . $this->sqlOrder()
-                . $this->sqlLimit(false));
+                . $this->sqlLimit(false)
+            );
             $this->sqlBindValues($st, 0);
             $st->execute();
             $st->closeCursor();
@@ -185,4 +193,3 @@ class ReportLog
         }
     }
 }
-

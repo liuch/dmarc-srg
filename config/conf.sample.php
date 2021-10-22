@@ -4,11 +4,22 @@ $debug = 0;
 
 // Settings for assessing the database in which reports will be saved
 $database = [
-    'host'     => 'localhost',
-    'type'     => 'mysql',
-    'name'     => 'dmarc',
-    'user'     => 'dmarc_user',
-    'password' => 'password'
+    'host'         => 'localhost',
+    'type'         => 'mysql',
+    'name'         => 'dmarc',
+    'user'         => 'dmarc_user',
+    'password'     => 'password',
+    /**
+     * This pamemeter can be usefull if the database is shared with other applications
+     * to avoid conflicting table names. You do not need to specify this parameter
+     * if you use a dedicated database.
+     * Example value: dmarc_
+     * Caution! Do not use an empty string as the table prefix value if you share the database with
+     * other applications.
+     * Caution! Do not change this parameter if you have already created the tables in the database
+     * because the tables will not be renamed automatically.
+     */
+    'table_prefix' => ''
 ];
 
 // This needs only if you want to get reports from a mailbox automatically.

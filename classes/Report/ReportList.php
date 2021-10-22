@@ -83,7 +83,17 @@ class ReportList
         $limit_str = $this->sqlLimit();
         $db = Database::connection();
         try {
-            $st = $db->prepare("SELECT `org`, `begin_time`, `end_time`, `fqdn`, external_id, `seen`, SUM(`rcount`) AS `rcount`, MIN(`dkim_align`) AS `dkim_align`, MIN(`spf_align`) AS `spf_align`, MIN(`disposition`) AS `disposition` FROM `rptrecords` RIGHT JOIN (SELECT `reports`.`id`, `org`, `begin_time`, `end_time`, `external_id`, `fqdn`, `seen` FROM `reports` INNER JOIN `domains` ON `domains`.`id` = `reports`.`domain_id`{$cond_str0}{$order_str}) AS `reports` ON `reports`.`id` = `rptrecords`.`report_id` GROUP BY `reports`.`id`{$cond_str1}{$order_str}{$limit_str}");
+            $st = $db->prepare(
+                'SELECT `org`, `begin_time`, `end_time`, `fqdn`, external_id, `seen`, SUM(`rcount`) AS `rcount`,'
+                . ' MIN(`dkim_align`) AS `dkim_align`, MIN(`spf_align`) AS `spf_align`,'
+                . ' MIN(`disposition`) AS `disposition` FROM `' . Database::tablePrefix('rptrecords')
+                . '` AS `rr` RIGHT JOIN (SELECT `rp`.`id`, `org`, `begin_time`, `end_time`, `external_id`,'
+                . ' `fqdn`, `seen` FROM `' . Database::tablePrefix('reports')
+                . '` AS `rp` INNER JOIN `' . Database::tablePrefix('domains')
+                . '` AS `d` ON `d`.`id` = `rp`.`domain_id`' . $cond_str0 . $order_str
+                . ') AS `rp` ON `rp`.`id` = `rr`.`report_id` GROUP BY `rp`.`id`'
+                . $cond_str1 . $order_str . $limit_str
+            );
             $this->sqlBindValues($st, 1);
             $st->execute();
             $r_cnt = 0;
@@ -194,7 +204,7 @@ class ReportList
                     case 'string':
                         if (!empty($fv)) {
                             if ($fn == 'domain') {
-                                $filters[0]['a_str'][] = '`reports`.`domain_id` = ?';
+                                $filters[0]['a_str'][] = '`rp`.`domain_id` = ?';
                                 $filters[0]['bindings'][] = [ (new Domain($fv))->id(), PDO::PARAM_INT ];
                             } elseif ($fn == 'month') {
                                 $ma = explode('-', $fv);
@@ -260,7 +270,7 @@ class ReportList
                         break;
                     case 'object':
                         if ($fn == 'domain') {
-                            $filters[0]['a_str'][] = '`reports`.`domain_id` = ?';
+                            $filters[0]['a_str'][] = '`rp`.`domain_id` = ?';
                             $filters[0]['bindings'][] = [ $fv->id(), PDO::PARAM_INT ];
                             break;
                         }
@@ -292,7 +302,10 @@ class ReportList
         $cnt = 0;
         $db = Database::connection();
         try {
-            $st = $db->prepare('SELECT COUNT(*) FROM `reports`' . $this->sqlCondition(' WHERE ', 0));
+            $st = $db->prepare(
+                'SELECT COUNT(*) FROM `' . Database::tablePrefix('reports') . '` AS `rp`'
+                . $this->sqlCondition(' WHERE ', 0)
+            );
             $this->sqlBindValues($st, -1);
             $st->execute();
             $cnt = $st->fetch(PDO::FETCH_NUM)[0];
@@ -329,12 +342,18 @@ class ReportList
             $order_str = $this->sqlOrder();
             $limit_str = $this->sqlLimit();
 
-            $st = $db->prepare("DELETE `rr` FROM `rptrecords` AS `rr` INNER JOIN (SELECT `id` FROM `reports`{$cond_str}{$order_str}{$limit_str}) AS `rp` ON `rp`.`id` = `rr`.`report_id`");
+            $st = $db->prepare(
+                'DELETE `rr` FROM `' . Database::tablePrefix('rptrecords')
+                . '` AS `rr` INNER JOIN (SELECT `id` FROM `' . Database::tablePrefix('reports') . '`'
+                . $cond_str . $order_str . $limit_str . ') AS `rp` ON `rp`.`id` = `rr`.`report_id`'
+            );
             $this->sqlBindValues($st, 0);
             $st->execute();
             $st->closeCursor();
 
-            $st = $db->prepare("DELETE FROM `reports`{$cond_str}{$order_str}{$limit_str}");
+            $st = $db->prepare(
+                'DELETE FROM `' . Database::tablePrefix('reports') . "`{$cond_str}{$order_str}{$limit_str}"
+            );
             $this->sqlBindValues($st, 0);
             $st->execute();
             $st->closeCursor();
@@ -358,7 +377,7 @@ class ReportList
         $db = Database::connection();
         try {
             $domains = [];
-            $st = $db->query('SELECT `fqdn` FROM `domains` ORDER BY `fqdn`');
+            $st = $db->query('SELECT `fqdn` FROM `' . Database::tablePrefix('domains') . '` ORDER BY `fqdn`');
             while ($r = $st->fetch(PDO::FETCH_NUM)) {
                 $domains[] = $r[0];
             }
@@ -367,9 +386,15 @@ class ReportList
         } catch (Exception $e) {
             throw new Exception('Failed to get a list of domains', -1);
         }
+        $rep_tn = Database::tablePrefix('reports');
         try {
             $months = [];
-            $st = $db->query('SELECT DISTINCT DATE_FORMAT(`date`, "%Y-%m") AS `month` FROM ((SELECT DISTINCT `begin_time` AS `date` FROM `reports`) UNION (SELECT DISTINCT `end_time` AS `date` FROM `reports`)) AS `r` ORDER BY `month` DESC');
+            $st = $db->query(
+                'SELECT DISTINCT DATE_FORMAT(`date`, "%Y-%m") AS `month` FROM'
+                . ' ((SELECT DISTINCT `begin_time` AS `date` FROM `' . $rep_tn
+                . '`) UNION (SELECT DISTINCT `end_time` AS `date` FROM `' . $rep_tn
+                . '`)) AS `r` ORDER BY `month` DESC'
+            );
             while ($r = $st->fetch(PDO::FETCH_NUM)) {
                 $months[] = $r[0];
             }
@@ -381,19 +406,18 @@ class ReportList
         try {
             $orgs = [];
             // TODO оптимизировать индексом!
-            $st = $db->query('SELECT DISTINCT `org` FROM `reports` ORDER BY `org`');
+            $st = $db->query('SELECT DISTINCT `org` FROM `' . $rep_tn . '` ORDER BY `org`');
             while ($r = $st->fetch(PDO::FETCH_NUM)) {
                 $orgs[] = $r[0];
             }
             $st->closeCursor();
             $res['organization'] = $orgs;
-
-            $res['dkim']   = [ 'pass', 'fail' ];
-            $res['spf']    = [ 'pass', 'fail' ];
-            $res['status'] = [ 'read', 'unread' ];
         } catch (Exception $e) {
             throw new Exception('Failed to get a list of organizations', -1);
         }
+        $res['dkim']   = [ 'pass', 'fail' ];
+        $res['spf']    = [ 'pass', 'fail' ];
+        $res['status'] = [ 'read', 'unread' ];
         return $res;
     }
 
@@ -500,4 +524,3 @@ class ReportList
         }
     }
 }
-

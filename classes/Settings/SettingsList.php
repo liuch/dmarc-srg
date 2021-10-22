@@ -53,7 +53,9 @@ class SettingsList
         $list = [];
         $fmap = [];
 
-        $st = Database::connection()->query('SELECT `key`, `value` FROM `system` ORDER BY `key`');
+        $st = Database::connection()->query(
+            'SELECT `key`, `value` FROM `' . Database::tablePrefix('system') . '` ORDER BY `key`'
+        );
         while ($row = $st->fetch(PDO::FETCH_NUM)) {
             $name = $row[0];
             if (isset(static::$schema[$name])) {
@@ -181,4 +183,3 @@ class SettingsList
         ]
     ];
 }
-

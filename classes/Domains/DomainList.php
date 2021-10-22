@@ -47,7 +47,10 @@ class DomainList
     public function getList(): array
     {
         $list = [];
-        $st = Database::connection()->query('SELECT `id`, `fqdn`, `active`, `description`, `created_time`, `updated_time` FROM `domains`');
+        $st = Database::connection()->query(
+            'SELECT `id`, `fqdn`, `active`, `description`, `created_time`, `updated_time` FROM `'
+            . Database::tablePrefix('domains') . '`'
+        );
         while ($row = $st->fetch(PDO::FETCH_NUM)) {
             $list[] = new Domain([
                 'id'           => intval($row[0]),
@@ -72,10 +75,12 @@ class DomainList
      */
     public static function count(): int
     {
-        $st = Database::connection()->query('SELECT COUNT(*) FROM `domains`', PDO::FETCH_NUM);
+        $st = Database::connection()->query(
+            'SELECT COUNT(*) FROM `' . Database::tablePrefix('domains') . '`',
+            PDO::FETCH_NUM
+        );
         $res = intval($st->fetchColumn(0));
         $st->closeCursor();
         return $res;
     }
 }
-

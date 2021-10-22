@@ -64,6 +64,20 @@ class Database
         return $database['host'];
     }
 
+    /**
+     * Returns the prefix for tables of the database
+     *
+     * @param string $postfix String to be concatenated with the prefix.
+     *                        Usually, this is a table name.
+     *
+     * @return string
+     */
+    public static function tablePrefix(string $postfix = ''): string
+    {
+        global $database;
+        return ($database['table_prefix'] ?? '') . $postfix;
+    }
+
     private function establishConnection()
     {
         global $database;
@@ -298,4 +312,3 @@ class Database
         ]
     ];
 }
-

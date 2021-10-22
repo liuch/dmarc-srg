@@ -121,7 +121,14 @@ class Statistics
      */
     public function summary(): array
     {
-        $st = Database::connection()->prepare('SELECT SUM(`rcount`), SUM(IF(`dkim_align` = 2 AND `spf_align` = 2, `rcount`, 0)), SUM(IF(`dkim_align` = 2 AND `spf_align` <> 2, `rcount`, 0)), SUM(IF(`dkim_align` <> 2 AND `spf_align` = 2, `rcount`, 0)) FROM `rptrecords` INNER JOIN `reports` ON `rptrecords`.`report_id` = `reports`.`id` WHERE ' . $this->sqlCondition());
+        $st = Database::connection()->prepare(
+            'SELECT SUM(`rcount`), SUM(IF(`dkim_align` = 2 AND `spf_align` = 2, `rcount`, 0)),'
+            . ' SUM(IF(`dkim_align` = 2 AND `spf_align` <> 2, `rcount`, 0)),'
+            . ' SUM(IF(`dkim_align` <> 2 AND `spf_align` = 2, `rcount`, 0))'
+            . ' FROM `' . Database::tablePrefix('rptrecords') . '` AS `rr`'
+            . ' INNER JOIN `' . Database::tablePrefix('reports') . '` AS `rp` ON `rr`.`report_id` = `rp`.`id`'
+            . ' WHERE ' . $this->sqlCondition()
+        );
         $this->sqlBindValues($st);
         $st->execute();
         $row = $st->fetch(PDO::FETCH_NUM);
@@ -133,7 +140,10 @@ class Statistics
         ];
         $st->closeCursor();
 
-        $st = Database::connection()->prepare('SELECT COUNT(*) FROM (SELECT `org` FROM `reports` WHERE ' . $this->sqlCondition() . ' GROUP BY `org`) AS `orgs`');
+        $st = Database::connection()->prepare(
+            'SELECT COUNT(*) FROM (SELECT `org` FROM `' . Database::tablePrefix('reports') . '` WHERE '
+            . $this->sqlCondition() . ' GROUP BY `org`) AS `orgs`'
+        );
         $this->sqlBindValues($st);
         $st->execute();
         $row = $st->fetch(PDO::FETCH_NUM);
@@ -153,7 +163,13 @@ class Statistics
      */
     public function ips(): array
     {
-        $st = Database::connection()->prepare('SELECT `ip`, SUM(`rcount`) AS `rcount`, SUM(IF(`dkim_align` = 2, `rcount`, 0)) AS `dkim_aligned`, SUM(IF(`spf_align` = 2, `rcount`, 0)) AS `spf_aligned` FROM `rptrecords` INNER JOIN `reports` ON `rptrecords`.`report_id` = `reports`.`id` WHERE ' . $this->sqlCondition() . ' GROUP BY `ip` ORDER BY `rcount` DESC');
+        $st = Database::connection()->prepare(
+            'SELECT `ip`, SUM(`rcount`) AS `rcount`, SUM(IF(`dkim_align` = 2, `rcount`, 0)) AS `dkim_aligned`,'
+            . ' SUM(IF(`spf_align` = 2, `rcount`, 0)) AS `spf_aligned`'
+            . ' FROM `' . Database::tablePrefix('rptrecords') . '` AS `rr`'
+            . ' INNER JOIN `' . Database::tablePrefix('reports') . '` AS `rp` ON `rr`.`report_id` = `rp`.`id`'
+            . ' WHERE ' . $this->sqlCondition() . ' GROUP BY `ip` ORDER BY `rcount` DESC'
+        );
         $this->sqlBindValues($st);
         $st->execute();
         $res = [];
@@ -177,7 +193,13 @@ class Statistics
      */
     public function organizations(): array
     {
-        $st = Database::connection()->prepare('SELECT `org`, COUNT(*), SUM(`rptrecords`.`rcount`) AS `rcount` FROM `reports` INNER JOIN (SELECT `report_id`, SUM(`rcount`) AS `rcount` FROM `rptrecords` GROUP BY `report_id`) AS `rptrecords` ON `reports`.`id` = `rptrecords`.`report_id` WHERE ' . $this->sqlCondition() . ' GROUP BY `org` ORDER BY `rcount` DESC');
+        $st = Database::connection()->prepare(
+            'SELECT `org`, COUNT(*), SUM(`rr`.`rcount`) AS `rcount`'
+            . ' FROM `' . Database::tablePrefix('reports') . '` AS `rp`'
+            . ' INNER JOIN (SELECT `report_id`, SUM(`rcount`) AS `rcount` FROM `' . Database::tablePrefix('rptrecords')
+            . '` GROUP BY `report_id`) AS `rr` ON `rp`.`id` = `rr`.`report_id` WHERE ' . $this->sqlCondition()
+            . ' GROUP BY `org` ORDER BY `rcount` DESC'
+        );
         $this->sqlBindValues($st);
         $st->execute();
         $res = [];
@@ -224,4 +246,3 @@ class Statistics
         $st->bindValue(++$pnum, $this->date1 + 10, PDO::PARAM_INT);
     }
 }
-

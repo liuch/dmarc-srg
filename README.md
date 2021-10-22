@@ -57,6 +57,8 @@ Create a new user called `dmarc_user` for the new database (you can specify a di
 
 **Remember** to replace `new_user_password` with a more secure one!
 
+**Note:** If there is a need to use an existing database with other tables, you can specify the table prefix in the `conf/conf.php` file.
+
 ### conf.php
 Copy `conf/conf.sample.php` to `conf/conf.php` and configure it. Learn more by reading the comments in it.
 
