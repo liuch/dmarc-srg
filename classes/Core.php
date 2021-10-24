@@ -39,7 +39,7 @@ use Exception;
  */
 class Core
 {
-    public const APP_VERSION = '1.1';
+    public const APP_VERSION = '1.2';
     private const SESSION_NAME = 'session';
     private static $html_file_name = 'index.html';
     private static $v_auth = null;
