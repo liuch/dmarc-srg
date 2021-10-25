@@ -93,7 +93,7 @@ Router.go = function(url) {
 						Router.update_title(p.title());
 				}
 			}
-			if (d.state && d.state !== "Ok") {
+			if (d.state && d.state !== "Ok" && !d.error_code) {
 				Notification.add({ type: "warn", text: d.message, delay: 20000 });
 			}
 			if (d.version !== Router._app_ver) {
