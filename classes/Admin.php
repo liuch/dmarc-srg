@@ -31,20 +31,14 @@
 
 namespace Liuch\DmarcSrg;
 
-use PDO;
-use Exception;
-use PDOException;
 use Liuch\DmarcSrg\Mail\MailBoxes;
 use Liuch\DmarcSrg\Database\Database;
-use Liuch\DmarcSrg\Settings\SettingString;
 
 /**
  * It's the main class for accessing administration functions.
  */
 class Admin
 {
-    private $st = null;
-
     /**
      * Returns information about the database and mailboxes as an array.
      *
@@ -52,167 +46,18 @@ class Admin
      */
     public function state(): array
     {
-        $this->st = [ 'database' => [ 'tables' => [] ] ];
-        try {
-            $prefix = Database::tablePrefix();
-            $p_len = strlen($prefix);
-            if ($p_len > 0) {
-                $like_str  = ' WHERE NAME LIKE "' . str_replace('_', '\\_', $prefix) . '%"';
-            } else {
-                $like_str  = '';
-            }
-            $db = Database::connection();
-            $db_tables = [];
-            $st = $db->query(
-                'SHOW TABLE STATUS FROM `' . str_replace('`', '', Database::name()) . '`' . $like_str
-            );
-            while ($row = $st->fetch(PDO::FETCH_ASSOC)) {
-                $tnm = $row['Name'];
-                $st2 = $db->query('SELECT COUNT(*) FROM `' . $tnm . '`');
-                $rows = $st2->fetch(PDO::FETCH_NUM)[0];
-                $db_tables[substr($tnm, $p_len)] = [
-                    'engine'       => $row['Engine'],
-                    'rows'         => intval($rows),
-                    'data_length'  => intval($row['Data_length']),
-                    'index_length' => intval($row['Index_length']),
-                    'create_time'  => $row['Create_time'],
-                    'update_time'  => $row['Update_time']
-                ];
-            }
-            foreach (array_keys(Database::$schema) as $table) {
-                if (!isset($db_tables[$table])) {
-                    $db_tables[$table] = false;
-                }
-            }
-            $exist_sys = false;
-            $exist_cnt = 0;
-            $absent_cnt = 0;
-            $tables_res = [];
-            foreach ($db_tables as $tname => $tval) {
-                $t = null;
-                if ($tval) {
-                    $t = $tval;
-                    $t['exists'] = true;
-                    if (isset(Database::$schema[$tname])) {
-                        $exist_cnt += 1;
-                        $t['message'] = 'Ok';
-                        if (!$exist_sys && $tname === 'system') {
-                            $exist_sys = true;
-                        }
-                    } else {
-                        $t['message'] = 'Unknown table';
-                    }
-                } else {
-                    $absent_cnt += 1;
-                    $t = [
-                        'error_code' => 1,
-                        'message'    => 'Not exist'
-                    ];
-                }
-                $t['name'] = $tname;
-                $tables_res[] = $t;
-            }
-            $this->st['database']['tables'] = $tables_res;
-            $ver = $exist_sys ? (new SettingString('version'))->value() : null;
-            if ($exist_sys && $ver !== Database::REQUIRED_VERSION) {
-                $this->setDbMessage('The database structure needs upgrading', 0);
-                $this->st['database']['needs_upgrade'] = true;
-            } elseif ($absent_cnt == 0) {
-                $this->st['state'] = 'Ok';
-                $this->st['database']['correct'] = true;
-                $this->setDbMessage('Ok', 0);
-            } else {
-                if ($absent_cnt !== 0) {
-                    if ($exist_cnt == 0) {
-                        $this->setDbMessage('The database schema is not initiated', -1);
-                    } else {
-                        $this->setDbMessage('Incomplete set of the tables', -2);
-                    }
-                }
-            }
-            if ($ver) {
-                $this->st['database']['version'] = $ver;
-            }
-        } catch (Exception $e) {
-            $this->st['database']['error_code'] = $e->getCode();
-            $this->st['database']['message'] = $e->getMessage();
-        }
-        $this->st['database']['type'] = Database::type();
-        $this->st['database']['name'] = Database::name();
-        $this->st['database']['location'] = Database::location();
-        if (!isset($this->st['state'])) {
-            $this->st['state'] = 'Err';
+        $res = [
+            'database'  => Database::state(),
+            'mailboxes' => (new MailBoxes())->list()
+        ];
+
+        if ($res['database']['correct'] ?? false) {
+            $res['state'] = 'Ok';
+        } else {
+            $res['state'] = 'Err';
         }
 
-        // MailBoxes
-        $mb = new MailBoxes();
-        $this->st['mailboxes'] = $mb->list();
-
-        return $this->st;
-    }
-
-    /**
-     * Inites the database.
-     *
-     * This method creates needed tables and indexes in the database.
-     * The method will fail if the database already have tables with the table prefix.
-     *
-     * @return array Result array with `error_code` and `message` fields.
-     */
-    public function initDb(): array
-    {
-        try {
-            $db = Database::connection();
-            $st = $db->query(self::sqlShowTablesQuery());
-            if ($st->fetch()) {
-                if (empty(Database::tablePrefix())) {
-                    throw new Exception('The database is not empty', -4);
-                } else {
-                    throw new Exception('Database tables already exist with the given prefix', -4);
-                }
-            }
-            foreach (array_keys(Database::$schema) as $table) {
-                $this->createDbTable(Database::tablePrefix($table), Database::$schema[$table]);
-            }
-            $st = $db->prepare(
-                'INSERT INTO `' . Database::tablePrefix('system') . '` (`key`, `value`) VALUES ("version", ?)'
-            );
-            $st->bindValue(1, Database::REQUIRED_VERSION, PDO::PARAM_STR);
-            $st->execute();
-            $st->closeCursor();
-        } catch (Exception $e) {
-            return [
-                'error_code' => $e->getCode(),
-                'message'    => $e->getMessage()
-            ];
-        }
-        return [ 'message' => 'The database has been initiated' ];
-    }
-
-    /**
-     * Cleans up the database.
-     *
-     * Drops tables with the table prefix in the database or all tables in the database if no table prefix is set.
-     *
-     * @return array Result array with `error_code` and `message` fields.
-     */
-    public function dropTables(): array
-    {
-        try {
-            $db = Database::connection();
-            $db->query('SET foreign_key_checks = 0');
-            $st = $db->query(self::sqlShowTablesQuery());
-            while ($table = $st->fetchColumn(0)) {
-                $db->query('DROP TABLE `' . $table . '`');
-            }
-            $db->query('SET foreign_key_checks = 1');
-        } catch (PDOException $e) {
-            return [
-                'error_code' => $e->getCode(),
-                'message'    => $e->getMessage()
-            ];
-        }
-        return [ 'message' => 'Database tables have been dropped' ];
+        return $res;
     }
 
     /**
@@ -233,69 +78,14 @@ class Admin
             if ($type === 'mailbox') {
                 return (new MailBoxes())->check($id);
             } else {
-                throw new Exception('Unknown resource type', -1);
+                throw new \Exception('Unknown resource type', -1);
             }
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return [
                 'error_code' => $e->getCode(),
                 'message'    => $e->getMessage()
             ];
         }
         return [ 'message' => 'Successfully' ];
-    }
-
-    /**
-     * Creates a table in the database.
-     *
-     * @param string $name        Table name
-     * @param array  $definitions Table structure
-     *
-     * @return void
-     */
-    private function createDbTable(string $name, array $definitions): void
-    {
-        $query = 'CREATE TABLE `' . $name . '` (';
-        $col_num = 0;
-        foreach ($definitions['columns'] as $column) {
-            if ($col_num > 0) {
-                $query .= ', ';
-            }
-            $query .= '`' . $column['name'] . '` ' . $column['definition'];
-            $col_num += 1;
-        }
-        $query .= ', ' . $definitions['additional'] . ') ' . $definitions['table_options'];
-        Database::connection()->query($query);
-    }
-
-    /**
-     * Sets the database message and error code for the result array
-     *
-     * @param string $message  Message string
-     * @param int    $err_code Error code
-     *
-     * @return void
-     */
-    private function setDbMessage(string $message, int $err_code): void
-    {
-        $this->st['database']['message'] = $message;
-        if ($err_code !== 0) {
-            $this->st['database']['error_code'] = $err_code;
-        }
-    }
-
-    /**
-     * Return SHOW TABLES SQL query string for tables with the table prefix
-     *
-     * @return string
-     */
-    private static function sqlShowTablesQuery(): string
-    {
-        $res = 'SHOW TABLES';
-        $prefix = Database::tablePrefix();
-        if (strlen($prefix) > 0) {
-            $res .= ' WHERE `tables_in_' . str_replace('`', '', Database::name())
-                . '` LIKE "' . str_replace('_', '\\_', $prefix) . '%"';
-        }
-        return $res;
     }
 }

@@ -23,6 +23,7 @@
 namespace Liuch\DmarcSrg;
 
 use Exception;
+use Liuch\DmarcSrg\Database\Database;
 use Liuch\DmarcSrg\Database\DatabaseUpgrader;
 
 require 'init.php';
@@ -44,10 +45,10 @@ if (Core::isJson()) {
                     }
                 }
                 if ($cmd === 'initdb') {
-                    Core::sendJson(Core::admin()->initDb());
+                    Core::sendJson(Database::initDb());
                     return;
                 } elseif ($cmd === 'droptables') {
-                    Core::sendJson(Core::admin()->dropTables());
+                    Core::sendJson(Database::dropTables());
                     return;
                 } elseif ($cmd === 'checksource') {
                     if (isset($data['id']) && isset($data['type'])) {
@@ -88,4 +89,3 @@ if (Core::isJson()) {
 }
 
 Core::sendBad();
-

@@ -66,7 +66,7 @@ try {
             echo 'Tables:  ' . $tcn . "\n";
             break;
         case 'init':
-            $res = Core::admin()->initDb();
+            $res = Database::initDb();
             break;
         case 'upgrade':
             $cur_ver = (new SettingString('version'))->value();
@@ -89,7 +89,7 @@ try {
             }
             break;
         case 'drop':
-            $res = Core::admin()->dropTables();
+            $res = Database::dropTables();
             break;
         default:
             echo "Usage: ${argv[0]} status|init|upgrade|drop\n";
@@ -106,4 +106,3 @@ $error = (isset($res['error_code']) && $res['error_code'] !== 0) ? 'Error! ' : '
 echo "Message: ${error}${res['message']}\n";
 
 exit(0);
-

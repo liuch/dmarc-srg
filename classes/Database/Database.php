@@ -22,8 +22,7 @@
 
 namespace Liuch\DmarcSrg\Database;
 
-use PDO;
-use Exception;
+use Liuch\DmarcSrg\Settings\SettingString;
 
 class Database
 {
@@ -78,24 +77,254 @@ class Database
         return ($database['table_prefix'] ?? '') . $postfix;
     }
 
+    /**
+     * Returns information about the database as an array.
+     *
+     * @return array May contain the following fields:
+     *               `tables`        - an array of tables with their properties;
+     *               `needs_upgrade` - true if the database needs upgrading;
+     *               `correct`       - true if the database is correct;
+     *               `type`          - the database type;
+     *               `name`          - the database name;
+     *               `location`      - the database location;
+     *               `version`       - the current version of the database structure;
+     *               `message`       - a state message;
+     *               `error_code`    - an error code;
+     */
+    public static function state(): array
+    {
+        $res = [];
+        try {
+            $prefix = self::tablePrefix();
+            $p_len = strlen($prefix);
+            if ($p_len > 0) {
+                $like_str  = ' WHERE NAME LIKE "' . str_replace('_', '\\_', $prefix) . '%"';
+            } else {
+                $like_str  = '';
+            }
+            $db = self::connection();
+            $tables = [];
+            $st = $db->query(
+                'SHOW TABLE STATUS FROM `' . str_replace('`', '', self::name()) . '`' . $like_str
+            );
+            while ($row = $st->fetch(\PDO::FETCH_ASSOC)) {
+                $tnm = $row['Name'];
+                $st2 = $db->query('SELECT COUNT(*) FROM `' . $tnm . '`');
+                $rows = $st2->fetch(\PDO::FETCH_NUM)[0];
+                $tables[substr($tnm, $p_len)] = [
+                    'engine'       => $row['Engine'],
+                    'rows'         => intval($rows),
+                    'data_length'  => intval($row['Data_length']),
+                    'index_length' => intval($row['Index_length']),
+                    'create_time'  => $row['Create_time'],
+                    'update_time'  => $row['Update_time']
+                ];
+            }
+            foreach (array_keys(self::$schema) as $table) {
+                if (!isset($tables[$table])) {
+                    $tables[$table] = false;
+                }
+            }
+            $exist_sys = false;
+            $exist_cnt = 0;
+            $absent_cnt = 0;
+            $tables_res = [];
+            foreach ($tables as $tname => $tval) {
+                $t = null;
+                if ($tval) {
+                    $t = $tval;
+                    $t['exists'] = true;
+                    if (isset(self::$schema[$tname])) {
+                        $exist_cnt += 1;
+                        $t['message'] = 'Ok';
+                        if (!$exist_sys && $tname === 'system') {
+                            $exist_sys = true;
+                        }
+                    } else {
+                        $t['message'] = 'Unknown table';
+                    }
+                } else {
+                    $absent_cnt += 1;
+                    $t = [
+                        'error_code' => 1,
+                        'message'    => 'Not exist'
+                    ];
+                }
+                $t['name'] = $tname;
+                $tables_res[] = $t;
+            }
+            $res['tables'] = $tables_res;
+            $ver = $exist_sys ? (new SettingString('version'))->value() : null;
+            if ($exist_sys && $ver !== self::REQUIRED_VERSION) {
+                self::setDbMessage('The database structure needs upgrading', 0, $res);
+                $res['needs_upgrade'] = true;
+            } elseif ($absent_cnt == 0) {
+                $res['correct'] = true;
+                self::setDbMessage('Ok', 0, $res);
+            } else {
+                if ($exist_cnt == 0) {
+                    self::setDbMessage('The database schema is not initiated', -1, $res);
+                } else {
+                    self::setDbMessage('Incomplete set of the tables', -1, $res);
+                }
+            }
+            if ($ver) {
+                $res['version'] = $ver;
+            }
+        } catch (\Exception $e) {
+            $res['error_code'] = $e->getCode();
+            $res['message'] = $e->getMessage();
+        }
+        $res['type']     = self::type();
+        $res['name']     = self::name();
+        $res['location'] = self::location();
+
+        return $res;
+    }
+
+    /**
+     * Inites the database.
+     *
+     * This method creates needed tables and indexes in the database.
+     * The method will fail if the database already have tables with the table prefix.
+     *
+     * @return array Result array with `error_code` and `message` fields.
+     */
+    public static function initDb(): array
+    {
+        try {
+            $db = self::connection();
+            $st = $db->query(self::sqlShowTablesQuery());
+            try {
+                if ($st->fetch()) {
+                    if (empty(self::tablePrefix())) {
+                        throw new \Exception('The database is not empty', -4);
+                    } else {
+                        throw new \Exception('Database tables already exist with the given prefix', -4);
+                    }
+                }
+                foreach (array_keys(self::$schema) as $table) {
+                    self::createDbTable(self::tablePrefix($table), self::$schema[$table]);
+                }
+            } finally {
+                $st->closeCursor();
+            }
+            $st = $db->prepare(
+                'INSERT INTO `' . self::tablePrefix('system') . '` (`key`, `value`) VALUES ("version", ?)'
+            );
+            $st->bindValue(1, self::REQUIRED_VERSION, \PDO::PARAM_STR);
+            $st->execute();
+            $st->closeCursor();
+        } catch (\Exception $e) {
+            return [
+                'error_code' => $e->getCode(),
+                'message'    => $e->getMessage()
+            ];
+        }
+        return [ 'message' => 'The database has been initiated' ];
+    }
+
+    /**
+     * Cleans up the database.
+     *
+     * Drops tables with the table prefix in the database or all tables in the database if no table prefix is set.
+     *
+     * @return array Result array with `error_code` and `message` fields.
+     */
+    public static function dropTables(): array
+    {
+        try {
+            $db = self::connection();
+            $db->query('SET foreign_key_checks = 0');
+            $st = $db->query(self::sqlShowTablesQuery());
+            while ($table = $st->fetchColumn(0)) {
+                $db->query('DROP TABLE `' . $table . '`');
+            }
+            $st->closeCursor();
+            $db->query('SET foreign_key_checks = 1');
+        } catch (\PDOException $e) {
+            return [
+                'error_code' => $e->getCode(),
+                'message'    => $e->getMessage()
+            ];
+        }
+        return [ 'message' => 'Database tables have been dropped' ];
+    }
+
     private function establishConnection()
     {
         global $database;
         try {
             $dsn = "{$database['type']}:host={$database['host']};dbname={$database['name']};charset=utf8";
-            $this->conn = new PDO(
+            $this->conn = new \PDO(
                 $dsn,
                 $database['user'],
                 $database['password'],
-                [ PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION ]
+                [ \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION ]
             );
             $this->conn->query('SET time_zone = "+00:00"');
-        } catch (Exception $e) {
-            throw new Exception($e->getMessage(), -1);
+        } catch (\Exception $e) {
+            throw new \Exception($e->getMessage(), -1);
         }
     }
 
-    public static $schema = [
+    /**
+     * Return SHOW TABLES SQL query string for tables with the table prefix
+     *
+     * @return string
+     */
+    private static function sqlShowTablesQuery(): string
+    {
+        $res = 'SHOW TABLES';
+        $prefix = self::tablePrefix();
+        if (strlen($prefix) > 0) {
+            $res .= ' WHERE `tables_in_' . str_replace('`', '', self::name())
+                . '` LIKE "' . str_replace('_', '\\_', $prefix) . '%"';
+        }
+        return $res;
+    }
+
+    /**
+     * Creates a table in the database.
+     *
+     * @param string $name        Table name
+     * @param array  $definitions Table structure
+     *
+     * @return void
+     */
+    private static function createDbTable(string $name, array $definitions): void
+    {
+        $query = 'CREATE TABLE `' . $name . '` (';
+        $col_num = 0;
+        foreach ($definitions['columns'] as $column) {
+            if ($col_num > 0) {
+                $query .= ', ';
+            }
+            $query .= '`' . $column['name'] . '` ' . $column['definition'];
+            $col_num += 1;
+        }
+        $query .= ', ' . $definitions['additional'] . ') ' . $definitions['table_options'];
+        self::connection()->query($query);
+    }
+
+    /**
+     * Sets the database message and error code for the state array
+     *
+     * @param string $message  Message string
+     * @param int    $err_code Error code
+     * @param array  $state    Database state array
+     *
+     * @return void
+     */
+    private static function setDbMessage(string $message, int $err_code, array &$state): void
+    {
+        $state['message'] = $message;
+        if ($err_code !== 0) {
+            $state['error_code'] = $err_code;
+        }
+    }
+
+    private static $schema = [
         'system' => [
             'columns' => [
                 [
