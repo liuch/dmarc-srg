@@ -48,16 +48,14 @@
 
 namespace Liuch\DmarcSrg;
 
-use Exception;
 use Liuch\DmarcSrg\Settings\SettingsList;
 
 require 'init.php';
 
 if (Core::isJson()) {
     try {
+        Core::auth()->isAllowed();
         if (Core::method() == 'GET') {
-            Core::auth()->isAllowed();
-
             if (isset($_GET['name'])) {
                 Core::sendJson(SettingsList::getSettingByName($_GET['name'])->toArray());
                 return;
@@ -75,7 +73,6 @@ if (Core::isJson()) {
             return;
         }
         if (Core::method() == 'POST' && Core::isJson()) {
-            Core::auth()->isAllowed();
             $data = Core::getJsonData();
             if ($data) {
                 $sett = SettingsList::getSettingByName($data['name'] ?? '');
@@ -90,12 +87,12 @@ if (Core::isJson()) {
                         ]);
                         break;
                     default:
-                        throw new Exception('Bad request', -1);
+                        throw new \Exception('Unknown action. The only valid value is "update".', -1);
                 }
                 return;
             }
         }
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
         Core::sendJson(
             [
                 'error_code' => $e->getCode(),
@@ -104,9 +101,9 @@ if (Core::isJson()) {
         );
         return;
     }
-    Core::sendBad();
+} elseif (Core::method() == 'GET') {
+    Core::sendHtml();
     return;
 }
 
-Core::sendHtml();
-
+Core::sendBad();

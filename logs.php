@@ -21,14 +21,20 @@
  *
  * =========================
  *
- * This script returns the log records
+ * This script returns the log items
  *
  * HTTP GET query:
- *   ? TODO
+ *   When the header 'Accept' is 'application/json':
+ *     It returns the item specified in the GET parameter `id` if specified. The parameter must contain integer value.
+ *     Otherwise it returns a list of the log items. The request may have the following GET parameters:
+ *       `position`  integer The position from which the list will be returned. The default value is 0.
+ *       `direction` string  The sort direction. Can be one of the following values: `ascent`, `descent'.
+ *                           The default value is `ascent`. The list will be sorted by Event time.
+ *     The data will be returned in json format.
+ *   Otherwise:
+ *     It returns the content of the index.html file.
  * Other HTTP methods:
- *   it returns an error
- *
- * All the data is in json format.
+ *   It returns an error.
  *
  * @category Web
  * @package  DmarcSrg
@@ -38,14 +44,13 @@
 
 namespace Liuch\DmarcSrg;
 
-use Exception;
 use Liuch\DmarcSrg\ReportLog\ReportLog;
 use Liuch\DmarcSrg\ReportLog\ReportLogItem;
 
 require 'init.php';
 
-if (Core::isJson()) {
-    if (Core::method() == "GET") {
+if (Core::method() == "GET") {
+    if (Core::isJson()) {
         try {
             Core::auth()->isAllowed();
             if (isset($_GET['id'])) {
@@ -58,7 +63,7 @@ if (Core::isJson()) {
             $res = $log->getList($pos);
             Core::sendJson($res);
             return;
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             Core::sendJson(
                 [
                     'error_code' => $e->getCode(),
@@ -67,10 +72,10 @@ if (Core::isJson()) {
             );
             return;
         }
+    } else {
+        Core::sendHtml();
+        return;
     }
-    Core::sendBad();
-    return;
 }
 
-Core::sendHtml();
-
+Core::sendBad();

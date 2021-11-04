@@ -22,13 +22,12 @@
 
 namespace Liuch\DmarcSrg;
 
-use Exception;
 use Liuch\DmarcSrg\Report\ReportList;
 
 require 'init.php';
 
-if (Core::isJson()) {
-    if (Core::method() == "GET" && isset($_GET['list'])) {
+if (Core::method() == 'GET') {
+    if (Core::isJson() && isset($_GET['list'])) {
         try {
             Core::auth()->isAllowed();
             $lst = explode(',', $_GET['list']);
@@ -64,20 +63,18 @@ if (Core::isJson()) {
                 $res['filters'] = ReportList::getFilterList();
             }
             Core::sendJson($res);
-            return;
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             Core::sendJson(
                 [
                     'error_code' => $e->getCode(),
                     'message'    => $e->getMessage()
                 ]
             );
-            return;
         }
+        return;
     }
-    Core::sendBad();
+    Core::sendHtml();
     return;
 }
 
-Core::sendHtml();
-
+Core::sendBad();
