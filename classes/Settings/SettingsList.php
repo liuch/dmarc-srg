@@ -40,6 +40,11 @@ use Liuch\DmarcSrg\Database\Database;
  */
 class SettingsList
 {
+    public const ORDER_ASCENT  = 0;
+    public const ORDER_DESCENT = 1;
+
+    private $order = self::ORDER_ASCENT;
+
     /**
      * Returns a list of the settings
      *
@@ -105,19 +110,36 @@ class SettingsList
         }
         unset($sch_data);
 
-        usort($list, static function ($a, $b) {
+        $dir = $this->order == self::ORDER_ASCENT ? 1 : -1;
+        usort($list, static function ($a, $b) use ($dir) {
             $an = $a->name();
             $bn = $b->name();
             if ($an === $bn) {
                 return 0;
             }
-            return ($an < $bn) ? -1 : 1;
+            return (($an < $bn) ? -1 : 1) * $dir;
         });
 
         return [
             'list' => $list,
             'more' => false
         ];
+    }
+
+    /**
+     * Sets the sorting direction for the list
+     *
+     * @param int $direction The sorting direction. ORDER_ASCENT or ORDER_DESCENT must be used here.
+     *
+     * @return SettingsList $this
+     */
+    public function setOrder(int $direction)
+    {
+        if ($direction !== self::ORDER_DESCENT) {
+            $direction = self::ORDER_ASCENT;
+        }
+        $this->order = $direction;
+        return $this;
     }
 
     /**

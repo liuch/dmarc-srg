@@ -25,12 +25,16 @@
  *
  * HTTP GET query:
  *   When the header 'Accept' is 'application/json':
- *     It returns a list of the settings or data for the setting specified in the parameter name.
- *   otherwise:
+ *     It returns the setting specified in the GET parameter `name`.
+ *     Otherwise it returns a list of the settings. The request may have the following GET parameters:
+ *       `direction` string The sort direction. Can be one of the following values: `ascent`, `descent'.
+ *                          The default value is `ascent`. The list will be sorted by Setting name.
+ *     The data will be returned in json format.
+ *   Otherwise:
  *     It returns the content of the index.html file.
  *
  * HTTP POST query:
- *   Updates data for specified setting. Data must be in json format with the following fields:
+ *   Updates data for the specified setting. Data must be in json format with the following fields:
  *     `name`   string     Name of the setting.
  *     `action` string     Must be `update`.
  *     `value`  string|int Value to update.
@@ -61,7 +65,9 @@ if (Core::isJson()) {
                 return;
             }
 
-            $res = (new SettingsList())->getList();
+            $dir  = $_GET['direction'] ?? 'ascent';
+            $ndir = $dir === 'ascent' ? SettingsList::ORDER_ASCENT : SettingsList::ORDER_DESCENT;
+            $res  = (new SettingsList())->setOrder($ndir)->getList();
             $list = array_map(function ($setting) {
                 return $setting->toArray();
             }, $res['list']);

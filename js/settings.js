@@ -22,6 +22,7 @@ class Settings {
 	constructor() {
 		this._table = null;
 		this._scrool = null;
+		this._sort   = "ascent";
 		this._element = document.getElementById("main-block");
 	}
 
@@ -46,7 +47,10 @@ class Settings {
 		this._table.display_status("wait");
 		let that = this;
 
-		return window.fetch("settings.php", {
+		let uparams = new URLSearchParams();
+		uparams.set("direction", this._sort);
+
+		return window.fetch("settings.php?" + uparams.toString(), {
 			method: "GET",
 			cache: "no-store",
 			headers: HTTP_HEADERS,
@@ -67,7 +71,6 @@ class Settings {
 			that._table.clear();
 			let fr = new ITableFrame(d, 0);
 			that._table.add_frame(fr);
-			that._table.sort("name", "ascent");
 			that._table.focus();
 		}).catch(function(err) {
 			console.warn(err.message);
@@ -88,6 +91,12 @@ class Settings {
 					this._display_edit_dialog(data);
 				}
 			}.bind(this),
+			onsort: function(col) {
+				let dir = col.sorted() && "toggle" || "ascent";
+				this._table.set_sorted(col.name(), dir);
+				this._sort = col.sorted();
+				this.update();
+			}.bind(this),
 			onfocus: function(el) {
 				scroll_to_element(el, this._scroll);
 			}.bind(this)
@@ -97,7 +106,10 @@ class Settings {
 			{ content: "Value", name: "value" },
 			{ content: "Description", name: "descr" }
 		].forEach(function(col) {
-			this._table.add_column(col);
+			let c = this._table.add_column(col);
+			if (c.name() === "name") {
+				c.sort(this._sort);
+			}
 		}, this);
 	}
 
