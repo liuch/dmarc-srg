@@ -22,8 +22,6 @@
 
 namespace Liuch\DmarcSrg\Mail;
 
-use Exception;
-
 class MailBoxes
 {
     private $box_list;
@@ -72,7 +70,7 @@ class MailBoxes
     public function mailbox($id)
     {
         if (!is_int($id) || $id < 0 || $id > count($this->box_list)) {
-            throw new Exception('Incorrect mailbox Id', -1);
+            throw new \Exception('Incorrect mailbox Id', -1);
         }
         return $this->box_list[$id - 1];
     }
@@ -82,7 +80,7 @@ class MailBoxes
         if ($id !== 0) {
             try {
                 return $this->mailbox($id)->check();
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 return [
                     'error_code' => $e->getCode(),
                     'message' => $e->getMessage()
@@ -94,11 +92,11 @@ class MailBoxes
         $err_cnt = 0;
         $box_cnt = count($this->box_list);
         for ($i = 0; $i < $box_cnt; ++$i) {
-            $r = $this->box_list[i]->check();
+            $r = $this->box_list[$i]->check();
             if ($r['error_code'] !== 0) {
                 ++$err_cnt;
             }
-            $result[] = $r;
+            $results[] = $r;
         }
         $res = [];
         if ($err_cnt == 0) {
@@ -112,4 +110,3 @@ class MailBoxes
         return $res;
     }
 }
-
