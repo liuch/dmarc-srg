@@ -78,6 +78,7 @@ class LoginDialog extends ModalDialog {
 	}
 
 	_submit() {
+		this._buttons[1].focus();
 		this._enable_elements(false);
 		let body = {};
 		if (!this._params.nousername) {
