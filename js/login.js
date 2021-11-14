@@ -91,6 +91,7 @@ class LoginDialog extends ModalDialog {
 			return;
 		}
 		let that = this;
+		let hide = false;
 		set_wait_status(this._msg_el, "Sending credentials to the server...");
 		window.fetch("login.php", {
 			method: "POST",
@@ -106,14 +107,17 @@ class LoginDialog extends ModalDialog {
 			if (data.error_code !== undefined && data.error_code !== 0)
 				throw new Error(data.message || "Login: Unknown error");
 			that._result = data;
-			that.hide();
 			Notification.add({ type: "info", text: data.message || "Successfully!" });
+			hide = true;
 		}).catch(function(err) {
 			that._pass.value = "";
 			console.warn(err.message);
 			set_error_status(that._msg_el, err.message);
 		}).finally(function() {
 			that._enable_elements(true);
+			that._first.focus();
+			if (hide)
+				that.hide();
 		});
 	}
 }
