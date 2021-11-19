@@ -86,7 +86,8 @@ class Settings {
 	_make_table() {
 		this._table = new ITable({
 			class:   "main-table",
-			onclick: function(data, id) {
+			onclick: function(row) {
+				let data = row.userdata();
 				if (data) {
 					this._display_edit_dialog(data);
 				}

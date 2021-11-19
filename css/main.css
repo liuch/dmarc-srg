@@ -409,7 +409,7 @@ th.cell-status {
 	width: 25em;
 	height: 7em;
 }
-tr.virtual-item {
+tr.virtual-item, .nodata {
 	color: gray;
 	font-style: italic;
 }

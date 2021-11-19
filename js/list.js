@@ -159,9 +159,10 @@ class ReportList {
 	_gen_table() {
 		this._table = new ReportTable({
 			class:   "main-table",
-			onclick: function(data, id) {
+			onclick: function(row) {
+				let data = row.userdata();
 				if (data)
-					this._display_report(data, id);
+					this._display_report(data, row.id());
 			}.bind(this),
 			onsort: function(col) {
 				let dir = col.sorted() && "toggle" || "descent";

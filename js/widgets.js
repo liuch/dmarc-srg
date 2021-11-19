@@ -35,6 +35,7 @@ class ITable {
 			this._onsort = params.onsort || null;
 			this._onclick = params.onclick || null;
 			this._onfocus = params.onfocus || null;
+			this._nodata_text = params.nodata_text || null;
 		}
 		this._focused = false;
 		this._focused_row = null;
@@ -73,7 +74,7 @@ class ITable {
 				if (row) {
 					that._set_selected_rows([ row ]);
 					if (that._onclick)
-						that._onclick(row.userdata(), row.id());
+						that._onclick(row);
 				}
 			});
 			this._body.addEventListener("focus", function(event) {
@@ -159,7 +160,7 @@ class ITable {
 					case "Enter":
 					case "NumpadEnter":
 						if (that._onclick && that._focused_row)
-							that._onclick(that._focused_row.userdata(), that._focused_row.id());
+							that._onclick(that._focused_row);
 						event.preventDefault();
 						return;
 				}
@@ -169,6 +170,7 @@ class ITable {
 					event.preventDefault();
 				}
 			});
+			this._fill_frames();
 			this._table.appendChild(this._body);
 		}
 		return this._table;
@@ -207,30 +209,29 @@ class ITable {
 	}
 
 	display_status(status, text) {
-		if (this._status) {
-			if (!status) {
-				this._status.remove();
-				this._status = null;
-				return;
-			}
-		}
-		else {
-			this.element();
-			this._status = document.createElement("tr");
-			let col = document.createElement("td");
-			col.setAttribute("colspan", this._columns.length || 1);
-			this._status.appendChild(col);
+		if (this._status && !status) {
+			this._status.remove();
+			this._status = null;
+			return;
 		}
 
-		let el = this._status.firstChild;
-		if (status === "wait")
+		this.element();
+		this._status = document.createElement("tr");
+		let el = document.createElement("td");
+		el.setAttribute("colspan", this._columns.length || 1);
+		this._status.appendChild(el);
+		if (status === "wait") {
 			set_wait_status(el);
+		}
 		else {
 			remove_all_children(this._body);
-			if (status === "nodata")
+			if (status === "nodata") {
+				el.classList.add("nodata");
 				el.appendChild(document.createTextNode(text || "No data"));
-			else
+			}
+			else {
 				set_error_status(el, text);
+			}
 		}
 		this._body.appendChild(this._status);
 	}
@@ -246,7 +247,7 @@ class ITable {
 	add_frame(frame) {
 		if (frame.count() === 0) {
 			if (this._frames.length === 0)
-				this.display_status("nodata");
+				this.display_status("nodata", this._nodata_text);
 			return
 		}
 
@@ -264,7 +265,8 @@ class ITable {
 
 	clear() {
 		this._frames = [];
-		remove_all_children(this._body);
+		if (this._body)
+			remove_all_children(this._body);
 		this._focused_row = null;
 		this._selected_rows = [];
 	}
@@ -322,6 +324,12 @@ class ITable {
 	_fill_columns() {
 		this._columns.forEach(function(col) {
 			this._header.appendChild(col.element());
+		}, this);
+	}
+
+	_fill_frames() {
+		this._frames.forEach(function(fr) {
+			this._body.appendChild(fr.element());
 		}, this);
 	}
 
@@ -469,6 +477,7 @@ class ITableRow {
 		this._tabindex = -1;
 		this._selected = false;
 		this._element = null;
+		this._class = data.class || null;
 		this._userdata = data.userdata || null;
 		this._cells = data.cells.map(function(col) {
 			if (col instanceof ITableCell) {
@@ -490,6 +499,8 @@ class ITableRow {
 		if (!this._element) {
 			this._element = document.createElement("tr");
 			this._element.setAttribute("data-id", this._id);
+			if (this._class)
+				this._element.setAttribute("class", this._class);
 			this._cells.forEach(function(col) {
 				this._element.appendChild(col.element());
 			}, this);
