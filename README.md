@@ -4,7 +4,7 @@ A php parser, viewer and summary report generator for incoming DMARC reports.
 ### Features
 * View a table of parsed reports;
 * Easily identify potential DMARC related issues through colors;
-* Filter report list by domain, month and reporting organization;
+* Filter report list by domain, month, reporting organization and more;
 * View DKIM/SPF details for each report;
 * Password protection of the web interface (can be disabled);
 * Receiving and processing incoming DMARC reports from specified mailboxes;
@@ -91,5 +91,5 @@ For example, if you want to get a summary report for the last week, you should r
 `$ cd /usr/local/share/dmarc-srg && php utils/summary_report.php domain=example.com period=lastweek`
 
 # Web-interface
-Navigate in your browser to the location of the `index.html` file. You will see the basic Report List view, allowing you to navigate through the reports that have been parsed. Using the menu go to the Admin section and create tables in the database and check the availability of the mailboxes if necessary.
+Navigate in your browser to the location of the `index.html` file. You will see the basic Report List view, allowing you to navigate through the reports that have been parsed. Using the menu go to the Admin section and create tables in the database and check the accessibility of the mailboxes if necessary.
 

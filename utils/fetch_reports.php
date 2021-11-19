@@ -23,7 +23,7 @@
  *
  * This script fetches DMARC reports from mailboxes and saves them to the DB.
  * The mailbox parameters must be specified in the configuration file.
- * The mailbox availability can be checked on the administration page in
+ * The mailbox accessibility can be checked on the administration page in
  * the web interface.
  * Note: the current directory must be the one containing the classes directory.
  *
@@ -216,4 +216,3 @@ try {
 }
 
 exit(0);
-

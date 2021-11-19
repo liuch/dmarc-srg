@@ -152,7 +152,7 @@ if (Core::method() == 'POST') {
                 if ($lcnt > 0) {
                     $res['message'] = "Only {$lcnt} of the {$rcnt} report files have been loaded";
                 } else {
-                    $res['message'] = 'None of the report file has been loaded';
+                    $res['message'] = 'None of the report files has been loaded';
                 }
             }
             $res['results'] = $results;

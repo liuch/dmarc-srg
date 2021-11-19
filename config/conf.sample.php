@@ -53,7 +53,7 @@ $admin = [
 //
 $fetcher = [
     'mailboxes' => [
-        // How many messages will be fetched at once maximum.
+        // How many messages will be fetched at once maximum. 0 to disable any limiting.
         'messages_maximum' => 10
     ]
 ];

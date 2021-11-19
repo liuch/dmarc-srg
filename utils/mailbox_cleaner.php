@@ -23,7 +23,7 @@
  *
  * This script deletes old DMARC report email messages in mailboxes.
  * The mailbox parameters and conditions for removal must be specified
- * in the configuration file. The mailbox availability can be checked
+ * in the configuration file. The mailbox accessibility can be checked
  * on the administration page in the web interface.
  * The best place to use it is cron.
  * Note: the current directory must be the one containing the classes directory.
@@ -106,4 +106,3 @@ try {
 }
 
 exit(0);
-
