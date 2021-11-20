@@ -600,7 +600,10 @@ class ITableCell {
 	}
 
 	value(target) {
-		return (target === "dom" || typeof(this._content) !== "object") && this._content || null;
+		if (target === "dom" || typeof(this._content) !== "object") {
+			return this._content;
+		}
+		return null;
 	}
 }
 
