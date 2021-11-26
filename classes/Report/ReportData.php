@@ -125,7 +125,7 @@ class ReportData
                 }
                 unset($tag_data);
                 self::$rep_data['begin_time'] = intval(self::$rep_data['begin_time']);
-                self::$rep_data['eng_time'] = intval(self::$rep_data['end_time']);
+                self::$rep_data['end_time'] = intval(self::$rep_data['end_time']);
                 foreach (self::$rep_data['records'] as &$rec_data) {
                     $rec_data['rcount'] = intval($rec_data['rcount']);
                 }
