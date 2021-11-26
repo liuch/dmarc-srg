@@ -22,8 +22,6 @@
 
 namespace Liuch\DmarcSrg\Report;
 
-use PDO;
-use Exception;
 use Liuch\DmarcSrg\Common;
 use Liuch\DmarcSrg\Domains\Domain;
 use Liuch\DmarcSrg\Domains\DomainList;
@@ -41,7 +39,11 @@ class Report
 
     public static function fromXmlFile($fd)
     {
-        return new Report(ReportData::fromXmlFile($fd));
+        $data = ReportData::fromXmlFile($fd);
+        if (!self::checkData($data)) {
+            throw new \Exception('Incorrect or incomplete report data', -1);
+        }
+        return new Report($data);
     }
 
     public static function jsonOrNull($data)
@@ -57,7 +59,7 @@ class Report
         $domain = $this->data['domain'];
         $report_id = $this->data['report_id'];
         if (empty($domain) || empty($report_id)) {
-            throw new Exception('Not specified report\'s domain or id');
+            throw new \Exception('Not specified report\'s domain or id');
         }
         $this->data = [ 'domain' => $domain, 'report_id' => $report_id, 'records' => [] ];
         $db = Database::connection();
@@ -69,14 +71,14 @@ class Report
                 . ' INNER JOIN `' . Database::tablePrefix('domains') . '` AS `dom` ON `dom`.`id` = `rp`.`domain_id`'
                 . ' WHERE `fqdn` = ? AND `external_id` = ?'
             );
-            $st->bindValue(1, $domain, PDO::PARAM_STR);
-            $st->bindValue(2, $report_id, PDO::PARAM_STR);
+            $st->bindValue(1, $domain, \PDO::PARAM_STR);
+            $st->bindValue(2, $report_id, \PDO::PARAM_STR);
             $st->execute();
             $id = null;
             try {
-                $res = $st->fetch(PDO::FETCH_NUM);
+                $res = $st->fetch(\PDO::FETCH_NUM);
                 if (!$res) {
-                    throw new Exception('The report was not found', -1);
+                    throw new \Exception('The report was not found', -1);
                 }
                 $id = $res[0];
                 $this->data['date'] = [
@@ -105,10 +107,10 @@ class Report
                 . ' `spf_align`, `envelope_to`, `envelope_from`, `header_from`'
                 . ' FROM `' . Database::tablePrefix('rptrecords') . '` WHERE `report_id` = ?' . $order_str
             );
-            $st->bindValue(1, $id, PDO::PARAM_INT);
+            $st->bindValue(1, $id, \PDO::PARAM_INT);
             $st->execute();
             try {
-                while ($res = $st->fetch(PDO::FETCH_NUM)) {
+                while ($res = $st->fetch(\PDO::FETCH_NUM)) {
                     $this->data['records'][] = [
                         'ip'            => inet_ntop($res[1]),
                         'count'         => intval($res[2]),
@@ -126,9 +128,9 @@ class Report
             } finally {
                 $st->closeCursor();
             }
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             if ($e->getCode() !== -1) {
-                throw new Exception('Failed to get the report from DB', -1);
+                throw new \Exception('Failed to get the report from DB', -1);
             }
             throw $e;
         }
@@ -146,7 +148,7 @@ class Report
                 // It will automatically added a new domain if there are no domains in the table
                 // or will throw an error otherwise.
                 if (DomainList::count() !== 0) {
-                    throw new Exception('Failed to add an incoming report: unknown domain', -1);
+                    throw new \Exception('Failed to add an incoming report: unknown domain', -1);
                 }
 
                 $domain = new Domain([
@@ -156,7 +158,7 @@ class Report
                 ]);
                 $domain->save();
             } elseif (!$domain->active()) {
-                throw new Exception('Failed to add an incoming report: the domain is inactive', -1);
+                throw new \Exception('Failed to add an incoming report: the domain is inactive', -1);
             }
 
             $st = $db->prepare(
@@ -166,20 +168,20 @@ class Report
                 . ' `policy_sp`, `policy_pct`, `policy_fo`, `seen`)'
                 . ' VALUES (?, FROM_UNIXTIME(?), FROM_UNIXTIME(?), NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)'
             );
-            $st->bindValue(1, $domain->id(), PDO::PARAM_INT);
-            $st->bindValue(2, $this->data['begin_time'], PDO::PARAM_INT);
-            $st->bindValue(3, $this->data['end_time'], PDO::PARAM_INT);
-            $st->bindValue(4, $this->data['org'], PDO::PARAM_STR);
-            $st->bindValue(5, $this->data['external_id'], PDO::PARAM_STR);
-            $st->bindValue(6, $this->data['email'], PDO::PARAM_STR);
-            $st->bindValue(7, $this->data['extra_contact_info'], PDO::PARAM_STR);
-            $st->bindValue(8, Report::jsonOrNull($this->data['error_string']), PDO::PARAM_STR);
-            $st->bindValue(9, $this->data['policy_adkim'], PDO::PARAM_STR);
-            $st->bindValue(10, $this->data['policy_aspf'], PDO::PARAM_STR);
-            $st->bindValue(11, $this->data['policy_p'], PDO::PARAM_STR);
-            $st->bindValue(12, $this->data['policy_sp'], PDO::PARAM_STR);
-            $st->bindValue(13, $this->data['policy_pct'], PDO::PARAM_STR);
-            $st->bindValue(14, $this->data['policy_fo'], PDO::PARAM_STR);
+            $st->bindValue(1, $domain->id(), \PDO::PARAM_INT);
+            $st->bindValue(2, $this->data['begin_time'], \PDO::PARAM_INT);
+            $st->bindValue(3, $this->data['end_time'], \PDO::PARAM_INT);
+            $st->bindValue(4, $this->data['org'], \PDO::PARAM_STR);
+            $st->bindValue(5, $this->data['external_id'], \PDO::PARAM_STR);
+            $st->bindValue(6, $this->data['email'], \PDO::PARAM_STR);
+            $st->bindValue(7, $this->data['extra_contact_info'], \PDO::PARAM_STR);
+            $st->bindValue(8, Report::jsonOrNull($this->data['error_string']), \PDO::PARAM_STR);
+            $st->bindValue(9, $this->data['policy_adkim'], \PDO::PARAM_STR);
+            $st->bindValue(10, $this->data['policy_aspf'], \PDO::PARAM_STR);
+            $st->bindValue(11, $this->data['policy_p'], \PDO::PARAM_STR);
+            $st->bindValue(12, $this->data['policy_sp'], \PDO::PARAM_STR);
+            $st->bindValue(13, $this->data['policy_pct'], \PDO::PARAM_STR);
+            $st->bindValue(14, $this->data['policy_fo'], \PDO::PARAM_STR);
             $st->execute();
             $new_id = $db->lastInsertId();
             $st->closeCursor();
@@ -191,31 +193,31 @@ class Report
                 . ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
             );
             foreach ($this->data['records'] as &$rec_data) {
-                $st->bindValue(1, $new_id, PDO::PARAM_INT);
-                $st->bindValue(2, inet_pton($rec_data['ip']), PDO::PARAM_STR);
-                $st->bindValue(3, $rec_data['rcount'], PDO::PARAM_INT);
-                $st->bindValue(4, array_search($rec_data['disposition'], Common::$disposition), PDO::PARAM_INT);
-                $st->bindValue(5, Report::jsonOrNull($rec_data['reason']), PDO::PARAM_STR);
-                $st->bindValue(6, Report::jsonOrNull($rec_data['dkim_auth']), PDO::PARAM_STR);
-                $st->bindValue(7, Report::jsonOrNull($rec_data['spf_auth']), PDO::PARAM_STR);
-                $st->bindValue(8, array_search($rec_data['dkim_align'], Common::$align_res), PDO::PARAM_INT);
-                $st->bindValue(9, array_search($rec_data['spf_align'], Common::$align_res), PDO::PARAM_INT);
-                $st->bindValue(10, $rec_data['envelope_to'], PDO::PARAM_STR);
-                $st->bindValue(11, $rec_data['envelope_from'], PDO::PARAM_STR);
-                $st->bindValue(12, $rec_data['header_from'], PDO::PARAM_STR);
+                $st->bindValue(1, $new_id, \PDO::PARAM_INT);
+                $st->bindValue(2, inet_pton($rec_data['ip']), \PDO::PARAM_STR);
+                $st->bindValue(3, $rec_data['rcount'], \PDO::PARAM_INT);
+                $st->bindValue(4, array_search($rec_data['disposition'], Common::$disposition), \PDO::PARAM_INT);
+                $st->bindValue(5, Report::jsonOrNull($rec_data['reason']), \PDO::PARAM_STR);
+                $st->bindValue(6, Report::jsonOrNull($rec_data['dkim_auth']), \PDO::PARAM_STR);
+                $st->bindValue(7, Report::jsonOrNull($rec_data['spf_auth']), \PDO::PARAM_STR);
+                $st->bindValue(8, array_search($rec_data['dkim_align'], Common::$align_res), \PDO::PARAM_INT);
+                $st->bindValue(9, array_search($rec_data['spf_align'], Common::$align_res), \PDO::PARAM_INT);
+                $st->bindValue(10, $rec_data['envelope_to'], \PDO::PARAM_STR);
+                $st->bindValue(11, $rec_data['envelope_from'], \PDO::PARAM_STR);
+                $st->bindValue(12, $rec_data['header_from'], \PDO::PARAM_STR);
                 $st->execute();
                 $st->closeCursor();
             }
             unset($rec_data);
             $db->commit();
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $db->rollBack();
             if ($e->getCode() == '23000') {
-                throw new Exception('This report has already been loaded', -1);
+                throw new \Exception('This report has already been loaded', -1);
             } elseif ($e->getCode() == -1) {
                 throw $e;
             } else {
-                throw new Exception('Failed to insert the report', -1);
+                throw new \Exception('Failed to insert the report', -1);
             }
         }
         return [ 'message' => 'The report is loaded successfully' ];
@@ -229,7 +231,7 @@ class Report
     public function set($name, $value)
     {
         if ($name !== 'seen' && gettype($value) !== 'boolean') {
-            throw new Exception('Incorrect parameters', -1);
+            throw new \Exception('Incorrect parameters', -1);
         }
 
         $db = Database::connection();
@@ -239,13 +241,13 @@ class Report
                 . ' INNER JOIN `' . Database::tablePrefix('domains') . '` AS `dom`'
                 . ' ON `rp`.`domain_id` = `dom`.`id` SET `seen` = ? WHERE `fqdn` = ? AND `external_id` = ?'
             );
-            $st->bindValue(1, $value, PDO::PARAM_BOOL);
-            $st->bindValue(2, $this->data['domain'], PDO::PARAM_STR);
-            $st->bindValue(3, $this->data['report_id'], PDO::PARAM_STR);
+            $st->bindValue(1, $value, \PDO::PARAM_BOOL);
+            $st->bindValue(2, $this->data['domain'], \PDO::PARAM_STR);
+            $st->bindValue(3, $this->data['report_id'], \PDO::PARAM_STR);
             $st->execute();
             $st->closeCursor();
-        } catch (Exception $e) {
-            throw new Exception('Failed to update the DB record', -1);
+        } catch (\Exception $e) {
+            throw new \Exception('Failed to update the DB record', -1);
         }
         return [ 'message' => 'Ok' ];
     }
@@ -270,5 +272,79 @@ class Report
         $dir = $o_set[1] === 'descent' ? 'DESC' : 'ASC';
 
         return " ORDER BY `{$fname}` {$dir}";
+    }
+
+    /**
+     * Checks report data for correctness and completeness
+     *
+     * @param array $data Report data
+     *
+     * @return bool
+     */
+    private static function checkData(array $data): bool
+    {
+        static $fields = [
+            'domain'             => [ 'required' => true,  'type' => 'string'  ],
+            'begin_time'         => [ 'required' => true,  'type' => 'integer' ],
+            'end_time'           => [ 'required' => true,  'type' => 'integer' ],
+            'org'                => [ 'required' => true,  'type' => 'string'  ],
+            'external_id'        => [ 'required' => true,  'type' => 'string'  ],
+            'email'              => [ 'required' => false, 'type' => 'string'  ],
+            'extra_contact_info' => [ 'required' => false, 'type' => 'string'  ],
+            'error_string'       => [ 'required' => false, 'type' => 'array'   ],
+            'policy_adkim'       => [ 'required' => false, 'type' => 'string'  ],
+            'policy_aspf'        => [ 'required' => false, 'type' => 'string'  ],
+            'policy_p'           => [ 'required' => false, 'type' => 'string'  ],
+            'policy_sp'          => [ 'required' => false, 'type' => 'string'  ],
+            'policy_pct'         => [ 'required' => false, 'type' => 'string'  ],
+            'policy_fo'          => [ 'required' => false, 'type' => 'string'  ],
+            'records'            => [ 'required' => true,  'type' => 'array'   ]
+        ];
+        if (!self::checkRow($data, $fields) || count($data['records']) === 0) {
+            return false;
+        }
+
+        static $rfields = [
+            'ip'            => [ 'required' => true,  'type' => 'string'  ],
+            'rcount'        => [ 'required' => true,  'type' => 'integer' ],
+            'disposition'   => [ 'required' => true,  'type' => 'string'  ],
+            'reason'        => [ 'required' => false, 'type' => 'array'   ],
+            'dkim_auth'     => [ 'required' => false, 'type' => 'array'   ],
+            'spf_auth'      => [ 'required' => false, 'type' => 'array'   ],
+            'dkim_align'    => [ 'required' => true,  'type' => 'string'  ],
+            'spf_align'     => [ 'required' => true,  'type' => 'string'  ],
+            'envelope_to'   => [ 'required' => false, 'type' => 'string'  ],
+            'envelope_from' => [ 'required' => false, 'type' => 'string'  ],
+            'header_from'   => [ 'required' => false, 'type' => 'string'  ]
+        ];
+        foreach ($data['records'] as &$rec) {
+            if (gettype($rec) !== 'array' || !self::checkRow($rec, $rfields)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Checks one row of report data
+     *
+     * @param array $row Data row
+     * @param array $def Row definition
+     *
+     * @return bool
+     */
+    private static function checkRow(array &$row, array &$def): bool
+    {
+        foreach ($def as $key => &$dd) {
+            if (isset($row[$key])) {
+                if (gettype($row[$key]) !== $dd['type']) {
+                    return false;
+                }
+            } elseif ($dd['required']) {
+                return false;
+            }
+        }
+        return true;
     }
 }
