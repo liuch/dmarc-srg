@@ -9,11 +9,10 @@ h4, h5 {
 h4:not(:first-child), .info-block {
 	margin-top: 1rem;
 }
-input[type=file] {
-	display: block;
-	margin-bottom: 0.5em;
+input[type=submit], input[type=reset] {
+	margin-top: 0.5em;
 }
-input[type=reset] {
+input[type=reset]:not(:first-child) {
 	margin-left: 0.5em;
 }
 fieldset {
@@ -110,6 +109,11 @@ legend {
 	text-align: left;
 	border-spacing: 0;
 	width: 100%;
+}
+.subtable {
+	font-size: 90%;
+	border: 0.1rem solid #eee;
+	border-radius: 0.4rem;
 }
 .main-table th {
 	top: 0;
@@ -241,7 +245,7 @@ legend {
 .mailbox-location {
 	min-width: 20%;
 }
-.mailbox-host {
+.mailbox-host, .directory-location {
 	margin-right: auto;
 }
 .source-check-button {

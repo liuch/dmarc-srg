@@ -22,9 +22,6 @@
 
 namespace Liuch\DmarcSrg\ReportFile;
 
-use Exception;
-use ZipArchive;
-
 class ReportFile
 {
     private $fd = null;
@@ -49,11 +46,11 @@ class ReportFile
                 if ($fd) {
                     $tmpfname = tempnam(sys_get_temp_dir(), 'dmarc_');
                     if ($tmpfname === false) {
-                        throw new Exception('Failed to create a temporary file', -1);
+                        throw new \Exception('Failed to create a temporary file', -1);
                     }
                     rewind($fd);
                     if (file_put_contents($tmpfname, $fd) === false) {
-                        throw new Exception('Failed to copy data to a temporary file', -1);
+                        throw new \Exception('Failed to copy data to a temporary file', -1);
                     }
                     $this->filepath = $tmpfname;
                     $this->remove = true;
@@ -81,7 +78,7 @@ class ReportFile
     public static function fromFile($filepath, $filename = null, $remove = false)
     {
         if (!is_file($filepath)) {
-            throw new Exception('ReportFile: it is not a file', -1);
+            throw new \Exception('ReportFile: it is not a file', -1);
         }
         $fname = $filename ? basename($filename) : basename($filepath);
         $type = pathinfo($fname, PATHINFO_EXTENSION);
@@ -109,30 +106,33 @@ class ReportFile
             $fd = null;
             switch ($this->type) {
                 case 'zip':
-                    $this->zip = new ZipArchive();
+                    $this->zip = new \ZipArchive();
                     $this->zip->open($this->filepath);
                     if ($this->zip->count() !== 1) {
-                        throw new Exception('The archive must have only one file in it', -1);
+                        throw new \Exception('The archive must have only one file in it', -1);
                     }
                     $zfn = $this->zip->getNameIndex(0);
                     if ($zfn !== pathinfo($zfn, PATHINFO_BASENAME)) {
-                        throw new Exception('There must not be any directories in the archive', -1);
+                        throw new \Exception('There must not be any directories in the archive', -1);
                     }
                     $fd = $this->zip->getStream($zfn);
                     break;
                 default:
                     // gzopen() can be used to read a file which is not in gzip format;
                     // in this case gzread() will directly read from the file without decompression.
-                    $fd = gzopen($this->filepath, 'r');
+                    $fd = @gzopen($this->filepath, 'r');
                     break;
             }
             if (!$fd) {
-                throw new Exception('Failed to open a report file', -1);
+                throw new \Exception('Failed to open a report file', -1);
             }
             $this->fd = $fd;
         }
         if ($this->type === 'gz' && !$this->filepath) {
-            ReportFile::ensureRegisterFilter('report_gzfile_cut_filter', 'Liuch\DmarcSrg\ReportFile\ReportGZFileCutFilter');
+            ReportFile::ensureRegisterFilter(
+                'report_gzfile_cut_filter',
+                'Liuch\DmarcSrg\ReportFile\ReportGZFileCutFilter'
+            );
             $this->enableGzFilter(true);
         }
         return $this->fd;
@@ -161,4 +161,3 @@ class ReportFile
         }
     }
 }
-

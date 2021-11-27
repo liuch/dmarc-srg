@@ -33,6 +33,7 @@ namespace Liuch\DmarcSrg;
 
 use Liuch\DmarcSrg\Mail\MailBoxes;
 use Liuch\DmarcSrg\Database\Database;
+use Liuch\DmarcSrg\Directories\DirectoryList;
 
 /**
  * It's the main class for accessing administration functions.
@@ -40,16 +41,19 @@ use Liuch\DmarcSrg\Database\Database;
 class Admin
 {
     /**
-     * Returns information about the database and mailboxes as an array.
+     * Returns information about the database, directories, and mailboxes as an array.
      *
-     * @return array Contains fields: `database`, `state`, `mailboxes`.
+     * @return array Contains fields: `database`, `state`, `mailboxes`, `directories`.
      */
     public function state(): array
     {
         $res = [
-            'database'  => Database::state(),
-            'mailboxes' => (new MailBoxes())->list()
+            'database'    => Database::state(),
+            'mailboxes'   => (new MailBoxes())->list()
         ];
+        $res['directories'] = array_map(function ($dir) {
+            return $dir->toArray();
+        }, (new DirectoryList())->list());
 
         if ($res['database']['correct'] ?? false) {
             $res['state'] = 'Ok';
@@ -61,12 +65,11 @@ class Admin
     }
 
     /**
-     * Checks the availability of report sources. So far these are only mailboxes.
+     * Checks the availability of report sources.
      *
-     * @param int    $id   Id of the checked source. If $id == 0 then all available
-     *                     mailboxes will be checked.
+     * @param int    $id   Id of the checked source. If $id == 0 then all available sources with the passed type
+     *                     will be checked.
      * @param string $type Type of the checked source.
-     *                     So far it is only a `mailbox`.
      *
      * @return array Result array with `error_code` and `message` fields.
      *               For one resource and if there is no error,
@@ -74,18 +77,12 @@ class Admin
      */
     public function checkSource(int $id, string $type): array
     {
-        try {
-            if ($type === 'mailbox') {
+        switch ($type) {
+            case 'mailbox':
                 return (new MailBoxes())->check($id);
-            } else {
-                throw new \Exception('Unknown resource type', -1);
-            }
-        } catch (\Exception $e) {
-            return [
-                'error_code' => $e->getCode(),
-                'message'    => $e->getMessage()
-            ];
+            case 'directory':
+                return (new DirectoryList())->check($id);
         }
-        return [ 'message' => 'Successfully' ];
+        throw new \Exception('Unknown resource type', -1);
     }
 }

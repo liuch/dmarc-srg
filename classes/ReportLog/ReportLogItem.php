@@ -22,15 +22,15 @@
 
 namespace Liuch\DmarcSrg\ReportLog;
 
-use PDO;
-use Exception;
+use Liuch\DmarcSrg\Sources\Source;
 use Liuch\DmarcSrg\Database\Database;
 
 class ReportLogItem
 {
     public const SOURCE_UPLOADED_FILE = 1;
     public const SOURCE_EMAIL = 2;
-    private const SOURCE_LAST_ = 3;
+    public const SOURCE_DIRECTORY = 3;
+    private const SOURCE_LAST_ = 4;
 
     private $id = null;
     private $domain = null;
@@ -45,7 +45,7 @@ class ReportLogItem
     {
         if (!is_null($source)) {
             if (gettype($source) !== 'integer' || $source <= 0 || $source >= static::SOURCE_LAST_) {
-                throw new Exception('Invalid parameter passed', -1);
+                throw new \Exception('Invalid parameter passed', -1);
             }
         }
         $this->source = $source;
@@ -96,11 +96,11 @@ class ReportLogItem
             'SELECT `domain`, `external_id`, `event_time`, `filename`, `source`, `success`, `message` FROM `'
             . Database::tablePrefix('reportlog') . '` WHERE `id` = ?'
         );
-        $st->bindValue(1, $id, PDO::PARAM_INT);
+        $st->bindValue(1, $id, \PDO::PARAM_INT);
         $st->execute();
-        $row = $st->fetch(PDO::FETCH_NUM);
+        $row = $st->fetch(\PDO::FETCH_NUM);
         if (!$row) {
-            throw new Exception('The log item is not found', -1);
+            throw new \Exception('The log item is not found', -1);
         }
         $li->domain      = $row[0];
         $li->external_id = $row[1];
@@ -129,6 +129,8 @@ class ReportLogItem
                 return 'uploaded_file';
             case ReportLogItem::SOURCE_EMAIL:
                 return 'email';
+            case Source::SOURCE_DIRECTORY:
+                return 'directory';
         }
         return '';
     }
@@ -169,15 +171,15 @@ class ReportLogItem
                 . ' `source` = ?, `success` = ?, `message` = ? WHERE `id` = ?'
             );
         }
-        $st->bindValue(1, $this->domain, PDO::PARAM_STR);
-        $st->bindValue(2, $this->external_id, PDO::PARAM_STR);
-        $st->bindValue(3, !is_null($this->event_time) ? $this->event_time : time(), PDO::PARAM_INT);
-        $st->bindValue(4, $this->filename, PDO::PARAM_STR);
-        $st->bindValue(5, $this->source, PDO::PARAM_INT);
-        $st->bindValue(6, $this->success, PDO::PARAM_BOOL);
-        $st->bindValue(7, $this->message, PDO::PARAM_STR);
+        $st->bindValue(1, $this->domain, \PDO::PARAM_STR);
+        $st->bindValue(2, $this->external_id, \PDO::PARAM_STR);
+        $st->bindValue(3, !is_null($this->event_time) ? $this->event_time : time(), \PDO::PARAM_INT);
+        $st->bindValue(4, $this->filename, \PDO::PARAM_STR);
+        $st->bindValue(5, $this->source, \PDO::PARAM_INT);
+        $st->bindValue(6, $this->success, \PDO::PARAM_BOOL);
+        $st->bindValue(7, $this->message, \PDO::PARAM_STR);
         if (!is_null($this->id)) {
-            $st->bindValue(8, $this->id, PDO::PARAM_INT);
+            $st->bindValue(8, $this->id, \PDO::PARAM_INT);
         }
         $st->execute();
         if (is_null($this->id)) {

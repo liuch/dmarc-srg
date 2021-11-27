@@ -116,8 +116,25 @@ class Admin {
 
 	_fill_data(err_msg) {
 		if (!err_msg) {
-			this._database.set_data(this._state.database);
-			this._sources.set_data(this._state.mailboxes);
+			let d = this._state.database || [];
+			this._database.set_data({
+				root: {
+					name:     d.name,
+					type:     d.type,
+					correct:  d.correct,
+					message:  d.message,
+					location: d.location
+				},
+				groups: [
+					{ name: "Tables", items: this._state.database.tables || [] }
+				]
+			});
+			this._sources.set_data({
+				groups: [
+					{ name: "Mailboxes", type: "mailbox", items: this._state.mailboxes || [] },
+					{ name: "Directories", type: "directory", items: this._state.directories || [] }
+				]
+			});
 		}
 		else {
 			this._database.set_status("error", err_msg);
@@ -225,23 +242,22 @@ Admin.db_actions = [
 
 class DropdownListBox {
 	constructor() {
-		this._items = [];
-		this._element = null;
-		this._root_content = null
+		this._item_groups  = [];
+		this._element      = null;
+		this._root_item    = null
 		this._list_element = null;
 	}
 
 	element() {
 		if (!this._element) {
 			let el = document.createElement("div");
-			//el.setAttribute("id", "mb-container");
 			el.setAttribute("class", "round-border");
 			let that = this;
 			el.addEventListener("click", function(event) {
 				if (event.target.closest(".root-list-block")) {
-					if (that._items.length > 0) {
+					if (that._item_groups.length > 0) {
 						that._list_element.classList.toggle("hidden");
-						that._root_content.element().classList.toggle("bottom-border");
+						that._root_item.element().classList.toggle("bottom-border");
 					}
 				}
 			});
@@ -261,9 +277,9 @@ class DropdownListBox {
 	}
 
 	set_data(data) {
-		this._root_content = new ListBoxItem();
+		this._root_item = new ListBoxItem();
+		this._make_group_list(data);
 		this._make_root_columns(data);
-		this._make_list_items(data);
 		if (this._element) {
 			this._update_element();
 		}
@@ -278,10 +294,10 @@ class DropdownListBox {
 	}
 
 	_content_container() {
-		if (!this._root_content) {
-			this._root_content = new ListBoxItem();
+		if (!this._root_item) {
+			this._root_item = new ListBoxItem();
 		}
-		let c = this._root_content.element();
+		let c = this._root_item.element();
 		let cl = [];
 		for (let i = 0; i < c.classList.length; ++i) {
 			if (c.classList[i].startsWith("state-"))
@@ -302,17 +318,20 @@ class DropdownListBox {
 	_make_root_columns(data) {
 	}
 
-	_make_list_items(data) {
-		this._items = data.map(function(di) {
-			let lbi = new ListBoxItem();
-			return lbi;
-		});
+	_make_group_list(data) {
+		this._item_groups = data.groups.map(function(gd) {
+			return this._make_group_item(gd);
+		}, this);
+	}
+
+	_make_group_item(gr_data) {
+		return new ListBoxItemGroup(gr_data);
 	}
 
 	_make_list_item_elements() {
 		let fr = document.createDocumentFragment();
-		this._items.forEach(function(item) {
-			fr.appendChild(item.element());
+		this._item_groups.forEach(function(ig) {
+			fr.appendChild(ig.element());
 		});
 		return fr;
 	}
@@ -321,40 +340,35 @@ class DropdownListBox {
 class DatabaseListBox extends DropdownListBox {
 	constructor(menu) {
 		super();
-		this._menu = menu;
+		this._menu     = menu;
+		this._name     = null;
+		this._type     = null;
+		this._correct  = false;
+		this._message  = null;
+		this._location = null;
+	}
+
+	set_data(data) {
+		this._name     = data.root.name;
+		this._type     = data.root.type;
+		this._correct  = data.root.correct;
+		this._message  = data.root.message;
+		this._location = data.root.location;
+		super.set_data(data);
 	}
 
 	_make_root_columns(data) {
-		this._root_content.state(data.correct && "green" || "red");
-		this._root_content.add_column(new StatusIndicator(data.name, data.message, "title-item-wrap"));
-		this._root_content.add_column(new ListBoxColumn(data.message, null, "message-item state-text"));
-		this._root_content.add_column(new ListBoxColumn(data.type, null, "db-type"));
-		this._root_content.add_column(new ListBoxColumn(data.location, null, "db-location"));
+		this._root_item.state(this._correct && "green" || "red");
+		this._root_item.add_column(new StatusIndicator(this._name, this._message, "title-item-wrap"));
+		this._root_item.add_column(new ListBoxColumn(this._message, null, "message-item state-text"));
+		this._root_item.add_column(new ListBoxColumn(this._type, null, "db-type"));
+		this._root_item.add_column(new ListBoxColumn(this._location, null, "db-location"));
 		if (this._menu)
-			this._root_content.add_column(new ListBoxColumn(this._menu, null, "db-menu-button"));
+			this._root_item.add_column(new ListBoxColumn(this._menu, null, "db-menu-button"));
 	}
 
-	_make_list_items(data) {
-		super._make_list_items(data.tables);
-		for (let i = 0; i < data.tables.length; ++i) {
-			let d = data.tables[i];
-			let it = this._items[i];
-			let state = d.error_code && "red" || (d.message === "Ok" && "green" || "yellow");
-			it.state(state);
-			it.add_column(new StatusIndicator(d.name, d.message, "title-item-wrap"));
-			it.add_column(new ListBoxColumn(d.engine || d.message, null, "message-item state-text"));
-			it.add_column(new ListBoxColumn(d.rows || 0, "Records", "dbtable-records"));
-			it.add_column(new ListBoxColumn((d.data_length || 0) + (d.index_length || 0), "Size", "dbtable-size"));
-		}
-	}
-
-	_make_list_item_elements() {
-		let fr = document.createDocumentFragment();
-		let h = document.createElement("h5");
-		h.appendChild(document.createTextNode("Tables (" + this._items.length + ")"));
-		fr.appendChild(h);
-		fr.appendChild(super._make_list_item_elements());
-		return fr;
+	_make_group_item(gr_data) {
+		return new DatabaseItemGroup(gr_data);
 	}
 }
 
@@ -379,43 +393,16 @@ class SourceListBox extends DropdownListBox {
 	}
 
 	_make_root_columns(data) {
-		let enabled = (data.length > 0);
-		this._root_content.state(enabled && "green" || "gray");
-		this._root_content.add_column(new StatusIndicator("Total sources: " + data.length, enabled && "Enabled" || "Disabled"));
+		let count = this._item_groups.reduce(function(cnt, gr) {
+			return cnt + gr.count();
+		}, 0);
+		let enabled = (count > 0);
+		this._root_item.state(enabled && "green" || "gray");
+		this._root_item.add_column(new StatusIndicator("Total sources: " + count, enabled && "Enabled" || "Disabled"));
 	}
 
-	_make_list_items(data) {
-		this._items = data.map(function(di) {
-			let lbi = new ListBoxItem();
-			return lbi;
-		});
-	}
-
-	_make_list_items(data) {
-		this._items = data.map(function(di) {
-			let it = new SourceListItem({ id: di.id, type: "mailbox" });
-			it.state("green");
-			it.add_column(new StatusIndicator(di.name, null, "title-item-wrap"));
-			it.add_column(new ListBoxColumn(di.mailbox, null, "mailbox-location"));
-			it.add_column(new ListBoxColumn(di.host, "Host", "mailbox-host"));
-			it.add_column(new ListBoxColumn(this._get_check_button(), null, "source-check-button"));
-			return it;
-		}, this);
-	}
-
-	_make_list_item_elements() {
-		let fr = document.createDocumentFragment();
-		let h = document.createElement("h5");
-		h.appendChild(document.createTextNode("Mailboxes (" + this._items.length + ")"));
-		fr.appendChild(h);
-		fr.appendChild(super._make_list_item_elements());
-		return fr;
-	}
-
-	_get_check_button() {
-		let btn = document.createElement("button");
-		btn.appendChild(document.createTextNode("Check accessibility"));
-		return btn;
+	_make_group_item(gr_data) {
+		return new SourceItemGroup(gr_data);
 	}
 
 	_check_button_clicked(id, type, btn) {
@@ -437,7 +424,16 @@ class SourceListBox extends DropdownListBox {
 		}).then(function(data) {
 			if (data.error_code)
 				throw new Error(data.message || "Failed");
-			let msg = [ data.message, "Messages: " + data.status.messages, "Unseen: " + data.status.unseen ];
+			let msg = [ data.message ];
+			if (data.status) {
+				if (type === "mailbox") {
+					msg.push("Messages: " + data.status.messages);
+					msg.push("Unseen: " + data.status.unseen);
+				}
+				else if (type === "directory") {
+					msg.push("Files: " + data.status.files);
+				}
+			}
 			Notification.add({ text: msg, type: "info" });
 			state = "green";
 		}).catch(function(err) {
@@ -446,20 +442,28 @@ class SourceListBox extends DropdownListBox {
 		}).finally(function() {
 			btn.textContent = btn_text;
 			btn.disabled = false;
-			let item_f = false;
-			let gstate = "green";
-			for (let i = 0; i < that._items.length; ++i) {
-				let it = that._items[i];
-				if (!item_f && it.id() === id && it.type() === type) {
-					it.state(state);
-					item_f = true;
-				}
-				if (gstate === "green") {
-					gstate = it.state();
+			that._set_state(state, id, type);
+		});
+	}
+
+	_set_state(state, id, type) {
+		let flag = 0;
+		let gstate = "green";
+		for (let i = 0; flag !== 3 && i < this._item_groups.length; ++i) {
+			let gr = this._item_groups[i];
+			if (!(flag & 1) && gr.type() === type) {
+				gr.state(state, id);
+				flag |= 1;
+			}
+			if (!(flag & 2)) {
+				let s = gr.state();
+				if (s !== "green") {
+					gstate = s;
+					flag |= 2;
 				}
 			}
-			that._root_content.state(gstate);
-		});
+		}
+		this._root_item.state(gstate);
 	}
 }
 
@@ -529,6 +533,101 @@ class SourceListItem extends ListBoxItem {
 		el.setAttribute("data-type", this._type);
 		return el;
 	}
+}
+
+class ListBoxItemGroup {
+	constructor(data) {
+		this._name = data.name;
+		this._type = data.type;
+		this._element = null;
+		this._items = data.items.map(function(it) {
+			return this._make_item(it);
+		}, this);
+	}
+
+	type() {
+		return this._type;
+	}
+
+	count() {
+		return this._items.length;
+	}
+
+	element() {
+		if (!this._element) {
+			let fr = document.createDocumentFragment();
+			let h = document.createElement("h5");
+			h.appendChild(document.createTextNode(this._name + " (" + this._items.length + ")"));
+			fr.appendChild(h);
+			this._items.forEach(function(it) {
+				fr.appendChild(it.element());
+			});
+			this._element = fr;
+		}
+		return this._element;
+	}
+
+	_make_item(d) {
+		return new ListBoxItem();
+	}
+}
+
+class DatabaseItemGroup extends ListBoxItemGroup {
+	_make_item(d) {
+		let it = super._make_item(d);
+		let state = d.error_code && "red" || (d.message === "Ok" && "green" || "yellow");
+		it.state(state);
+		it.add_column(new StatusIndicator(d.name, d.message, "title-item-wrap"));
+		it.add_column(new ListBoxColumn(d.engine || d.message, null, "message-item state-text"));
+		it.add_column(new ListBoxColumn(d.rows || 0, "Records", "dbtable-records"));
+		it.add_column(new ListBoxColumn((d.data_length || 0) + (d.index_length || 0), "Size", "dbtable-size"));
+		return it;
+	}
+}
+
+class SourceItemGroup extends ListBoxItemGroup {
+	state(new_state, item_id) {
+		if (item_id !== undefined) {
+			this._items.find(function(item) {
+				if (item.id() == item_id) {
+					item.state(new_state);
+					return true;
+				}
+				return false;
+			});
+			return;
+		}
+		let gstate = "green";
+		for (let i = 0; i < this._items.length; ++i) {
+			let state = this._items[i].state();
+			if (state !== gstate) {
+				return state;
+			}
+		}
+		return gstate;
+	}
+
+	_make_item(d) {
+		let it = new SourceListItem({ id: d.id, type: this._type });
+		it.state("green");
+		it.add_column(new StatusIndicator(d.name, null, "title-item-wrap"));
+		if (this._type === "mailbox") {
+			it.add_column(new ListBoxColumn(d.mailbox, null, "mailbox-location"));
+			it.add_column(new ListBoxColumn(d.host, "Host", "mailbox-host"));
+		}
+		else {
+			it.add_column(new ListBoxColumn(d.location, null, "directory-location"));
+		}
+		it.add_column(new ListBoxColumn(this._make_check_button(), null, "source-check-button"));
+		return it;
+	}
+
+	_make_check_button() {
+		let btn = document.createElement("button");
+		btn.appendChild(document.createTextNode("Check accessibility"));
+		return btn;
+	}
+
 }
 
 class ListBoxColumn {

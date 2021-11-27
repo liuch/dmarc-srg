@@ -22,9 +22,11 @@ $database = [
     'table_prefix' => ''
 ];
 
-// This needs only if you want to get reports from a mailbox automatically.
-// In order to collect reports from several mailboxes, you should put each
-// mailbox settings in an array.
+/**
+ * It is only required if you want to get reports from a mailbox automatically.
+ * In order to collect reports from several mailboxes, you should put each
+ * mailbox settings in an array.
+ */
 $mailboxes = [
     // Just for displaying in web-admin. Not necessary.
     'name'            => 'Dmarc-Rua',
@@ -45,6 +47,22 @@ $mailboxes = [
     'mailbox'         => 'INBOX'
 ];
 
+/**
+ * It is only required if you want to get reports from a server directory.
+ * In order to collect report from several directories, you should put each
+ * directory settings in an array. Processing of the directories is not recursive.
+ * It is recommended to use atomic methods for adding files to these directories.
+ * Attention! All successfully processed files will be deleted from the directories
+ * and all others will be moved to subdirectory `failed`, that will be created
+ * automatically if it does not exist.
+ */
+$directories = [
+    // Just for displaying in web-admin. Not necessary.
+    'name'     => 'Rua-Dir',
+    // The directory location
+    'location' => '/var/spool/dmarc-srg/rua'
+];
+
 $admin = [
     // Set this value to null or remove this parameter to disable authentication
     'password' => '',
@@ -55,6 +73,10 @@ $fetcher = [
     'mailboxes' => [
         // How many messages will be fetched at once maximum. 0 to disable any limiting.
         'messages_maximum' => 10
+    ],
+    'directories' => [
+        // How many report files will be processed at once maximum. 0 to disable any limiting.
+        'files_maximum' => 50
     ]
 ];
 
