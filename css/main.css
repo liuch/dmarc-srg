@@ -394,7 +394,7 @@ th.report-id, td.report-id {
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
-.unseen {
+.unseen, .custom-value {
 	font-weight: bold;
 }
 #list-settings-btn {

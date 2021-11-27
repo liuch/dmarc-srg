@@ -189,9 +189,10 @@ abstract class Setting
                 break;
         }
         return [
-            'type'  => $type,
-            'name'  => $this->name,
-            'value' => $this->value
+            'type'    => $type,
+            'name'    => $this->name,
+            'value'   => $this->value,
+            'default' => SettingsList::$schema[$this->name]['default']
         ];
     }
 

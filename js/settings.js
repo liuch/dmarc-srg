@@ -119,6 +119,9 @@ class Settings {
 		rd.cells.push({ content: d.name });
 		rd.cells.push({ content: d.value });
 		rd.cells.push({ content: Settings._descriptions[d.name] || "n/a" });
+		if (d.value !== d.default) {
+			rd.class = "custom-value";
+		}
 		return rd;
 	}
 
