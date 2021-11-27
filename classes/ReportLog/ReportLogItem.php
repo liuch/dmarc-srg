@@ -29,7 +29,6 @@ class ReportLogItem
 {
     public const SOURCE_UPLOADED_FILE = 1;
     public const SOURCE_EMAIL = 2;
-    public const SOURCE_DIRECTORY = 3;
     private const SOURCE_LAST_ = 4;
 
     private $id = null;

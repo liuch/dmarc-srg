@@ -32,7 +32,6 @@
 namespace Liuch\DmarcSrg\Sources;
 
 use Liuch\DmarcSrg\ReportFile\ReportFile;
-use Liuch\DmarcSrg\ReportLog\ReportLogItem;
 
 /**
  * This class is designed to process report files from local server directories.
