@@ -22,11 +22,9 @@
 
 namespace Liuch\DmarcSrg;
 
-use Liuch\DmarcSrg\Report\Report;
 use Liuch\DmarcSrg\Report\ReportFetcher;
-use Liuch\DmarcSrg\ReportFile\ReportFile;
 use Liuch\DmarcSrg\Sources\DirectorySource;
-use Liuch\DmarcSrg\ReportLog\ReportLogItem;
+use Liuch\DmarcSrg\Sources\UploadedFilesSource;
 use Liuch\DmarcSrg\Directories\DirectoryList;
 
 require 'init.php';
@@ -143,57 +141,21 @@ if (Core::method() == 'POST') {
             }
         }
     } elseif (isset($_FILES['report_file']) && isset($_POST['cmd']) && $_POST['cmd'] === 'upload-report') {
-        $results = [];
-        $files   = &$_FILES['report_file'];
-        for ($i = 0; $i < count($files['name']); ++$i) {
-            $log = null;
-            $rep = null;
-            try {
-                if ($files['error'][$i] !== UPLOAD_ERR_OK) {
-                    throw new \Exception(
-                        'Failed to upload a report file',
-                        $files['error'][$i]
-                    );
-                }
-
-                $realfname = $files['name'][$i];
-                $tempfname  = $files['tmp_name'][$i];
-                if (!is_uploaded_file($tempfname)) {
-                    throw new \Exception('Possible file upload attack', -11);
-                }
-
-                $rf = ReportFile::fromFile($tempfname, $realfname, false);
-                $rep = Report::fromXmlFile($rf->datastream());
-                $results[] = $rep->save($realfname);
-
-                $log = ReportLogItem::success(
-                    ReportLogItem::SOURCE_UPLOADED_FILE,
-                    $rep,
-                    $realfname,
-                    null
-                );
-            } catch (\Exception $e) {
-                $results[] = [
-                    'error_code' => $e->getCode(),
-                    'message'    => $e->getMessage()
-                ];
-                $log = ReportLogItem::failed(
-                    ReportLogItem::SOURCE_UPLOADED_FILE,
-                    $rep,
-                    $realfname,
-                    $e->getMessage()
-                );
-            } finally {
-                if ($log) {
-                    $log->save();
-                }
-                unset($rep);
-                unset($rf);
+        try {
+            $results = (new ReportFetcher(new UploadedFilesSource($_FILES['report_file'])))->fetch();
+            Core::sendJson(ReportFetcher::makeSummaryResult($results));
+            return;
+        } catch (\Exception $e) {
+            $err_code = $e->getCode();
+            if ($err_code === 0) {
+                $err_code = -1;
             }
+            Core::sendJson([
+                'error_code' => $err_code,
+                'message'    => $e->getMessage()
+            ]);
+            return;
         }
-        unset($files);
-        Core::sendJson(ReportFetcher::makeSummaryResult($results));
-        return;
     }
 }
 

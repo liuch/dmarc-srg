@@ -27,7 +27,6 @@ use Liuch\DmarcSrg\Database\Database;
 
 class ReportLogItem
 {
-    public const SOURCE_UPLOADED_FILE = 1;
     public const SOURCE_EMAIL = 2;
     private const SOURCE_LAST_ = 4;
 
@@ -124,7 +123,7 @@ class ReportLogItem
     public static function sourceToString(int $source): string
     {
         switch ($source) {
-            case ReportLogItem::SOURCE_UPLOADED_FILE:
+            case Source::SOURCE_UPLOADED_FILE:
                 return 'uploaded_file';
             case ReportLogItem::SOURCE_EMAIL:
                 return 'email';

@@ -92,7 +92,6 @@ class Files {
 			let fd = new FormData(fm);
 			window.fetch("files.php", {
 				method: "POST",
-				headers: HTTP_HEADERS,
 				credentials: "same-origin",
 				body: fd
 			}).then(function(resp) {
