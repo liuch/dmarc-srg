@@ -73,10 +73,14 @@ class ReportFetcher
         $limit = 0;
         $stype = $this->source->type();
         switch ($stype) {
+            case Source::SOURCE_MAILBOX:
+                $limit = $fetcher['mailboxes']['messages_maximum'] ?? 0;
+                break;
             case Source::SOURCE_DIRECTORY:
                 $limit = $fetcher['directories']['files_maximum'] ?? 0;
                 break;
         }
+        $limit = intval($limit);
 
         $results = [];
         while ($this->source->valid()) {

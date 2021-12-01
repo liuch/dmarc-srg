@@ -27,9 +27,6 @@ use Liuch\DmarcSrg\Database\Database;
 
 class ReportLogItem
 {
-    public const SOURCE_EMAIL = 2;
-    private const SOURCE_LAST_ = 4;
-
     private $id = null;
     private $domain = null;
     private $external_id = null;
@@ -42,7 +39,7 @@ class ReportLogItem
     private function __construct($source, $filename)
     {
         if (!is_null($source)) {
-            if (gettype($source) !== 'integer' || $source <= 0 || $source >= static::SOURCE_LAST_) {
+            if (gettype($source) !== 'integer' || $source <= 0) {
                 throw new \Exception('Invalid parameter passed', -1);
             }
         }
@@ -125,7 +122,7 @@ class ReportLogItem
         switch ($source) {
             case Source::SOURCE_UPLOADED_FILE:
                 return 'uploaded_file';
-            case ReportLogItem::SOURCE_EMAIL:
+            case Source::SOURCE_MAILBOX:
                 return 'email';
             case Source::SOURCE_DIRECTORY:
                 return 'directory';
