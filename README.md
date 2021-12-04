@@ -1,13 +1,14 @@
 # DmarcSrg
 A php parser, viewer and summary report generator for incoming DMARC reports.
 
-### Features
+## Features
 * View a table of parsed reports;
 * Easily identify potential DMARC related issues through colors;
 * Filter report list by domain, month, reporting organization and more;
 * View DKIM/SPF details for each report;
 * Password protection of the web interface (can be disabled);
 * Receiving and processing incoming DMARC reports from specified mailboxes;
+* Receiving and processing incoming DMARC reports from specified server local directories;
 * Uploading and processing incoming DMARC reports by using the web interface;
 * Ability to configure deletion of old reports from the database and mailboxes;
 * Generation of summary reports for the last week, last month or last N days and sending them to the specified mailbox;
@@ -63,18 +64,18 @@ Create a new user called `dmarc_user` for the new database (you can specify a di
 Copy `conf/conf.sample.php` to `conf/conf.php` and configure it. Learn more by reading the comments in it.
 
 ### Database initialization
-There are two ways to do that: by using the web-interface or by running the follow command:
+There are two ways to do that: by using the web interface or by running the follow command:
 
 `$ php utils/database_admin.php init`
 
 **Note:** This command must be run from the directory which contains the directories classes and config.
 
 ## Usage
-In general, DmarcSrg is designed to automatically receive incoming DMARC reports, process them and send summary reports to the specified e-mail address, so a web-interface as well as a web-server is optional. Most of the work is done by periodically running php scripts, which are located in the utils directory.
+In general, DmarcSrg is designed to automatically receive incoming DMARC reports, process them and send summary reports to the specified e-mail address, so a web interface as well as a web-server is optional. Most of the work is done by periodically running php scripts, which are located in the utils directory.
 
 ### Utils
 - `utils/database_admin.php` - performs some administration functions with the database.
-- `utils/fetch_reports.php` - fetches DMARC reports from mailboxes and saves them to the database.
+- `utils/fetch_reports.php` - fetches DMARC reports from mailboxes and server local directories and saves them to the database.
 - `utils/mailbox_cleaner.php` - deletes old DMARC report email messages in mailboxes.
 - `utils/reportlog_cleaner.php` - deletes old log entries.
 - `utils/reports_cleaner.php` - deletes old reports from the database.
@@ -90,6 +91,36 @@ For example, if you want to get a summary report for the last week, you should r
 
 `$ cd /usr/local/share/dmarc-srg && php utils/summary_report.php domain=example.com period=lastweek`
 
-# Web-interface
+# Web interface
 Navigate in your browser to the location of the `index.html` file. You will see the basic Report List view, allowing you to navigate through the reports that have been parsed. Using the menu go to the Admin section and create tables in the database and check the accessibility of the mailboxes if necessary.
+
+# How the report file processing works
+
+## General rules for processing report files
+- Only files of the following formats are accepted: zip, gzip, xml.
+- Reports that do not have required fields (domain, time, org, id, records, and so on) are rejected.
+- Reports that have already been accepted are also rejected.
+- Reports for domains that are not listed in the database as allowed for processing are rejected. The first domain is automatically added to the database from the first correct report.
+- For any attempt to download a report file, an entry is added to the internal log that can be viewed in the web interface (Administration --> Logs).
+
+## Mailboxes
+An IMAP connection is sequentially established to each mailbox, and the following actions are performed:
+- Obtaining a list of unread messages.
+- Checking the content of each message (number of attachments, attachment size, file extension).
+- Extracting a report file from the message and parsing it and adding the report data to the database.
+- If the report is successfully added to the database, the message is set as SEEN.
+- If the report is rejected, the message is also set as SEEN and moved to the `failed` folder of the current mailbox. It the folder does not exist, it will be created.
+
+**Note:** The total number of processed messages depends on the limit specified in the configuration file. The limitation is valid for each mail box separately.
+
+## Local directories of the server
+Each directory specified in the configuration file is scanned for presence of files in it (not recursively). Each file in each directory is pprocessed as follows:
+- Parsing the report file and adding the report data to the database.
+- If the report is successfully added to the database, the file is removed from the directory.
+- If the report is rejected, the file is moved to the `failed` subdirectory of the directory in which the file is currently located. If the subdirectory does not exist, it will be created.
+
+**Note:** The total number of processed report files depends on the limit specified in the configuration file. The limitation is valid for each directory separately.
+
+## Uploaded report files from the web interface
+Uploading report files via the web interface is pretty standard. The upload result can be seen in a popup message and in the internal log. The number of simultaneously uploaded files and their size are limited only by the settings of your server (See `upload_max_filesize` and `post_max_size` in your `php.ini` file).
 
