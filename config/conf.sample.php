@@ -77,7 +77,18 @@ $fetcher = [
     'directories' => [
         // How many report files will be processed at once maximum. 0 to disable any limiting.
         'files_maximum' => 50
-    ]
+    ],
+    /**
+     * Domains matching this regular expression will be automatically added to the database from processed
+     * reports. This option does not affect domains that have already been added to the database.
+     * It is not necessary to use this option in most cases. The option can be useful if you have many domains
+     * or subdomains and do not want to add them manually in the GUI. An empty string or null doesn't match any domain.
+     * Note: The first domain from the first report will be automatically added anyway.
+     * Some examples:
+     *   '.+\\.example\\.net$'  - Matches any subdomain of the domain example.net
+     *   '^mymail[0-9]+\\.net$' - Matches the domains mymail01.net, mymail02.net, mymail99999.net, etc.
+     */
+    'allowed_domains' => ''
 ];
 
 // Settings for sending summary reports if it is necessary.

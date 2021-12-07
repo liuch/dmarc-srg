@@ -32,6 +32,8 @@ class Report
 {
     private $data = null;
 
+    private static $allowed_domains = null;
+
     public function __construct($data)
     {
         $this->data = $data;
@@ -141,22 +143,11 @@ class Report
         $db = Database::connection();
         $db->beginTransaction();
         try {
-            $fqdn = $this->data['domain'];
+            $fqdn = strtolower($this->data['domain']);
             $domain = new Domain($fqdn);
             if (!$domain->exists()) {
-                // The domain is not found.
-                // It will automatically added a new domain if there are no domains in the table
-                // or will throw an error otherwise.
-                if (DomainList::count() !== 0) {
-                    throw new \Exception('Failed to add an incoming report: unknown domain', -1);
-                }
-
-                $domain = new Domain([
-                    'fqdn'        => $fqdn,
-                    'active'      => true,
-                    'description' => 'The domain was added automatically.'
-                ]);
-                $domain->save();
+                // The domain is not found. Let's try to add it automatically.
+                $domain = self::insertDomain($fqdn);
             } elseif (!$domain->active()) {
                 throw new \Exception('Failed to add an incoming report: the domain is inactive', -1);
             }
@@ -346,5 +337,40 @@ class Report
             }
         }
         return true;
+    }
+
+    /**
+     * Checks if the domain exists and adds it to the database if necessary
+     *
+     * It automatically adds the domain if there are no domains in the database
+     * or if the domain match the reqular expression `allowed_domains` from the configuration file.
+     * Otherwise, an exception will be thrown.
+     *
+     * @param string $fqdn Domain name
+     *
+     * @return Domain Instance of the class Domain
+     */
+    private static function insertDomain(string $fqdn)
+    {
+        if (DomainList::count() !== 0) {
+            if (is_null(self::$allowed_domains)) {
+                global $fetcher;
+                if (!empty($fetcher['allowed_domains'])) {
+                    self::$allowed_domains = '<' . $fetcher['allowed_domains'] . '>i';
+                }
+            }
+            if (empty(self::$allowed_domains) || @preg_match(self::$allowed_domains, $fqdn) !== 1) {
+                throw new \Exception('Failed to add an incoming report: unknown domain', -1);
+            }
+        }
+
+        $domain = new Domain([
+            'fqdn'        => $fqdn,
+            'active'      => true,
+            'description' => 'The domain was added automatically.'
+        ]);
+        $domain->save();
+
+        return $domain;
     }
 }
