@@ -94,6 +94,15 @@ For example, if you want to get a summary report for the last week, you should r
 # Web interface
 Navigate in your browser to the location of the `index.html` file. You will see the basic Report List view, allowing you to navigate through the reports that have been parsed. Using the menu go to the Admin section and create tables in the database and check the accessibility of the mailboxes if necessary.
 
+If Content Security Policy (CSP) is used on your web server, it is enough to add the following permissions:
+- style-src 'self';
+- img-src 'self';
+- script-src 'self';
+- media-src 'self';
+- form-action 'self';
+
+That is, this rather strict policy will work well with the current web interface: `Content-Security-Policy: default-src 'none'; style-src 'self'; img-src 'self'; script-src 'self'; media-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'`
+
 # How the report file processing works
 
 ## General rules for processing report files
