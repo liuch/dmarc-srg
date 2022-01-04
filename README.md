@@ -98,10 +98,11 @@ If Content Security Policy (CSP) is used on your web server, it is enough to add
 - style-src 'self';
 - img-src 'self';
 - script-src 'self';
+- connect-src 'self';
 - media-src 'self';
 - form-action 'self';
 
-That is, this rather strict policy will work well with the current web interface: `Content-Security-Policy: default-src 'none'; style-src 'self'; img-src 'self'; script-src 'self'; media-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'`
+That is, this rather strict policy will work well with the current web interface: `Content-Security-Policy: default-src 'none'; style-src 'self'; img-src 'self'; script-src 'self'; connect-src 'self'; media-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'`
 
 # How the report file processing works
 
