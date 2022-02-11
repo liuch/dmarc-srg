@@ -34,7 +34,7 @@ $mailboxes = [
     'host'            => 'yourdomain.net',
      // Connection encryption method. The valid values are:
      // 'none'     - without encryption (strongly not recommend).
-     // 'ssl'      - SSl/TLS on a separate port, for IMAP it is usually port 993.
+     // 'ssl'      - SSL/TLS on a separate port, for IMAP it is usually port 993.
      // 'starttls' - STARTTLS method, usually on the standard IMAP port 143. Default value.
     'encryption'      => 'starttls',
     // Set true if you want to connect to the IMAP server without certificate validation
