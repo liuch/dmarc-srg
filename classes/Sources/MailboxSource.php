@@ -44,8 +44,10 @@ class MailboxSource extends Source
 
     /**
      * Returns an instance of the ReportFile class for the current email message.
+     *
+     * @return ReportFile
      */
-    public function current()
+    public function current(): object
     {
         $this->msg = $this->data->message($this->list[$this->index]);
         if (!$this->msg->isCorrect()) {
@@ -60,7 +62,7 @@ class MailboxSource extends Source
      *
      * @return int
      */
-    public function key()
+    public function key(): int
     {
         return $this->index;
     }

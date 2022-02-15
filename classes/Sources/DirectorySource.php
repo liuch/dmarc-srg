@@ -43,8 +43,10 @@ class DirectorySource extends Source
 
     /**
      * Returns an instance of the ReportFile class for the current file.
+     *
+     * @return ReportFile
      */
-    public function current()
+    public function current(): object
     {
         return ReportFile::fromFile($this->list[$this->index]);
     }
@@ -54,7 +56,7 @@ class DirectorySource extends Source
      *
      * @return int
      */
-    public function key()
+    public function key(): int
     {
         return $this->index;
     }

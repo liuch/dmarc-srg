@@ -30,7 +30,7 @@ class ReportGZFileCutFilter extends php_user_filter
     private $header_data = '';
     private $tail_data   = '';
 
-    public function filter($in, $out, &$consumed, $closing)
+    public function filter($in, $out, &$consumed, $closing): int
     {
         $b_cnt = 0;
         while ($bucket = stream_bucket_make_writeable($in)) {
@@ -112,4 +112,3 @@ class ReportGZFileCutFilter extends php_user_filter
         return $len + 1;
     }
 }
-

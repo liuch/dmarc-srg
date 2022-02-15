@@ -42,8 +42,10 @@ class UploadedFilesSource extends Source
 
     /**
      * Returns an instance of the ReportFile class for the current file.
+     *
+     * @return ReportFile
      */
-    public function current()
+    public function current(): object
     {
         if ($this->data['error'][$this->index] !== UPLOAD_ERR_OK) {
             throw new \Exception('Failed to upload the report file', $this->data['error'][$this->index]);
@@ -63,7 +65,7 @@ class UploadedFilesSource extends Source
      *
      * @return int
      */
-    public function key()
+    public function key(): int
     {
         return $this->index;
     }

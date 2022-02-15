@@ -57,8 +57,8 @@ abstract class Source implements \Iterator
     /**
      * Iterator interface methods
      */
-    abstract public function current();
-    abstract public function key();
+    abstract public function current(): object;
+    abstract public function key(): int;
     abstract public function next(): void;
     abstract public function rewind(): void;
     abstract public function valid(): bool;
