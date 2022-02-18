@@ -22,8 +22,6 @@
 
 namespace Liuch\DmarcSrg\Report;
 
-use Exception;
-
 class ReportData
 {
     public static $rep_data = null;
@@ -35,12 +33,19 @@ class ReportData
         self::$rep_data = [ 'records' => [] ];
 
         $parser = xml_parser_create();
-        xml_set_element_handler($parser, 'Liuch\DmarcSrg\Report\ReportData::xmlStartTag', 'Liuch\DmarcSrg\Report\ReportData::xmlEndTag');
+        xml_set_element_handler(
+            $parser,
+            'Liuch\DmarcSrg\Report\ReportData::xmlStartTag',
+            'Liuch\DmarcSrg\Report\ReportData::xmlEndTag'
+        );
         xml_set_character_data_handler($parser, 'Liuch\DmarcSrg\Report\ReportData::xmlTagData');
+        xml_set_external_entity_ref_handler($parser, function () {
+            throw new \Exception('The XML document has an external entity!', -1);
+        });
         try {
             while ($file_data = fread($fd, 4096)) {
                 if (!xml_parse($parser, $file_data, feof($fd))) {
-                    throw new Exception('XML error!', -1);
+                    throw new \Exception('XML error!', -1);
                 }
             }
         } finally {
@@ -201,7 +206,7 @@ class ReportData
             !isset(self::$report_tags[self::$tag_id]['children']) ||
             !isset(self::$report_tags[self::$tag_id]['children'][$name])
         ) {
-                throw new Exception('Unknown tag: ' . $name, -1);
+                throw new \Exception('Unknown tag: ' . $name, -1);
         }
 
         self::$tag_id = self::$report_tags[self::$tag_id]['children'][$name];
@@ -358,4 +363,3 @@ class ReportData
         'spf_result'        => [ 'parent' => 'spf_auth' ]
     ];
 }
-
