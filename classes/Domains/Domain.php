@@ -326,6 +326,7 @@ class Domain
             $st->closeCursor();
 
             $db->commit();
+            $this->ex_f = false;
         } catch (Exception $e) {
             $db->rollBack();
             throw $e;
