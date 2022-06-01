@@ -65,6 +65,7 @@ $directories = [
 
 $admin = [
     // Set this value to null or remove this parameter to disable authentication
+    // Note: The authentication is always failed with an empty password. Change it if you want to use the web ui.
     'password' => '',
 ];
 
