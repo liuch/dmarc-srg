@@ -20,7 +20,7 @@
 
 class ReportWidget {
 	constructor() {
-		this._rep = null;
+		this._rep_id = null;
 		this._element = null;
 		this._close_btn = null;
 		this._id_element = null;
@@ -57,20 +57,21 @@ class ReportWidget {
 			}
 			that._id_element.childNodes[0].nodeValue = report_id;
 			set_wait_status(that._cn_element);
-			that._rep = new Report(domain, report_id);
+			that._rep_id = report_id;
 			that._element.classList.remove("report-hidden");
 			that._close_btn.classList.add("active");
-			that._rep.fetch().then(function() {
-				if (that._rep.id() == report_id) {
+			let rep = new Report(domain, report_id);
+			rep.fetch().then(function() {
+				if (that._rep_id === report_id) {
 					remove_all_children(that._cn_element);
-					that._cn_element.appendChild(that._rep.element());
-					that._rep.set_value("seen", true).catch(function(err) {
+					that._cn_element.appendChild(rep.element());
+					rep.set_value("seen", true).catch(function(err) {
 						console.warn(err.message);
 					});
 				}
 				resolve();
 			}).catch(function(err) {
-				let err_str = that._rep.error_message() || "Failed to get the report data";
+				let err_str = rep.error_message() || "Failed to get the report data";
 				set_error_status(that._cn_element, err_str);
 				reject(err);
 			});
