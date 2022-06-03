@@ -1,3 +1,81 @@
+@media (prefers-color-scheme: light) {
+	:root {
+		--color-fg-default:  #000;
+		--color-fg-muted:    #666;
+		--color-fg-custom:   #666;
+		--color-fg-menu:     #333;
+		--color-bg-default:  #fff;
+		--color-bg-header:   #eee;
+		--color-bg-title:    #ddd;
+		--color-bg-dialog:   #fff;
+		--color-bg-selected: #eef;
+		--color-bg-focused:  #ccf;
+		--color-bg-button:   #fff;
+		--color-bg-hover:    #eee;
+		--color-bg-input:    #fff;
+		--color-br-default:  #eee;
+		--color-br-strong:   #777;
+		--color-br-focused:  #66f;
+		--color-br-button:   rgba(0,0,0,0.5);
+		--color-br-menu:     #ccc;
+		--color-br-submenu:  #eee;
+		--color-st-txtblue:  #00f;
+		--color-nt-error:    #f88;
+		--color-nt-warning:  #ff8;
+		--color-nt-inform:   #8f8;
+		--color-sh-default:  rgba(0,0,0,0.5);
+	}
+}
+@media (prefers-color-scheme: dark) {
+	:root {
+		--color-fg-default:  #c9d1d9;
+		--color-fg-muted:    #8b949e;
+		--color-fg-custom:   #aaadbb;
+		--color-fg-menu:     #9ca6b1;
+		--color-bg-default:  #0d1117;
+		--color-bg-header:   #161b22;
+		--color-bg-title:    #262b32;
+		--color-bg-dialog:   #111a24;
+		--color-bg-selected: #161b22;
+		--color-bg-focused:  #161b33;
+		--color-bg-button:   #21262d;
+		--color-bg-hover:    #30363d;
+		--color-bg-input:    #0d1117;
+		--color-br-default:  #30363d;
+		--color-br-strong:   #40464d;
+		--color-br-focused:  #f78166;
+		--color-br-button:   rgba(240,246,252,0.1);
+		--color-br-menu:     #505860;
+		--color-br-submenu:  #30363d;
+		--color-st-txtblue:  #4040ff;
+		--color-nt-error:    #da3633;
+		--color-nt-warning:  #e7a100;
+		--color-nt-inform:   #3fb950;
+		--color-sh-default:  rgba(255,255,255,0.3);
+	}
+}
+
+html {
+	color: var(--color-fg-default);
+	background-color: var(--color-bg-default);
+}
+button, select, textarea, input {
+	padding: 0.3em .5em;
+	color: var(--color-fg-default);
+	border: .07em solid;
+	border-radius: 0.4rem;
+}
+button {
+	background-color: var(--color-bg-button);
+	border-color: var(--color-br-button);
+}
+button:hover {
+	background-color: var(--color-bg-hover);
+}
+select, textarea, input {
+	background-color: var(--color-bg-input);
+	border-color: var(--color-br-default);
+}
 h1 {
 	margin: 0 0.6rem 0.6rem 0.8rem;
 	display: inline-block;
@@ -19,14 +97,14 @@ fieldset {
 	display: block;
 	margin: 0.7em;
 	padding: 0.7em;
-	border: 0.07rem solid gray;
+	border: 0.07rem solid var(--color-br-strong);
 }
 legend {
 	margin: 0;
 	padding: 0 0.2em;
 }
 .bottom-border {
-	border-bottom: 0.07rem solid gray;
+	border-bottom: 0.07rem solid var(--color-br-strong);
 }
 #stat-block {
 	float: right;
@@ -60,7 +138,7 @@ legend {
 	pointer-events: none;
 }
 .round-border, #stat-block li div {
-	border: 0.07em solid gray;
+	border: 0.07em solid var(--color-br-strong);
 	border-radius: 0.4em;
 }
 .wait-message {
@@ -101,27 +179,27 @@ legend {
 	left: 0.5rem;
 	right: 0.5rem;
 	bottom: 0.5rem;
-	border: 0.1rem solid #eee;
+	border: 0.1rem solid var(--color-br-default);
 	border-radius: 0.4rem;
 }
 .main-table {
-	color: #666;
+	color: var(--color-fg-muted);
 	text-align: left;
 	border-spacing: 0;
 	width: 100%;
 }
 .subtable {
 	font-size: 90%;
-	border: 0.1rem solid #eee;
+	border: 0.1rem solid var(--color-br-default);
 	border-radius: 0.4rem;
 }
 .main-table th {
 	top: 0;
 	position: sticky;
-	background-color: #eee;
+	background-color: var(--color-bg-header);
 }
 .main-table td {
-	border-top: 0.1em solid #eee;
+	border-top: 0.1em solid var(--color-br-default);
 }
 .main-table th, .main-table td {
 	padding: 0.3em 0.3em 0.3em 1em;
@@ -130,7 +208,7 @@ legend {
 	cursor: pointer;
 }
 .main-table tbody tr:hover {
-	background-color: #eef;
+	background-color: var(--color-bg-selected);
 }
 .focused {
 	outline: none;
@@ -139,14 +217,14 @@ legend {
 	border-left: 0.2em solid #0000;
 }
 .main-table tbody tr.focused td:first-child {
-	border-left: 0.2em solid #66f;
+	border-left: 0.2em solid var(--color-br-focused);
 }
 .main-table tbody tr.selected {
-	background-color: #eef;
-	color: #000;
+	background-color: var(--color-bg-selected);
+	color: var(--color-fg-default);
 }
 .main-table.focused tbody tr.selected {
-	background-color: #ccf;
+	background-color: var(--color-bg-focused);
 }
 .state-red .state-text {
 	color: red;
@@ -173,7 +251,7 @@ legend {
 	background-color: gray;
 }
 .state-blue .state-text {
-	color: darkblue;
+	color: var(--color-st-txtblue);
 }
 .state-blue .state-background {
 	background-color: darkblue;
@@ -187,7 +265,7 @@ legend {
 	height: 3.25rem;
 	margin: 0 0 1rem 0;
 	display: inline-flex;
-	background-color: #f6f6f6;
+	background-color: var(--color-bg-header);
 }
 .block-item-column {
 	display: flex;
@@ -238,6 +316,7 @@ legend {
 .db-menu-button span[role="button"] {
 	font-weight: bold;
 	color: gray;
+	user-select: none;
 }
 .db-menu-button>div>span:hover {
 	color: blue;
@@ -257,7 +336,7 @@ legend {
 	left: -5.3em;
 	width: 7em;
 	text-align: center;
-	background-color: white;
+	background-color: var(--color-bg-default);
 }
 .popup-menu:after {
 	content: "";
@@ -270,7 +349,7 @@ legend {
 	width: 0;
 	border-width: 0 0.4em 0.4em;
 	border-style: solid;
-	border-color: white transparent;
+	border-color: var(--color-bg-default) transparent;
 }
 .popup-menu:before {
 	content: "";
@@ -283,7 +362,7 @@ legend {
 	width: 0;
 	border-width: 0 0.4em 0.4em;
 	border-style: solid;
-	border-color: gray transparent;
+	border-color: var(--color-br-strong) transparent;
 }
 .popup-menu li {
 	margin: 0.2em 0 0.2em 0;
@@ -293,7 +372,7 @@ legend {
 }
 .report-result {
 	display: inline-block;
-	border-color: gray;
+	border-color: var(--color-br-strong);
 	border-style: solid;
 	border-width: 0.07em;
 	border-radius: 0.4em;
@@ -320,7 +399,7 @@ legend {
 	height: 100%;
 	margin: 0;
 	padding: 0;
-	background: #fff;
+	background-color: var(--color-bg-default);
 	text-align: center;
 	transition: all 600ms cubic-bezier(0.86, 0, 0.07, 1);
 	overflow: auto;
@@ -330,8 +409,8 @@ legend {
 	top: 0;
 	padding: 1rem;
 	cursor: pointer;
-	border-bottom: solid 0.1rem #ddd;
-	background-color: #ddd;
+	border-bottom: solid 0.1rem var(--color-br-default);
+	background-color: var(--color-bg-title);
 }
 .report-modal > .report-header > .header-text {
 	padding: 0.5rem;
@@ -339,9 +418,9 @@ legend {
 }
 .report-record > .header {
 	padding: 0.3em 0;
-	border-bottom: solid 0.1rem #ddd;
+	border-bottom: solid 0.1rem var(--color-br-default);
 	border-radius: 0.3em 0.3em 0 0;
-	background-color: #eee;
+	background-color: var(--color-bg-header);
 }
 .report-modal > .body {
 	padding: 1rem;
@@ -353,7 +432,7 @@ legend {
 	position: relative;
 	display: inline-block;
 	padding: 0.7em 1.5em;
-	background: #eee;
+	background-color: var(--color-bg-button);
 	border: solid 0.07rem gray;
 	border-radius: 1.8em;
 	cursor: pointer;
@@ -365,16 +444,16 @@ legend {
 	margin: 0 auto;
 }
 .report-modal .close-btn:hover {
-	box-shadow: 0 3px 15px rgba(0,0,0,0.2);
+	box-shadow: 0 3px 15px var(--color-sh-default);
 }
 .report-records {
 	margin-top: 1rem;
 	padding-top: 1rem;
-	border-top: solid 0.1rem #ddd;
+	border-top: solid 0.1rem var(--color-br-default);
 }
 .report-record {
 	margin: 0 0 1rem 0;
-	border-color: #ddd;
+	border-color: var(--color-br-default);
 }
 .report-item {
 	display: inline-flex;
@@ -396,6 +475,7 @@ th.report-id, td.report-id {
 }
 .unseen, .custom-value {
 	font-weight: bold;
+	color: var(--color-fg-custom);
 }
 #list-settings-btn {
 	color: gray;

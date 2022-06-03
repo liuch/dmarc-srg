@@ -25,14 +25,14 @@
 	text-align: left;
 	white-space: normal;
 	border: solid 0.1rem gray;
-	background-color: white;
+	background-color: var(--color-bg-dialog);
 }
 .dialog .title {
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	min-height: 2em;
-	background-color: #ddd;
+	background-color: var(--color-bg-title);
 	white-space: nowrap;
 }
 .dialog .title-text {
@@ -59,7 +59,7 @@
 .dialog .close-btn {
 	display: flex;
 	margin-right: 0.1em;
-	color: #000;
+	color: var(--color-fg-default);
 	font-size: 1.2rem;
 	font-weight: 700;
 	opacity: 0.5;
