@@ -144,7 +144,8 @@ class Settings {
 
 	static _descriptions = {
 		"status.emails-for-last-n-days": "The period in days for which statistics are displayed in the status block.",
-		"report-view.sort-records-by": "How records are sorted in the report view dialog."
+		"report-view.sort-records-by": "How records are sorted in the report view dialog.",
+		"log-view.sort-list-by": "How report log items are sorted by default in the log view dialog."
 	};
 }
 

@@ -202,6 +202,12 @@ class SettingsList
             'public'  => true,
             'options' => [ 'ip,ascent', 'ip,descent', 'message-count,ascent', 'message-count,descent' ],
             'default' => 'message-count,descent'
+        ],
+        'log-view.sort-list-by'   => [
+            'type'    => 'select',
+            'public'  => true,
+            'options' => [ 'event-time,ascent', 'event-time,descent' ],
+            'default' => 'event-time,ascent'
         ]
     ];
 }

@@ -24,7 +24,7 @@ class Logs {
 		this._scroll = null;
 		this._element = document.getElementById("main-block");
 		this._fetching = false;
-		this._sort = { column: "event_time", direction: "ascent" };
+		this._sort = { column: "", direction: "" };
 	}
 
 	display() {
@@ -72,8 +72,10 @@ class Logs {
 
 		let uparams = new URLSearchParams();
 		uparams.set("position", pos);
-		uparams.set("order", this._sort.column);
-		uparams.set("direction", this._sort.direction);
+		if (this._sort.column && this._sort.direction) {
+			uparams.set("order", this._sort.column);
+			uparams.set("direction", this._sort.direction);
+		}
 
 		let that = this;
 		return window.fetch("logs.php?" + uparams.toString(), {
@@ -89,6 +91,15 @@ class Logs {
 			that._table.display_status(null);
 			if (data.error_code !== undefined && data.error_code !== 0) {
 				throw new Error(data.message || "Unknown error");
+			}
+			if (data.sorted_by) {
+				let cname = data.sorted_by.column;
+				let dir   = data.sorted_by.direction;
+				if (that._sort.column !== cname || that._sort.direction !== dir) {
+					that._sort.column = cname;
+					that._sort.direction = dir;
+					that._table.set_sorted(cname, dir);
+				}
 			}
 			let d = { more: data.more };
 			d.rows = data.items.map(function(it) {

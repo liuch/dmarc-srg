@@ -46,6 +46,7 @@ namespace Liuch\DmarcSrg;
 
 use Liuch\DmarcSrg\ReportLog\ReportLog;
 use Liuch\DmarcSrg\ReportLog\ReportLogItem;
+use Liuch\DmarcSrg\Settings\SettingsList;
 
 require 'init.php';
 
@@ -53,14 +54,27 @@ if (Core::method() == "GET") {
     if (Core::isJson()) {
         try {
             Core::auth()->isAllowed();
+
             if (isset($_GET['id'])) {
                 return Core::sendJson(ReportLogItem::byId(intval($_GET['id']))->toArray());
             }
-            $pos = isset($_GET['position']) ? $_GET['position'] : 0;
-            $dir = isset($_GET['direction']) ? $_GET['direction'] : 'ascent';
+
+            $pos = $_GET['position'] ?? 0;
+            $dir = $_GET['direction'] ?? '';
+            if (empty($dir)) {
+                $o_set = explode(',', SettingsList::getSettingByName('log-view.sort-list-by')->value());
+                if ($o_set[0] === 'event_time') {
+                    $dir = $o_set[1];
+                }
+            }
+            if ($dir !== 'ascent') {
+                $dir = 'descent';
+            }
+
             $log = new ReportLog(null, null);
             $log->setOrder($dir === 'ascent' ? ReportLog::ORDER_ASCENT : ReportLog::ORDER_DESCENT);
             $res = $log->getList($pos);
+            $res['sorted_by'] = [ 'column' => 'event_time', 'direction' => $dir ];
             Core::sendJson($res);
             return;
         } catch (\Exception $e) {
