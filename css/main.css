@@ -19,7 +19,10 @@
 		--color-br-button:   rgba(0,0,0,0.5);
 		--color-br-menu:     #ccc;
 		--color-br-submenu:  #eee;
+		--color-dg-wait:     #080;
 		--color-st-txtblue:  #00f;
+		--color-st-txtgreen: #080;
+		--color-st-txtred:   #f00;
 		--color-nt-error:    #f88;
 		--color-nt-warning:  #ff8;
 		--color-nt-inform:   #8f8;
@@ -47,7 +50,10 @@
 		--color-br-button:   rgba(240,246,252,0.1);
 		--color-br-menu:     #505860;
 		--color-br-submenu:  #30363d;
+		--color-dg-wait:     #c58208;
 		--color-st-txtblue:  #4040ff;
+		--color-st-txtgreen: #009300;
+		--color-st-txtred:   #f22;
 		--color-nt-error:    #da3633;
 		--color-nt-warning:  #e7a100;
 		--color-nt-inform:   #3fb950;
@@ -148,7 +154,7 @@ legend {
 	margin: 1em;
 }
 .dialog .wait-message {
-	color: green;
+	color: var(--color-dg-wait);
 	text-align: center;
 }
 .dialog .error-message {
@@ -161,7 +167,7 @@ legend {
 	clear: both;
 }
 .error-message {
-	color: red;
+	color: var(--color-st-txtred);
 	margin: 0.3rem;
 }
 .stat-val {
@@ -227,13 +233,13 @@ legend {
 	background-color: var(--color-bg-focused);
 }
 .state-red .state-text {
-	color: red;
+	color: var(--color-st-txtred);
 }
 .state-red .state-background {
 	background-color: red;
 }
 .state-green .state-text {
-	color: green;
+	color: var(--color-st-txtgreen);
 }
 .state-green .state-background {
 	background-color: green;
@@ -383,13 +389,13 @@ legend {
 	font-size: 75%;
 }
 .report-result-pass {
-	color: green;
+	color: var(--color-st-txtgreen);
 }
 .report-result-unknown {
 	color: grey;
 }
 .report-result-fail {
-	color: red;
+	color: var(--color-st-txtred);
 }
 .report-modal {
 	position: fixed;
