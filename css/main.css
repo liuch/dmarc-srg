@@ -139,7 +139,7 @@ legend {
 	margin: 0 1px;
 }
 .disabled {
-	color: gray;
+	color: #888;
 	cursor: default;
 	pointer-events: none;
 }
@@ -236,31 +236,31 @@ legend {
 	color: var(--color-st-txtred);
 }
 .state-red .state-background {
-	background-color: red;
+	background-color: #f00;
 }
 .state-green .state-text {
 	color: var(--color-st-txtgreen);
 }
 .state-green .state-background {
-	background-color: green;
+	background-color: #080;
 }
 .state-yellow .state-text {
-	color: darkorange;
+	color: #f80;
 }
 .state-yellow .state-background {
-	background-color: darkorange;
+	background-color: #f80;
 }
 .state-gray .state-text {
-	color: gray;
+	color: #888;
 }
 .state-gray .state-background {
-	background-color: gray;
+	background-color: #888;
 }
 .state-blue .state-text {
 	color: var(--color-st-txtblue);
 }
 .state-blue .state-background {
-	background-color: darkblue;
+	background-color: #00f;
 }
 .panel-container {
 	margin: 0.5rem 0;
@@ -321,11 +321,11 @@ legend {
 }
 .db-menu-button span[role="button"] {
 	font-weight: bold;
-	color: gray;
+	color: #888;
 	user-select: none;
 }
 .db-menu-button>div>span:hover {
-	color: blue;
+	color: #00f;
 }
 .mailbox-location {
 	min-width: 20%;
@@ -374,7 +374,7 @@ legend {
 	margin: 0.2em 0 0.2em 0;
 }
 .popup-menu li:hover {
-	color: blue;
+	color: #00f;
 }
 .report-result {
 	display: inline-block;
@@ -392,7 +392,7 @@ legend {
 	color: var(--color-st-txtgreen);
 }
 .report-result-unknown {
-	color: grey;
+	color: #888;
 }
 .report-result-fail {
 	color: var(--color-st-txtred);
@@ -439,7 +439,7 @@ legend {
 	display: inline-block;
 	padding: 0.7em 1.5em;
 	background-color: var(--color-bg-button);
-	border: solid 0.07rem gray;
+	border: solid 0.07rem #888;
 	border-radius: 1.8em;
 	cursor: pointer;
 	transition: all .4s ease;
@@ -484,13 +484,13 @@ th.report-id, td.report-id {
 	color: var(--color-fg-custom);
 }
 #list-settings-btn {
-	color: gray;
+	color: #888;
 	font-size: 80%;
 	margin-left: 0.3em;
 	cursor: pointer;
 }
 #list-settings-btn:hover, #list-settings-btn.active {
-	color: green;
+	color: #080;
 }
 th.cell-status {
 	width: 1em;
@@ -500,7 +500,7 @@ th.cell-status {
 	height: 7em;
 }
 tr.virtual-item, .nodata {
-	color: gray;
+	color: #888;
 	font-style: italic;
 }
 

@@ -24,7 +24,7 @@
 .dialog .container {
 	text-align: left;
 	white-space: normal;
-	border: solid 0.1rem gray;
+	border: solid 0.1rem #888;
 	background-color: var(--color-bg-dialog);
 }
 .dialog .title {
