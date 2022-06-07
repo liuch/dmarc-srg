@@ -93,10 +93,10 @@ h4, h5 {
 h4:not(:first-child), .info-block {
 	margin-top: 1rem;
 }
-input[type=submit], input[type=reset] {
+button[type=submit], button[type=reset] {
 	margin-top: 0.5em;
 }
-input[type=reset]:not(:first-child) {
+button[type=reset]:not(:first-child) {
 	margin-left: 0.5em;
 }
 fieldset {

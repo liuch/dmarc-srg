@@ -75,10 +75,10 @@ class Files {
 		fl.multiple = true;
 		fm.appendChild(fl);
 		let dv = document.createElement("div");
-		let sb = this._create_input_element("submit", null, "Upload reports");
+		let sb = this._create_button_element("submit", "Upload reports");
 		sb.disabled = true;
 		dv.appendChild(sb);
-		dv.appendChild(this._create_input_element("reset", null, "Reset"));
+		dv.appendChild(this._create_button_element("reset", "Reset"));
 		fm.appendChild(dv);
 		let that = this;
 		fl.addEventListener("change", function(event) {
@@ -144,7 +144,7 @@ class Files {
 			this._dir_table.add_column(col);
 		}, this);
 		fm.appendChild(this._dir_table.element());
-		let sb = this._create_input_element("submit", null, "Load reports");
+		let sb = this._create_button_element("submit", "Load reports");
 		sb.disabled = true;
 		fm.appendChild(sb);
 
@@ -238,7 +238,7 @@ class Files {
 	}
 
 	_update_directory_button() {
-		this._fieldset2.querySelector("input[type=submit]").disabled = !this._directories.some(function(it) {
+		this._fieldset2.querySelector("button[type=submit]").disabled = !this._directories.some(function(it) {
 			return it.checked;
 		});
 	}
@@ -297,6 +297,13 @@ class Files {
 		}
 
 		return res;
+	}
+
+	_create_button_element(type, text) {
+		let el = document.createElement("button");
+		el.setAttribute("type", type);
+		el.appendChild(document.createTextNode(text));
+		return el;
 	}
 
 	_create_input_element(type, name, value) {
