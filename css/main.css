@@ -1,6 +1,7 @@
 @media (prefers-color-scheme: light) {
 	:root {
 		--color-fg-default:  #000;
+		--color-fg-disabled: #666;
 		--color-fg-muted:    #666;
 		--color-fg-custom:   #666;
 		--color-fg-menu:     #333;
@@ -10,13 +11,15 @@
 		--color-bg-dialog:   #fff;
 		--color-bg-selected: #eef;
 		--color-bg-focused:  #ccf;
-		--color-bg-button:   #fff;
-		--color-bg-hover:    #eee;
+		--color-bg-button:   #f0f0f0;
+		--color-bg-dbutton:  #f4f4f4;
+		--color-bg-hover:    #d8d8d8;
 		--color-bg-input:    #fff;
 		--color-br-default:  #eee;
 		--color-br-strong:   #777;
 		--color-br-focused:  #66f;
-		--color-br-button:   rgba(0,0,0,0.5);
+		--color-br-input:    rgba(0,0,0,0.5);
+		--color-br-disabled: #e0e0e0;
 		--color-br-menu:     #ccc;
 		--color-br-submenu:  #eee;
 		--color-dg-wait:     #080;
@@ -33,6 +36,7 @@
 	:root {
 		--color-fg-default:  #c9d1d9;
 		--color-fg-muted:    #8b949e;
+		--color-fg-disabled: #484f58;
 		--color-fg-custom:   #aaadbb;
 		--color-fg-menu:     #9ca6b1;
 		--color-bg-default:  #0d1117;
@@ -42,12 +46,14 @@
 		--color-bg-selected: #161b22;
 		--color-bg-focused:  #161b33;
 		--color-bg-button:   #21262d;
+		--color-bg-dbutton:  #21262d;
 		--color-bg-hover:    #30363d;
 		--color-bg-input:    #0d1117;
 		--color-br-default:  #30363d;
 		--color-br-strong:   #40464d;
 		--color-br-focused:  #f78166;
-		--color-br-button:   rgba(240,246,252,0.1);
+		--color-br-input:    rgba(240,246,252,0.1);
+		--color-br-disabled: #30363d;
 		--color-br-menu:     #505860;
 		--color-br-submenu:  #30363d;
 		--color-dg-wait:     #c58208;
@@ -68,19 +74,24 @@ html {
 button, select, textarea, input {
 	padding: 0.3em .5em;
 	color: var(--color-fg-default);
-	border: .07em solid;
+	border: .07em solid var(--color-br-input);
 	border-radius: 0.4rem;
 }
-button {
+button, select {
 	background-color: var(--color-bg-button);
-	border-color: var(--color-br-button);
 }
-button:hover {
+button:hover, select:hover {
 	background-color: var(--color-bg-hover);
 }
-select, textarea, input {
+button:disabled, select:disabled{
+	background-color: var(--color-bg-dbutton);
+}
+button:disabled, select:disabled, textarea:disabled, input:disabled {
+	color: var(--color-fg-disabled);
+	border-color: var(--color-br-disabled);
+}
+textarea, input {
 	background-color: var(--color-bg-input);
-	border-color: var(--color-br-default);
 }
 h1 {
 	margin: 0 0.6rem 0.6rem 0.8rem;
