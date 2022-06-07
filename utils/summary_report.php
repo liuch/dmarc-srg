@@ -60,6 +60,13 @@ if (php_sapi_name() !== 'cli') {
     exit(1);
 }
 
+$num2percent = function (int $per, int $cent) {
+    if (!$per) {
+        return '0';
+    }
+    return sprintf('%.0f%%(%d)', $per / $cent * 100, $per);
+};
+
 $domain = null;
 $period = null;
 for ($i = 1; $i < count($argv); ++$i) {
@@ -142,16 +149,8 @@ $n_aligned = $total - $aligned;
 $body[] = '## Summary';
 $body[] = sprintf(' Total: %d', $total);
 if ($total > 0) {
-    $body[] = sprintf(
-        ' DKIM or SPF aligned: %.0f%%(%d)',
-        $aligned / $total * 100,
-        $aligned
-    );
-    $body[] = sprintf(
-        ' Not aligned: %.0f%%(%d)',
-        $n_aligned / $total * 100,
-        $n_aligned
-    );
+    $body[] = sprintf(' DKIM or SPF aligned: %s', $num2percent($aligned, $total));
+    $body[] = sprintf(' Not aligned: %s', $num2percent($n_aligned, $total));
 } else {
     $body[] = sprintf(' DKIM or SPF aligned: %d', $aligned);
     $body[] = sprintf(' Not aligned: %d', $n_aligned);
@@ -172,16 +171,8 @@ if (count($stat->ips()) > 0) {
         $total = $it['emails'];
         $spf_a = $it['spf_aligned'];
         $dkim_a = $it['dkim_aligned'];
-        $spf_str = sprintf(
-            '%.0f%%(%d)',
-            $spf_a / $total * 100,
-            $spf_a
-        );
-        $dkim_str = sprintf(
-            '%.0f%%(%d)',
-            $dkim_a / $total * 100,
-            $dkim_a
-        );
+        $spf_str = $num2percent($spf_a, $total);
+        $dkim_str = $num2percent($dkim_a, $total);
         $body[] = sprintf(
             ' %-25s %13d %13s %13s',
             $it['ip'],
@@ -223,4 +214,3 @@ mail(
 );
 
 exit(0);
-
