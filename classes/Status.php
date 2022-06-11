@@ -71,9 +71,7 @@ class Status
 
         if (!isset($res['error_code']) || $res['error_code'] === 0) {
             $days = SettingsList::getSettingByName('status.emails-for-last-n-days')->value();
-            $date2 = strtotime('midnight');
-            $date1 = strtotime("-{$days} days", $date2);
-            $stat = Statistics::fromTo(null, $date1, $date2 - 1);
+            $stat = Statistics::lastNDays(null, $days);
             $res['emails'] = $stat->summary()['emails'];
             $res['emails']['days'] = $days;
         }
@@ -90,4 +88,3 @@ class Status
         return $res;
     }
 }
-

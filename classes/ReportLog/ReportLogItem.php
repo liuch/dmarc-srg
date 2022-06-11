@@ -22,6 +22,7 @@
 
 namespace Liuch\DmarcSrg\ReportLog;
 
+use Liuch\DmarcSrg\DateTime;
 use Liuch\DmarcSrg\Sources\Source;
 use Liuch\DmarcSrg\Database\Database;
 
@@ -99,7 +100,7 @@ class ReportLogItem
         }
         $li->domain      = $row[0];
         $li->external_id = $row[1];
-        $li->event_time  = strtotime($row[2]);
+        $li->event_time  = new DateTime($row[2]);
         $li->filename    = $row[3];
         $li->source      = intval($row[4]);
         $li->success     = boolval($row[5]);
@@ -157,29 +158,32 @@ class ReportLogItem
             $st = $db->prepare(
                 'INSERT INTO `' . Database::tablePrefix('reportlog')
                 . '` (`domain`, `external_id`, `event_time`, `filename`, `source`, `success`, `message`)'
-                . ' VALUES (?, ?, FROM_UNIXTIME(?), ?, ?, ?, ?)'
+                . ' VALUES (?, ?, ?, ?, ?, ?, ?)'
             );
         } else {
             $st = $db->prepare(
                 'UPDATE `' . Database::tablePrefix('reportlog')
-                . '` SET `domain` = ?, `external_id` = ?, `event_time` = FROM_UNIXTIME(?), `filename` = ?,'
+                . '` SET `domain` = ?, `external_id` = ?, `event_time` = ?, `filename` = ?,'
                 . ' `source` = ?, `success` = ?, `message` = ? WHERE `id` = ?'
             );
+            $st->bindValue(8, $this->id, \PDO::PARAM_INT);
+        }
+        $ts = $this->event_time;
+        if (!$ts) {
+            $ts = new DateTime();
         }
         $st->bindValue(1, $this->domain, \PDO::PARAM_STR);
         $st->bindValue(2, $this->external_id, \PDO::PARAM_STR);
-        $st->bindValue(3, !is_null($this->event_time) ? $this->event_time : time(), \PDO::PARAM_INT);
+        $st->bindValue(3, $ts->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
         $st->bindValue(4, $this->filename, \PDO::PARAM_STR);
         $st->bindValue(5, $this->source, \PDO::PARAM_INT);
         $st->bindValue(6, $this->success, \PDO::PARAM_BOOL);
         $st->bindValue(7, $this->message, \PDO::PARAM_STR);
-        if (!is_null($this->id)) {
-            $st->bindValue(8, $this->id, \PDO::PARAM_INT);
-        }
         $st->execute();
         if (is_null($this->id)) {
             $this->id = $db->lastInsertId();
         }
         $st->closeCursor();
+        $this->event_time = $ts;
     }
 }

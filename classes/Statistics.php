@@ -31,7 +31,7 @@
 
 namespace Liuch\DmarcSrg;
 
-use PDO;
+use Liuch\DmarcSrg\DateTime;
 use Liuch\DmarcSrg\Database\Database;
 
 /**
@@ -46,7 +46,7 @@ class Statistics
     /**
      * The constructor of the class, it only uses in static methods of this class
      *
-     * @param Domain|null $domain The domain for which you need to get statistics, null of all the domains.
+     * @param Domain|null $domain The domain for which you need to get statistics, null for all the domains.
      *
      * @return void
      */
@@ -59,8 +59,8 @@ class Statistics
      * Returns an instance of the class for the period from $date1 to $date2
      *
      * @param Domain|null $domain See the constructor for the details
-     * @param int         $date1  The date you need statistics from
-     * @param int         $date2  The date you need statistics to
+     * @param DateTime    $date1  The date you need statistics from
+     * @param DateTime    $date2  The date you need statistics to (not included)
      *
      * @return Statistics Instance of the class
      */
@@ -82,8 +82,8 @@ class Statistics
     public static function lastWeek($domain)
     {
         $r = new Statistics($domain);
-        $r->date1 = strtotime('monday last week');
-        $r->date2 = strtotime('+7 days', $r->date1) - 1;
+        $r->date1 = new DateTime('monday last week');
+        $r->date2 = (clone $r->date1)->add(new \DateInterval('P7D'));
         return $r;
     }
 
@@ -97,9 +97,24 @@ class Statistics
     public static function lastMonth($domain)
     {
         $r = new Statistics($domain);
-        $now = time();
-        $r->date1 = strtotime('midnight first day of last month', $now);
-        $r->date2 = strtotime('midnight first day of this month', $now) - 1;
+        $r->date1 = new DateTime('midnight first day of last month');
+        $r->date2 = new DateTime('midnight first day of this month');
+        return $r;
+    }
+
+    /**
+     * Returns an instance of the class for the last N days
+     *
+     * @param Domain|null $domain See the construct for the details
+     * @param int         $ndays  Number of days
+     *
+     * @return Statistics Instance of the class
+     */
+    public static function lastNDays($domain, int $ndays)
+    {
+        $r = new Statistics($domain);
+        $r->date2 = new DateTime('midnight');
+        $r->date1 = (clone $r->date2)->sub(new \DateInterval("P${ndays}D"));
         return $r;
     }
 
@@ -110,7 +125,7 @@ class Statistics
      */
     public function range(): array
     {
-        return [ $this->date1, $this->date2 ];
+        return [ (clone $this->date1), (clone $this->date2)->sub(new \DateInterval('PT1S')) ];
     }
 
     /**
@@ -131,7 +146,7 @@ class Statistics
         );
         $this->sqlBindValues($st);
         $st->execute();
-        $row = $st->fetch(PDO::FETCH_NUM);
+        $row = $st->fetch(\PDO::FETCH_NUM);
         $ems = [
             'total' => intval($row[0]),
             'dkim_spf_aligned' => intval($row[1]),
@@ -146,7 +161,7 @@ class Statistics
         );
         $this->sqlBindValues($st);
         $st->execute();
-        $row = $st->fetch(PDO::FETCH_NUM);
+        $row = $st->fetch(\PDO::FETCH_NUM);
         $st->closeCursor();
 
         return [
@@ -173,7 +188,7 @@ class Statistics
         $this->sqlBindValues($st);
         $st->execute();
         $res = [];
-        while ($row = $st->fetch(PDO::FETCH_NUM)) {
+        while ($row = $st->fetch(\PDO::FETCH_NUM)) {
             $res[] = [
                 'ip' => inet_ntop($row[0]),
                 'emails' => intval($row[1]),
@@ -203,7 +218,7 @@ class Statistics
         $this->sqlBindValues($st);
         $st->execute();
         $res = [];
-        while ($row = $st->fetch(PDO::FETCH_NUM)) {
+        while ($row = $st->fetch(\PDO::FETCH_NUM)) {
             $res[] = [
                 'name' => $row[0],
                 'reports' => intval($row[1]),
@@ -225,7 +240,7 @@ class Statistics
         if ($this->domain) {
             $res = 'domain_id = ? AND ';
         }
-        $res .= '`begin_time` < FROM_UNIXTIME(?) AND `end_time` >= FROM_UNIXTIME(?)';
+        $res .= '`begin_time` < ? AND `end_time` >= ?';
         return $res;
     }
 
@@ -240,9 +255,11 @@ class Statistics
     {
         $pnum = 0;
         if ($this->domain) {
-            $st->bindValue(++$pnum, $this->domain->id(), PDO::PARAM_INT);
+            $st->bindValue(++$pnum, $this->domain->id(), \PDO::PARAM_INT);
         }
-        $st->bindValue(++$pnum, $this->date2 - 10, PDO::PARAM_INT);
-        $st->bindValue(++$pnum, $this->date1 + 10, PDO::PARAM_INT);
+        $ds1 = (clone $this->date1)->add(new \DateInterval('PT10S'))->format('Y-m-d H:i:s');
+        $ds2 = (clone $this->date2)->sub(new \DateInterval('PT10S'))->format('Y-m-d H:i:s');
+        $st->bindValue(++$pnum, $ds2, \PDO::PARAM_STR);
+        $st->bindValue(++$pnum, $ds1, \PDO::PARAM_STR);
     }
 }

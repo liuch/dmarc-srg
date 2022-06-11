@@ -22,6 +22,8 @@
 
 namespace Liuch\DmarcSrg\Report;
 
+use Liuch\DmarcSrg\DateTime;
+
 class ReportData
 {
     public static $rep_data = null;
@@ -129,8 +131,8 @@ class ReportData
                     }
                 }
                 unset($tag_data);
-                self::$rep_data['begin_time'] = intval(self::$rep_data['begin_time']);
-                self::$rep_data['end_time'] = intval(self::$rep_data['end_time']);
+                self::$rep_data['begin_time'] = new DateTime('@' . intval(self::$rep_data['begin_time']));
+                self::$rep_data['end_time'] = new DateTime('@' . intval(self::$rep_data['end_time']));
                 foreach (self::$rep_data['records'] as &$rec_data) {
                     $rec_data['rcount'] = intval($rec_data['rcount']);
                 }
@@ -177,8 +179,7 @@ class ReportData
                 break;
             default:
                 if (!isset(self::$report_tags[self::$tag_id]['children'])) {
-                    if (
-                        isset(self::$report_tags[self::$tag_id]['header']) &&
+                    if (isset(self::$report_tags[self::$tag_id]['header']) &&
                         self::$report_tags[self::$tag_id]['header']
                     ) {
                         if (!isset(self::$rep_data[self::$tag_id])) {
@@ -202,8 +203,7 @@ class ReportData
 
     public static function xmlEnterTag($name)
     {
-        if (
-            !isset(self::$report_tags[self::$tag_id]['children']) ||
+        if (!isset(self::$report_tags[self::$tag_id]['children']) ||
             !isset(self::$report_tags[self::$tag_id]['children'][$name])
         ) {
                 throw new \Exception('Unknown tag: ' . $name, -1);

@@ -35,7 +35,7 @@
 
 namespace Liuch\DmarcSrg;
 
-use Exception;
+use Liuch\DmarcSrg\DateTime;
 use Liuch\DmarcSrg\Report\ReportList;
 
 require 'init.php';
@@ -52,7 +52,7 @@ $days = $cleaner['reports']['days_old'];
 if (gettype($days) !== 'integer' || $days < 0) {
     exit(0);
 }
-$days_date = strtotime('- ' . $days . ' days');
+$days_date = (new DateTime())->sub(new \DateInterval("P${days}D"));
 $maximum = isset($cleaner['reports']['delete_maximum']) ?
     $cleaner['reports']['delete_maximum'] : 0;
 if (gettype($maximum) !== 'integer' || $maximum < 0) {
@@ -78,9 +78,8 @@ try {
         }
         $rl->delete();
     }
-} catch (Exception $e) {
+} catch (\Exception $e) {
     echo $e->getMessage() . ' (' . $e->getCode() . ')';
 }
 
 exit(0);
-

@@ -169,7 +169,7 @@ class Logs {
 		rd.cells.push(new LogsResultCell(d.success));
 		rd.cells.push({ content: d.domain });
 		rd.cells.push({ content: d.source });
-		rd.cells.push({ content: unixtime2date(d.event_time).toLocaleString() });
+		rd.cells.push({ content: (new Date(d.event_time)).toLocaleString() });
 		rd.cells.push({ content: d.message });
 		return rd;
 	}
@@ -274,7 +274,7 @@ class LogItemDialog extends ModalDialog {
 			}
 			that._data.domain     = data.domain;
 			that._data.report_id  = data.report_id;
-			that._data.event_time = unixtime2date(data.event_time);
+			that._data.event_time = new Date(data.event_time);
 			that._data.filename   = data.filename;
 			that._data.source     = data.source;
 			that._data.success    = data.success;

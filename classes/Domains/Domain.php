@@ -31,8 +31,7 @@
 
 namespace Liuch\DmarcSrg\Domains;
 
-use PDO;
-use Exception;
+use Liuch\DmarcSrg\DateTime;
 use Liuch\DmarcSrg\Database\Database;
 use Liuch\DmarcSrg\Report\ReportList;
 
@@ -110,13 +109,13 @@ class Domain
                     $this->desc = $data['description'];
                 }
                 if (isset($data['created_time'])) {
-                    if (gettype($data['created_time']) !== 'integer') {
+                    if (gettype($data['created_time']) !== 'object') {
                         break;
                     }
                     $this->c_tm = $data['created_time'];
                 }
                 if (isset($data['updated_time'])) {
-                    if (gettype($data['updated_time']) !== 'integer') {
+                    if (gettype($data['updated_time']) !== 'object') {
                         break;
                     }
                     $this->u_tm = $data['updated_time'];
@@ -125,7 +124,7 @@ class Domain
                     return;
                 }
         }
-        throw new Exception('Wrong domain data', -1);
+        throw new \Exception('Wrong domain data', -1);
     }
 
     /**
@@ -141,7 +140,7 @@ class Domain
             );
             $this->sqlBindValue($st, 1);
             $st->execute();
-            $res = $st->fetch(PDO::FETCH_NUM);
+            $res = $st->fetch(\PDO::FETCH_NUM);
             $st->closeCursor();
             if ($res) {
                 $this->id = intval($res[0]);
@@ -238,21 +237,21 @@ class Domain
     public function save(): void
     {
         $db = Database::connection();
-        $this->u_tm = time();
+        $this->u_tm = new DateTime();
         if ($this->exists()) {
             try {
                 $st = $db->prepare(
                     'UPDATE `' . Database::tablePrefix('domains')
-                    . '` SET `active` = ?, `description` = ?, `updated_time` = FROM_UNIXTIME(?) WHERE `id` = ?'
+                    . '` SET `active` = ?, `description` = ?, `updated_time` = ? WHERE `id` = ?'
                 );
-                $st->bindValue(1, $this->actv, PDO::PARAM_BOOL);
-                $st->bindValue(2, $this->desc, PDO::PARAM_STR);
-                $st->bindValue(3, $this->u_tm, PDO::PARAM_INT);
-                $st->bindValue(4, $this->id, PDO::PARAM_INT);
+                $st->bindValue(1, $this->actv, \PDO::PARAM_BOOL);
+                $st->bindValue(2, $this->desc, \PDO::PARAM_STR);
+                $st->bindValue(3, $this->u_tm->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
+                $st->bindValue(4, $this->id, \PDO::PARAM_INT);
                 $st->execute();
                 $st->closeCursor();
-            } catch (Exception $e) {
-                throw new Execption('Failed to update the domain data', -1);
+            } catch (\Exception $e) {
+                throw new \Exception('Failed to update the domain data', -1);
             }
         } else {
             try {
@@ -268,23 +267,23 @@ class Domain
                 $st = $db->prepare(
                     'INSERT INTO `' . Database::tablePrefix('domains')
                     . '` (`fqdn`, `active`' . $sql1 . ', `created_time`, `updated_time`)'
-                    . ' VALUES (?, ?' . $sql2 . ', FROM_UNIXTIME(?), FROM_UNIXTIME(?))'
+                    . ' VALUES (?, ?' . $sql2 . ', ?, ?)'
                 );
                 $idx = 0;
-                $st->bindValue(++$idx, $this->fqdn, PDO::PARAM_STR);
-                $st->bindValue(++$idx, $actv, PDO::PARAM_BOOL);
+                $st->bindValue(++$idx, $this->fqdn, \PDO::PARAM_STR);
+                $st->bindValue(++$idx, $actv, \PDO::PARAM_BOOL);
                 if (!is_null($this->desc)) {
-                    $st->bindValue(++$idx, $this->desc, PDO::PARAM_STR);
+                    $st->bindValue(++$idx, $this->desc, \PDO::PARAM_STR);
                 }
-                $st->bindValue(++$idx, $this->c_tm, PDO::PARAM_INT);
-                $st->bindValue(++$idx, $this->u_tm, PDO::PARAM_INT);
+                $st->bindValue(++$idx, $this->c_tm->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
+                $st->bindValue(++$idx, $this->u_tm->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
                 $st->execute();
                 $st->closeCursor();
                 $this->id = $db->lastInsertId();
                 $this->ex_f = true;
                 $this->actv = $actv;
-            } catch (Exception $e) {
-                throw new Execption('Failed to insert the domain data', -1);
+            } catch (\Exception $e) {
+                throw new \Exception('Failed to insert the domain data', -1);
             }
         }
     }
@@ -317,17 +316,17 @@ class Domain
                     $s2 = '';
                 }
                 $msg = "Failed to delete: there $s1 $rcnt incoming report$s2 for this domain";
-                throw new Exception($msg, -1);
+                throw new \Exception($msg, -1);
             }
 
             $st = $db->prepare('DELETE FROM `' . Database::tablePrefix('domains') . '` WHERE `id` = ?');
-            $st->bindValue(1, $this->id, PDO::PARAM_STR);
+            $st->bindValue(1, $this->id, \PDO::PARAM_STR);
             $st->execute();
             $st->closeCursor();
 
             $db->commit();
             $this->ex_f = false;
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $db->rollBack();
             throw $e;
         }
@@ -345,7 +344,7 @@ class Domain
             $this->fqdn = trim(substr($this->fqdn, 0, -1));
         }
         if ($this->fqdn === '') {
-            throw new Exception('The domain is empty', -1);
+            throw new \Exception('The domain is empty', -1);
         }
     }
 
@@ -366,17 +365,17 @@ class Domain
         );
         $this->sqlBindValue($st, 1);
         $st->execute();
-        $res = $st->fetch(PDO::FETCH_NUM);
+        $res = $st->fetch(\PDO::FETCH_NUM);
         if (!$res) {
             $this->ex_f = false;
-            throw new Exception('There is no such domain', -1);
+            throw new \Exception('There is no such domain', -1);
         }
         $this->id   = $res[0];
         $this->fqdn = $res[1];
         $this->actv = boolval($res[2]);
         $this->desc = $res[3];
-        $this->c_tm = strtotime($res[4]);
-        $this->u_tm = strtotime($res[5]);
+        $this->c_tm = new DateTime($res[4]);
+        $this->u_tm = new DateTime($res[5]);
         $st->closeCursor();
         $this->ex_f = true;
     }
@@ -405,9 +404,9 @@ class Domain
     private function sqlBindValue($st, int $pos): void
     {
         if (!is_null($this->id)) {
-            $st->bindValue($pos, $this->id, PDO::PARAM_INT);
+            $st->bindValue($pos, $this->id, \PDO::PARAM_INT);
         } else {
-            $st->bindValue($pos, $this->fqdn, PDO::PARAM_STR);
+            $st->bindValue($pos, $this->fqdn, \PDO::PARAM_STR);
         }
     }
 }

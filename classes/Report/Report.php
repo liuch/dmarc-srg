@@ -23,6 +23,7 @@
 namespace Liuch\DmarcSrg\Report;
 
 use Liuch\DmarcSrg\Common;
+use Liuch\DmarcSrg\DateTime;
 use Liuch\DmarcSrg\Domains\Domain;
 use Liuch\DmarcSrg\Domains\DomainList;
 use Liuch\DmarcSrg\Database\Database;
@@ -84,10 +85,10 @@ class Report
                 }
                 $id = $res[0];
                 $this->data['date'] = [
-                    'begin' => strtotime($res[1]),
-                    'end'   => strtotime($res[2])
+                    'begin' => new DateTime($res[1]),
+                    'end'   => new DateTime($res[2])
                 ];
-                $this->data['loaded_time']  = strtotime($res[3]);
+                $this->data['loaded_time']  = new DateTime($res[3]);
                 $this->data['org_name']     = $res[4];
                 $this->data['email']        = $res[5];
                 $this->data['extra_contact_info'] = $res[6];
@@ -152,27 +153,29 @@ class Report
                 throw new \Exception('Failed to add an incoming report: the domain is inactive', -1);
             }
 
+            $ct = new DateTime();
             $st = $db->prepare(
                 'INSERT INTO `' . Database::tablePrefix('reports')
                 . '` (`domain_id`, `begin_time`, `end_time`, `loaded_time`, `org`, `external_id`, `email`,'
                 . ' `extra_contact_info`, `error_string`, `policy_adkim`, `policy_aspf`, `policy_p`,'
                 . ' `policy_sp`, `policy_pct`, `policy_fo`, `seen`)'
-                . ' VALUES (?, FROM_UNIXTIME(?), FROM_UNIXTIME(?), NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)'
+                . ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)'
             );
             $st->bindValue(1, $domain->id(), \PDO::PARAM_INT);
-            $st->bindValue(2, $this->data['begin_time'], \PDO::PARAM_INT);
-            $st->bindValue(3, $this->data['end_time'], \PDO::PARAM_INT);
-            $st->bindValue(4, $this->data['org'], \PDO::PARAM_STR);
-            $st->bindValue(5, $this->data['external_id'], \PDO::PARAM_STR);
-            $st->bindValue(6, $this->data['email'], \PDO::PARAM_STR);
-            $st->bindValue(7, $this->data['extra_contact_info'], \PDO::PARAM_STR);
-            $st->bindValue(8, Report::jsonOrNull($this->data['error_string']), \PDO::PARAM_STR);
-            $st->bindValue(9, $this->data['policy_adkim'], \PDO::PARAM_STR);
-            $st->bindValue(10, $this->data['policy_aspf'], \PDO::PARAM_STR);
-            $st->bindValue(11, $this->data['policy_p'], \PDO::PARAM_STR);
-            $st->bindValue(12, $this->data['policy_sp'], \PDO::PARAM_STR);
-            $st->bindValue(13, $this->data['policy_pct'], \PDO::PARAM_STR);
-            $st->bindValue(14, $this->data['policy_fo'], \PDO::PARAM_STR);
+            $st->bindValue(2, $this->data['begin_time']->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
+            $st->bindValue(3, $this->data['end_time']->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
+            $st->bindValue(4, $ct->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
+            $st->bindValue(5, $this->data['org'], \PDO::PARAM_STR);
+            $st->bindValue(6, $this->data['external_id'], \PDO::PARAM_STR);
+            $st->bindValue(7, $this->data['email'], \PDO::PARAM_STR);
+            $st->bindValue(8, $this->data['extra_contact_info'], \PDO::PARAM_STR);
+            $st->bindValue(9, Report::jsonOrNull($this->data['error_string']), \PDO::PARAM_STR);
+            $st->bindValue(10, $this->data['policy_adkim'], \PDO::PARAM_STR);
+            $st->bindValue(11, $this->data['policy_aspf'], \PDO::PARAM_STR);
+            $st->bindValue(12, $this->data['policy_p'], \PDO::PARAM_STR);
+            $st->bindValue(13, $this->data['policy_sp'], \PDO::PARAM_STR);
+            $st->bindValue(14, $this->data['policy_pct'], \PDO::PARAM_STR);
+            $st->bindValue(15, $this->data['policy_fo'], \PDO::PARAM_STR);
             $st->execute();
             $new_id = $db->lastInsertId();
             $st->closeCursor();
@@ -201,6 +204,7 @@ class Report
             }
             unset($rec_data);
             $db->commit();
+            $this->data['loaded_time']  = $ct;
         } catch (\Exception $e) {
             $db->rollBack();
             if ($e->getCode() == '23000') {
@@ -275,21 +279,21 @@ class Report
     private static function checkData(array $data): bool
     {
         static $fields = [
-            'domain'             => [ 'required' => true,  'type' => 'string'  ],
-            'begin_time'         => [ 'required' => true,  'type' => 'integer' ],
-            'end_time'           => [ 'required' => true,  'type' => 'integer' ],
-            'org'                => [ 'required' => true,  'type' => 'string'  ],
-            'external_id'        => [ 'required' => true,  'type' => 'string'  ],
-            'email'              => [ 'required' => false, 'type' => 'string'  ],
-            'extra_contact_info' => [ 'required' => false, 'type' => 'string'  ],
-            'error_string'       => [ 'required' => false, 'type' => 'array'   ],
-            'policy_adkim'       => [ 'required' => false, 'type' => 'string'  ],
-            'policy_aspf'        => [ 'required' => false, 'type' => 'string'  ],
-            'policy_p'           => [ 'required' => false, 'type' => 'string'  ],
-            'policy_sp'          => [ 'required' => false, 'type' => 'string'  ],
-            'policy_pct'         => [ 'required' => false, 'type' => 'string'  ],
-            'policy_fo'          => [ 'required' => false, 'type' => 'string'  ],
-            'records'            => [ 'required' => true,  'type' => 'array'   ]
+            'domain'             => [ 'required' => true,  'type' => 'string' ],
+            'begin_time'         => [ 'required' => true,  'type' => 'object' ],
+            'end_time'           => [ 'required' => true,  'type' => 'object' ],
+            'org'                => [ 'required' => true,  'type' => 'string' ],
+            'external_id'        => [ 'required' => true,  'type' => 'string' ],
+            'email'              => [ 'required' => false, 'type' => 'string' ],
+            'extra_contact_info' => [ 'required' => false, 'type' => 'string' ],
+            'error_string'       => [ 'required' => false, 'type' => 'array'  ],
+            'policy_adkim'       => [ 'required' => false, 'type' => 'string' ],
+            'policy_aspf'        => [ 'required' => false, 'type' => 'string' ],
+            'policy_p'           => [ 'required' => false, 'type' => 'string' ],
+            'policy_sp'          => [ 'required' => false, 'type' => 'string' ],
+            'policy_pct'         => [ 'required' => false, 'type' => 'string' ],
+            'policy_fo'          => [ 'required' => false, 'type' => 'string' ],
+            'records'            => [ 'required' => true,  'type' => 'array'  ]
         ];
         if (!self::checkRow($data, $fields) || count($data['records']) === 0) {
             return false;

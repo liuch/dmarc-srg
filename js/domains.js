@@ -123,7 +123,7 @@ class DomainList {
 		rd.cells.push(new DomainStatusCell(d.active));
 		rd.cells.push({ content: d.fqdn });
 		rd.cells.push({ content: d.description || "" });
-		rd.cells.push(new DomainTimeCell(unixtime2date(d.updated_time)));
+		rd.cells.push(new DomainTimeCell(new Date(d.updated_time)));
 		return rd;
 	}
 
@@ -320,8 +320,8 @@ class DomainEditDialog extends ModalDialog {
 			if (data.error_code !== undefined && data.error_code !== 0) {
 				throw new Error(data.message || "Unknown error");
 			}
-			data.created_time = unixtime2date(data.created_time);
-			data.updated_time = unixtime2date(data.updated_time);
+			data.created_time = new Date(data.created_time);
+			data.updated_time = new Date(data.updated_time);
 			that._update_ui(data);
 			that._enable_ui(true);
 		}).catch(function(err) {

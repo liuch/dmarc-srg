@@ -32,10 +32,10 @@
  *
  * Some examples:
  *
- * $ utils/summary_report.php domain=example.com period=lastweek
+ * $ php utils/summary_report.php domain=example.com period=lastweek
  * will send a weekly summary report by email for the domain example.com
  *
- * $ utils/summary_report.php domain=example.com period=lastndays:10
+ * $ php utils/summary_report.php domain=example.com period=lastndays:10
  * will send a summary report by email for last 10 days for the domain example.com
  *
  * The best place to use it is cron.
@@ -52,8 +52,6 @@ namespace Liuch\DmarcSrg;
 use Liuch\DmarcSrg\Domains\Domain;
 
 require 'init.php';
-
-date_default_timezone_set('GMT');
 
 if (php_sapi_name() !== 'cli') {
     echo 'Forbidden';
@@ -118,9 +116,7 @@ switch ($period) {
                 echo 'Error: "days" parameter has an incorrect value';
                 exit(1);
             }
-            $date2 = strtotime('midnight');
-            $date1 = strtotime('-' . $ndays . ' days', $date2);
-            $stat = Statistics::fromTo($dom, $date1, $date2 - 1);
+            $stat = Statistics::lastNDays($dom, $ndays);
             $subject = sprintf(' %d day%s', $ndays, ($ndays > 1 ? 's' : ''));
         }
         break;
@@ -137,7 +133,7 @@ $body = [];
 $body[] = '# Domain: ' . $dom->fqdn();
 
 $range = $stat->range();
-$body[] = ' Range: ' . date('M d', $range[0]) . ' - ' . date('M d', $range[1]);
+$body[] = ' Range: ' . $range[0]->format('M d') . ' - ' . $range[1]->format('M d');
 $body[] = '';
 
 $summ = $stat->summary();

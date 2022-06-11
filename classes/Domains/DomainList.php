@@ -31,7 +31,7 @@
 
 namespace Liuch\DmarcSrg\Domains;
 
-use PDO;
+use Liuch\DmarcSrg\DateTime;
 use Liuch\DmarcSrg\Database\Database;
 
 /**
@@ -51,14 +51,14 @@ class DomainList
             'SELECT `id`, `fqdn`, `active`, `description`, `created_time`, `updated_time` FROM `'
             . Database::tablePrefix('domains') . '`'
         );
-        while ($row = $st->fetch(PDO::FETCH_NUM)) {
+        while ($row = $st->fetch(\PDO::FETCH_NUM)) {
             $list[] = new Domain([
                 'id'           => intval($row[0]),
                 'fqdn'         => $row[1],
                 'active'       => boolval($row[2]),
                 'description'  => $row[3],
-                'created_time' => strtotime($row[4]),
-                'updated_time' => strtotime($row[5])
+                'created_time' => new DateTime($row[4]),
+                'updated_time' => new DateTime($row[5])
             ]);
         }
         $st->closeCursor();
@@ -77,7 +77,7 @@ class DomainList
     {
         $st = Database::connection()->query(
             'SELECT COUNT(*) FROM `' . Database::tablePrefix('domains') . '`',
-            PDO::FETCH_NUM
+            \PDO::FETCH_NUM
         );
         $res = intval($st->fetchColumn(0));
         $st->closeCursor();

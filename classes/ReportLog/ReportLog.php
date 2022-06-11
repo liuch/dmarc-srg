@@ -22,8 +22,7 @@
 
 namespace Liuch\DmarcSrg\ReportLog;
 
-use PDO;
-use Exception;
+use Liuch\DmarcSrg\DateTime;
 use Liuch\DmarcSrg\Database\Database;
 
 class ReportLog
@@ -64,10 +63,10 @@ class ReportLog
             );
             $this->sqlBindValues($st, 0);
             $st->execute();
-            $cnt = $st->fetch(PDO::FETCH_NUM)[0];
+            $cnt = $st->fetch(\PDO::FETCH_NUM)[0];
             $st->closeCursor();
-        } catch (Exception $e) {
-            throw new Exception('Failed to get the log data', -1);
+        } catch (\Exception $e) {
+            throw new \Exception('Failed to get the log data', -1);
         }
         return $cnt;
     }
@@ -95,12 +94,12 @@ class ReportLog
             $r_cnt = 0;
             $list = [];
             $more = false;
-            while ($res = $st->fetch(PDO::FETCH_NUM)) {
+            while ($res = $st->fetch(\PDO::FETCH_NUM)) {
                 if (++$r_cnt <= $this->rec_limit) {
                     $list[] = [
                         'id'         => intval($res[0]),
                         'domain'     => $res[1],
-                        'event_time' => strtotime($res[2]),
+                        'event_time' => new DateTime($res[2]),
                         'source'     => ReportLogItem::sourceToString(intval($res[3])),
                         'success'    => boolval($res[4]),
                         'message'    => $res[5]
@@ -110,8 +109,8 @@ class ReportLog
                 }
             }
             $st->closeCursor();
-        } catch (Exception $e) {
-            throw new Exception('Failed to get the logs', -1);
+        } catch (\Exception $e) {
+            throw new \Exception('Failed to get the logs', -1);
         } finally {
             if ($def_limit) {
                 $this->rec_limit = 0;
@@ -136,8 +135,8 @@ class ReportLog
             $this->sqlBindValues($st, 0);
             $st->execute();
             $st->closeCursor();
-        } catch (Exception $e) {
-            throw new Exception('Failed to remove the log data', -1);
+        } catch (\Exception $e) {
+            throw new \Exception('Failed to remove the log data', -1);
         }
     }
 
@@ -147,13 +146,13 @@ class ReportLog
         if (!is_null($this->from_time) || !is_null($this->till_time)) {
             $res = ' WHERE';
             if (!is_null($this->from_time)) {
-                $res .= ' `event_time` >= FROM_UNIXTIME(?)';
+                $res .= ' `event_time` >= ?';
                 if (!is_null($this->till_time)) {
                     $res .= ' AND';
                 }
             }
             if (!is_null($this->till_time)) {
-                $res .= ' `event_time` < FROM_UNIXTIME(?)';
+                $res .= ' `event_time` < ?';
             }
         }
         return $res;
@@ -180,16 +179,16 @@ class ReportLog
     {
         $pos = 0;
         if (!is_null($this->from_time)) {
-            $st->bindValue(++$pos, $this->from_time, PDO::PARAM_INT);
+            $st->bindValue(++$pos, $this->from_time->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
         }
         if (!is_null($this->till_time)) {
-            $st->bindValue(++$pos, $this->till_time, PDO::PARAM_INT);
+            $st->bindValue(++$pos, $this->till_time->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
         }
         if ($this->rec_limit > 0 && $inc_limit >= 0) {
             if (!is_null($this->position)) {
-                $st->bindValue(++$pos, $this->position, PDO::PARAM_INT);
+                $st->bindValue(++$pos, $this->position, \PDO::PARAM_INT);
             }
-            $st->bindValue(++$pos, $this->rec_limit + $inc_limit, PDO::PARAM_INT);
+            $st->bindValue(++$pos, $this->rec_limit + $inc_limit, \PDO::PARAM_INT);
         }
     }
 }

@@ -31,9 +31,8 @@
 
 namespace Liuch\DmarcSrg\Report;
 
-use PDO;
-use Exception;
 use Liuch\DmarcSrg\Common;
+use Liuch\DmarcSrg\DateTime;
 use Liuch\DmarcSrg\Domains\Domain;
 use Liuch\DmarcSrg\Database\Database;
 
@@ -99,13 +98,13 @@ class ReportList
             $r_cnt = 0;
             $list = [];
             $more = false;
-            while ($res = $st->fetch(PDO::FETCH_NUM)) {
+            while ($res = $st->fetch(\PDO::FETCH_NUM)) {
                 if (++$r_cnt <= $this->limit) {
                     $list[] = [
                         'org_name'    => $res[0],
                         'date'        => [
-                            'begin' => strtotime($res[1]),
-                            'end'   => strtotime($res[2])
+                            'begin' => new DateTime($res[1]),
+                            'end'   => new DateTime($res[2])
                         ],
                         'domain'      => $res[3],
                         'report_id'   => $res[4],
@@ -121,8 +120,8 @@ class ReportList
             }
             $st->closeCursor();
             unset($st);
-        } catch (Exception $e) {
-            throw new Exception('Failed to get the report list', -1);
+        } catch (\Exception $e) {
+            throw new \Exception('Failed to get the report list', -1);
         } finally {
             if ($def_limit) {
                 $this->limit = null;
@@ -176,7 +175,7 @@ class ReportList
      * Sets filter values for the list and for deleting reports
      *
      * @param array $filter An key-value array:
-     *                      'before_time'  => int, unix timestamp
+     *                      'before_time'  => DateTime, timestamp
      *                      'dkim'         => string, 'fail' or 'pass'
      *                      'domain'       => string or instance of Domain class
      *                      'month'        => string, yyyy-mm format
@@ -205,74 +204,70 @@ class ReportList
                         if (!empty($fv)) {
                             if ($fn == 'domain') {
                                 $filters[0]['a_str'][] = '`rp`.`domain_id` = ?';
-                                $filters[0]['bindings'][] = [ (new Domain($fv))->id(), PDO::PARAM_INT ];
+                                $filters[0]['bindings'][] = [ (new Domain($fv))->id(), \PDO::PARAM_INT ];
                             } elseif ($fn == 'month') {
                                 $ma = explode('-', $fv);
                                 if (count($ma) != 2) {
-                                    throw new Exception('Incorrect date format', -1);
+                                    throw new \Exception('Incorrect date format', -1);
                                 }
                                 $year = (int)$ma[0];
                                 $month = (int)$ma[1];
                                 if ($year < 0 || $month < 1 || $month > 12) {
-                                    throw new Exception('Incorrect month or year value', -1);
+                                    throw new \Exception('Incorrect month or year value', -1);
                                 }
-                                $filters[0]['a_str'][] = '`begin_time` < FROM_UNIXTIME(?) AND `end_time` >= FROM_UNIXTIME(?)';
-                                $dtz = date_default_timezone_get();
-                                date_default_timezone_set('GMT');
-                                $filters[0]['bindings'][] = [ mktime(0, 0, 0, $month + 1, 1, $year) - 11, PDO::PARAM_INT ];
-                                $filters[0]['bindings'][] = [ mktime(0, 0, 0, $month, 1, $year) + 10, PDO::PARAM_INT ];
-                                date_default_timezone_set($dtz);
+                                $filters[0]['a_str'][] = '`begin_time` < ? AND `end_time` >= ?';
+                                $date1 = new DateTime("${year}-${month}-01");
+                                $date2 = (clone $date1)->modify('first day of next month');
+                                $date1->add(new \DateInterval('PT10S'));
+                                $date2->sub(new \DateInterval('PT10S'));
+                                $filters[0]['bindings'][] = [ $date2->format('Y-m-d H:i:s'), \PDO::PARAM_STR ];
+                                $filters[0]['bindings'][] = [ $date1->format('Y-m-d H:i:s'), \PDO::PARAM_STR ];
                             } elseif ($fn == 'organization') {
                                 $filters[0]['a_str'][] = '`org` = ?';
-                                $filters[0]['bindings'][] = [ $fv, PDO::PARAM_STR ];
+                                $filters[0]['bindings'][] = [ $fv, \PDO::PARAM_STR ];
                             } elseif ($fn == 'dkim') {
                                 if ($fv === Common::$align_res[0]) {
                                     $val = 0;
                                 } else {
                                     $val = count(Common::$align_res) - 1;
                                     if ($fv !== Common::$align_res[$val]) {
-                                        throw new Exception('Incorrect DKIM filter', -1);
+                                        throw new \Exception('Incorrect DKIM filter', -1);
                                     }
                                 }
                                 $filters[1]['a_str'][] = '`dkim_align` = ?';
-                                $filters[1]['bindings'][] = [ $val, PDO::PARAM_INT ];
+                                $filters[1]['bindings'][] = [ $val, \PDO::PARAM_INT ];
                             } elseif ($fn == 'spf') {
                                 if ($fv === Common::$align_res[0]) {
                                     $val = 0;
                                 } else {
                                     $val = count(Common::$align_res) - 1;
                                     if ($fv !== Common::$align_res[$val]) {
-                                        throw new Exception('Incorrect SPF filter', -1);
+                                        throw new \Exception('Incorrect SPF filter', -1);
                                     }
                                 }
                                 $filters[1]['a_str'][] = '`spf_align` = ?';
-                                $filters[1]['bindings'][] = [ $val, PDO::PARAM_INT ];
+                                $filters[1]['bindings'][] = [ $val, \PDO::PARAM_INT ];
                             } elseif ($fn == 'status') {
                                 if ($fv === 'read') {
                                     $val = true;
                                 } elseif ($fv === 'unread') {
                                     $val = false;
                                 } else {
-                                    throw new Exception('Incorrect status filter');
+                                    throw new \Exception('Incorrect status filter');
                                 }
                                 $filters[0]['a_str'][] = '`seen` = ?';
-                                $filters[0]['bindings'][] = [ $val, PDO::PARAM_BOOL ];
-                            }
-                        }
-                        break;
-                    case 'integer':
-                        if ($fv > 0) {
-                            if ($fn == 'before_time') {
-                                $filters[0]['a_str'][] = '`begin_time` < FROM_UNIXTIME(?)';
-                                $filters[0]['bindings'][] = [ $fv, PDO::PARAM_INT ];
+                                $filters[0]['bindings'][] = [ $val, \PDO::PARAM_BOOL ];
                             }
                         }
                         break;
                     case 'object':
                         if ($fn == 'domain') {
                             $filters[0]['a_str'][] = '`rp`.`domain_id` = ?';
-                            $filters[0]['bindings'][] = [ $fv->id(), PDO::PARAM_INT ];
+                            $filters[0]['bindings'][] = [ $fv->id(), \PDO::PARAM_INT ];
                             break;
+                        } elseif ($fn == 'before_time') {
+                            $filters[0]['a_str'][] = '`begin_time` < ?';
+                            $filters[0]['bindings'][] = [ $fv->format('Y-m-d H:i:s'), \PDO::PARAM_STR ];
                         }
                 }
             }
@@ -308,7 +303,7 @@ class ReportList
             );
             $this->sqlBindValues($st, -1);
             $st->execute();
-            $cnt = $st->fetch(PDO::FETCH_NUM)[0];
+            $cnt = $st->fetch(\PDO::FETCH_NUM)[0];
             $st->closeCursor();
             if (!is_null($this->position)) {
                 $cnt -= ($this->position - 1);
@@ -320,8 +315,8 @@ class ReportList
             if (!is_null($this->limit) && $this->limit < $cnt) {
                 $cnt = $this->limit;
             }
-        } catch (Exception $e) {
-            throw new Exception('Failed to get the number of reports', -1);
+        } catch (\Exception $e) {
+            throw new \Exception('Failed to get the number of reports', -1);
         }
         return $cnt;
     }
@@ -359,9 +354,9 @@ class ReportList
             $st->closeCursor();
 
             $db->commit();
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $db->rollBack();
-            throw new Exception('Failed to delete reports', -1);
+            throw new \Exception('Failed to delete reports', -1);
         }
     }
 
@@ -378,13 +373,13 @@ class ReportList
         try {
             $domains = [];
             $st = $db->query('SELECT `fqdn` FROM `' . Database::tablePrefix('domains') . '` ORDER BY `fqdn`');
-            while ($r = $st->fetch(PDO::FETCH_NUM)) {
+            while ($r = $st->fetch(\PDO::FETCH_NUM)) {
                 $domains[] = $r[0];
             }
             $st->closeCursor();
             $res['domain'] = $domains;
-        } catch (Exception $e) {
-            throw new Exception('Failed to get a list of domains', -1);
+        } catch (\Exception $e) {
+            throw new \Exception('Failed to get a list of domains', -1);
         }
         $rep_tn = Database::tablePrefix('reports');
         try {
@@ -395,25 +390,25 @@ class ReportList
                 . '`) UNION (SELECT DISTINCT `end_time` AS `date` FROM `' . $rep_tn
                 . '`)) AS `r` ORDER BY `month` DESC'
             );
-            while ($r = $st->fetch(PDO::FETCH_NUM)) {
+            while ($r = $st->fetch(\PDO::FETCH_NUM)) {
                 $months[] = $r[0];
             }
             $st->closeCursor();
             $res['month'] = $months;
-        } catch (Exception $e) {
-            throw new Exception('Failed to get a list of months', -1);
+        } catch (\Exception $e) {
+            throw new \Exception('Failed to get a list of months', -1);
         }
         try {
             $orgs = [];
             // TODO оптимизировать индексом!
             $st = $db->query('SELECT DISTINCT `org` FROM `' . $rep_tn . '` ORDER BY `org`');
-            while ($r = $st->fetch(PDO::FETCH_NUM)) {
+            while ($r = $st->fetch(\PDO::FETCH_NUM)) {
                 $orgs[] = $r[0];
             }
             $st->closeCursor();
             $res['organization'] = $orgs;
-        } catch (Exception $e) {
-            throw new Exception('Failed to get a list of organizations', -1);
+        } catch (\Exception $e) {
+            throw new \Exception('Failed to get a list of organizations', -1);
         }
         $res['dkim']   = [ 'pass', 'fail' ];
         $res['spf']    = [ 'pass', 'fail' ];
@@ -502,9 +497,9 @@ class ReportList
         }
         if (!is_null($this->limit) && $inc_limit >= 0) {
             if (!is_null($this->position)) {
-                $st->bindValue(++$pos, $this->position, PDO::PARAM_INT);
+                $st->bindValue(++$pos, $this->position, \PDO::PARAM_INT);
             }
-            $st->bindValue(++$pos, $this->limit + $inc_limit, PDO::PARAM_INT);
+            $st->bindValue(++$pos, $this->limit + $inc_limit, \PDO::PARAM_INT);
         }
     }
 

@@ -260,8 +260,8 @@ class ReportList {
 	_make_row_data(d) {
 		let rd = { cells: [], userdata: { domain: d.domain, report_id: d.report_id }, seen: d.seen && true || false }
 		rd.cells.push({ content: d.domain });
-		let d1 = unixtime2date(d.date.begin);
-		let d2 = unixtime2date(d.date.end);
+		let d1 = new Date(d.date.begin);
+		let d2 = new Date(d.date.end);
 		rd.cells.push({ content: date_range_to_string(d1, d2), title: d1.toUTCString() + " - " + d2.toUTCString() });
 		rd.cells.push({ content: d.org_name });
 		rd.cells.push({ content: d.report_id, class: "report-id" });

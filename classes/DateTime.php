@@ -18,23 +18,26 @@
  *
  * You should have received a copy of the GNU General Public License along with
  * this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * =========================
+ *
+ * This file contains the class Core
+ *
+ * @category API
+ * @package  DmarcSrg
+ * @author   Aleksey Andreev (liuch)
+ * @license  https://www.gnu.org/licenses/gpl-3.0.html GNU/GPLv3
  */
 
-spl_autoload_register(function ($class) {
-    $prefix     = 'Liuch\\DmarcSrg\\';
-    $prefix_len = 15;
-    $base_dir   = __DIR__ . '/classes/';
+namespace Liuch\DmarcSrg;
 
-    if (strncmp($prefix, $class, $prefix_len) === 0) {
-        $relative_class = substr($class, $prefix_len);
-        $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
-        if (file_exists($file)) {
-            require_once($file);
-        }
+/**
+ * This class extends the standard class to get ISO 8601 value in json_encode.
+ */
+class DateTime extends \DateTime implements \JsonSerializable
+{
+    public function jsonSerialize()
+    {
+        return $this->format(\DateTime::ATOM);
     }
-});
-
-date_default_timezone_set('GMT');
-
-require_once('config/conf.php');
-require_once('debug.php');
+}
