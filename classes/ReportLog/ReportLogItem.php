@@ -181,7 +181,7 @@ class ReportLogItem
         $st->bindValue(7, $this->message, \PDO::PARAM_STR);
         $st->execute();
         if (is_null($this->id)) {
-            $this->id = $db->lastInsertId();
+            $this->id = intval($db->lastInsertId());
         }
         $st->closeCursor();
         $this->event_time = $ts;

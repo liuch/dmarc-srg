@@ -279,7 +279,7 @@ class Domain
                 $st->bindValue(++$idx, $this->u_tm->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
                 $st->execute();
                 $st->closeCursor();
-                $this->id = $db->lastInsertId();
+                $this->id = intval($db->lastInsertId());
                 $this->ex_f = true;
                 $this->actv = $actv;
             } catch (\Exception $e) {
@@ -320,7 +320,7 @@ class Domain
             }
 
             $st = $db->prepare('DELETE FROM `' . Database::tablePrefix('domains') . '` WHERE `id` = ?');
-            $st->bindValue(1, $this->id, \PDO::PARAM_STR);
+            $st->bindValue(1, $this->id, \PDO::PARAM_INT);
             $st->execute();
             $st->closeCursor();
 
