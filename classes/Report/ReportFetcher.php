@@ -197,9 +197,9 @@ class ReportFetcher
             } else {
                 $err_code = -1;
                 if ($loaded > 0) {
-                    $message = "Only ${loaded} of the ${r_count} report files have been loaded";
+                    $message = "Only {$loaded} of the {$r_count} report files have been loaded";
                 } else {
-                    $message = "None of the ${r_count} report files has been loaded";
+                    $message = "None of the {$r_count} report files has been loaded";
                 }
             }
             $result['error_code'] = $err_code;

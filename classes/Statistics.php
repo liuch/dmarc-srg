@@ -114,7 +114,7 @@ class Statistics
     {
         $r = new Statistics($domain);
         $r->date2 = new DateTime('midnight');
-        $r->date1 = (clone $r->date2)->sub(new \DateInterval("P${ndays}D"));
+        $r->date1 = (clone $r->date2)->sub(new \DateInterval("P{$ndays}D"));
         return $r;
     }
 

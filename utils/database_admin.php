@@ -37,7 +37,6 @@
 
 namespace Liuch\DmarcSrg;
 
-use Exception;
 use Liuch\DmarcSrg\Database\Database;
 use Liuch\DmarcSrg\Database\DatabaseUpgrader;
 use Liuch\DmarcSrg\Settings\SettingString;
@@ -73,7 +72,7 @@ try {
             if ($cur_ver === '') {
                 $cur_ver = 'n/a';
             }
-            echo "Current version:  ${cur_ver}\n";
+            echo "Current version:  {$cur_ver}\n";
             echo 'Required version: ' . Database::REQUIRED_VERSION . "\n";
             if ($cur_ver !== Database::REQUIRED_VERSION) {
                 DatabaseUpgrader::go();
@@ -92,10 +91,10 @@ try {
             $res = Database::dropTables();
             break;
         default:
-            echo "Usage: ${argv[0]} status|init|upgrade|drop\n";
+            echo "Usage: {$argv[0]} status|init|upgrade|drop\n";
             exit(1);
     }
-} catch (Exception $e) {
+} catch (\Exception $e) {
     $res = [
         'error_code' => $e->getCode(),
         'message'    => $e->getMessage()
@@ -103,6 +102,6 @@ try {
 }
 
 $error = (isset($res['error_code']) && $res['error_code'] !== 0) ? 'Error! ' : '';
-echo "Message: ${error}${res['message']}\n";
+echo "Message: {$error}{$res['message']}\n";
 
 exit(0);

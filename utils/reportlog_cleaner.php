@@ -51,7 +51,7 @@ $days = $cleaner['reportlog']['days_old'];
 if (gettype($days) !== 'integer' || $days < 0) {
     exit(0);
 }
-$days_date = (new DateTime())->sub(new \DateInterval("P${days}D"));
+$days_date = (new DateTime())->sub(new \DateInterval("P{$days}D"));
 $maximum = isset($cleaner['reportlog']['delete_maximum']) ?
     $cleaner['reportlog']['delete_maximum'] : 0;
 if (gettype($maximum) !== 'integer' || $maximum < 0) {
