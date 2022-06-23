@@ -22,9 +22,10 @@
 
 namespace Liuch\DmarcSrg\Mail;
 
-class MailBoxes
+class MailBoxes implements \Iterator
 {
     private $box_list;
+    private $index = 0;
 
     public function __construct()
     {
@@ -108,5 +109,30 @@ class MailBoxes
         }
         $res['results'] = $results;
         return $res;
+    }
+
+    public function current(): object
+    {
+        return $this->box_list[$this->index];
+    }
+
+    public function key(): int
+    {
+        return $this->index;
+    }
+
+    public function next(): void
+    {
+        ++$this->index;
+    }
+
+    public function rewind(): void
+    {
+        $this->index = 0;
+    }
+
+    public function valid(): bool
+    {
+        return isset($this->box_list[$this->index]);
     }
 }

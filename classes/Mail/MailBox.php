@@ -93,6 +93,20 @@ class MailBox
         }
     }
 
+    public function childMailbox(string $mailbox_name)
+    {
+        $this->ensureConnection();
+        $mb_list = imap_list($this->conn, $this->server, '%.' . $mailbox_name);
+        if (!$mb_list) {
+            return null;
+        }
+        $child = clone $this;
+        $child->mbox .= ".{$mailbox_name}";
+        $child->conn = null;
+        $child->expunge = false;
+        return $child;
+    }
+
     public function name()
     {
         return $this->name;

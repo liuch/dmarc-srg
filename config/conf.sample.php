@@ -101,22 +101,28 @@ $mailer = [
 
 //
 $cleaner = [
-    // It uses in utils/mailbox_cleaner.php
+    // It is used in utils/mailbox_cleaner.php
     'mailboxes' => [
         // Will remove messages older than (days)
         'days_old'       => 30,
         // How many messages will be removed at once maximum.
         'delete_maximum' => 50,
         // How many messages must be leave in the mailbox minimum.
-        'leave_minimum'  => 100
+        'leave_minimum'  => 100,
+        // Cleaning up the mailbox that failed reports are moved to. This box is also subject
+        // to the restrictions mentioned above. The valid values are:
+        // 'none' - no action with it. Default value.
+        // 'seen' - only seen messages will be removed
+        // 'any'  - all messages will be removed
+        'failed'         => 'none'
     ],
-    // It uses in utils/reports_cleaner.php
+    // It is used in utils/reports_cleaner.php
     'reports' => [
         'days_old'       => 30,
         'delete_maximum' => 50,
         'leave_minimum'  => 100
     ],
-    // It uses in utils/reportlog_cleaner.php
+    // It is used in utils/reportlog_cleaner.php
     'reportlog' => [
         'days_old'       => 30,
         'delete_maximum' => 50,

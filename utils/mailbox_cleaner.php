@@ -64,6 +64,17 @@ $leave = isset($cleaner['mailboxes']['leave_minimum']) ?
 if (gettype($leave) !== 'integer' || $leave < 0) {
     exit(0);
 }
+switch ($cleaner['mailboxes']['failed'] ?? 'no') {
+    case 'seen':
+        $f_criteria = 'SEEN';
+        break;
+    case 'any':
+        $f_criteria = 'ALL';
+        break;
+    default:
+        $f_criteria = null;
+        break;
+}
 
 // Get a list of the configured email boxes
 $mb_list = new MailBoxes();
@@ -74,27 +85,35 @@ if ($mb_list->count() === 0) {
 }
 
 try {
-    for ($mb_idx = 1; $mb_idx <= $mb_list->count(); ++$mb_idx) {
-        $mbox = $mb_list->mailbox($mb_idx);
-        $s_res = $mbox->sort(SORTDATE, 'SEEN', false);
+    foreach ($mb_list as $mbox) {
+        $cr_a = [ 'SEEN', $f_criteria ];
+        for ($cr_i = 0; $cr_i < 2; ++$cr_i) {
+            $criteria = $cr_a[$cr_i];
+            if ($cr_i === 1) {
+                $mbox = $criteria ? $mbox->childMailbox('failed') : null;
+            }
+            if ($mbox) {
+                $s_res = $mbox->sort(SORTDATE, $criteria, false);
 
-        $max = $maximum > 0 ? $maximum : -1;
-        $lv = $leave === 0 ? count($s_res) : count($s_res) - $leave;
-        $i = 0;
-        while ($lv-- > 0) {
-            $m_num = $s_res[$i++];
-            $msg = $mbox->message($m_num);
-            $mo = $msg->overview();
-            if (isset($mo->date)) {
-                $md = strtotime($mo->date);
-                if ($md !== false) {
-                    if ($md > $days_date) {
-                        break;
-                    }
-                    $mbox->deleteMessage($m_num);
-                    if ($max > 0) {
-                        if (--$max === 0) {
-                            break;
+                $max = $maximum > 0 ? $maximum : -1;
+                $lv = $leave === 0 ? count($s_res) : count($s_res) - $leave;
+                $i = 0;
+                while ($lv-- > 0) {
+                    $m_num = $s_res[$i++];
+                    $msg = $mbox->message($m_num);
+                    $mo = $msg->overview();
+                    if (isset($mo->date)) {
+                        $md = strtotime($mo->date);
+                        if ($md !== false) {
+                            if ($md > $days_date) {
+                                break;
+                            }
+                            $mbox->deleteMessage($m_num);
+                            if ($max > 0) {
+                                if (--$max === 0) {
+                                    break;
+                                }
+                            }
                         }
                     }
                 }
