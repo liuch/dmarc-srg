@@ -22,11 +22,8 @@
 
 namespace Liuch\DmarcSrg\Mail;
 
-use Exception;
-
 class MailBox
 {
-    private $params;
     private $conn;
     private $server;
     private $host;
@@ -34,12 +31,13 @@ class MailBox
     private $name;
     private $uname;
     private $passw;
+    private $delim;
     private $expunge;
 
     public function __construct($params)
     {
         if (!is_array($params)) {
-            throw new Exception('Incorrect mailbox params', -1);
+            throw new \Exception('Incorrect mailbox params', -1);
         }
 
         $this->conn = null;
@@ -87,7 +85,7 @@ class MailBox
                     @imap_expunge($this->conn);
                 }
                 @imap_close($this->conn);
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 $this->resetErrorStack();
             }
         }
@@ -96,12 +94,16 @@ class MailBox
     public function childMailbox(string $mailbox_name)
     {
         $this->ensureConnection();
-        $mb_list = imap_list($this->conn, $this->server, '%.' . $mailbox_name);
+        $mb_list = imap_list(
+            $this->conn,
+            imap_utf8_to_mutf7($this->server),
+            imap_utf8_to_mutf7($this->mbox) . $this->delim . imap_utf8_to_mutf7($mailbox_name)
+        );
         if (!$mb_list) {
             return null;
         }
         $child = clone $this;
-        $child->mbox .= ".{$mailbox_name}";
+        $child->mbox .= $this->delim . $mailbox_name;
         $child->conn = null;
         $child->expunge = false;
         return $child;
@@ -127,11 +129,11 @@ class MailBox
         $status = [];
         try {
             $this->ensureConnection();
-            $res = @imap_status($this->conn, imap_utf7_encode($this->server . $this->mbox), SA_MESSAGES | SA_UNSEEN);
+            $res = @imap_status($this->conn, imap_utf8_to_mutf7($this->server . $this->mbox), SA_MESSAGES | SA_UNSEEN);
             if ($res === false) {
                 $err_msg = imap_last_error();
                 $this->resetErrorStack();
-                throw new Exception($err_msg, -1);
+                throw new \Exception($err_msg, -1);
             }
             return [
                 'error_code' => 0,
@@ -141,7 +143,7 @@ class MailBox
                     'unseen'   => $res->unseen
                 ]
             ];
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return [
                 'error_code' => $e->getCode(),
                 'message'    => $e->getMessage()
@@ -159,7 +161,7 @@ class MailBox
                 return [];
             }
             $this->resetErrorStack();
-            throw new Exception($err_msg, -1);
+            throw new \Exception($err_msg, -1);
         }
         return $res;
     }
@@ -174,7 +176,7 @@ class MailBox
                 return [];
             }
             $this->resetErrorStack();
-            throw new Exception($err_msg, -1);
+            throw new \Exception($err_msg, -1);
         }
         return $res;
     }
@@ -186,13 +188,16 @@ class MailBox
 
     public function ensureMailbox($mailbox_name)
     {
+        $mbn = imap_utf8_to_mutf7($mailbox_name);
+        $srv = imap_utf8_to_mutf7($this->server);
+        $mbo = imap_utf8_to_mutf7($this->mbox);
         $this->ensureConnection();
-        $mb_list = imap_list($this->conn, $this->server, '%.' . $mailbox_name);
+        $mb_list = @imap_list($this->conn, $srv, $mbo . $this->delim . $mbn);
         if (!$mb_list) {
-            $new_mailbox = imap_utf7_encode($this->server . $this->mbox . '.' . $mailbox_name);
-            if (!imap_createmailbox($this->conn, $new_mailbox)) {
+            $new_mailbox = $srv . $mbo . $this->delim . $mbn;
+            if (!@imap_createmailbox($this->conn, $new_mailbox)) {
                 $this->resetErrorStack();
-                throw new Exception('Failed to create a new mailbox', -1);
+                throw new \Exception('Failed to create a new mailbox', -1);
             }
             @imap_subscribe($this->conn, $new_mailbox);
             $this->resetErrorStack();
@@ -202,11 +207,11 @@ class MailBox
     public function moveMessage($number, $mailbox_name)
     {
         $this->ensureConnection();
-        $target = imap_utf7_encode($this->mbox . '.' . $mailbox_name);
+        $target = imap_utf8_to_mutf7($this->mbox) . $this->delim . imap_utf8_to_mutf7($mailbox_name);
         if (!@imap_mail_move($this->conn, strval($number), $target)) {
             $err_str = imap_last_error();
             $this->resetErrorStack();
-            throw new Exception('Failed to move a message: ' . $err_str, -1);
+            throw new \Exception('Failed to move a message: ' . $err_str, -1);
         }
         $this->expunge = true;
     }
@@ -221,13 +226,30 @@ class MailBox
     private function ensureConnection()
     {
         if (is_null($this->conn)) {
-            $this->conn = @imap_open(imap_utf7_encode($this->server . $this->mbox), $this->uname, $this->passw);
-            if ($this->conn === false) {
-                $this->conn = null;
-                $err_msg = imap_last_error();
-                $this->resetErrorStack();
-                throw new Exception($err_msg, -1);
+            $err_msg = null;
+            $srv = imap_utf8_to_mutf7($this->server);
+            $this->conn = @imap_open($srv, $this->uname, $this->passw, OP_HALFOPEN);
+            if ($this->conn !== false) {
+                $mbx = imap_utf8_to_mutf7($this->mbox);
+                $mb_list = @imap_getmailboxes($this->conn, $srv, $mbx);
+                if ($mb_list && count($mb_list) === 1) {
+                    $this->delim = $mb_list[0]->delimiter ?? '/';
+                    if (@imap_reopen($this->conn, $srv . $mbx)) {
+                        return;
+                    }
+                } else {
+                    $err_msg = "Mailbox `{$this->mbox}` not found";
+                }
             }
+            if (!$err_msg) {
+                $err_msg = imap_last_error();
+            }
+            $this->resetErrorStack();
+            if ($this->conn) {
+                @imap_close($this->conn);
+                $this->conn = null;
+            }
+            throw new \Exception($err_msg ? $err_msg : 'Cannot connect to the mail server', -1);
         }
     }
 
@@ -237,4 +259,3 @@ class MailBox
         imap_alerts();
     }
 }
-
