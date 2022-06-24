@@ -42,7 +42,7 @@ class Status
      * Returns general state of DmarcSrg
      *
      * This method returns an array with general state of the modules Admin, Auth
-     * and statistics for the last 30 days.
+     * and statistics for the last N days.
      *
      * @return array
      */
