@@ -116,8 +116,8 @@ class Settings {
 
 	_make_row_data(d) {
 		let rd = { cells: [], userdata: d.name };
-		rd.cells.push({ content: d.name });
-		rd.cells.push({ content: d.value });
+		rd.cells.push({ content: d.name, class: "setting-name" });
+		rd.cells.push({ content: d.value, class: "setting-value" });
 		rd.cells.push({ content: Settings._descriptions[d.name] || "n/a" });
 		if (d.value !== d.default) {
 			rd.class = "custom-value";

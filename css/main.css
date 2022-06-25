@@ -514,4 +514,6 @@ tr.virtual-item, .nodata {
 	color: #888;
 	font-style: italic;
 }
-
+.setting-name, .setting-value {
+	white-space: nowrap;
+}
