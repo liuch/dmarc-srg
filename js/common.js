@@ -106,3 +106,19 @@ function bytes2size(bytes) {
 	return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 }
 
+class Common {
+	static tuneDateTimeOutput(mode) {
+		Date.prototype.outputMode = mode;
+		if (!Date.prototype.toUIString) {
+			Date.prototype.toUIString = function(prefer_utc) {
+				if (this.outputMode === "local" || (this.outputMode === "auto" && !prefer_utc)) {
+					return this.toLocaleString();
+				}
+				return this.toUTCString();
+			};
+		}
+	}
+}
+
+Common.tuneDateTimeOutput("auto");
+

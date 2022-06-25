@@ -208,6 +208,12 @@ class SettingsList
             'public'  => true,
             'options' => [ 'event-time,ascent', 'event-time,descent' ],
             'default' => 'event-time,ascent'
+        ],
+        'ui.datetime.offset' => [
+            'type'    => 'select',
+            'public'  => true,
+            'options' => [ 'auto', 'utc', 'local' ],
+            'default' => 'auto'
         ]
     ];
 }

@@ -267,14 +267,14 @@ class Report {
 		md.appendChild(this._create_data_item("Domain", this._data.domain));
 		let d1 = new Date(this._data.date.begin);
 		let d2 = new Date(this._data.date.end);
-		md.appendChild(this._create_data_item("Date range", d1.toUTCString() + " - " + d2.toUTCString()));
+		md.appendChild(this._create_data_item("Date range", d1.toUIString(true) + " - " + d2.toUIString(true)));
 		md.appendChild(this._create_data_item("Email", this._data.email));
 		if (this._data.extra_contact_info)
 			md.appendChild(this._create_data_item("Extra contact info", this._data.extra_contact_info));
 		md.appendChild(this._create_data_item("Published policy", this._create_pub_policy_fragment(this._data.policy)));
 		if (this._data.error_string)
 			md.appendChild(this._create_data_item("Error string", "???"));
-		md.appendChild(this._create_data_item("Loaded time", (new Date(this._data.loaded_time)).toUTCString()));
+		md.appendChild(this._create_data_item("Loaded time", (new Date(this._data.loaded_time)).toUIString()));
 		el.appendChild(md);
 		// Records
 		let rs = document.createElement("div");

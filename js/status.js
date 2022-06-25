@@ -23,8 +23,8 @@ class Status {
 		this._data = {};
 	}
 
-	update() {
-		return this._fetch().then(function(data) {
+	update(params) {
+		return this._fetch(params).then(function(data) {
 			return data;
 		}).catch(function(err) {
 			console.warn(err.message);
@@ -41,10 +41,17 @@ class Status {
 		return this._data.error_code && this._data.error_code !== 0 || false;
 	}
 
-	_fetch() {
+	_fetch(params) {
+		let p_string = '';
+		if (params.settings && params.settings.length) {
+			let uparams = new URLSearchParams();
+			uparams.set("settings", params.settings.join(','));
+			p_string = '?' + uparams.toString();
+		}
+
 		let that = this;
 		return new Promise(function(resolve, reject) {
-			window.fetch("status.php", {
+			window.fetch("status.php" + p_string, {
 				method: "GET",
 				cache: "no-store",
 				headers: HTTP_HEADERS,

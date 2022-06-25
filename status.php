@@ -22,7 +22,7 @@
 
 namespace Liuch\DmarcSrg;
 
-use Exception;
+use Liuch\DmarcSrg\Settings\SettingsList;
 
 require 'init.php';
 
@@ -30,8 +30,21 @@ if (Core::isJson()) {
     if (Core::method() == 'GET') {
         try {
             Core::auth()->isAllowed();
-            Core::sendJson(Core::status()->get());
-        } catch (Exception $e) {
+
+            $result = Core::status()->get();
+
+            $settings_query = $_GET['settings'] ?? '';
+            if (!empty($settings_query)) {
+                $settings = [];
+                foreach (explode(',', $settings_query) as $name) {
+                    $setting = SettingsList::getSettingByName($name);
+                    $settings[$name] = $setting->value();
+                }
+                $result['settings'] = $settings;
+            }
+
+            Core::sendJson($result);
+        } catch (\Exception $e) {
             $r = [ 'error_code' => $e->getCode(), 'message' => $e->getMessage() ];
             if ($e->getCode() == -2) {
                 $r['authenticated'] = 'no';
@@ -43,4 +56,3 @@ if (Core::isJson()) {
 }
 
 Core::sendBad();
-

@@ -169,7 +169,7 @@ class Logs {
 		rd.cells.push(new LogsResultCell(d.success));
 		rd.cells.push({ content: d.domain });
 		rd.cells.push({ content: d.source });
-		rd.cells.push({ content: (new Date(d.event_time)).toLocaleString() });
+		rd.cells.push({ content: (new Date(d.event_time)).toUIString() });
 		rd.cells.push({ content: d.message });
 		return rd;
 	}
@@ -289,7 +289,7 @@ class LogItemDialog extends ModalDialog {
 	}
 
 	_update_ui() {
-		this._time_el.textContent = this._data.event_time.toLocaleString();
+		this._time_el.textContent = this._data.event_time.toUIString();
 		if (this._data.success) {
 			this._res_el.textContent = "Ok";
 			this._res_el.parentElement.classList.add("state-green");

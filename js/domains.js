@@ -167,7 +167,7 @@ class DomainStatusCell extends ITableCell {
 class DomainTimeCell extends ITableCell {
 	value(target) {
 		if (target === "dom") {
-			return this._content && this._content.toLocaleString() || "";
+			return this._content && this._content.toUIString() || "";
 		}
 		if (target === "sort") {
 			return this._content && this._content.valueOf() || "";
@@ -347,8 +347,8 @@ class DomainEditDialog extends ModalDialog {
 		}
 		this._actv_el.value = val;
 		this._desc_el.appendChild(document.createTextNode(data.description || ""));
-		this._c_tm_el.setAttribute("value", data.created_time && data.created_time.toLocaleString() || "n/a");
-		this._u_tm_el.setAttribute("value", data.updated_time && data.updated_time.toLocaleString() || "n/a");
+		this._c_tm_el.setAttribute("value", data.created_time && data.created_time.toUIString() || "n/a");
+		this._u_tm_el.setAttribute("value", data.updated_time && data.updated_time.toUIString() || "n/a");
 	}
 
 	_add_button(container, text, type) {

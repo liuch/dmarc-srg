@@ -76,7 +76,7 @@ Router.start = function() {
 };
 
 Router.go = function(url) {
-	Status.instance().update().then(function(d) {
+	Status.instance().update({ settings: [ "ui.datetime.offset" ] }).then(function(d) {
 		if (d) {
 			Router._update_menu(d.authenticated);
 			if (d.error_code !== -2) {
@@ -99,6 +99,9 @@ Router.go = function(url) {
 			if (d.version !== Router._app_ver) {
 				Router._app_ver = d.version;
 				Router.update_title();
+			}
+			if (d.settings && d.settings["ui.datetime.offset"]) {
+				Common.tuneDateTimeOutput(d.settings["ui.datetime.offset"]);
 			}
 		}
 	});

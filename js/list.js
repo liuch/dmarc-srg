@@ -262,7 +262,7 @@ class ReportList {
 		rd.cells.push({ content: d.domain });
 		let d1 = new Date(d.date.begin);
 		let d2 = new Date(d.date.end);
-		rd.cells.push({ content: date_range_to_string(d1, d2), title: d1.toUTCString() + " - " + d2.toUTCString() });
+		rd.cells.push({ content: date_range_to_string(d1, d2), title: d1.toUIString(true) + " - " + d2.toUIString(true) });
 		rd.cells.push({ content: d.org_name });
 		rd.cells.push({ content: d.report_id, class: "report-id" });
 		rd.cells.push({ content: d.messages });
