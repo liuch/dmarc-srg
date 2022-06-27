@@ -79,7 +79,7 @@ In general, DmarcSrg is designed to automatically receive incoming DMARC reports
 - `utils/mailbox_cleaner.php` - deletes old DMARC report email messages in mailboxes.
 - `utils/reportlog_cleaner.php` - deletes old log entries.
 - `utils/reports_cleaner.php` - deletes old reports from the database.
-- `utils/summary_report.php` - creates a summary report and sents it by email.
+- `utils/summary_report.php` - creates a summary report and sends it by email.
 
 You can find more detailed information about each script in the comments to it.
 
@@ -119,12 +119,12 @@ An IMAP connection is sequentially established to each mailbox, and the followin
 - Checking the content of each message (number of attachments, attachment size, file extension).
 - Extracting a report file from the message and parsing it and adding the report data to the database.
 - If the report is successfully added to the database, the message is set as SEEN.
-- If the report is rejected, the message is also set as SEEN and moved to the `failed` folder of the current mailbox. It the folder does not exist, it will be created.
+- If the report is rejected, the message remains marked as UNSEEN and is moved to the `failed` folder of the current mailbox. If the folder does not exist, it will be created.
 
 **Note:** The total number of processed messages depends on the limit specified in the configuration file. The limitation is valid for each mail box separately.
 
 ## Local directories of the server
-Each directory specified in the configuration file is scanned for presence of files in it (not recursively). Each file in each directory is pprocessed as follows:
+Each directory specified in the configuration file is scanned for presence of files in it (not recursively). Each file in each directory is processed as follows:
 - Parsing the report file and adding the report data to the database.
 - If the report is successfully added to the database, the file is removed from the directory.
 - If the report is rejected, the file is moved to the `failed` subdirectory of the directory in which the file is currently located. If the subdirectory does not exist, it will be created.
