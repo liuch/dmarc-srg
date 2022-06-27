@@ -53,7 +53,7 @@ class MailMessage
     public function setSeen()
     {
         if (!@imap_setflag_full($this->conn, strval($this->number), '\\Seen')) {
-            throw new Exception('Failed to make a message unseen: ' . imap_last_error(), -1);
+            throw new Exception('Failed to make a message seen: ' . imap_last_error(), -1);
         }
     }
 
