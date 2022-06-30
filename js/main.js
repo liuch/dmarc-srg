@@ -22,6 +22,8 @@ class Router {
 }
 
 Router.start = function() {
+	Router._initial_header = document.querySelector("h1").textContent;
+
 	document.getElementsByTagName("body")[0].addEventListener("keydown", function(event) {
 		if (event.code == "Escape" && !event.shiftKey && !event.ctrlKey && !event.altKey) {
 			let cbtn = document.querySelector(".close-btn.active");
@@ -117,7 +119,12 @@ Router.update_title = function(str) {
 		Router._title = str;
 	}
 	document.title = title1 + (title2 && (": " + title2) || "");
-	document.querySelector("h1").childNodes[0].nodeValue = title2 || "";
+	let h1 = document.querySelector("h1");
+	if (str === "") {
+		h1.textContent = Router._initial_header || "";
+	} else {
+		h1.childNodes[0].nodeValue = title2 || "";
+	}
 };
 
 Router._update_menu = function(authenticated) {
@@ -185,6 +192,7 @@ Router._update_menu = function(authenticated) {
 					Status.instance().reset();
 					Router._clear_data();
 					Router._update_menu("no");
+					Router.update_title("");
 				}).catch(function(err) {
 					console.warn(err.message);
 					m_el.classList.remove("disabled");
