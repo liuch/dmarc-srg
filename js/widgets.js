@@ -751,6 +751,9 @@ class ModalDialog {
 				event.preventDefault();
 				that._submit();
 			});
+			frm.addEventListener("reset", function(event) {
+				this._reset();
+			}.bind(this));
 		}
 		return this._element;
 	}
@@ -847,6 +850,9 @@ class ModalDialog {
 	}
 
 	_submit() {
+	}
+
+	_reset() {
 	}
 }
 
