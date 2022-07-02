@@ -235,7 +235,7 @@ class OptionsDialog extends ModalDialog {
 	_update_domain_element() {
 		let el = this._ui_data[0].element;
 		remove_all_children(el);
-		let c_val = this._data.domain;
+		let c_val = this._data.domain || "";
 		if (this._domains) {
 			this._domains.forEach(function(name) {
 				let opt = document.createElement("option");
@@ -251,7 +251,7 @@ class OptionsDialog extends ModalDialog {
 
 	_update_period_element() {
 		let el = this._ui_data[1].element;
-		let c_val = this._data.period.split(":");
+		let c_val = this._data.period && this._data.period.split(":") || [ "lastweek" ];
 		[
 			[ "lastweek", "Last week"],
 			[ "lastmonth", "Last month" ],
