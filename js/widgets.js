@@ -757,6 +757,7 @@ class ModalDialog {
 
 	show() {
 		this.element();
+		this._result = null;
 		this._title.querySelector("button.close-btn").classList.add("active");
 		this._element.classList.remove("hidden");
 		if (this._first) {
