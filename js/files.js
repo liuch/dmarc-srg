@@ -19,7 +19,7 @@
  */
 
 class Files {
-	constructor(id) {
+	constructor() {
 		this._container   = null;
 		this._fieldset1   = null;
 		this._fieldset2   = null;
