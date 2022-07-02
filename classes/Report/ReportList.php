@@ -34,6 +34,7 @@ namespace Liuch\DmarcSrg\Report;
 use Liuch\DmarcSrg\Common;
 use Liuch\DmarcSrg\DateTime;
 use Liuch\DmarcSrg\Domains\Domain;
+use Liuch\DmarcSrg\Domains\DomainList;
 use Liuch\DmarcSrg\Database\Database;
 
 /**
@@ -371,13 +372,7 @@ class ReportList
         $res = [];
         $db = Database::connection();
         try {
-            $domains = [];
-            $st = $db->query('SELECT `fqdn` FROM `' . Database::tablePrefix('domains') . '` ORDER BY `fqdn`');
-            while ($r = $st->fetch(\PDO::FETCH_NUM)) {
-                $domains[] = $r[0];
-            }
-            $st->closeCursor();
-            $res['domain'] = $domains;
+            $res['domain'] = (new DomainList())->names();
         } catch (\Exception $e) {
             throw new \Exception('Failed to get a list of domains', -1);
         }

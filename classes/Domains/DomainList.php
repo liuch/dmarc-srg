@@ -69,6 +69,24 @@ class DomainList
     }
 
     /**
+     * Returns an ordered array with domain names from the database
+     *
+     * @return array Array of strings
+     */
+    public function names(): array
+    {
+        $res = [];
+        $st = Database::connection()->query(
+            'SELECT `fqdn` FROM `' . Database::tablePrefix('domains') . '` ORDER BY `fqdn`'
+        );
+        while ($row = $st->fetch(\PDO::FETCH_NUM)) {
+            $res[] = $row[0];
+        }
+        $st->closeCursor();
+        return $res;
+    }
+
+    /**
      * Returns the total number of domains in the database
      *
      * @return int The total number of domains

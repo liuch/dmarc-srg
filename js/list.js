@@ -121,7 +121,7 @@ class ReportList {
 	_gen_settings_button() {
 		if (!this._settings_btn) {
 			let btn = document.createElement("span");
-			btn.setAttribute("id", "list-settings-btn");
+			btn.setAttribute("class", "options-button");
 			btn.appendChild(document.createTextNode("\u{2699}"));
 			let that = this;
 			btn.addEventListener("click", function(event) {

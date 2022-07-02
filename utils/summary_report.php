@@ -50,20 +50,14 @@
 namespace Liuch\DmarcSrg;
 
 use Liuch\DmarcSrg\Domains\Domain;
+use Liuch\DmarcSrg\Report\SummaryReport;
 
 require 'init.php';
 
 if (php_sapi_name() !== 'cli') {
-    echo 'Forbidden';
+    echo 'Forbidden' . PHP_EOL;
     exit(1);
 }
-
-$num2percent = function (int $per, int $cent) {
-    if (!$per) {
-        return '0';
-    }
-    return sprintf('%.0f%%(%d)', $per / $cent * 100, $per);
-};
 
 $domain = null;
 $period = null;
@@ -81,132 +75,35 @@ for ($i = 1; $i < count($argv); ++$i) {
     }
 }
 
-
 if (!$domain) {
-    echo 'Error: Parameter "domain" is not specified';
+    echo 'Error: Parameter "domain" is not specified' . PHP_EOL;
     exit(1);
 }
 if (!$period) {
-    echo 'Error: Parameter "period" is not specified';
+    echo 'Error: Parameter "period" is not specified' . PHP_EOL;
     exit(1);
 }
 
-$dom = new Domain($domain);
-if (!$dom->exists()) {
-    echo 'Error: Domain "' . htmlspecialchars($dom->fqdn()) . '" does not exist';
-    exit(2);
-}
+try {
+    $rep = new SummaryReport(new Domain($domain), $period);
+    $body = $rep->text();
+    $subject = $rep->subject();
 
-$stat = null;
-$subject = '';
-switch ($period) {
-    case 'lastweek':
-        $stat = Statistics::lastWeek($dom);
-        $subject = ' weekly';
-        break;
-    case 'lastmonth':
-        $stat = Statistics::lastMonth($dom);
-        $subject = ' monthly';
-        break;
-    default:
-        $av = explode(':', $period);
-        if (count($av) == 2 && $av[0] == 'lastndays') {
-            $ndays = intval($av[1]);
-            if ($ndays <= 0) {
-                echo 'Error: "days" parameter has an incorrect value';
-                exit(1);
-            }
-            $stat = Statistics::lastNDays($dom, $ndays);
-            $subject = sprintf(' %d day%s', $ndays, ($ndays > 1 ? 's' : ''));
-        }
-        break;
-}
-if (!$stat) {
-    echo 'Error: Parameter "period" has an incorrect value';
-    exit(1);
-}
-
-$subject = sprintf('DMARC%s digest for %s', $subject, $domain);
-
-$body = [];
-
-$body[] = '# Domain: ' . $dom->fqdn();
-
-$range = $stat->range();
-$body[] = ' Range: ' . $range[0]->format('M d') . ' - ' . $range[1]->format('M d');
-$body[] = '';
-
-$summ = $stat->summary();
-$total = $summ['emails']['total'];
-$aligned = $summ['emails']['dkim_spf_aligned'] +
-    $summ['emails']['dkim_aligned'] +
-    $summ['emails']['spf_aligned'];
-$n_aligned = $total - $aligned;
-$body[] = '## Summary';
-$body[] = sprintf(' Total: %d', $total);
-if ($total > 0) {
-    $body[] = sprintf(' DKIM or SPF aligned: %s', $num2percent($aligned, $total));
-    $body[] = sprintf(' Not aligned: %s', $num2percent($n_aligned, $total));
-} else {
-    $body[] = sprintf(' DKIM or SPF aligned: %d', $aligned);
-    $body[] = sprintf(' Not aligned: %d', $n_aligned);
-}
-$body[] = sprintf(' Organizations: %d', $summ['organizations']);
-$body[] = '';
-
-if (count($stat->ips()) > 0) {
-    $body[] = '## Sources';
-    $body[] = sprintf(
-        ' %-25s %13s %13s %13s',
-        '',
-        'Total',
-        'SPF aligned',
-        'DKIM aligned'
+    global $mailer;
+    $headers = [
+        'From'         => $mailer['from'],
+        'MIME-Version' => '1.0',
+        'Content-Type' => 'text/plain; charset=utf-8'
+    ];
+    mail(
+        $mailer['default'],
+        mb_encode_mimeheader($rep->subject(), 'UTF-8'),
+        implode("\r\n", $rep->text()),
+        $headers
     );
-    foreach ($stat->ips() as &$it) {
-        $total = $it['emails'];
-        $spf_a = $it['spf_aligned'];
-        $dkim_a = $it['dkim_aligned'];
-        $spf_str = $num2percent($spf_a, $total);
-        $dkim_str = $num2percent($dkim_a, $total);
-        $body[] = sprintf(
-            ' %-25s %13d %13s %13s',
-            $it['ip'],
-            $total,
-            $spf_str,
-            $dkim_str
-        );
-    }
-    unset($it);
-    $body[] = '';
+} catch (\Exception $e) {
+    echo 'Error: ' . $e->getMessage() . PHP_EOL;
+    exit(1);
 }
-
-if (count($stat->organizations()) > 0) {
-    $body[] = '## Organizations';
-    $body[] = sprintf(' %-15s %8s %8s', '', 'emails', 'reports');
-    foreach ($stat->organizations() as &$org) {
-        $body[] = sprintf(
-            ' %-15s %8d %8d',
-            $org['name'],
-            $org['emails'],
-            $org['reports']
-        );
-    }
-    unset($org);
-    $body[] = '';
-}
-
-global $mailer;
-$headers = [
-    'From'         => $mailer['from'],
-    'MIME-Version' => '1.0',
-    'Content-Type' => 'text/plain; charset=utf-8'
-];
-mail(
-    $mailer['default'],
-    mb_encode_mimeheader($subject, 'UTF-8'),
-    implode("\r\n", $body),
-    $headers
-);
 
 exit(0);

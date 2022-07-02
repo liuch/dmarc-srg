@@ -248,6 +248,11 @@ Router._modules = {
 			m.pointer = new Logs();
 		}
 	},
+	summary: {
+		start: function(m) {
+			m.pointer = new Summary();
+		}
+	},
 	settings: {
 		start: function(m) {
 			m.pointer = new Settings();
@@ -268,6 +273,7 @@ Router._routes = {
 	"files.php": "files",
 	"report.php": "report",
 	"domains.php": "domains",
+	"summary.php": "summary",
 	"settings.php": "settings"
 };
 

@@ -21,7 +21,7 @@
  *
  * =========================
  *
- * This script is to get summary report in web interface
+ * This script is to get summary report via the web interface
  *
  * HTTP GET query:
  *   when the header 'Accept' is 'application/json':

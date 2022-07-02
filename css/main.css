@@ -120,6 +120,13 @@ legend {
 	margin: 0;
 	padding: 0 0.2em;
 }
+hr {
+	border: 0;
+	border-top: 0.07em solid var(--color-br-menu);
+}
+input[type=number] {
+	width: 4em;
+}
 .bottom-border {
 	border-bottom: 0.07rem solid var(--color-br-strong);
 }
@@ -172,7 +179,7 @@ legend {
 	text-align: center;
 }
 .hidden {
-	display: none;
+	display: none !important;
 }
 #main-block {
 	clear: both;
@@ -494,14 +501,22 @@ th.report-id, td.report-id {
 	font-weight: bold;
 	color: var(--color-fg-custom);
 }
-#list-settings-btn {
+.options-button {
 	color: #888;
 	font-size: 80%;
 	margin-left: 0.3em;
 	cursor: pointer;
 }
-#list-settings-btn:hover, #list-settings-btn.active {
+button.options-button {
+	color: inherit;
+	margin-left: 1em;
+}
+.options-button:hover, .options-button.active {
 	color: #080;
+}
+.options-block {
+	display: flex;
+	align-items: center;
 }
 th.cell-status {
 	width: 1em;
