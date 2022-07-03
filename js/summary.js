@@ -170,8 +170,8 @@ class OptionsDialog extends ModalDialog {
 		this._ui_data = [
 			{ name: "domain", title: "Domain" },
 			{ name: "period", title: "Period" },
+			{ name: "days", title: "Days", type: "input" }
 		];
-		this._days_row = null;
 	}
 
 	_gen_content() {
@@ -179,24 +179,31 @@ class OptionsDialog extends ModalDialog {
 		container.setAttribute("class", "table");
 		this._content.appendChild(container);
 		this._ui_data.forEach(function(row) {
-			let el = this._add_option_row(row.name, row.title);
-			row.element = el.lastChild;
-			container.appendChild(el);
+			let r_el = this._add_option_row(row.name, row.title, row.type);
+			let i_el = r_el.lastChild;
+			if (row.name === "days") {
+				i_el.setAttribute("type", "number");
+				i_el.setAttribute("min", "1");
+				i_el.setAttribute("max", "9999");
+				i_el.setAttribute("value", "");
+			}
+			row.element = i_el;
+			container.appendChild(r_el);
 		}, this);
 		this._ui_data[1].element.addEventListener("change", function(event) {
-			let action = event.target.value === "lastndays" ? "remove" : "add";
-			this._days_row.classList[action]("hidden");
+			let days_el = this._ui_data[2].element;
+			if (event.target.value === "lastndays") {
+				days_el.disabled = false;
+				delete days_el.dataset.disabled;
+				days_el.value = days_el.dataset.value || "1";
+			} else {
+				days_el.disabled = true;
+				console.debug("ggg", days_el, days_el.value);
+				days_el.dataset.value = days_el.value || "1";
+				days_el.dataset.disabled = true;
+				days_el.value = "";
+			}
 		}.bind(this));
-		{
-			let row_el = this._add_option_row("days", "Days", "input");
-			container.appendChild(row_el);
-			let days = row_el.lastChild;
-			days.setAttribute("type", "number");
-			days.setAttribute("min", "1");
-			days.setAttribute("max", "9999");
-			days.setAttribute("value", 1);
-			this._days_row = row_el;
-		}
 		this._update_period_element();
 		if (!this._domains) {
 			this._fetch_data();
@@ -209,7 +216,7 @@ class OptionsDialog extends ModalDialog {
 			period: this._ui_data[1].element.value
 		};
 		if (res.period === "lastndays") {
-			res.days = parseInt(this._days_row.lastChild.value);
+			res.days = parseInt(this._ui_data[2].element.value) || 1;
 		}
 		this._result = res;
 		this.hide();
@@ -266,7 +273,10 @@ class OptionsDialog extends ModalDialog {
 			el.appendChild(opt);
 		});
 		if (c_val[1]) {
-			this._days_row.lastChild.setAttribute("value", parseInt(c_val[1]));
+			let val  = parseInt(c_val[1]);
+			let i_el = this._ui_data[2].element;
+			i_el.setAttribute("value", val);
+			i_el.dataset.value = val;
 		}
 		el.dispatchEvent(new Event("change"));
 	}
@@ -274,7 +284,8 @@ class OptionsDialog extends ModalDialog {
 	_enable_ui(enable) {
 		let list = this._element.querySelector("form").elements;
 		for (let i = 0; i < list.length; ++i) {
-			list[i].disabled = !enable;
+			let el = list[1];
+			el.disabled = !enable || el.dataset.disabled;
 		}
 	}
 
