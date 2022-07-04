@@ -97,6 +97,14 @@ h1 {
 	margin: 0 0.6rem 0.6rem 0.8rem;
 	display: inline-block;
 }
+h2 {
+	font-size: 1.4em;
+	margin: 1em 0 .2em;
+}
+h3 {
+	font-size: 1.3em;
+	margin: 1em 0 .2em;
+}
 h4, h5 {
 	margin: 0 0 0.5rem 0;
 	text-transform: uppercase;
@@ -249,6 +257,29 @@ input[type=number] {
 }
 .main-table.focused tbody tr.selected {
 	background-color: var(--color-bg-focused);
+}
+.report-table {
+	font-size: 90%;
+	border-spacing: 0;
+	border-collapse: collapse;
+}
+.report-table caption {
+	font-style: italic;
+}
+.report-table th {
+	min-width: 4em;
+	padding: .3em .6em;
+}
+.report-table td {
+	padding: .3em;
+	text-align: right;
+}
+.report-table td:first-child {
+	text-align: left;
+	padding-right: 1em;
+}
+.report-table td, .report-table th {
+	border: 0.1rem solid var(--color-br-default);
 }
 .state-red .state-text {
 	color: var(--color-st-txtred);
@@ -531,4 +562,10 @@ tr.virtual-item, .nodata {
 }
 .setting-name, .setting-value {
 	white-space: nowrap;
+}
+.left-titled {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	row-gap: .2em;
+	column-gap: 1em;
 }

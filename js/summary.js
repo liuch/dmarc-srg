@@ -53,8 +53,9 @@ class Summary {
 		let url_params = new URL(document.location.href).searchParams;
 		let domain = url_params.get("domain");
 		let period = url_params.get("period");
+		let format = url_params.get("format");
 		if (domain && period) {
-			this._options_data = { domain: domain, period: period };
+			this._options_data = { domain: domain, period: period, format: format || "text" };
 		} else {
 			this._options_data = null;
 		}
@@ -108,6 +109,7 @@ class Summary {
 				period += ":" + d.days;
 			}
 			url.searchParams.set("period", period);
+			url.searchParams.set("format", d.format);
 			window.history.replaceState(null, "", url.toString());
 			this.display();
 			this.update();
@@ -124,9 +126,10 @@ class Summary {
 		}
 		this._report_block.appendChild(set_wait_status());
 		let uparams = new URLSearchParams();
-		uparams.set("domain", this._options_data.domain);
+		let domain = this._options_data.domain;
+		uparams.set("domain", domain);
 		uparams.set("period", this._options_data.period);
-		uparams.set("format", "text");
+		uparams.set("format", this._options_data.format === "html" ? "raw" : "text");
 		window.fetch("summary.php?mode=report&" + uparams.toString(), {
 			method: "GET",
 			cache: "no-store",
@@ -141,6 +144,7 @@ class Summary {
 			if (report.error_code !== undefined && report.error_code !== 0) {
 				throw new Error(report.message || "Unknown error");
 			}
+			report.domain = domain;
 			this._report = new SummaryReport(report);
 			this._display_report();
 		}.bind(this)).catch(function(err) {
@@ -155,8 +159,18 @@ class Summary {
 	}
 
 	_display_report() {
-		let el = document.createElement("pre");
-		el.appendChild(document.createTextNode(this._report.text()));
+		let el   = null;
+		let text = this._report.text();
+		if (text) {
+			el = document.createElement("pre");
+			el.appendChild(document.createTextNode(this._report.text()));
+		} else {
+			el = this._report.html();
+			if (!el) {
+				el = document.createElement("p");
+				el.appendChild(document.createTextNode("No data"));
+			}
+		}
 		this._report_block.appendChild(el);
 	}
 }
@@ -170,7 +184,8 @@ class OptionsDialog extends ModalDialog {
 		this._ui_data = [
 			{ name: "domain", title: "Domain" },
 			{ name: "period", title: "Period" },
-			{ name: "days", title: "Days", type: "input" }
+			{ name: "days", title: "Days", type: "input" },
+			{ name: "format", title: "Format" }
 		];
 	}
 
@@ -198,13 +213,14 @@ class OptionsDialog extends ModalDialog {
 				days_el.value = days_el.dataset.value || "1";
 			} else {
 				days_el.disabled = true;
-				console.debug("ggg", days_el, days_el.value);
 				days_el.dataset.value = days_el.value || "1";
 				days_el.dataset.disabled = true;
 				days_el.value = "";
 			}
 		}.bind(this));
 		this._update_period_element();
+		this._update_format_element();
+
 		if (!this._domains) {
 			this._fetch_data();
 		}
@@ -213,7 +229,8 @@ class OptionsDialog extends ModalDialog {
 	_submit() {
 		let res = {
 			domain: this._ui_data[0].element.value,
-			period: this._ui_data[1].element.value
+			period: this._ui_data[1].element.value,
+			format: this._ui_data[3].element.value
 		};
 		if (res.period === "lastndays") {
 			res.days = parseInt(this._ui_data[2].element.value) || 1;
@@ -281,6 +298,23 @@ class OptionsDialog extends ModalDialog {
 		el.dispatchEvent(new Event("change"));
 	}
 
+	_update_format_element() {
+		let el = this._ui_data[3].element;
+		let cv = this._data.format || "text";
+		[
+			[ "text", "Plain text" ],
+			[ "html", "HTML" ]
+		].forEach(function(it) {
+			let opt = document.createElement("option");
+			opt.setAttribute("value", it[0]);
+			if (it[0] === cv) {
+				opt.setAttribute("selected", "");
+			}
+			opt.appendChild(document.createTextNode(it[1]));
+			el.appendChild(opt);
+		});
+	}
+
 	_enable_ui(enable) {
 		let list = this._element.querySelector("form").elements;
 		for (let i = 0; i < list.length; ++i) {
@@ -334,7 +368,172 @@ class SummaryReport {
 		if (lines.length > 0) {
 			return lines.join("\n");
 		}
-		return 'No data';
+	}
+
+	html() {
+		let data = this._report.data;
+		let html = document.createDocumentFragment();
+		let header = document.createElement("h2");
+		header.appendChild(document.createTextNode("Domain: " + this._report.domain));
+		html.appendChild(header);
+		{
+			let range = document.createElement("div");
+			let d1 = (new Date(data.date_range.begin)).toLocaleDateString();
+			let d2 = (new Date(data.date_range.end)).toLocaleDateString();
+			range.appendChild(document.createTextNode("Range: " + d1 + " - " + d2));
+			html.appendChild(range);
+		}
+		{
+			let header = document.createElement("h3");
+			header.appendChild(document.createTextNode("Summary"));
+			html.appendChild(header);
+			let cont = document.createElement("div");
+			cont.setAttribute("class", "left-titled");
+			html.appendChild(cont);
+			function add_row(title, value, cname) {
+				let te = document.createElement("span");
+				te.appendChild(document.createTextNode(title + ": "));
+				cont.appendChild(te);
+				let ve = document.createElement("span");
+				if (cname) {
+					ve.setAttribute("class", cname);
+				}
+				ve.appendChild(document.createTextNode(value));
+				cont.appendChild(ve);
+			}
+			let emails = data.summary.emails;
+			let total = emails.total;
+			add_row("Total", total);
+			let aligned = emails.dkim_spf_aligned + emails.dkim_aligned + emails.spf_aligned;
+			let n_aligned = total - aligned;
+			add_row(
+				"DKIM or SPF aligned",
+				SummaryReport.num2percent(aligned, total),
+				aligned && "report-result-pass" || null
+			);
+			add_row(
+				"Not aligned",
+				SummaryReport.num2percent(n_aligned, total),
+				n_aligned && "report-result-fail" || null
+			);
+			add_row("Organizations", data.summary.organizations);
+		}
+		if (data.sources && data.sources.length) {
+			let header = document.createElement("h3");
+			header.appendChild(document.createTextNode("Sources"));
+			html.appendChild(header);
+			let table = document.createElement("table");
+			table.setAttribute("class", "report-table");
+			html.appendChild(table);
+
+			let caption = document.createElement("caption");
+			caption.appendChild(document.createTextNode("Total records: " + data.sources.length));
+			table.appendChild(caption);
+			let thead = document.createElement("thead");
+			table.appendChild(thead);
+			[
+				[
+					[ "IP address", 0, 2 ], [ "Email volume", 0, 2 ], [ "SPF", 3, 0 ], [ "DKIM", 3, 0 ]
+				],
+				[
+					[ "pass" ], [ "fail" ], [ "rate" ], [ "pass" ], [ "fail" ], [ "rate" ]
+				]
+			].forEach(function(row) {
+				let tr = document.createElement("tr");
+				thead.appendChild(tr);
+				row.forEach(function(col) {
+					let th = document.createElement("th");
+					th.appendChild(document.createTextNode(col[0]));
+					if (col[1]) {
+						th.setAttribute("colspan", col[1]);
+					}
+					if (col[2]) {
+						th.setAttribute("rowspan", col[2]);
+					}
+					tr.appendChild(th);
+				});
+			});
+			let tbody = document.createElement("tbody");
+			table.appendChild(tbody);
+			data.sources.forEach(function(sou) {
+				let tr = document.createElement("tr");
+				tbody.appendChild(tr);
+				let va = [];
+				va.push([ sou.ip, 0 ]);
+				let ett = sou.emails;
+				let spf = sou.spf_aligned;
+				let dkm = sou.dkim_aligned;
+				va.push([ ett, 1 ]);
+				va.push([ spf, 3 ]);
+				va.push([ ett - spf, 5 ]);
+				va.push([ spf / ett, 8 ]);
+				va.push([ dkm, 3 ]);
+				va.push([ ett - dkm, 5 ]);
+				va.push([ dkm / ett, 8 ]);
+				va.forEach(function(it) {
+					let val  = it[0];
+					let mode = it[1];
+					let td   = document.createElement("td");
+					if (val && (mode & 2)) {
+						td.setAttribute("class", "report-result-pass");
+					}
+					if (val && (mode & 4)) {
+						td.setAttribute("class", "report-result-fail");
+					}
+					if (mode & 8) {
+						val = (val * 100).toFixed(0) + "%";
+					} else if (mode & 1) {
+						val = val.toLocaleString();
+					}
+					td.appendChild(document.createTextNode(val));
+					tr.appendChild(td);
+				});
+			});
+		}
+		if (data.organizations && data.organizations.length) {
+			let header = document.createElement("h3");
+			header.appendChild(document.createTextNode("Organizations"));
+			html.appendChild(header);
+			let table = document.createElement("table");
+			table.setAttribute("class", "report-table");
+			html.appendChild(table);
+
+			let caption = document.createElement("caption");
+			caption.appendChild(document.createTextNode("Total records: " + data.organizations.length));
+			table.appendChild(caption);
+			let thead = document.createElement("thead");
+			table.appendChild(thead);
+			let tr = document.createElement("tr");
+			thead.appendChild(tr);
+			[ "Name", "Emails", "Reports" ].forEach(function(org) {
+				let th = document.createElement("th");
+				th.appendChild(document.createTextNode(org));
+				tr.appendChild(th);
+			});
+			let tbody = document.createElement("tbody");
+			table.appendChild(tbody);
+			data.organizations.forEach(function(org) {
+				let tr = document.createElement("tr");
+				tbody.appendChild(tr);
+				let va = [];
+				va.push(org.name);
+				va.push(org.emails.toLocaleString());
+				va.push(org.reports.toLocaleString());
+				va.forEach(function(v) {
+					let td = document.createElement("td");
+					td.appendChild(document.createTextNode(v));
+					tr.appendChild(td);
+				});
+			});
+		}
+		return html;
+	}
+
+	static num2percent(per, cent) {
+		if (!per) {
+			return "0";
+		}
+		return "" + Math.round(per / cent * 100, per) + "% (" + per + ")";
 	}
 }
 
