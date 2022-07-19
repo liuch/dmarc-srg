@@ -118,7 +118,7 @@ class Settings {
 		let rd = { cells: [], userdata: d.name };
 		rd.cells.push({ content: d.name, class: "setting-name" });
 		rd.cells.push({ content: d.value, class: "setting-value" });
-		rd.cells.push({ content: Settings._descriptions[d.name] || "n/a" });
+		rd.cells.push({ content: Settings._descriptions_short[d.name] || Settings._descriptions[d.name] || "No description" });
 		if (d.value !== d.default) {
 			rd.class = "custom-value";
 		}
@@ -149,6 +149,12 @@ class Settings {
 		"ui.datetime.offset": "Time zone offset of displayed dates in UI. Auto means that the report range is in UTC and all other dates are in local.",
 		"ui.ipv4.url": "The URL that will be used as a link when clicking on the IPv4 address. For example: https://somewhoisservice.net/ip/{$ip}, where {$ip} is IP address from the UI. Use {$eip} if you want to insert url encoded IP address. Use an empty string to disable.",
 		"ui.ipv6.url": "The URL that will be used as a link when clicking on the IPv6 address. For example: https://somewhoisservice.net/ip/{$ip}, where {$ip} is IP address from the UI. Use {$eip} if you want to insert url encoded IP address. Use an empty string to disable."
+	};
+
+	static _descriptions_short = {
+		"ui.datetime.offset": "Time zone offset of displayed dates in UI.",
+		"ui.ipv4.url": "The URL that will be used as a link when clicking on the IPv4 address.",
+		"ui.ipv6.url": "The URL that will be used as a link when clicking on the IPv6 address."
 	};
 }
 
