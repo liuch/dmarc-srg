@@ -118,6 +118,30 @@ class Common {
 			};
 		}
 	}
+
+	static makeIpElement(ip) {
+		let url = null;
+		let type = ip.includes(":") && 6 || 4;
+		switch (type) {
+			case 4:
+				url = Common.ipv4_url;
+				break;
+			case 6:
+				url = Common.ipv6_url;
+				break;
+		}
+		let tn = document.createTextNode(ip);
+		if (url) {
+			url = url.replace("{$ip}", ip).replace("{$eip}", encodeURIComponent(ip));
+			let el = document.createElement("a");
+			el.setAttribute("href", url);
+			el.setAttribute("target", "_blank");
+			el.setAttribute("title", "IP address information");
+			el.appendChild(tn);
+			return el;
+		}
+		return tn;
+	}
 }
 
 Common.tuneDateTimeOutput("auto");

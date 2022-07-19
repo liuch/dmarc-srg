@@ -146,7 +146,9 @@ class Settings {
 		"status.emails-for-last-n-days": "The period in days for which statistics are displayed in the status block.",
 		"report-view.sort-records-by": "How records are sorted in the report view dialog.",
 		"log-view.sort-list-by": "How report log items are sorted by default in the log view dialog.",
-		"ui.datetime.offset": "Time zone offset of displayed dates in UI. Auto means that the report range is in UTC and all other dates are in local."
+		"ui.datetime.offset": "Time zone offset of displayed dates in UI. Auto means that the report range is in UTC and all other dates are in local.",
+		"ui.ipv4.url": "The URL that will be used as a link when clicking on the IPv4 address. For example: https://somewhoisservice.net/ip/{$ip}, where {$ip} is IP address from the UI. Use {$eip} if you want to insert url encoded IP address. Use an empty string to disable.",
+		"ui.ipv6.url": "The URL that will be used as a link when clicking on the IPv6 address. For example: https://somewhoisservice.net/ip/{$ip}, where {$ip} is IP address from the UI. Use {$eip} if you want to insert url encoded IP address. Use an empty string to disable."
 	};
 }
 
@@ -176,7 +178,6 @@ class SettingEditDialog extends ModalDialog {
 
 		let val = document.createElement("input");
 		val.setAttribute("type", "text");
-		val.setAttribute("required", "required");
 		val.disabled = true;
 		this._insert_row("Value", val);
 		this._val_el = val;

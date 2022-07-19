@@ -78,9 +78,16 @@ Router.start = function() {
 };
 
 Router.go = function(url) {
-	Status.instance().update({ settings: [ "ui.datetime.offset" ] }).then(function(d) {
+	Status.instance().update({ settings: [ "ui.datetime.offset", "ui.ipv4.url", "ui.ipv6.url" ] }).then(function(d) {
 		if (d) {
 			Router._update_menu(d.authenticated);
+			if (d.settings) {
+				if (d.settings["ui.datetime.offset"]) {
+					Common.tuneDateTimeOutput(d.settings["ui.datetime.offset"]);
+				}
+				Common.ipv4_url = d.settings["ui.ipv4.url"] || '';
+				Common.ipv6_url = d.settings["ui.ipv6.url"] || '';
+			}
 			if (d.error_code !== -2) {
 				let module = Router._url2module(url);
 				if (module) {
@@ -101,9 +108,6 @@ Router.go = function(url) {
 			if (d.version !== Router._app_ver) {
 				Router._app_ver = d.version;
 				Router.update_title();
-			}
-			if (d.settings && d.settings["ui.datetime.offset"]) {
-				Common.tuneDateTimeOutput(d.settings["ui.datetime.offset"]);
 			}
 		}
 	});

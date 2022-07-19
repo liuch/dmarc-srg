@@ -82,6 +82,13 @@ class SettingsList
                             ], true);
                             $fmap[$name] = true;
                             break;
+                        case 'string':
+                            $list[] = new SettingString([
+                                'name'  => $name,
+                                'value' => $value
+                            ], true);
+                            $fmap[$name] = true;
+                            break;
                     }
                 }
             }
@@ -101,6 +108,12 @@ class SettingsList
                         break;
                     case 'integer':
                         $list[] = new SettingInteger([
+                            'name'  => $sch_name,
+                            'value' => $sch_def
+                        ]);
+                        break;
+                    case 'string':
+                        $list[] = new SettingString([
                             'name'  => $sch_name,
                             'value' => $sch_def
                         ]);
@@ -197,13 +210,13 @@ class SettingsList
             'maximum' => 365,
             'default' => 30
         ],
-        'report-view.sort-records-by'   => [
+        'report-view.sort-records-by' => [
             'type'    => 'select',
             'public'  => true,
             'options' => [ 'ip,ascent', 'ip,descent', 'message-count,ascent', 'message-count,descent' ],
             'default' => 'message-count,descent'
         ],
-        'log-view.sort-list-by'   => [
+        'log-view.sort-list-by' => [
             'type'    => 'select',
             'public'  => true,
             'options' => [ 'event-time,ascent', 'event-time,descent' ],
@@ -214,6 +227,16 @@ class SettingsList
             'public'  => true,
             'options' => [ 'auto', 'utc', 'local' ],
             'default' => 'auto'
+        ],
+        'ui.ipv4.url' => [
+            'type'    => 'string',
+            'public'  => true,
+            'default' => 'https://who.is/whois-ip/ip-address/{$ip}'
+        ],
+        'ui.ipv6.url' => [
+            'type'    => 'string',
+            'public'  => true,
+            'default' => 'https://who.is/whois-ip/ip-address/{$ip}'
         ]
     ];
 }

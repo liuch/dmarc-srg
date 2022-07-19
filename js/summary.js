@@ -459,7 +459,7 @@ class SummaryReport {
 				let tr = document.createElement("tr");
 				tbody.appendChild(tr);
 				let va = [];
-				va.push([ sou.ip, 0 ]);
+				va.push([ Common.makeIpElement(sou.ip), 0 ]);
 				let ett = sou.emails;
 				let spf = sou.spf_aligned;
 				let dkm = sou.dkim_aligned;
@@ -485,7 +485,11 @@ class SummaryReport {
 					} else if (mode & 1) {
 						val = val.toLocaleString();
 					}
-					td.appendChild(document.createTextNode(val));
+					if (typeof(val) === "object") {
+						td.appendChild(val);
+					} else {
+						td.appendChild(document.createTextNode(val));
+					}
 					tr.appendChild(td);
 				});
 			});
