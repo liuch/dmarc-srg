@@ -61,7 +61,7 @@ class SummaryReport
         switch ($period) {
             case 'lastweek':
                 $stat = Statistics::lastWeek($domain);
-                $subject = ' monthly';
+                $subject = ' weekly';
                 break;
             case 'lastmonth':
                 $stat = Statistics::lastMonth($domain);
