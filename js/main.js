@@ -74,6 +74,27 @@ Router.start = function() {
 		}
 	});
 
+	document.querySelector(".menu-box .about a").addEventListener("click", function(event) {
+		event.preventDefault();
+		setTimeout(function() {
+			let dlg = new AboutDialog({
+				authors: [
+					{ name:  "Aleksey Andreev", url:   "https://github.com/liuch", years: "2021-2022" }
+				],
+				documentation: [
+					{ ancor: "README on GitHub", url: "https://github.com/liuch/dmarc-srg/blob/master/README.md" }
+				],
+				source_code: [
+					{ ancor: "DmarcSrg on GitHub", url: "https://github.com/liuch/dmarc-srg" }
+				]
+			});
+			document.getElementById("main-block").appendChild(dlg.element());
+			dlg.show().finally(function() {
+				dlg.element().remove();
+			});
+		}, 0);
+	});
+
 	Router.go();
 };
 
@@ -113,11 +134,16 @@ Router.go = function(url) {
 	});
 };
 
-Router.update_title = function(str) {
-	let title1 = "DmarcSrg";
+Router.app_name = function() {
+	let name = "DmarcSrg";
 	if (Router._app_ver) {
-		title1 += " " + Router._app_ver;
+		name += " " + Router._app_ver;
 	}
+	return name;
+}
+
+Router.update_title = function(str) {
+	let title1 = Router.app_name();
 	let title2 = str || Router._title || null;
 	if (str) {
 		Router._title = str;

@@ -569,3 +569,13 @@ tr.virtual-item, .nodata {
 	row-gap: .2em;
 	column-gap: 1em;
 }
+.vertical-content {
+	display: flex;
+	flex-direction: column;
+	gap: 1em;
+	max-width: 30em;
+}
+.vertical-content > * {
+	margin-top: 0;
+	margin-bottom: 0;
+}

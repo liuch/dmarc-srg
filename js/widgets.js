@@ -856,3 +856,81 @@ class ModalDialog {
 	}
 }
 
+class AboutDialog extends ModalDialog {
+	constructor(params) {
+		super({
+			title:   "About",
+			buttons: [ "ok" ]
+		});
+		this._authors = params.authors;
+		this._documentation = params.documentation;
+		this._source_code = params.source_code;
+	}
+
+	element() {
+		if (!this._element) {
+			super.element();
+			this._element.children[0].classList.add("about");
+			this._content.classList.add("vertical-content");
+			this._content.parentElement.classList.add("vertical-content");
+		}
+		return this._element;
+	}
+
+	_gen_content() {
+		let header = document.createElement("h2");
+		header.appendChild(document.createTextNode(Router.app_name()));
+		this._content.appendChild(header);
+
+		let cblock = document.createElement("div");
+		this._authors.forEach(function(author) {
+			let ablock = document.createElement("div");
+			ablock.appendChild(document.createTextNode("Copyright © " + author.years + ", "));
+			cblock.appendChild(ablock);
+			let alink = document.createElement("a");
+			alink.setAttribute("href", author.url);
+			alink.setAttribute("title", "The author's page");
+			alink.setAttribute("target", "_blank");
+			alink.appendChild(document.createTextNode(author.name));
+			ablock.appendChild(alink);
+		});
+		this._content.appendChild(cblock);
+
+		let oblock = document.createElement("div");
+		oblock.setAttribute("class", "left-titled");
+		let add_row = function(title, value) {
+			let t_el = document.createElement("span");
+			t_el.appendChild(document.createTextNode(title + ": "));
+			oblock.appendChild(t_el);
+			let v_el = document.createElement("div");
+			value.forEach(function(v) {
+				if (v_el.children.length > 0) {
+					v_el.appendChild(document.createTextNode(", "));
+				}
+				let a_el = document.createElement("a");
+				a_el.setAttribute("href", v.url);
+				a_el.setAttribute("title", v.title || v.ancor);
+				a_el.setAttribute("target", "_blank");
+				a_el.appendChild(document.createTextNode(v.ancor));
+				v_el.appendChild(a_el);
+			});
+			oblock.appendChild(v_el);
+		};
+		this._content.appendChild(oblock);
+		add_row("Documentation", this._documentation);
+		add_row("Source code", this._source_code);
+
+		let lblock = document.createElement("div");
+		lblock.appendChild(document.createTextNode(
+			"This program is free software: you can redistribute it and/or modify it\
+ under the terms of the GNU General Public License as published by the Free\
+ Software Foundation, either version 3 of the License."
+		));
+		this._content.appendChild(lblock);
+	}
+
+	_submit() {
+		this.hide();
+	}
+}
+
