@@ -381,13 +381,12 @@ class ReportListSettingsDialog extends ModalDialog {
 
 	_gen_content() {
 		let fs = document.createElement("fieldset");
-		fs.setAttribute("class", "round-border table");
+		fs.setAttribute("class", "round-border left-titled");
 		let lg = document.createElement("legend");
 		lg.appendChild(document.createTextNode("Filter by"));
 		fs.appendChild(lg);
 		this._ui_data.forEach(function(ud) {
-			let el = this._create_select_div(ud.title);
-			fs.appendChild(el);
+			let el = this._create_select_div(ud.title, fs);
 			ud.element = el;
 		}, this);
 		this._content.appendChild(fs);
@@ -395,17 +394,13 @@ class ReportListSettingsDialog extends ModalDialog {
 			this._fetch_data();
 	}
 
-	_create_select_div(text) {
-		let dv = document.createElement("div");
-		dv.setAttribute("class", "row");
+	_create_select_div(text, c_el) {
 		let sp = document.createElement("span");
-		sp.setAttribute("class", "cell");
 		sp.appendChild(document.createTextNode(text + ": "));
-		dv.appendChild(sp);
+		c_el.appendChild(sp);
 		let sl = document.createElement("select");
-		sl.setAttribute("class", "cell");
-		dv.appendChild(sl);
-		return dv;
+		c_el.appendChild(sl);
+		return sl;
 	}
 
 	_enable_ui(enable) {
@@ -426,8 +421,7 @@ class ReportListSettingsDialog extends ModalDialog {
 		}, this);
 	}
 
-	_update_select_element(el, d, v) {
-		let sl = el.querySelector("select");
+	_update_select_element(sl, d, v) {
 		remove_all_children(sl);
 		let ao = document.createElement("option");
 		ao.setAttribute("value", "");
@@ -454,7 +448,7 @@ class ReportListSettingsDialog extends ModalDialog {
 		let res = {};
 		let fdata = {};
 		this._ui_data.forEach(function(ud) {
-			let el = ud.element.querySelector("select");
+			let el = ud.element;
 			let val = el.options[el.selectedIndex].value;
 			res[ud.name] = val;
 			fdata[ud.name] = val;

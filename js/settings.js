@@ -173,7 +173,7 @@ class SettingEditDialog extends ModalDialog {
 
 	_gen_content() {
 		this._table = document.createElement("div");
-		this._table.setAttribute("class", "table");
+		this._table.setAttribute("class", "left-titled");
 		this._content.appendChild(this._table);
 
 		let nm = document.createElement("input");
@@ -194,7 +194,8 @@ class SettingEditDialog extends ModalDialog {
 		if (this._data.description) {
 			desc.appendChild(document.createTextNode(this._data.description));
 		}
-		this._insert_row("Description", desc).classList.add("description");
+		desc.classList.add("description");
+		this._insert_row("Description", desc);
 		this._desc_el = desc;
 
 		this._save_bt = this._buttons[1];
@@ -226,17 +227,10 @@ class SettingEditDialog extends ModalDialog {
 	}
 
 	_insert_row(text, val_el) {
-		let row = document.createElement("div");
-		row.setAttribute("class", "row");
 		let sp = document.createElement("span");
-		sp.setAttribute("class", "cell");
-		sp.appendChild(document.createTextNode(text + ":"));
-		row.appendChild(sp);
-		val_el.classList.add("cell");
-		row.appendChild(val_el);
-
-		this._table.appendChild(row);
-		return row;
+		sp.appendChild(document.createTextNode(text + ": "));
+		this._table.appendChild(sp);
+		this._table.appendChild(val_el);
 	}
 
 	_fetch_data() {
@@ -305,7 +299,6 @@ class SettingEditDialog extends ModalDialog {
 				});
 			}
 			if (new_el) {
-				new_el.setAttribute("class", "cell");
 				new_el.setAttribute("required", "required");
 				this._val_el.replaceWith(new_el);
 				this._val_el = new_el;

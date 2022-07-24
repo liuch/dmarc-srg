@@ -43,19 +43,6 @@
 .dialog form {
 	padding: 0.7em;
 }
-.dialog .table {
-	display: table;
-}
-.dialog .table .row {
-	display: table-row;
-}
-.dialog .table .cell {
-	display: table-cell;
-	margin: 0.2em 0;
-	min-width: 5em;
-	padding-right: 0.5em;
-	vertical-align: middle;
-}
 .dialog .close-btn {
 	display: flex;
 	margin-right: 0.1em;

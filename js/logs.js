@@ -223,7 +223,7 @@ class LogItemDialog extends ModalDialog {
 
 	_gen_content() {
 		this._table = document.createElement("div");
-		this._table.setAttribute("class", "table");
+		this._table.setAttribute("class", "left-titled");
 		this._content.appendChild(this._table);
 
 		this._time_el = this._insert_row("Event time");
@@ -239,17 +239,12 @@ class LogItemDialog extends ModalDialog {
 	}
 
 	_insert_row(text) {
-		let row = document.createElement("div");
-		row.setAttribute("class", "row");
-		let sp = document.createElement("span");
-		sp.setAttribute("class", "cell");
-		sp.appendChild(document.createTextNode(text + ":"));
-		row.appendChild(sp);
-		let val_el = document.createElement("span");
-		val_el.classList.add("cell");
-		row.appendChild(val_el);
-		this._table.appendChild(row);
-		return val_el;
+		let t_el = document.createElement("span");
+		t_el.appendChild(document.createTextNode(text + ": "));
+		this._table.appendChild(t_el);
+		let v_el = document.createElement("span");
+		this._table.appendChild(v_el);
+		return v_el;
 	}
 
 	_fetch_data() {

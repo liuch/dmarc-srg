@@ -191,11 +191,10 @@ class OptionsDialog extends ModalDialog {
 
 	_gen_content() {
 		let container = document.createElement("div");
-		container.setAttribute("class", "table");
+		container.setAttribute("class", "left-titled");
 		this._content.appendChild(container);
 		this._ui_data.forEach(function(row) {
-			let r_el = this._add_option_row(row.name, row.title, row.type);
-			let i_el = r_el.lastChild;
+			let i_el = this._add_option_row(row.name, row.title, container, row.type);
 			if (row.name === "days") {
 				i_el.setAttribute("type", "number");
 				i_el.setAttribute("min", "1");
@@ -203,7 +202,6 @@ class OptionsDialog extends ModalDialog {
 				i_el.setAttribute("value", "");
 			}
 			row.element = i_el;
-			container.appendChild(r_el);
 		}, this);
 		this._ui_data[1].element.addEventListener("change", function(event) {
 			let days_el = this._ui_data[2].element;
@@ -239,21 +237,16 @@ class OptionsDialog extends ModalDialog {
 		this.hide();
 	}
 
-	_add_option_row(name, title, type) {
-		let r_el = document.createElement("div");
-		r_el.setAttribute("class", "row");
-
+	_add_option_row(name, title, p_el, type) {
 		let t_el = document.createElement("span");
-		t_el.setAttribute("class", "cell");
 		t_el.appendChild(document.createTextNode(title + ": "));
-		r_el.appendChild(t_el);
+		p_el.appendChild(t_el);
 
 		let n_el = document.createElement(type || "select");
 		n_el.setAttribute("name", name);
-		n_el.setAttribute("class", "cell");
-		r_el.appendChild(n_el);
+		p_el.appendChild(n_el);
 
-		return r_el;
+		return n_el;
 	}
 
 	_update_domain_element() {

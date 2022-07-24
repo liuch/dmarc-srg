@@ -552,8 +552,8 @@ button.options-button {
 th.cell-status {
 	width: 1em;
 }
-.dialog .row.description textarea {
-	width: 25em;
+textarea.description {
+	min-width: 25em;
 	height: 7em;
 }
 tr.virtual-item, .nodata {
@@ -566,8 +566,9 @@ tr.virtual-item, .nodata {
 .left-titled {
 	display: grid;
 	grid-template-columns: auto 1fr;
-	row-gap: .2em;
+	row-gap: .3em;
 	column-gap: 1em;
+	align-items: center;
 }
 .vertical-content {
 	display: flex;

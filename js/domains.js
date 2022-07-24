@@ -235,7 +235,7 @@ class DomainEditDialog extends ModalDialog {
 
 	_gen_content() {
 		this._table = document.createElement("div");
-		this._table.setAttribute("class", "table");
+		this._table.setAttribute("class", "left-titled");
 		this._content.appendChild(this._table);
 
 		let fq = document.createElement("input");
@@ -250,7 +250,6 @@ class DomainEditDialog extends ModalDialog {
 
 		{
 			let en = document.createElement("select");
-			en.setAttribute("class", "cell");
 			let op1 = document.createElement("option");
 			op1.setAttribute("value", "yes");
 			op1.appendChild(document.createTextNode("Yes"));
@@ -285,17 +284,12 @@ class DomainEditDialog extends ModalDialog {
 		}
 	}
 
-	_insert_row(text, val_el) {
-		let row = document.createElement("div");
-		row.setAttribute("class", "row");
-		let sp = document.createElement("span");
-		sp.setAttribute("class", "cell");
-		sp.appendChild(document.createTextNode(text + ":"));
-		row.appendChild(sp);
-		val_el.classList.add("cell");
-		row.appendChild(val_el);
-		this._table.appendChild(row);
-		return row;
+	_insert_row(text, v_el) {
+		let t_el = document.createElement("span");
+		t_el.appendChild(document.createTextNode(text + ": "));
+		this._table.appendChild(t_el);
+		this._table.appendChild(v_el);
+		return v_el;
 	}
 
 	_fetch_data() {

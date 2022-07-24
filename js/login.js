@@ -39,7 +39,7 @@ class LoginDialog extends ModalDialog {
 
 	_gen_content() {
 		let tdiv = document.createElement("div");
-		tdiv.setAttribute("class", "table");
+		tdiv.setAttribute("class", "left-titled");
 		if (!this._params.nousername) {
 			this._user = this._insert_row(tdiv, "User name", "text", "Enter your user name");
 		}
@@ -50,22 +50,17 @@ class LoginDialog extends ModalDialog {
 		set_wait_status(this._msg_el, "Enter your credentials");
 	}
 
-	_insert_row(t_el, text, type, placeholder) {
-		let row = document.createElement("div");
-		row.setAttribute("class", "row");
-		let spn = document.createElement("span");
-		spn.setAttribute("class", "cell");
-		spn.appendChild(document.createTextNode(text + ":"));
-		row.appendChild(spn);
+	_insert_row(c_el, text, type, placeholder) {
+		let t_el = document.createElement("span");
+		t_el.appendChild(document.createTextNode(text + ": "));
+		c_el.appendChild(t_el);
 		let inp = document.createElement("input");
 		inp.required = true;
 		inp.setAttribute("type", type);
-		inp.setAttribute("class", "cell");
 		if (placeholder) {
 			inp.setAttribute("placeholder", placeholder);
 		}
-		row.appendChild(inp);
-		t_el.appendChild(row);
+		c_el.appendChild(inp);
 		return inp;
 	}
 
