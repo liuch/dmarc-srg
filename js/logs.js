@@ -209,7 +209,7 @@ class LogsResultCell extends ITableCell {
 
 class LogItemDialog extends ModalDialog {
 	constructor(data) {
-		super({ buttons: [ "close" ] });
+		super({ title: "Log record", buttons: [ "close" ] });
 		this._data    = data;
 		this._table   = null;
 		this._res_el  = null;

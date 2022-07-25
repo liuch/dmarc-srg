@@ -361,7 +361,7 @@ class StatusColumn extends ITableCell {
 
 class ReportListSettingsDialog extends ModalDialog {
 	constructor(params) {
-		super({ buttons: [ "apply", "reset" ] });
+		super({ title: "List display settings", buttons: [ "apply", "reset" ] });
 		this._data    = params || {};
 		this._content = null;
 		this._ui_data = [

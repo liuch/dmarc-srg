@@ -160,7 +160,7 @@ class Settings {
 
 class SettingEditDialog extends ModalDialog {
 	constructor(param) {
-		super({ buttons: [ "ok", "close" ] });
+		super({ title: "Setting dialog", buttons: [ "ok", "close" ] });
 		this._data    = param || {};
 		this._content = null;
 		this._table   = null;

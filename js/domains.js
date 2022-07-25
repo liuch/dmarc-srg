@@ -221,7 +221,7 @@ class DomainEditDialog extends ModalDialog {
 		if (!params["new"]) {
 			ba.splice(1, 0, "delete");
 		}
-		super({ buttons: ba });
+		super({ title: "Domain settings", buttons: ba });
 		this._data    = params || {};
 		this._content = null;
 		this._table   = null;
