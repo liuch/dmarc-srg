@@ -51,6 +51,18 @@ Router.start = function() {
 		}
 	});
 
+	document.getElementById("main-menu-button").addEventListener("click", function(event) {
+		let el = event.target;
+		if (el.tagName === "A") {
+			let href = el.getAttribute("href");
+			if (href !== "") {
+				event.preventDefault();
+				window.history.pushState(null, "", href);
+				Router.go();
+			}
+		}
+	});
+
 	window.addEventListener("popstate", function(event) {
 		let m = Router._url2module();
 		if (m) {
@@ -198,7 +210,7 @@ Router._update_menu = function(authenticated) {
 	l_el = document.createElement("li");
 	l_el.setAttribute("id", "auth-action");
 	let a_el = document.createElement("a");
-	a_el.setAttribute("href", "./");
+	a_el.setAttribute("href", "");
 	if (authenticated == "yes") {
 		a_el.appendChild(document.createTextNode("Log out"));
 		a_el.addEventListener("click", function(event) {
