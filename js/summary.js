@@ -21,6 +21,7 @@
 class Summary {
 	constructor(id) {
 		this._report = null;
+		this._element = document.getElementById("main-block");
 		this._container = null;
 		this._options_data = null;
 		this._options_block = null;
@@ -28,10 +29,8 @@ class Summary {
 	}
 
 	display() {
-		let mcn = document.getElementById("main-block");
-		remove_all_children(mcn);
 		this._create_container();
-		mcn.appendChild(this._container);
+		this._element.appendChild(this._container);
 		this._create_options_block();
 		this._create_report_block();
 		this._container.appendChild(this._options_block);
@@ -111,6 +110,7 @@ class Summary {
 			url.searchParams.set("period", period);
 			url.searchParams.set("format", d.format);
 			window.history.replaceState(null, "", url.toString());
+			remove_all_children(this._element);
 			this.display();
 			this.update();
 		}.bind(this)).finally(function() {

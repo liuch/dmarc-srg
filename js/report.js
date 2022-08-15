@@ -31,7 +31,6 @@ class ReportWidget {
 	display() {
 		if (!this._element || !document.contains(this._element)) {
 			let cn = document.getElementById("main-block");
-			remove_all_children(cn);
 			cn.appendChild(this.element());
 		}
 	}
@@ -40,6 +39,18 @@ class ReportWidget {
 		this.show_report().catch(function(err) {
 			console.warn(err.message);
 		});
+	}
+
+	onpopstate() {
+		this.display();
+		this.update();
+	}
+
+	oncleardata() {
+		if (!this._element || !document.contains(this._element)) {
+			remove_all_children(document.getElementById("main-block"));
+			remove_all_children(document.getElementById("detail-block"));
+		}
 	}
 
 	show_report(domain, report_id) {

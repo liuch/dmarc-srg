@@ -34,7 +34,6 @@ class Admin {
 			this._element.appendChild(this._get_database_elements());
 			this._element.appendChild(this._get_sources_elements());
 		}
-		remove_all_children(cn);
 		cn.appendChild(this._element);
 	}
 

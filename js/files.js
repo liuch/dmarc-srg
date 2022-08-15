@@ -24,6 +24,7 @@ class Files {
 		this._fieldset1   = null;
 		this._fieldset2   = null;
 		this._dir_table   = null;
+		this._element     = document.getElementById("main-block");
 		this._fcount_info = 0;
 		this._fsize_info  = 0;
 		this._limits      = {
@@ -34,14 +35,12 @@ class Files {
 	}
 
 	display() {
-		let mcn = document.getElementById("main-block");
-		remove_all_children(mcn);
 		this._create_container();
 		this._create_local_file_uploading_element();
 		this._create_directory_loading_element();
 		this._container.appendChild(this._fieldset1);
 		this._container.appendChild(this._fieldset2);
-		mcn.appendChild(this._container);
+		this._element.appendChild(this._container);
 		this._fieldset1.focus();
 	}
 

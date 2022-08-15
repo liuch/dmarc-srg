@@ -27,7 +27,6 @@ class Settings {
 	}
 
 	display() {
-		remove_all_children(this._element);
 		this._make_scroll_container();
 		this._make_table();
 		this._scroll.appendChild(this._table.element());

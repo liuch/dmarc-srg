@@ -68,13 +68,12 @@ Router.start = function() {
 		if (m) {
 			let p = m.pointer;
 			if (p && p.onpopstate) {
+				if (p.title) {
+					Router.update_title(p.title());
+				}
 				p.onpopstate(event.state);
-			}
-			else {
+			} else {
 				Router.go();
-			}
-			if (p && p.title) {
-				Router.update_title(p.title());
 			}
 		}
 	});
@@ -127,12 +126,16 @@ Router.go = function(url) {
 					if (!module.pointer)
 						module.start(module);
 					let p = module.pointer;
+					if (p.oncleardata)
+						p.oncleardata();
+					else
+						Router._clear_data();
+					if (p.title)
+						Router.update_title(p.title());
 					if (p.display)
 						p.display();
 					if (p.update)
 						p.update();
-					if (p.title)
-						Router.update_title(p.title());
 				}
 			}
 			if (d.state && d.state !== "Ok" && !d.error_code) {
@@ -164,8 +167,8 @@ Router.update_title = function(str) {
 	let h1 = document.querySelector("h1");
 	if (str === "") {
 		h1.textContent = Router._initial_header || "";
-	} else {
-		h1.childNodes[0].nodeValue = title2 || "";
+	} else if (str) {
+		h1.textContent = title2 || "";
 	}
 };
 
@@ -262,7 +265,7 @@ Router._clear_data = function() {
 Router._modules = {
 	list: {
 		start: function(m) {
-			m.pointer = new ReportList("main-block");
+			m.pointer = new ReportList();
 		}
 	},
 	report: {

@@ -19,28 +19,27 @@
  */
 
 class ReportList {
-	constructor(id) {
+	constructor() {
 		this._table = null;
 		this._scroll = null;
 		this._filter = null;
 		this._sort = { column: "begin_time", direction: "descent" };
-		this._element = document.getElementById(id);
+		this._element = document.getElementById("main-block");
+		this._element2 = document.getElementById("detail-block");
 		this._fetching = false;
 		this._settings_btn = null;
 		this._settings_dlg = null;
 	}
 
 	display() {
-		remove_all_children(this._element);
 		this._gen_settings_button();
 		this._gen_content_container();
 		this._gen_table();
 		this._scroll.appendChild(this._table.element());
 		this._element.appendChild(this._scroll);
-		document.getElementById("detail-block").appendChild(ReportWidget.instance().element());
-		let title_el = document.querySelector("h1");
-		if (!title_el.contains(this._settings_btn))
-			title_el.appendChild(this._settings_btn);
+		this._ensure_report_widget();
+		this._element2.appendChild(ReportWidget.instance().element());
+		this._ensure_settins_button();
 		ReportWidget.instance().hide();
 		this._table.focus();
 	}
@@ -79,11 +78,26 @@ class ReportList {
 			remove_all_children(this._element);
 			this._element.appendChild(this._scroll);
 		}
-		else {
-			ReportWidget.instance().hide();
-		}
+		this._ensure_settins_button();
+		this._ensure_report_widget();
 		if (this._table) {
 			this._table.focus();
+		}
+	}
+
+	_ensure_settins_button() {
+		let title_el = document.querySelector("h1");
+		if (!title_el.contains(this._settings_btn)) {
+			title_el.appendChild(this._settings_btn);
+		}
+	}
+
+	_ensure_report_widget() {
+		let wdg = ReportWidget.instance();
+		wdg.hide();
+		let el = wdg.element();
+		if (!this._element2.contains(el)) {
+			this._element2.appendChild(el);
 		}
 	}
 
@@ -195,7 +209,6 @@ class ReportList {
 			let url = new URL("report.php", document.location.href);
 			url.searchParams.set("domain", data.domain);
 			url.searchParams.set("report_id", data.report_id);
-			window.history.replaceState({ click: [ ".report-modal .close-btn.active" ] }, "");
 			window.history.pushState(null, "", url.toString());
 			let that = this;
 			ReportWidget.instance().show_report(data.domain, data.report_id).then(function() {
@@ -291,6 +304,7 @@ class ReportList {
 				}
 				that._filter = n_empty && d || null;
 				window.history.replaceState(null, "", url.toString());
+				remove_all_children(that._element);
 				that.display();
 				that.update();
 			}
