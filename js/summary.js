@@ -311,7 +311,7 @@ class OptionsDialog extends ModalDialog {
 	_enable_ui(enable) {
 		let list = this._element.querySelector("form").elements;
 		for (let i = 0; i < list.length; ++i) {
-			let el = list[1];
+			let el = list[i];
 			el.disabled = !enable || el.dataset.disabled;
 		}
 	}
