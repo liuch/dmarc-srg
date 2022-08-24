@@ -15,7 +15,8 @@
 		--color-bg-dbutton:  #f4f4f4;
 		--color-bg-hover:    #d8d8d8;
 		--color-bg-input:    #fff;
-		--color-br-default:  #eee;
+		--color-br-default:  #ccc;
+		--color-br-weak:     #eee;
 		--color-br-strong:   #777;
 		--color-br-focused:  #66f;
 		--color-br-input:    rgba(0,0,0,0.5);
@@ -50,6 +51,7 @@
 		--color-bg-hover:    #30363d;
 		--color-bg-input:    #0d1117;
 		--color-br-default:  #30363d;
+		--color-br-weak:     #21262b;
 		--color-br-strong:   #40464d;
 		--color-br-focused:  #f78166;
 		--color-br-input:    rgba(240,246,252,0.1);
@@ -334,7 +336,7 @@ textarea.description {
 	left: 0.5rem;
 	right: 0.5rem;
 	bottom: 0.5rem;
-	border: 0.1rem solid var(--color-br-default);
+	border: 0.1rem solid var(--color-br-weak);
 	border-radius: 0.4rem;
 }
 .main-table {
@@ -345,7 +347,7 @@ textarea.description {
 }
 .subtable {
 	font-size: 90%;
-	border: 0.1rem solid var(--color-br-default);
+	border: 0.1rem solid var(--color-br-weak);
 	border-radius: 0.4rem;
 }
 .main-table .table-header {
