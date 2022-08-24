@@ -144,18 +144,18 @@
 	right: 0.6em;
 	width: 0;
 }
-.sortable.arrows:before {
+.sortable.arrows::before {
 	border-bottom-color: #bbb;
 	top: 0;
 }
-.sortable.arrows:after {
+.sortable.arrows::after {
 	border-top-color: #bbb;
 	bottom: 0;
 }
-.sortable.arrows.sorted-asc:before {
+.sortable.arrows.sorted-asc::before {
 	border-bottom-color: #777;
 }
-.sortable.arrows.sorted-des:after {
+.sortable.arrows.sorted-des::after {
 	border-top-color: #777;
 }
 

@@ -501,7 +501,7 @@ textarea.description {
 	text-align: center;
 	background-color: var(--color-bg-default);
 }
-.popup-menu:after {
+.popup-menu::after {
 	content: "";
 	display: block;
 	position: absolute;
@@ -514,7 +514,7 @@ textarea.description {
 	border-style: solid;
 	border-color: var(--color-bg-default) transparent;
 }
-.popup-menu:before {
+.popup-menu::before {
 	content: "";
 	display: block;
 	position: absolute;

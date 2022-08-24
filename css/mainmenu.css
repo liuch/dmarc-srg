@@ -9,7 +9,7 @@
 #main-menu-toggle {
 	display: none;
 }
-#main-menu-button .button-decor, #main-menu-button .button-decor:after, #main-menu-button .button-decor:before {
+#main-menu-button .button-decor, #main-menu-button .button-decor::after, #main-menu-button .button-decor::before {
 	width: 25px;
 	height: 4px;
 	background-color: #666;
@@ -19,7 +19,7 @@
 	transition: all 600ms cubic-bezier(0.86, 0, 0.07, 1);
 	z-index: 2;
 }
-#main-menu-button .button-decor:after, #main-menu-button .button-decor:before {
+#main-menu-button .button-decor::after, #main-menu-button .button-decor::before {
 	content: "";
 	position: absolute;
 	left: 0;
@@ -28,10 +28,10 @@
 	position: relative;
 	top: 4px;
 }
-#main-menu-button .button-decor:after {
+#main-menu-button .button-decor::after {
 	top: 18px;
 }
-#main-menu-button .button-decor:before {
+#main-menu-button .button-decor::before {
 	top: 9px;
 }
 #main-menu-button .toggle-button {
@@ -48,11 +48,11 @@
 	top: 13px;
 	transform: rotate(45deg);
 }
-#main-menu-toggle:checked ~ .button-decor:after {
+#main-menu-toggle:checked ~ .button-decor::after {
 	top: 0;
 	transform: rotate(90deg);
 }
-#main-menu-toggle:checked ~ .button-decor:before {
+#main-menu-toggle:checked ~ .button-decor::before {
 	top: 0;
 	transform: rotate(0);
 }
@@ -103,7 +103,7 @@
 	visibility: visible;
 	left: 0;
 }
-.menu-box li span:after {
+.menu-box li span::after {
 	content: "";
 	width: 10px;
 	height: 10px;
@@ -114,7 +114,7 @@
 	border-top-right-radius: 3px;
 	transform: rotate(315deg);
 }
-.menu-box li.closed span:after {
+.menu-box li.closed span::after {
 	margin: 3px;
 	transform: rotate(135deg);
 }
