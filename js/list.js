@@ -46,23 +46,7 @@ class ReportList {
 
 	update() {
 		this._handle_url_params();
-		this._table.clear();
-		let that = this;
-		let frcnt = -1;
-		let again = function() {
-			if (frcnt < that._table.frames_count() && that._scroll.clientHeight * 1.5 >= that._scroll.scrollHeight) {
-				frcnt = that._table.frames_count();
-				that._fetch_list().then(function(frame) {
-					if (frame && frame.more())
-						again();
-					else
-						that._table.focus();
-				});
-			}
-			else
-				that._table.focus();
-		}
-		again();
+		this._update_table();
 	}
 
 	title() {
@@ -74,9 +58,14 @@ class ReportList {
 			this.display();
 			this.update();
 		}
-		else if (!this._element.contains(this._scroll)) {
-			remove_all_children(this._element);
-			this._element.appendChild(this._scroll);
+		else {
+			if (!this._element.contains(this._scroll)) {
+				remove_all_children(this._element);
+				this._element.appendChild(this._scroll);
+			}
+			if (this._handle_url_params()) {
+				this._update_table();
+			}
 		}
 		this._ensure_settins_button();
 		this._ensure_report_widget();
@@ -101,35 +90,45 @@ class ReportList {
 		}
 	}
 
+	/**
+	 * Sets the _filter object from the document's location
+	 * and updates the setting button if the filter has changed
+	 *
+	 * @return bool True if the filter was changed, false otherwise
+	 */
 	_handle_url_params() {
-		let fa = new URL(document.location.href).searchParams.getAll("filter[]");
-		if (fa.length) {
-			let filter = {};
-			let cnt = 0;
-			fa.forEach(function(it) {
-				let k = null, v = null;
-				let i = it.indexOf(":");
-				if (i != 0) {
-					if (i > 0) {
-						k = it.substr(0, i);
-						v = it.substr(i + 1);
-					}
-					else {
-						k = it;
-						v = "";
-					}
-					filter[k] = v;
-					cnt += 1;
+		let cnt = 0;
+		let filter = {};
+		(new URL(document.location.href)).searchParams.getAll("filter[]").forEach(function(it) {
+			let k = null;
+			let v = null;
+			let i = it.indexOf(":");
+			if (i != 0) {
+				if (i > 0) {
+					k = it.substr(0, i);
+					v = it.substr(i + 1);
 				}
-			});
-			if (cnt > 0) {
-				this._filter = filter;
-				this._update_settings_button();
-				return;
+				else {
+					k = it;
+					v = "";
+				}
+				filter[k] = v;
+				++cnt;
 			}
+		});
+		let changed = !this._filter && cnt > 0;
+		if (this._filter) {
+			let cnt2 = 0;
+			changed = Object.keys(this._filter).some(function(k) {
+				++cnt2;
+				return cnt < cnt2 || this._filter[k] !== filter[k];
+			}, this) || cnt !== cnt2;
 		}
-		this._filter = null;
-		this._update_settings_button();
+		if (changed) {
+			this._filter = cnt && filter || null;
+			this._update_settings_button();
+		}
+		return changed;
 	}
 
 	_gen_settings_button() {
@@ -202,6 +201,26 @@ class ReportList {
 				c.sort(this._sort.direction);
 			}
 		}, this);
+	}
+
+	_update_table() {
+		this._table.clear();
+		let that = this;
+		let frcnt = -1;
+		let again = function() {
+			if (frcnt < that._table.frames_count() && that._scroll.clientHeight * 1.5 >= that._scroll.scrollHeight) {
+				frcnt = that._table.frames_count();
+				that._fetch_list().then(function(frame) {
+					if (frame && frame.more())
+						again();
+					else
+						that._table.focus();
+				});
+			}
+			else
+				that._table.focus();
+		}
+		again();
 	}
 
 	_display_report(data, id) {
@@ -295,14 +314,11 @@ class ReportList {
 			if (d) {
 				let url = new URL(document.location.href);
 				url.searchParams.delete("filter[]");
-				let n_empty = false;
 				for (let k in d) {
 					if (d[k]) {
 						url.searchParams.append("filter[]", k + ":" + d[k]);
-						n_empty = true;
 					}
 				}
-				that._filter = n_empty && d || null;
 				window.history.replaceState(null, "", url.toString());
 				remove_all_children(that._element);
 				that.display();
