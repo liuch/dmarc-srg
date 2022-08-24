@@ -85,7 +85,7 @@ class DomainList {
 
 	_make_table() {
 		this._table = new ITable({
-			class:   "main-table",
+			class:   "main-table domains",
 			onclick: function(row) {
 				let data = row.userdata();
 				if (data) {
@@ -107,8 +107,8 @@ class DomainList {
 		[
 			{ content: "", sortable: true, name: "status", class: "cell-status" },
 			{ content: "FQDN", sortable: true, name: "fqdn" },
-			{ content: "Description" },
-			{ content: "Updated", sortable: true, name: "date" }
+			{ content: "Updated", sortable: true, name: "date" },
+			{ content: "Description", class: "descr" }
 		].forEach(function(col) {
 			let c = this._table.add_column(col);
 			if (c.name() === this._sort.column) {
@@ -120,9 +120,9 @@ class DomainList {
 	_make_row_data(d) {
 		let rd = { cells: [], userdata: d.fqdn };
 		rd.cells.push(new DomainStatusCell(d.active));
-		rd.cells.push({ content: d.fqdn });
-		rd.cells.push({ content: d.description || "" });
+		rd.cells.push({ content: d.fqdn, class: "fqdn" });
 		rd.cells.push(new DomainTimeCell(new Date(d.updated_time)));
+		rd.cells.push({ content: d.description || "", class: "descr" });
 		return rd;
 	}
 
@@ -187,11 +187,13 @@ class NewDomainRow extends ITableRow {
 	element() {
 		if (!this._element) {
 			super.element();
-			this._element.classList.add("virtual-item");
-			let cell = document.createElement("td");
-			cell.setAttribute("colspan", this._col_cnt);
-			cell.appendChild(document.createTextNode("New domain"));
-			this._element.appendChild(cell);
+			this._element.classList.add("colspanned", "virtual-item");
+			for (let i = 0; i < this._col_cnt; ++i) {
+				let cell = document.createElement("div");
+				cell.setAttribute("class", "table-cell");
+				cell.appendChild(document.createTextNode(!i && "New domain" || "\u00A0"));
+				this._element.appendChild(cell);
+			}
 		}
 		return this._element;
 	}
@@ -223,7 +225,7 @@ class DomainEditDialog extends ModalDialog {
 		super({ title: "Domain settings", buttons: ba });
 		this._data    = params || {};
 		this._content = null;
-		this._table   = null;
+		this._inputs  = null;
 		this._fqdn_el = null;
 		this._actv_el = null;
 		this._desc_el = null;
@@ -233,9 +235,10 @@ class DomainEditDialog extends ModalDialog {
 	}
 
 	_gen_content() {
-		this._table = document.createElement("div");
-		this._table.setAttribute("class", "left-titled");
-		this._content.appendChild(this._table);
+		this._inputs = document.createElement("div");
+		this._inputs.setAttribute("class", "titled-input");
+		this._content.appendChild(this._inputs);
+		this._content.classList.add("vertical-content");
 
 		let fq = document.createElement("input");
 		fq.setAttribute("type", "text");
@@ -284,10 +287,12 @@ class DomainEditDialog extends ModalDialog {
 	}
 
 	_insert_row(text, v_el) {
+		let l_el = document.createElement("label");
 		let t_el = document.createElement("span");
 		t_el.appendChild(document.createTextNode(text + ": "));
-		this._table.appendChild(t_el);
-		this._table.appendChild(v_el);
+		l_el.appendChild(t_el);
+		l_el.appendChild(v_el);
+		this._inputs.appendChild(l_el);
 		return v_el;
 	}
 

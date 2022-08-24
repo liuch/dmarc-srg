@@ -84,7 +84,7 @@ class Settings {
 
 	_make_table() {
 		this._table = new ITable({
-			class:   "main-table",
+			class:   "main-table small-cards",
 			onclick: function(row) {
 				let data = row.userdata();
 				if (data) {
@@ -115,9 +115,9 @@ class Settings {
 
 	_make_row_data(d) {
 		let rd = { cells: [], userdata: d.name };
-		rd.cells.push({ content: d.name, class: "setting-name" });
-		rd.cells.push({ content: d.value, class: "setting-value" });
-		rd.cells.push({ content: Settings._descriptions_short[d.name] || Settings._descriptions[d.name] || "No description" });
+		rd.cells.push({ content: d.name, class: "setting-name", label: "Name " });
+		rd.cells.push({ content: d.value, class: "setting-value", label: "Value " });
+		rd.cells.push({ content: Settings._descriptions_short[d.name] || Settings._descriptions[d.name] || "No description", label: "Description " });
 		if (d.value !== d.default) {
 			rd.class = "custom-value";
 		}
@@ -172,8 +172,9 @@ class SettingEditDialog extends ModalDialog {
 
 	_gen_content() {
 		this._table = document.createElement("div");
-		this._table.setAttribute("class", "left-titled");
+		this._table.setAttribute("class", "titled-input");
 		this._content.appendChild(this._table);
+		this._content.classList.add("vertical-content");
 
 		let nm = document.createElement("input");
 		nm.setAttribute("type", "text");
@@ -226,10 +227,12 @@ class SettingEditDialog extends ModalDialog {
 	}
 
 	_insert_row(text, val_el) {
+		let lb = document.createElement("label");
 		let sp = document.createElement("span");
 		sp.appendChild(document.createTextNode(text + ": "));
-		this._table.appendChild(sp);
-		this._table.appendChild(val_el);
+		lb.appendChild(sp);
+		lb.appendChild(val_el);
+		this._table.appendChild(lb);
 	}
 
 	_fetch_data() {

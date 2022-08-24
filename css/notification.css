@@ -1,8 +1,9 @@
 #notifications-block {
 	position: fixed;
-	top: 2rem;
-	right: 1em;
-	width: 15em;
+	top: 0;
+	right: 0;
+	width: 100%;
+	z-index: 200;
 }
 .notification {
 	overflow: hidden;
@@ -11,7 +12,6 @@
 	opacity: 0.9;
 	background-clip: padding-box;
 	border: 1px solid rgba(0, 0, 0, 1);
-	border-radius: 0.25rem;
 	box-shadow: 0 0.25rem 0.75rem var(--color-sh-default);
 	position: relative;
 	padding: 0.75rem 2rem 0.75rem 0.75rem;
@@ -19,7 +19,20 @@
 	word-break: normal;
 }
 .notification:not(:last-child) {
-	margin-bottom: 0.5rem;
+	margin-bottom: 0.2rem;
+}
+@media screen and (min-width:20em) {
+	#notifications-block {
+		top: 2rem;
+		right: 1em;
+		width: 15em;
+	}
+	.notification {
+		border-radius: 0.25rem;
+	}
+	.notification:not(:last-child) {
+		margin-bottom: 0.5rem;
+	}
 }
 .notif-close {
 	position: absolute;

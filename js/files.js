@@ -74,6 +74,7 @@ class Files {
 		fl.multiple = true;
 		fm.appendChild(fl);
 		let dv = document.createElement("div");
+		dv.setAttribute("class", "buttons-block");
 		let sb = this._create_button_element("submit", "Upload reports");
 		sb.disabled = true;
 		dv.appendChild(sb);
@@ -143,9 +144,12 @@ class Files {
 			this._dir_table.add_column(col);
 		}, this);
 		fm.appendChild(this._dir_table.element());
+		let bb = document.createElement("div");
+		bb.setAttribute("class", "buttons-block");
+		fm.appendChild(bb);
 		let sb = this._create_button_element("submit", "Load reports");
 		sb.disabled = true;
-		fm.appendChild(sb);
+		bb.appendChild(sb);
 
 		fm.addEventListener("submit", function(event) {
 			sb.disabled = true;

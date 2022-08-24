@@ -131,7 +131,7 @@ class Logs {
 
 	_make_table() {
 		this._table = new ITable({
-			class: "main-table",
+			class: "main-table small-cards",
 			onclick: function(row) {
 				let data = row.userdata();
 				if (data) {
@@ -166,10 +166,10 @@ class Logs {
 	_make_row_data(d) {
 		let rd = { cells: [], userdata: { id: d.id } };
 		rd.cells.push(new LogsResultCell(d.success));
-		rd.cells.push({ content: d.domain });
-		rd.cells.push({ content: d.source });
-		rd.cells.push({ content: (new Date(d.event_time)).toUIString() });
-		rd.cells.push({ content: d.message });
+		rd.cells.push({ content: d.domain, label: "Domain" });
+		rd.cells.push({ content: d.source, label: "Source" });
+		rd.cells.push({ content: (new Date(d.event_time)).toUIString(), label: "Event time" });
+		rd.cells.push({ content: d.message, label: "Message" });
 		return rd;
 	}
 
@@ -191,6 +191,13 @@ class LogsResultCell extends ITableCell {
 		ca.push(success && "state-green" || "state-red");
 		props.class = ca.filter(function(s) { return s.length > 0; }).join(" ");
 		super(success, props);
+	}
+
+	element() {
+		if (!this._element) {
+			super.element().setAttribute("data-label", "Result");
+		}
+		return this._element;
 	}
 
 	value(target) {

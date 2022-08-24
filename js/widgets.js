@@ -45,9 +45,10 @@ class ITable {
 	element() {
 		if (!this._table) {
 			let that = this;
-			this._table = document.createElement("table");
+			this._table = document.createElement("div");
 			if (this._class)
 				this._table.setAttribute("class", this._class);
+			this._table.classList.add("table");
 			this._table.setAttribute("tabindex", -1);
 			this._table.addEventListener("focus", function(event) {
 				that._focused = true;
@@ -57,7 +58,11 @@ class ITable {
 				that._focused = false;
 				that._update_focus();
 			}, true);
-			this._header = document.createElement("tr");
+			let th = document.createElement("div");
+			th.setAttribute("class", "table-header");
+			this._table.appendChild(th);
+			this._header = document.createElement("div");
+			this._header.setAttribute("class", "table-row");
 			this._header.addEventListener("click", function(event) {
 				let col = that.get_column_by_element(event.target);
 				if (col && col.is_sortable()) {
@@ -66,9 +71,10 @@ class ITable {
 					}
 				}
 			});
-			this._table.appendChild(this._header);
+			th.appendChild(this._header);
 			this._fill_columns();
-			this._body = document.createElement("tbody");
+			this._body = document.createElement("div");
+			this._body.setAttribute("class", "table-body");
 			this._body.addEventListener("click", function(event) {
 				let row = that._get_row_by_element(event.target);
 				if (row) {
@@ -198,7 +204,7 @@ class ITable {
 	}
 
 	get_column_by_element(el) {
-		el = el && el.closest("th");
+		el = el && el.closest("div.table-cell");
 		if (el) {
 			for (let i = 0; i < this._columns.length; ++i) {
 				let col = this._columns[i];
@@ -216,10 +222,15 @@ class ITable {
 		}
 
 		this.element();
-		this._status = document.createElement("tr");
-		let el = document.createElement("td");
-		el.setAttribute("colspan", this._columns.length || 1);
+		this._status = document.createElement("div");
+		this._status.setAttribute("class", "table-row colspanned");
+		let el = document.createElement("div");
+		el.setAttribute("class", "table-cell");
 		this._status.appendChild(el);
+		let el2 = document.createElement("div");
+		el2.setAttribute("class", "table-cell");
+		el2.appendChild(document.createTextNode("\u00A0")); // Non breaking space
+		this._status.appendChild(el2);
 		if (status === "wait") {
 			set_wait_status(el);
 		}
@@ -347,7 +358,7 @@ class ITable {
 	_get_row_by_element(el) {
 		let row = null;
 		if (el) {
-			el = el.closest("tr");
+			el = el.closest("div.table-row");
 			if (el) {
 				let id = parseInt(el.getAttribute("data-id"));
 				if (id !== NaN)
@@ -484,8 +495,12 @@ class ITableRow {
 				return col;
 			}
 			let props = null;
-			if (col.title || col.class) {
-				props = { title: col.title || null, class: col.class || null };
+			if (col.title || col.class || col.label) {
+				props = {
+					title: col.title || null,
+					class: col.class || null,
+					label: col.label || null
+				};
 			}
 			return new ITableCell(col.content, props);
 		});
@@ -497,10 +512,11 @@ class ITableRow {
 
 	element() {
 		if (!this._element) {
-			this._element = document.createElement("tr");
+			this._element = document.createElement("div");
 			this._element.setAttribute("data-id", this._id);
 			if (this._class)
 				this._element.setAttribute("class", this._class);
+			this._element.classList.add("table-row");
 			this._cells.forEach(function(col) {
 				this._element.appendChild(col.element());
 			}, this);
@@ -566,26 +582,29 @@ class ITableRow {
 }
 
 class ITableCell {
-	_element_name = "td";
-
 	constructor(content, props) {
 		this._element = null;
 		this._content = content;
 		if (props) {
 			this._title = props.title || null;
 			this._class = props.class || null;
+			this._label = props.label || null;
 		}
 	}
 
 	element() {
 		if (!this._element) {
-			this._element = document.createElement(this._element_name);
+			this._element = document.createElement("div");
 			if (this._title) {
 				this._element.setAttribute("title", this._title);
 			}
 			if (this._class) {
 				this._element.setAttribute("class", this._class);
 			}
+			if (this._label) {
+				this._element.setAttribute("data-label", this._label);
+			}
+			this._element.classList.add("table-cell");
 			let content = this.value("dom");
 			if (content !== null) {
 				if (typeof(content) === "object") {
@@ -608,8 +627,6 @@ class ITableCell {
 }
 
 class ITableColumn extends ITableCell {
-	_element_name = "th";
-
 	constructor(content, props) {
 		super(content, props);
 		this._name = props.name;

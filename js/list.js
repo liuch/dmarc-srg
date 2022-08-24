@@ -172,7 +172,7 @@ class ReportList {
 
 	_gen_table() {
 		this._table = new ReportTable({
-			class:   "main-table",
+			class:   "main-table report-list small-cards",
 			onclick: function(row) {
 				let data = row.userdata();
 				if (data)
@@ -272,13 +272,13 @@ class ReportList {
 
 	_make_row_data(d) {
 		let rd = { cells: [], userdata: { domain: d.domain, report_id: d.report_id }, seen: d.seen && true || false }
-		rd.cells.push({ content: d.domain });
+		rd.cells.push({ content: d.domain, label: "Domain" });
 		let d1 = new Date(d.date.begin);
 		let d2 = new Date(d.date.end);
-		rd.cells.push({ content: date_range_to_string(d1, d2), title: d1.toUIString(true) + " - " + d2.toUIString(true) });
-		rd.cells.push({ content: d.org_name });
+		rd.cells.push({ content: date_range_to_string(d1, d2), title: d1.toUIString(true) + " - " + d2.toUIString(true), label: "Date" });
+		rd.cells.push({ content: d.org_name, label: "Reporting Organization" });
 		rd.cells.push({ content: d.report_id, class: "report-id" });
-		rd.cells.push({ content: d.messages });
+		rd.cells.push({ content: d.messages, label: "Messages" });
 		rd.cells.push(new StatusColumn({ dkim_align: d.dkim_align, spf_align: d.spf_align }));
 		return rd;
 	}
@@ -357,6 +357,13 @@ class ReportTableRow extends ITableRow {
 }
 
 class StatusColumn extends ITableCell {
+	element() {
+		if (!this._element) {
+			super.element().setAttribute("data-label", "Result");
+		}
+		return this._element;
+	}
+
 	value(target) {
 		if (target === "dom") {
 			let d = this._content;
@@ -395,25 +402,28 @@ class ReportListSettingsDialog extends ModalDialog {
 
 	_gen_content() {
 		let fs = document.createElement("fieldset");
-		fs.setAttribute("class", "round-border left-titled");
+		fs.setAttribute("class", "round-border titled-input");
 		let lg = document.createElement("legend");
 		lg.appendChild(document.createTextNode("Filter by"));
 		fs.appendChild(lg);
 		this._ui_data.forEach(function(ud) {
-			let el = this._create_select_div(ud.title, fs);
+			let el = this._create_select_label(ud.title, fs);
 			ud.element = el;
 		}, this);
 		this._content.appendChild(fs);
+		this._content.classList.add("vertical-content");
 		if (!this._data.loaded_filters)
 			this._fetch_data();
 	}
 
-	_create_select_div(text, c_el) {
+	_create_select_label(text, c_el) {
+		let lb = document.createElement("label");
 		let sp = document.createElement("span");
 		sp.appendChild(document.createTextNode(text + ": "));
-		c_el.appendChild(sp);
+		lb.appendChild(sp);
 		let sl = document.createElement("select");
-		c_el.appendChild(sl);
+		lb.appendChild(sl);
+		c_el.appendChild(lb);
 		return sl;
 	}
 

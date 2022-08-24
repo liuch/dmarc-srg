@@ -39,28 +39,30 @@ class LoginDialog extends ModalDialog {
 
 	_gen_content() {
 		let tdiv = document.createElement("div");
-		tdiv.setAttribute("class", "left-titled");
+		tdiv.setAttribute("class", "titled-input");
 		if (!this._params.nousername) {
 			this._user = this._insert_row(tdiv, "User name", "text", "Enter your user name");
 		}
 		this._pass = this._insert_row(tdiv, "Password", "password", "Enter your password");
-		this._msg_el = document.createElement("div");
+		this._msg_el = set_wait_status(null, "Enter your credentials");
+		this._content.setAttribute("class", "vertical-content");
 		this._content.appendChild(tdiv);
 		this._content.appendChild(this._msg_el);
-		set_wait_status(this._msg_el, "Enter your credentials");
 	}
 
 	_insert_row(c_el, text, type, placeholder) {
+		let l_el = document.createElement("label");
+		c_el.appendChild(l_el);
 		let t_el = document.createElement("span");
 		t_el.appendChild(document.createTextNode(text + ": "));
-		c_el.appendChild(t_el);
+		l_el.appendChild(t_el);
 		let inp = document.createElement("input");
 		inp.required = true;
 		inp.setAttribute("type", type);
 		if (placeholder) {
 			inp.setAttribute("placeholder", placeholder);
 		}
-		c_el.appendChild(inp);
+		l_el.appendChild(inp);
 		return inp;
 	}
 
@@ -87,7 +89,7 @@ class LoginDialog extends ModalDialog {
 		}
 		let that = this;
 		let hide = false;
-		set_wait_status(this._msg_el, "Sending credentials to the server...");
+		this._set_message("Sending credentials to the server...", false);
 		window.fetch("login.php", {
 			method: "POST",
 			cache: "no-store",
@@ -107,13 +109,19 @@ class LoginDialog extends ModalDialog {
 		}).catch(function(err) {
 			that._pass.value = "";
 			console.warn(err.message);
-			set_error_status(that._msg_el, err.message);
+			that._set_message(err.message, true);
 		}).finally(function() {
 			that._enable_elements(true);
 			that._first.focus();
 			if (hide)
 				that.hide();
 		});
+	}
+
+	_set_message(text, error) {
+		let el = error && set_error_status(null, text) || set_wait_status(null, text);
+		this._msg_el.replaceWith(el);
+		this._msg_el = el;
 	}
 }
 

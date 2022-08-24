@@ -1,6 +1,6 @@
 #main-menu-button {
 	float: left;
-	display: inline-block;
+	display: block;
 	width: 25px;
 	height: 22px;
 	margin: 0.3rem 0.5rem 0.5rem 0.5rem;

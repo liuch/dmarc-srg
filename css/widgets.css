@@ -1,8 +1,96 @@
+.table {
+	display: table;
+	empty-cells: show;
+}
+.table-header {
+	display: table-header-group;
+	font-weight: bold;
+}
+.table-body {
+	display: table-row-group;
+}
+.table-row {
+	display: table-row;
+}
+.table-cell {
+	display: table-cell;
+}
+.colspanned {
+	position: relative;
+}
+.colspanned .table-cell:first-child {
+	position: absolute;
+	left: 0;
+	right: 0;
+}
 .dialog {
 	display: inline-block;
-	vertical-align: middle;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+}
+.dialog .container {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	text-align: left;
+	white-space: normal;
+	background-color: var(--color-bg-dialog);
+}
+.dialog form {
+	margin: auto 0;
+	padding: 1em;
+	overflow: auto;
+}
+.titled-input {
+	display: flex;
+	flex-direction: column;
+	row-gap: .7em;
+}
+.titled-input > label {
+	display: flex;
+	flex-direction: column;
+	row-gap: .2em;
+}
+.dialog-buttons {
+	display: flex;
+	flex-flow: column;
+	justify-content: center;
+	gap: 1em;
+	margin: 1em 0 0 0;
+}
+@media screen and (min-width:35em) {
+	.dialog {
+		position: static;
+	}
+	.dialog .container {
+		border: solid 0.1rem #888;
+	}
+	.titled-input {
+		display: table;
+		margin: -.5em 0;
+		border-spacing: 1em .5em;
+	}
+	.titled-input > label {
+		display: table-row;
+	}
+	.titled-input > label > * {
+		display: table-cell;
+	}
+	.titled-input select {
+		width: 100%;
+	}
+	fieldset.titled-input {
+		margin-bottom: 0;
+	}
+	.dialog-buttons {
+		flex-flow: row wrap;
+	}
 }
 .dialog-overlay {
+	display: flex;
 	position: fixed;
 	top: 0;
 	left: 0;
@@ -10,22 +98,10 @@
 	height: 100%;
 	overflow: auto;
 	background-color: rgba(0,0,0,0.3);
-	text-align: center;
+	align-items: center;
+	justify-content: center;
 	white-space: nowrap;
 	z-index: 100;
-}
-.dialog-overlay:after {
-	display: inline-block;
-	vertical-align: middle;
-	width: 0;
-	height: 100%;
-	content: '';
-}
-.dialog .container {
-	text-align: left;
-	white-space: normal;
-	border: solid 0.1rem #888;
-	background-color: var(--color-bg-dialog);
 }
 .dialog .title {
 	display: flex;
@@ -40,9 +116,6 @@
 	margin: auto;
 	padding-left: 0.7em;
 }
-.dialog form {
-	padding: 0.7em;
-}
 .dialog .close-btn {
 	display: flex;
 	margin-right: 0.1em;
@@ -55,17 +128,13 @@
 	border: 0;
 	background-color: transparent;
 }
-.dialog .dialog-buttons {
-	text-align: center;
-}
-.dialog .dialog-buttons button {
-	margin: 0.5em;
+.dialog-buttons button {
 	min-width: 7em;
 }
-th.sortable {
+.table-cell.sortable {
 	cursor: pointer;
 }
-.sortable.arrows:before, .sortable.arrows:after {
+.sortable.arrows::before, .sortable.arrows::after {
 	content: '';
 	border-style: solid;
 	border-width: 0.4em 0.3em;

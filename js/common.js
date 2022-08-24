@@ -85,11 +85,12 @@ function scroll_to_element(element, container) { // because scrollIntoView is po
 	let diff = null;
 	let e_rect = element.getBoundingClientRect();
 	let c_rect = container.getBoundingClientRect();
-	if (e_rect.top < c_rect.top + e_rect.height * 2) {
-		diff = e_rect.top - c_rect.top - e_rect.height * 2;
+	let height = Math.min(e_rect.height, 64);
+	if (e_rect.top < c_rect.top + height * 2) {
+		diff = e_rect.top - c_rect.top - height * 2;
 	}
-	else if (e_rect.bottom > c_rect.bottom - e_rect.height) {
-		diff = e_rect.bottom - c_rect.bottom + e_rect.height;
+	else if (e_rect.bottom > c_rect.bottom - height) {
+		diff = e_rect.bottom - c_rect.bottom + height;
 	}
 	if (diff) {
 		container.scrollBy(0, diff);

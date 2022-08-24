@@ -92,6 +92,7 @@ class Summary {
 
 	_create_report_block() {
 		this._report_block = document.createElement("div");
+		this._report_block.setAttribute("class", "summary-report");
 	}
 
 	_display_dialog() {
@@ -191,8 +192,9 @@ class OptionsDialog extends ModalDialog {
 
 	_gen_content() {
 		let container = document.createElement("div");
-		container.setAttribute("class", "left-titled");
+		container.setAttribute("class", "titled-input");
 		this._content.appendChild(container);
+		this._content.classList.add("vertical-content");
 		this._ui_data.forEach(function(row) {
 			let i_el = this._add_option_row(row.name, row.title, container, row.type);
 			if (row.name === "days") {
@@ -238,13 +240,16 @@ class OptionsDialog extends ModalDialog {
 	}
 
 	_add_option_row(name, title, p_el, type) {
+		let l_el = document.createElement("label");
+		p_el.appendChild(l_el);
+
 		let t_el = document.createElement("span");
 		t_el.appendChild(document.createTextNode(title + ": "));
-		p_el.appendChild(t_el);
+		l_el.appendChild(t_el);
 
 		let n_el = document.createElement(type || "select");
 		n_el.setAttribute("name", name);
-		p_el.appendChild(n_el);
+		l_el.appendChild(n_el);
 
 		return n_el;
 	}
