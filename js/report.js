@@ -128,12 +128,14 @@ class ReportWidget {
 		let el = document.createElement("div");
 		el.setAttribute("class", "report-modal report-hidden");
 		el.setAttribute("tabindex", -1);
-		let that = this;
 		el.addEventListener("click", function(event) {
 			if (event.target.classList.contains("close-btn") || event.target.classList.contains("report-header")) {
-				that.close();
+				if (window.history.state && window.history.state.from === "list")
+					this.close();
+				else
+					window.history.go(-1);
 			}
-		});
+		}.bind(this));
 
 		let hd = document.createElement("div");
 		hd.setAttribute("class", "report-header");

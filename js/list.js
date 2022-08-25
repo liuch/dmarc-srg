@@ -228,7 +228,7 @@ class ReportList {
 			let url = new URL("report.php", document.location.href);
 			url.searchParams.set("domain", data.domain);
 			url.searchParams.set("report_id", data.report_id);
-			window.history.pushState(null, "", url.toString());
+			window.history.pushState({ from: "list" }, "", url.toString());
 			let that = this;
 			ReportWidget.instance().show_report(data.domain, data.report_id).then(function() {
 				if (!that._table.seen(id)) {
