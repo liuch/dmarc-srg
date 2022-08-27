@@ -33,14 +33,16 @@ if (Core::isJson()) {
 
             $result = Core::status()->get();
 
-            $settings_query = $_GET['settings'] ?? '';
-            if (!empty($settings_query)) {
-                $settings = [];
-                foreach (explode(',', $settings_query) as $name) {
-                    $setting = SettingsList::getSettingByName($name);
-                    $settings[$name] = $setting->value();
+            if (!($result['error_code'] ?? 0)) {
+                $settings_query = $_GET['settings'] ?? '';
+                if (!empty($settings_query)) {
+                    $settings = [];
+                    foreach (explode(',', $settings_query) as $name) {
+                        $setting = SettingsList::getSettingByName($name);
+                        $settings[$name] = $setting->value();
+                    }
+                    $result['settings'] = $settings;
                 }
-                $result['settings'] = $settings;
             }
 
             Core::sendJson($result);

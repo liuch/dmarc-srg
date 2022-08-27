@@ -24,7 +24,7 @@ class Status {
 	}
 
 	update(params) {
-		return this._fetch(params).then(function(data) {
+		return this._fetch(params || {}).then(function(data) {
 			return data;
 		}).catch(function(err) {
 			console.warn(err.message);
