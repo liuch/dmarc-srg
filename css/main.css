@@ -170,7 +170,6 @@ textarea.description {
 	overflow-wrap: anywhere;
 }
 .unseen, .custom-value .setting-value {
-	font-style: italic;
 	font-weight: bold;
 	color: var(--color-fg-custom);
 }
@@ -392,7 +391,7 @@ textarea.description {
 	border-spacing: 0;
 	border-collapse: collapse;
 }
-.report-table caption {
+.custom-value .setting-value, .report-table caption {
 	font-style: italic;
 }
 .report-table th {
