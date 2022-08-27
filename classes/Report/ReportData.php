@@ -131,8 +131,10 @@ class ReportData
                     }
                 }
                 unset($tag_data);
-                self::$rep_data['begin_time'] = new DateTime('@' . intval(self::$rep_data['begin_time']));
-                self::$rep_data['end_time'] = new DateTime('@' . intval(self::$rep_data['end_time']));
+                $b_ts = intval(self::$rep_data['begin_time']);
+                $e_ts = intval(self::$rep_data['end_time']);
+                self::$rep_data['begin_time'] = new DateTime('@' . ($b_ts < 0 ? 0 : $b_ts));
+                self::$rep_data['end_time']   = new DateTime('@' . ($e_ts < 0 ? 0 : $e_ts));
                 foreach (self::$rep_data['records'] as &$rec_data) {
                     $rec_data['rcount'] = intval($rec_data['rcount']);
                 }

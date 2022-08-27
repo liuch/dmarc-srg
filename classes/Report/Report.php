@@ -141,6 +141,12 @@ class Report
 
     public function save(string $real_fname)
     {
+        $b_ts = $this->data['begin_time'];
+        $e_ts = $this->data['end_time'];
+        if (!$b_ts->getTimestamp() || !$e_ts->getTimestamp() || $b_ts > $e_ts) {
+            throw new \Exception('Failed to add an incoming report: wrong date range', -1);
+        }
+
         $db = Database::connection();
         $db->beginTransaction();
         try {
