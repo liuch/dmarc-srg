@@ -222,7 +222,7 @@ Admin.db_actions = [
 	{
 		name:       "Initiate",
 		action:     "initdb",
-		title:      "Intiate DB",
+		title:      "Initiate DB",
 		long_title: "Create all needed tables and indexes in the database"
 	},
 	{
