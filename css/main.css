@@ -36,8 +36,8 @@
 @media (prefers-color-scheme: dark) {
 	:root {
 		--color-fg-default:  #c9d1d9;
-		--color-fg-muted:    #8b949e;
 		--color-fg-disabled: #484f58;
+		--color-fg-muted:    #8b949e;
 		--color-fg-custom:   #aaadbb;
 		--color-fg-menu:     #9ca6b1;
 		--color-bg-default:  #0d1117;
@@ -169,6 +169,11 @@ textarea.description {
 .domains.table .table-cell.fqdn {
 	overflow-wrap: anywhere;
 }
+.unseen, .custom-value .setting-value {
+	font-style: italic;
+	font-weight: bold;
+	color: var(--color-fg-custom);
+}
 @media screen and (min-width:30em) {
 	h1 {
 		font-size: 2em;
@@ -275,6 +280,9 @@ textarea.description {
 	.domains .table-body .table-row.selected, .domains.focused .table-body .table-row.selected,
 	.small-cards .table-body .table-row.selected, .small-cards.focused .table-body .table-row.selected {
 		background-color: unset;
+	}
+	.custom-value .setting-value {
+		font-weight: normal;
 	}
 }
 @media screen and (max-width:60em) {
@@ -637,14 +645,6 @@ textarea.description {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-}
-.unseen {
-	font-weight: bold;
-	color: var(--color-fg-custom);
-}
-.custom-value .setting-value {
-	font-style: italic;
-	color: var(--color-fg-custom);
 }
 .options-button {
 	color: #888;
