@@ -3,7 +3,7 @@
 	display: block;
 	width: 25px;
 	height: 22px;
-	margin: 0.3rem 0.5rem 0.5rem 0.5rem;
+	margin: 0.2rem;
 	background-color: var(--color-bg-default);
 }
 #main-menu-toggle {
@@ -37,10 +37,10 @@
 #main-menu-button .toggle-button {
 	display: block;
 	position: relative;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
+	top: -10%;
+	left: -10%;
+	width: 120%;
+	height: 120%;
 	cursor: pointer;
 	z-index: 3;
 }
