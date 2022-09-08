@@ -205,7 +205,7 @@ class SettingEditDialog extends ModalDialog {
 			if (this._fetched && event.target == this._val_el) {
 				let e_val = null;
 				switch (this._val_tp) {
-					case "string":
+					case "select":
 						e_val = this._val_el.value;
 						break;
 					case "integer":
