@@ -272,14 +272,26 @@ class DomainEditDialog extends ModalDialog {
 		let ct = document.createElement("input");
 		ct.setAttribute("type", "text");
 		ct.disabled = true;
+		ct.setAttribute("value","n/a");
 		this._insert_row("Created", ct);
 		this._c_tm_el = ct;
 
 		let ut = document.createElement("input");
 		ut.setAttribute("type", "text");
+		ut.setAttribute("value","n/a");
 		ut.disabled = true;
 		this._insert_row("Updated", ut);
 		this._u_tm_el = ut;
+
+		this._inputs.addEventListener("input", function(event) {
+			if (this._fetched || this._data["new"]) {
+				this._buttons[1].disabled = (
+					this._actv_el.dataset.server === this._actv_el.value &&
+					this._desc_el.defaultValue === this._desc_el.value &&
+					this._fqdn_el.defaultValue === this._fqdn_el.value
+				);
+			}
+		}.bind(this));
 
 		if (!this._data["new"] && !this._fetched) {
 			this._fetch_data();
@@ -344,6 +356,7 @@ class DomainEditDialog extends ModalDialog {
 			}
 		}
 		this._actv_el.value = val;
+		this._actv_el.dataset.server = val;
 		this._desc_el.appendChild(document.createTextNode(data.description || ""));
 		this._c_tm_el.setAttribute("value", data.created_time && data.created_time.toUIString() || "n/a");
 		this._u_tm_el.setAttribute("value", data.updated_time && data.updated_time.toUIString() || "n/a");
@@ -354,6 +367,7 @@ class DomainEditDialog extends ModalDialog {
 		if (type === "save") {
 			text = "Save";
 			btn = document.createElement("button");
+			btn.disabled = true;
 			btn.addEventListener("click", this._save.bind(this));
 		}
 		else if (type === "delete") {
@@ -375,7 +389,7 @@ class DomainEditDialog extends ModalDialog {
 		this._fqdn_el.disabled = !en || !this._data["new"];
 		this._actv_el.disabled = !en;
 		this._desc_el.disabled = !en;
-		for (let i = 1; i < this._buttons.length - 1; ++i) {
+		for (let i = 2; i < this._buttons.length - 1; ++i) {
 			this._buttons[i].disabled = !en;
 		}
 
@@ -417,6 +431,9 @@ class DomainEditDialog extends ModalDialog {
 			}
 			that._result = body;
 			that.hide();
+			Notification.add({
+				text: "The domain " + body.fqdn + " was " + (body.action === "add" && "added" || "updated")
+			});
 		}).catch(function(err) {
 			console.warn(err.message);
 			that._content.appendChild(set_error_status(null, err.message));
@@ -462,6 +479,7 @@ class DomainEditDialog extends ModalDialog {
 			}
 			that._result = data;
 			that.hide();
+			Notification.add({ text: "The domain " + body.fqdn + " was removed" });
 		}).catch(function(err) {
 			console.warn(err.message);
 			that._content.appendChild(set_error_status(null, err.message));
