@@ -78,6 +78,7 @@
 	}
 	.titled-input > label > * {
 		display: table-cell;
+		vertical-align: middle;
 	}
 	.titled-input select {
 		width: 100%;
