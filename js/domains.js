@@ -218,11 +218,16 @@ class DomainFrame extends ITableFrame {
 
 class DomainEditDialog extends ModalDialog {
 	constructor(params) {
+		let tl = null;
 		let ba = [ "save", "close" ];
 		if (!params["new"]) {
+			tl = "Domain settings";
 			ba.splice(1, 0, "delete");
 		}
-		super({ title: "Domain settings", buttons: ba });
+		else {
+			tl = "New domain";
+		}
+		super({ title: tl, buttons: ba });
 		this._data    = params || {};
 		this._content = null;
 		this._inputs  = null;
