@@ -92,7 +92,7 @@ class ReportList {
 
 	/**
 	 * Sets the _filter object from the document's location
-	 * and updates the setting button if the filter has changed
+	 * and updates the setting button if the filter changes
 	 *
 	 * @return bool True if the filter was changed, false otherwise
 	 */
@@ -309,7 +309,6 @@ class ReportList {
 			this._settings_dlg = dlg;
 		}
 		this._element.appendChild(dlg.element());
-		let that = this;
 		dlg.show().then(function(d) {
 			if (d) {
 				let url = new URL(document.location.href);
@@ -320,13 +319,13 @@ class ReportList {
 					}
 				}
 				window.history.replaceState(null, "", url.toString());
-				remove_all_children(that._element);
-				that.display();
-				that.update();
+				if (this._handle_url_params()) {
+					this._update_table();
+				}
 			}
-		}).finally(function() {
-			that._table.focus();
-		});
+		}.bind(this)).finally(function() {
+			this._table.focus();
+		}.bind(this));
 	}
 }
 
