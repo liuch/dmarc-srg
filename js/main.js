@@ -149,16 +149,16 @@ Router.go = function(url) {
 	});
 };
 
-Router.app_name = function() {
+Router.app_name = function(version) {
 	let name = "DmarcSrg";
-	if (Router._app_ver) {
+	if (version && Router._app_ver) {
 		name += " " + Router._app_ver;
 	}
 	return name;
 }
 
 Router.update_title = function(str) {
-	let title1 = Router.app_name();
+	let title1 = Router.app_name(false);
 	let title2 = str || Router._title || null;
 	if (str) {
 		Router._title = str;

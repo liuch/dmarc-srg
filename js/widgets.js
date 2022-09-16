@@ -896,7 +896,7 @@ class AboutDialog extends ModalDialog {
 
 	_gen_content() {
 		let header = document.createElement("h2");
-		header.appendChild(document.createTextNode(Router.app_name()));
+		header.appendChild(document.createTextNode(Router.app_name(true)));
 		this._content.appendChild(header);
 
 		let cblock = document.createElement("div");
