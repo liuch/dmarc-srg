@@ -61,6 +61,7 @@ if (php_sapi_name() !== 'cli') {
 
 $domain = null;
 $period = null;
+$emailto = null;
 for ($i = 1; $i < count($argv); ++$i) {
     $av = explode('=', $argv[$i]);
     if (count($av) == 2) {
@@ -71,6 +72,9 @@ for ($i = 1; $i < count($argv); ++$i) {
             case 'period':
                 $period = $av[1];
                 break;
+            case 'emailto':
+              $emailto = $av[1];
+              break;
         }
     }
 }
@@ -82,6 +86,11 @@ if (!$domain) {
 if (!$period) {
     echo 'Error: Parameter "period" is not specified' . PHP_EOL;
     exit(1);
+}
+if (!$emailto){
+  $emailto = $mailer['default'];
+} else {
+  $emailto = $emailto;
 }
 
 try {
@@ -96,7 +105,7 @@ try {
         'Content-Type' => 'text/plain; charset=utf-8'
     ];
     mail(
-        $mailer['default'],
+        $emailto,
         mb_encode_mimeheader($rep->subject(), 'UTF-8'),
         implode("\r\n", $rep->text()),
         $headers
