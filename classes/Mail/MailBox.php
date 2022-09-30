@@ -96,8 +96,8 @@ class MailBox
         $this->ensureConnection();
         $mb_list = imap_list(
             $this->conn,
-            imap_utf8_to_mutf7($this->server),
-            imap_utf8_to_mutf7($this->mbox) . $this->delim . imap_utf8_to_mutf7($mailbox_name)
+            \imap_utf8_to_mutf7($this->server),
+            \imap_utf8_to_mutf7($this->mbox) . $this->delim . \imap_utf8_to_mutf7($mailbox_name)
         );
         if (!$mb_list) {
             return null;
@@ -129,7 +129,7 @@ class MailBox
         $status = [];
         try {
             $this->ensureConnection();
-            $res = @imap_status($this->conn, imap_utf8_to_mutf7($this->server . $this->mbox), SA_MESSAGES | SA_UNSEEN);
+            $res = @imap_status($this->conn, \imap_utf8_to_mutf7($this->server . $this->mbox), SA_MESSAGES | SA_UNSEEN);
             if ($res === false) {
                 $err_msg = imap_last_error();
                 $this->resetErrorStack();
@@ -188,9 +188,9 @@ class MailBox
 
     public function ensureMailbox($mailbox_name)
     {
-        $mbn = imap_utf8_to_mutf7($mailbox_name);
-        $srv = imap_utf8_to_mutf7($this->server);
-        $mbo = imap_utf8_to_mutf7($this->mbox);
+        $mbn = \imap_utf8_to_mutf7($mailbox_name);
+        $srv = \imap_utf8_to_mutf7($this->server);
+        $mbo = \imap_utf8_to_mutf7($this->mbox);
         $this->ensureConnection();
         $mb_list = @imap_list($this->conn, $srv, $mbo . $this->delim . $mbn);
         if (!$mb_list) {
@@ -207,7 +207,7 @@ class MailBox
     public function moveMessage($number, $mailbox_name)
     {
         $this->ensureConnection();
-        $target = imap_utf8_to_mutf7($this->mbox) . $this->delim . imap_utf8_to_mutf7($mailbox_name);
+        $target = \imap_utf8_to_mutf7($this->mbox) . $this->delim . \imap_utf8_to_mutf7($mailbox_name);
         if (!@imap_mail_move($this->conn, strval($number), $target)) {
             $err_str = imap_last_error();
             $this->resetErrorStack();
@@ -227,10 +227,10 @@ class MailBox
     {
         if (is_null($this->conn)) {
             $err_msg = null;
-            $srv = imap_utf8_to_mutf7($this->server);
+            $srv = \imap_utf8_to_mutf7($this->server);
             $this->conn = @imap_open($srv, $this->uname, $this->passw, OP_HALFOPEN);
             if ($this->conn !== false) {
-                $mbx = imap_utf8_to_mutf7($this->mbox);
+                $mbx = \imap_utf8_to_mutf7($this->mbox);
                 $mb_list = @imap_getmailboxes($this->conn, $srv, $mbx);
                 if ($mb_list && count($mb_list) === 1) {
                     $this->delim = $mb_list[0]->delimiter ?? '/';
