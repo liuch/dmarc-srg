@@ -145,6 +145,9 @@ Router.go = function(url) {
 				Router._app_ver = d.version;
 				Router.update_title();
 			}
+			if (d.php_version) {
+				Router.php_version = d.php_version;
+			}
 		}
 	});
 };

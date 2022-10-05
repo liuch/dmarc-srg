@@ -84,6 +84,7 @@ class Status
         }
         $res['authenticated'] = $auth;
         $res['version'] = Core::APP_VERSION;
+        $res['php_version'] = phpversion();
 
         return $res;
     }

@@ -936,6 +936,14 @@ class AboutDialog extends ModalDialog {
 		this._content.appendChild(oblock);
 		add_row("Documentation", this._documentation);
 		add_row("Source code", this._source_code);
+		{
+			let tl = document.createElement("span");
+			tl.appendChild(document.createTextNode("PHP version: "));
+			oblock.appendChild(tl);
+			let vl = document.createElement("span");
+			vl.appendChild(document.createTextNode(Router.php_version || "n/a"));
+			oblock.appendChild(vl);
+		}
 
 		let lblock = document.createElement("div");
 		lblock.appendChild(document.createTextNode(
