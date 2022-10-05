@@ -105,19 +105,26 @@ class MailMessage
         if ($part->ifdparameters) {
             $filename = $this->getAttribute($part->dparameters, 'filename');
         }
-        if (!$filename && $part->ifparameters) {
-            $filename = $this->getAttribute($part->parameters, 'name');
+
+        // ugly hack to use ifparameters if dparameter is truncated
+        if ($part->ifparameters) {
+            $if_filename = $this->getAttribute($part->parameters, 'name');
+            if (!$filename || strlen($filename) < strlen($if_filename)) {
+                $filename = $if_filename;
+            }
         }
-        if ($filename) {
-            return [
-                'filename' => imap_utf8($filename),
-                'bytes'    => $part->bytes,
-                'number'   => $number,
-                'mnumber'  => $this->number,
-                'encoding' => $part->encoding
-            ];
+
+        if (!$filename) {
+            return null;
         }
-        return null;
+
+        return [
+            'filename' => imap_utf8($filename),
+            'bytes'    => $part->bytes,
+            'number'   => $number,
+            'mnumber'  => $this->number,
+            'encoding' => $part->encoding
+        ];
     }
 
     private function getAttribute($params, $name)
