@@ -106,15 +106,11 @@ class MailMessage
             $filename = $this->getAttribute($part->dparameters, 'filename');
         }
 
-        // ugly hack to use ifparameters if dparameter is truncated
-        if ($part->ifparameters) {
-            $if_filename = $this->getAttribute($part->parameters, 'name');
-            if (!$filename || strlen($filename) < strlen($if_filename)) {
-                $filename = $if_filename;
-            }
+        if (empty($filename) && $part->ifparameters) {
+            $filename = $this->getAttribute($part->parameters, 'name');
         }
 
-        if (!$filename) {
+        if (empty($filename)) {
             return null;
         }
 
@@ -129,11 +125,15 @@ class MailMessage
 
     private function getAttribute($params, $name)
     {
+        // need to check all objects as imap_fetchstructure
+        // returns multiple objects with the same attribute name,
+        // but first entry contains a truncated value
+        $value = null;
         foreach ($params as &$obj) {
             if (strcasecmp($obj->attribute, $name) === 0) {
-                return $obj->value;
+                $value = $obj->value;
             }
         }
-        return null;
+        return $value;
     }
 }
