@@ -105,28 +105,35 @@ class MailMessage
         if ($part->ifdparameters) {
             $filename = $this->getAttribute($part->dparameters, 'filename');
         }
-        if (!$filename && $part->ifparameters) {
+
+        if (empty($filename) && $part->ifparameters) {
             $filename = $this->getAttribute($part->parameters, 'name');
         }
-        if ($filename) {
-            return [
-                'filename' => imap_utf8($filename),
-                'bytes'    => $part->bytes,
-                'number'   => $number,
-                'mnumber'  => $this->number,
-                'encoding' => $part->encoding
-            ];
+
+        if (empty($filename)) {
+            return null;
         }
-        return null;
+
+        return [
+            'filename' => imap_utf8($filename),
+            'bytes'    => $part->bytes,
+            'number'   => $number,
+            'mnumber'  => $this->number,
+            'encoding' => $part->encoding
+        ];
     }
 
     private function getAttribute($params, $name)
     {
+        // need to check all objects as imap_fetchstructure
+        // returns multiple objects with the same attribute name,
+        // but first entry contains a truncated value
+        $value = null;
         foreach ($params as &$obj) {
             if (strcasecmp($obj->attribute, $name) === 0) {
-                return $obj->value;
+                $value = $obj->value;
             }
         }
-        return null;
+        return $value;
     }
 }
