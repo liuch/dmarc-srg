@@ -28,7 +28,6 @@ class MailMessage
 {
     private $conn;
     private $number;
-    private $structure;
     private $attachment;
     private $attachments_cnt;
 
@@ -36,7 +35,6 @@ class MailMessage
     {
         $this->conn = $conn;
         $this->number = $number;
-        $this->structure = null;
         $this->attachment = null;
         $this->attachments_cnt = -1;
     }
