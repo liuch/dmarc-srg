@@ -173,16 +173,15 @@ class Report
             $st->bindValue(4, $ct->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
             $st->bindValue(5, $this->data['org'], \PDO::PARAM_STR);
             $st->bindValue(6, $this->data['external_id'], \PDO::PARAM_STR);
-            $st->bindValue(7, isset($this->data['email']) ? $this->data['email'] : null, \PDO::PARAM_STR);
-            $st->bindValue(8, isset($this->data['extra_contact_info']) ? $this->data['extra_contact_info'] : null, \PDO::PARAM_STR);
+            $st->bindValue(7, $this->data['email'], \PDO::PARAM_STR);
+            $st->bindValue(8, $this->data['extra_contact_info'], \PDO::PARAM_STR);
             $st->bindValue(9, Report::jsonOrNull($this->data['error_string']), \PDO::PARAM_STR);
-            $st->bindValue(10, isset($this->data['policy_adkim']) ? $this->data['policy_adkim'] : null, \PDO::PARAM_STR);
-            $st->bindValue(11, isset($this->data['policy_aspf']) ? $this->data['policy_aspf'] : null, \PDO::PARAM_STR);
-            $st->bindValue(12, isset($this->data['policy_p']) ? $this->data['policy_p'] : null, \PDO::PARAM_STR);
-            $st->bindValue(13, isset($this->data['policy_sp']) ? $this->data['policy_sp'] : null, \PDO::PARAM_STR);
-            $st->bindValue(14, isset($this->data['policy_pct']) ? $this->data['policy_pct'] : null, \PDO::PARAM_STR);
-            $st->bindValue(15, isset($this->data['policy_fo']) ? $this->data['policy_fo'] : null, \PDO::PARAM_STR);
-            $st->execute();
+            $st->bindValue(10, $this->data['policy_adkim'], \PDO::PARAM_STR);
+            $st->bindValue(11, $this->data['policy_aspf'], \PDO::PARAM_STR);
+            $st->bindValue(12, $this->data['policy_p'], \PDO::PARAM_STR);
+            $st->bindValue(13, $this->data['policy_sp'], \PDO::PARAM_STR);
+            $st->bindValue(14, $this->data['policy_pct'], \PDO::PARAM_STR);
+            $st->bindValue(15, $this->data['policy_fo'], \PDO::PARAM_STR);            $st->execute();
             $new_id = intval($db->lastInsertId());
             $st->closeCursor();
 
@@ -202,9 +201,9 @@ class Report
                 $st->bindValue(7, Report::jsonOrNull($rec_data['spf_auth']), \PDO::PARAM_STR);
                 $st->bindValue(8, array_search($rec_data['dkim_align'], Common::$align_res), \PDO::PARAM_INT);
                 $st->bindValue(9, array_search($rec_data['spf_align'], Common::$align_res), \PDO::PARAM_INT);
-                $st->bindValue(10, isset($rec_data['envelope_to']) ? $rec_data['envelope_to'] : null, \PDO::PARAM_STR);
-                $st->bindValue(11, isset($rec_data['envelope_from']) ? $rec_data['envelope_from'] : null, \PDO::PARAM_STR);
-                $st->bindValue(12, isset($rec_data['header_from']) ? $rec_data['header_from'] : null, \PDO::PARAM_STR);
+                $st->bindValue(10, $rec_data['envelope_to'], \PDO::PARAM_STR);
+                $st->bindValue(11, $rec_data['envelope_from'], \PDO::PARAM_STR);
+                $st->bindValue(12, $rec_data['header_from'], \PDO::PARAM_STR);
                 $st->execute();
                 $st->closeCursor();
             }
