@@ -267,7 +267,7 @@ class ReportData
             ]
         ],
         'org'                => [ 'parent' => 'rmd', 'header' => true ],
-        'email'              => [ 'parent' => 'rmd', 'header' => true ],
+        'email'              => [ 'parent' => 'rmd', 'header' => true, 'default' => null ],
         'extra_contact_info' => [ 'parent' => 'rmd', 'header' => true, 'default' => null ],
         'external_id'        => [ 'parent' => 'rmd', 'header' => true ],
         'd_range'            => [
