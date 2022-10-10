@@ -181,7 +181,8 @@ class Report
             $st->bindValue(12, $this->data['policy_p'], \PDO::PARAM_STR);
             $st->bindValue(13, $this->data['policy_sp'], \PDO::PARAM_STR);
             $st->bindValue(14, $this->data['policy_pct'], \PDO::PARAM_STR);
-            $st->bindValue(15, $this->data['policy_fo'], \PDO::PARAM_STR);            $st->execute();
+            $st->bindValue(15, $this->data['policy_fo'], \PDO::PARAM_STR);
+            $st->execute();
             $new_id = intval($db->lastInsertId());
             $st->closeCursor();
 
