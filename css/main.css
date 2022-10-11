@@ -201,8 +201,8 @@ textarea.description {
 	#stat-block li div {
 		display: inline-grid;
 		margin: 0.5em;
-		width: 6em;
-		height: 6em;
+		min-width: 10em;
+        padding: 0.4em;
 		text-align: center;
 		font-size: 0.7em;
 		border: 0.07em solid var(--color-br-strong);
@@ -214,8 +214,6 @@ textarea.description {
 	}
 	.stat-val {
 		display: block;
-		height: 50%;
-		line-height: 180%;
 		font-size: 1.8em;
 		font-weight: bold;
 	}
