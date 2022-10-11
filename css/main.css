@@ -548,6 +548,8 @@ textarea.description {
 	border-radius: 0.4em;
 	padding: 0.2em;
 	margin: 0 0.2em 0 0.2em;
+    width: 3.5em;
+    text-align: center;
 }
 .main-table .report-result {
 	font-size: 75%;
