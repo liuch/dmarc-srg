@@ -31,6 +31,8 @@
 		--color-nt-warning:  #ff8;
 		--color-nt-inform:   #8f8;
 		--color-sh-default:  rgba(0,0,0,0.5);
+		--color-lk-default:  #0000EE;
+		--color-lk-visited:  #551A8B;
 	}
 }
 @media (prefers-color-scheme: dark) {
@@ -66,6 +68,8 @@
 		--color-nt-warning:  #e7a100;
 		--color-nt-inform:   #3fb950;
 		--color-sh-default:  rgba(255,255,255,0.3);
+		--color-lk-default:  #FFF;
+		--color-lk-visited:  #EEE;
 	}
 }
 
@@ -105,6 +109,12 @@ button:disabled, select:disabled, textarea:disabled, input:disabled {
 }
 textarea, input {
 	background-color: var(--color-bg-input);
+}
+a {
+	color: var(--color-lk-default);
+}
+a:visited {
+	color: var(--color-lk-visited);
 }
 h1 {
 	font-size: 1.4em;
