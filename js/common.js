@@ -115,7 +115,7 @@ class Common {
 				if (this.outputMode === "local" || (this.outputMode === "auto" && !prefer_utc)) {
 					return this.toLocaleString();
 				}
-				return this.toUTCString();
+				return this.toLocaleString(undefined, { timeZone: 'UTC', timeZoneName: 'short' });
 			};
 		}
 	}
