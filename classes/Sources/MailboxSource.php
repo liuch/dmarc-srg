@@ -135,4 +135,14 @@ class MailboxSource extends Source
     {
         return Source::SOURCE_MAILBOX;
     }
+
+    /**
+     * Returns the current email message.
+     *
+     * @return MailMessage|null
+     */
+    public function mailMessage()
+    {
+        return $this->msg;
+    }
 }
