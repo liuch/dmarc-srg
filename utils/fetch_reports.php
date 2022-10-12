@@ -90,32 +90,55 @@ if ($usage) {
 }
 
 $sou_list = [];
-$messages = [];
+$problems = [];
 
+const MAILBOX_LIST   = 1;
+const DIRECTORY_LIST = 2;
+const FETCHER        = 3;
+
+$state = MAILBOX_LIST;
 if (!$source || $source === 'email') {
     $mb_list = new MailBoxes();
+    $failed = null;
     for ($mb_num = 1; $mb_num <= $mb_list->count(); ++$mb_num) {
         try {
             $sou_list[] = new MailboxSource($mb_list->mailbox($mb_num));
         } catch (\Exception $e) {
-            $messages[] = $e->getMessage();
+            if (!$failed) {
+                $failed = [ 'state' => $state, 'messages' => [] ];
+            }
+            $failed['messages'][] = $e->getMessage();
         }
     }
+    if ($failed) {
+        $problems[] = $failed;
+    }
 }
+
+$state = DIRECTORY_LIST;
 if (!$source || $source === 'directory') {
+    $failed = null;
     foreach ((new DirectoryList())->list() as $dir) {
         try {
             $sou_list[] = new DirectorySource($dir);
         } catch (\Exception $e) {
-            $messages[] = $e->getMessage();
+            if (!$failed) {
+                $failed = [ 'state' => $state, 'messages' => [] ];
+            }
+            $failed['messages'][] = $e->getMessage();
         }
+    }
+    if ($failed) {
+        $problems[] = $failed;
     }
 }
 
+$state = FETCHER;
 try {
     foreach ($sou_list as $source) {
         $results = (new ReportFetcher($source))->fetch();
         foreach ($results as &$res) {
+            $messages = [];
             if (isset($res['source_error'])) {
                 $messages[] = $res['source_error'];
             }
@@ -125,15 +148,53 @@ try {
             if (isset($res['error_code']) && $res['error_code'] !== 0 && isset($res['message'])) {
                 $messages[] = $res['message'];
             }
+            if (count($messages) > 0) {
+                $pr = [ 'state' => $state, 'messages' => $messages ];
+                foreach ([ 'report_id', 'emailed_from', 'emailed_date'] as $it) {
+                    if (isset($res[$it])) {
+                        $pr[$it] = $res[$it];
+                    }
+                }
+                $problems[] = $pr;
+            }
         }
         unset($res);
     }
 } catch (\Exception $e) {
-    $messages[] = $e->getMessage();
+    $problems[] = [ 'state' => $state, 'messages' => [ $e->getMessage() ] ];
 }
 
-if (count($messages) > 0) {
-    echo implode(PHP_EOL, $messages) . PHP_EOL;
+if (count($problems) > 0) {
+    foreach ($problems as $i => $pr) {
+        if ($i > 0) {
+            echo PHP_EOL;
+        }
+        switch ($pr['state']) {
+            case MAILBOX_LIST:
+                echo 'Failed to get mailbox list:';
+                break;
+            case DIRECTORY_LIST:
+                echo 'Failed to get directory list:';
+                break;
+            case FETCHER:
+                echo 'Failed to get incoming report:';
+                break;
+        }
+        echo PHP_EOL;
+        echo '  Error message:', PHP_EOL;
+        $messages = array_map(function ($msg) {
+            return "    - {$msg}";
+        }, $pr['messages']);
+        echo implode(PHP_EOL, $messages), PHP_EOL;
+        if (isset($pr['report_id'])) {
+            echo "  Report ID: {$pr['report_id']}", PHP_EOL;
+        }
+        if (isset($pr['emailed_from']) || isset($pr['emailed_date'])) {
+            echo '  Email message metadata:', PHP_EOL;
+            echo '    - From: ' . ($pr['emailed_from'] ?? '-'), PHP_EOL;
+            echo '    - Date: ' . ($pr['emailed_date'] ?? '-'), PHP_EOL;
+        }
+    }
 }
 
 exit(0);

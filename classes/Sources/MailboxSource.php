@@ -51,7 +51,7 @@ class MailboxSource extends Source
     {
         $this->msg = $this->data->message($this->list[$this->index]);
         if (!$this->msg->isCorrect()) {
-            throw new \Exception('Incorrect message', -1);
+            throw new \Exception('Incorrect email message', -1);
         }
         $att = $this->msg->attachment();
         return ReportFile::fromStream($att->datastream(), $att->filename());
@@ -131,5 +131,15 @@ class MailboxSource extends Source
     public function type(): int
     {
         return Source::SOURCE_MAILBOX;
+    }
+
+    /**
+     * Returns the current email message.
+     *
+     * @return MailMessage|null
+     */
+    public function mailMessage()
+    {
+        return $this->msg;
     }
 }
