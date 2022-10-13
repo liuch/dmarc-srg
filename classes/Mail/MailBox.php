@@ -247,8 +247,8 @@ class MailBox
             $this->resetErrorStack();
             if ($this->conn) {
                 @imap_close($this->conn);
-                $this->conn = null;
             }
+            $this->conn = null;
             throw new \Exception($err_msg ? $err_msg : 'Cannot connect to the mail server', -1);
         }
     }
