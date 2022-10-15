@@ -40,6 +40,7 @@ namespace Liuch\DmarcSrg;
 use Liuch\DmarcSrg\Database\Database;
 use Liuch\DmarcSrg\Database\DatabaseUpgrader;
 use Liuch\DmarcSrg\Settings\SettingString;
+use Liuch\DmarcSrg\Exception\RuntimeException;
 
 require 'init.php';
 
@@ -55,14 +56,16 @@ try {
         case 'status':
             $res = Core::admin()->state()['database'];
             $tcn = 0;
-            foreach ($res['tables'] as &$t) {
-                if (isset($t['exists']) && $t['exists'] === true) {
-                    ++$tcn;
+            if (isset($res['tables'])) {
+                foreach ($res['tables'] as &$t) {
+                    if (isset($t['exists']) && $t['exists'] === true) {
+                        ++$tcn;
+                    }
                 }
+                unset($t);
             }
-            unset($t);
-            echo 'Version: ' . (isset($res['version']) ? $res['version'] : 'n/a') . "\n";
-            echo 'Tables:  ' . $tcn . "\n";
+            echo 'Version: ', ($res['version'] ?? 'n/a'), PHP_EOL;
+            echo 'Tables:  ', $tcn, PHP_EOL;
             break;
         case 'init':
             $res = Database::initDb();
@@ -72,8 +75,8 @@ try {
             if ($cur_ver === '') {
                 $cur_ver = 'n/a';
             }
-            echo "Current version:  {$cur_ver}\n";
-            echo 'Required version: ' . Database::REQUIRED_VERSION . "\n";
+            echo "Current version:  {$cur_ver}", PHP_EOL;
+            echo 'Required version: ', Database::REQUIRED_VERSION, PHP_EOL;
             if ($cur_ver !== Database::REQUIRED_VERSION) {
                 DatabaseUpgrader::go();
                 $res = [
@@ -91,17 +94,23 @@ try {
             $res = Database::dropTables();
             break;
         default:
-            echo "Usage: {$argv[0]} status|init|upgrade|drop\n";
+            echo "Usage: {$argv[0]} status|init|upgrade|drop", PHP_EOL;
             exit(1);
     }
-} catch (\Exception $e) {
-    $res = [
-        'error_code' => $e->getCode(),
-        'message'    => $e->getMessage()
-    ];
+} catch (RuntimeException $e) {
+    $res = ErrorHandler::exceptionResult($e);
 }
 
-$error = (isset($res['error_code']) && $res['error_code'] !== 0) ? 'Error! ' : '';
-echo "Message: {$error}{$res['message']}\n";
+$error = ($res['error_code'] ?? 0) ? 'Error! ' : '';
+echo "Message: {$error}{$res['message']}", PHP_EOL;
+
+if (isset($res['debug_info'])) {
+    $debug_info = $res['debug_info'];
+    echo "Debug info:", PHP_EOL;
+    echo '-----', PHP_EOL;
+    echo "[{$debug_info['code']}]", PHP_EOL;
+    echo '-----', PHP_EOL;
+    echo "{$debug_info['content']}", PHP_EOL;
+}
 
 exit(0);

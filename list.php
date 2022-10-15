@@ -22,7 +22,9 @@
 
 namespace Liuch\DmarcSrg;
 
+use Liuch\DmarcSrg\ErrorHandler;
 use Liuch\DmarcSrg\Report\ReportList;
+use Liuch\DmarcSrg\Exception\RuntimeException;
 
 require 'init.php';
 
@@ -63,13 +65,8 @@ if (Core::method() == 'GET') {
                 $res['filters'] = ReportList::getFilterList();
             }
             Core::sendJson($res);
-        } catch (\Exception $e) {
-            Core::sendJson(
-                [
-                    'error_code' => $e->getCode(),
-                    'message'    => $e->getMessage()
-                ]
-            );
+        } catch (RuntimeException $e) {
+            Core::sendJson(ErrorHandler::exceptionResult($e));
         }
         return;
     }

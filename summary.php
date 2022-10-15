@@ -42,9 +42,12 @@
 
 namespace Liuch\DmarcSrg;
 
+use Liuch\DmarcSrg\ErrorHandler;
 use Liuch\DmarcSrg\Domains\Domain;
 use Liuch\DmarcSrg\Domains\DomainList;
 use Liuch\DmarcSrg\Report\SummaryReport;
+use Liuch\DmarcSrg\Exception\SoftException;
+use Liuch\DmarcSrg\Exception\RuntimeException;
 
 require 'init.php';
 
@@ -62,10 +65,10 @@ if (Core::isJson() && isset($_GET['mode'])) {
             return;
         } elseif ($mode === 'report') {
             if (empty($_GET['domain'])) {
-                throw new \Exception('Parameter "domain" is not specified', -1);
+                throw new SoftException('Parameter "domain" is not specified');
             }
             if (empty($_GET['period'])) {
-                throw new \Exception('Parameter "period" is not specified', -1);
+                throw new SoftException('Parameter "period" is not specified');
             }
             $report = new SummaryReport(new Domain($_GET['domain']), $_GET['period']);
             if (($_GET['format'] ?? '') === 'raw') {
@@ -76,15 +79,10 @@ if (Core::isJson() && isset($_GET['mode'])) {
             Core::sendJson($res);
             return;
         } else {
-            throw new \Exception('The `mode` parameter can only be `options` or `report`', -1);
+            throw new SoftException('The `mode` parameter can only be `options` or `report`');
         }
-    } catch (\Exception $e) {
-        Core::sendJson(
-            [
-                'error_code' => $e->getCode(),
-                'message'    => $e->getMessage()
-            ]
-        );
+    } catch (RuntimeException $e) {
+        Core::sendJson(ErrorHandler::exceptionResult($e));
         return;
     }
 } elseif (Core::method() == 'GET') {

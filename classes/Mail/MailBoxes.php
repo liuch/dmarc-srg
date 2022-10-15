@@ -22,6 +22,11 @@
 
 namespace Liuch\DmarcSrg\Mail;
 
+use Liuch\DmarcSrg\ErrorHandler;
+use Liuch\DmarcSrg\Exception\LogicException;
+use Liuch\DmarcSrg\Exception\RuntimeException;
+use Liuch\DmarcSrg\Exception\MailboxException;
+
 class MailBoxes implements \Iterator
 {
     private $box_list;
@@ -70,8 +75,8 @@ class MailBoxes implements \Iterator
 
     public function mailbox($id)
     {
-        if (!is_int($id) || $id < 0 || $id > count($this->box_list)) {
-            throw new \Exception('Incorrect mailbox Id', -1);
+        if (!is_int($id) || $id <= 0 || $id > count($this->box_list)) {
+            throw new LogicException("Incorrect mailbox Id: {$i}");
         }
         return $this->box_list[$id - 1];
     }
@@ -79,14 +84,7 @@ class MailBoxes implements \Iterator
     public function check($id)
     {
         if ($id !== 0) {
-            try {
-                return $this->mailbox($id)->check();
-            } catch (\Exception $e) {
-                return [
-                    'error_code' => $e->getCode(),
-                    'message' => $e->getMessage()
-                ];
-            }
+            return $this->mailbox($id)->check();
         }
 
         $results = [];

@@ -83,14 +83,12 @@ class Logs {
 			headers: HTTP_HEADERS,
 			credentials: "same-origin"
 		}).then(function(resp) {
-			if (resp.status !== 200)
+			if (!resp.ok)
 				throw new Error("Failed to fetch the logs");
 			return resp.json();
 		}).then(function(data) {
 			that._table.display_status(null);
-			if (data.error_code !== undefined && data.error_code !== 0) {
-				throw new Error(data.message || "Unknown error");
-			}
+			Common.checkResult(data);
 			if (data.sorted_by) {
 				let cname = data.sorted_by.column;
 				let dir   = data.sorted_by.direction;
@@ -108,7 +106,7 @@ class Logs {
 			that._table.add_frame(fr);
 			return fr;
 		}).catch(function(err) {
-			console.warn(err.message);
+			Common.displayError(err);
 			that._table.display_status("error");
 		}).finally(function() {
 			that._fetching = false;
@@ -265,14 +263,11 @@ class LogItemDialog extends ModalDialog {
 			headers: HTTP_HEADERS,
 			credentials: "same-origin"
 		}).then(function(resp) {
-			if (resp.status != 200) {
+			if (!resp.ok)
 				throw new Error("Failed to fetch the log item");
-			}
 			return resp.json();
 		}).then(function(data) {
-			if (data.error_code !== undefined && data.error_code !== 0) {
-				throw new Error(data.message || "Unknown error");
-			}
+			Common.checkResult(data);
 			that._data.domain     = data.domain;
 			that._data.report_id  = data.report_id;
 			that._data.event_time = new Date(data.event_time);
@@ -282,7 +277,7 @@ class LogItemDialog extends ModalDialog {
 			that._data.message    = data.message;
 			that._update_ui();
 		}).catch(function(err) {
-			console.warn(err.message);
+			Common.displayError(err);
 			that._content.appendChild(set_error_status(null, err.message));
 		}).finally(function() {
 			that._content.querySelector(".wait-message").remove();

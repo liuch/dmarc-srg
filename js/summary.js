@@ -142,14 +142,12 @@ class Summary {
 			}
 			return resp.json();
 		}).then(function(report) {
-			if (report.error_code !== undefined && report.error_code !== 0) {
-				throw new Error(report.message || "Unknown error");
-			}
+			Common.checkResult(report);
 			report.domain = domain;
 			this._report = new SummaryReport(report);
 			this._display_report();
 		}.bind(this)).catch(function(err) {
-			console.warn(err.message);
+			Common.displayError(err);
 			set_error_status(this._report_block, 'Error: ' + err.message);
 		}.bind(this)).finally(function() {
 			let wm = this._report_block.querySelector(".wait-message");
@@ -335,14 +333,12 @@ class OptionsDialog extends ModalDialog {
 			}
 			return resp.json();
 		}).then(function(data) {
-			if (data.error_code !== undefined && data.error_code !== 0) {
-				throw new Error(data.message || "Unknown error");
-			}
+			Common.checkResult(data);
 			this._domains = data.domains;
 			this._update_domain_element();
 			this._enable_ui(true);
 		}.bind(this)).catch(function(err) {
-			console.warn(err.message);
+			Common.displayError(err);
 			this._content.appendChild(set_error_status());
 		}.bind(this)).finally(function() {
 			this._content.querySelector(".wait-message").remove();

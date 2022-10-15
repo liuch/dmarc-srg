@@ -31,7 +31,7 @@
 
 namespace Liuch\DmarcSrg;
 
-use Exception;
+use Liuch\DmarcSrg\Exception\AuthException;
 
 /**
  * Class for working with authentication data.
@@ -59,8 +59,8 @@ class Auth
      * This method throws an exception if the passed password is wrong.
      * The password with an empty string is always wrong!
      *
-     * @param string $username - Must be an empty string, is currently not used.
-     * @param string $password - Must not be empty string.
+     * @param string $username - Must be an empty string, it is currently not used.
+     * @param string $password - Must not be an empty string.
      *
      * @return array Array with `error_code` and `message` fields.
      */
@@ -68,7 +68,7 @@ class Auth
     {
         global $admin;
         if ($username !== '' || $admin['password'] === '' || !$this->isAdminPassword($password)) {
-            throw new Exception('Authentication failed. Try again', -1);
+            throw new AuthException('Authentication failed. Try again');
         }
         Core::userId(0);
         return [
@@ -103,7 +103,7 @@ class Auth
         if ($this->isEnabled()) {
             $user_id = Core::userId();
             if ($user_id === false) {
-                throw new Exception('Authentication needed', -2);
+                throw new AuthException('Authentication needed', -2);
             }
         }
     }
@@ -120,7 +120,7 @@ class Auth
     public function checkAdminPassword(string $password): void
     {
         if (!$this->isAdminPassword($password)) {
-            throw new Exception('Incorrect password', -1);
+            throw new AuthException('Incorrect password');
         }
     }
 
@@ -137,4 +137,3 @@ class Auth
         return $password === $admin['password'];
     }
 }
-

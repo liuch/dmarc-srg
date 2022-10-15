@@ -33,6 +33,7 @@ namespace Liuch\DmarcSrg;
 
 use Liuch\DmarcSrg\DateTime;
 use Liuch\DmarcSrg\Database\Database;
+use Liuch\DmarcSrg\Exception\DatabaseException;
 
 /**
  * This class is designed to get statistics on DMARC reports of a specified period
@@ -136,33 +137,38 @@ class Statistics
      */
     public function summary(): array
     {
-        $st = Database::connection()->prepare(
-            'SELECT SUM(`rcount`), SUM(IF(`dkim_align` = 2 AND `spf_align` = 2, `rcount`, 0)),'
-            . ' SUM(IF(`dkim_align` = 2 AND `spf_align` <> 2, `rcount`, 0)),'
-            . ' SUM(IF(`dkim_align` <> 2 AND `spf_align` = 2, `rcount`, 0))'
-            . ' FROM `' . Database::tablePrefix('rptrecords') . '` AS `rr`'
-            . ' INNER JOIN `' . Database::tablePrefix('reports') . '` AS `rp` ON `rr`.`report_id` = `rp`.`id`'
-            . ' WHERE ' . $this->sqlCondition()
-        );
-        $this->sqlBindValues($st);
-        $st->execute();
-        $row = $st->fetch(\PDO::FETCH_NUM);
-        $ems = [
-            'total' => intval($row[0]),
-            'dkim_spf_aligned' => intval($row[1]),
-            'dkim_aligned' => intval($row[2]),
-            'spf_aligned' => intval($row[3])
-        ];
-        $st->closeCursor();
+        $st = null;
+        try {
+            $st = Database::connection()->prepare(
+                'SELECT SUM(`rcount`), SUM(IF(`dkim_align` = 2 AND `spf_align` = 2, `rcount`, 0)),'
+                . ' SUM(IF(`dkim_align` = 2 AND `spf_align` <> 2, `rcount`, 0)),'
+                . ' SUM(IF(`dkim_align` <> 2 AND `spf_align` = 2, `rcount`, 0))'
+                . ' FROM `' . Database::tablePrefix('rptrecords') . '` AS `rr`'
+                . ' INNER JOIN `' . Database::tablePrefix('reports') . '` AS `rp` ON `rr`.`report_id` = `rp`.`id`'
+                . ' WHERE ' . $this->sqlCondition()
+            );
+            $this->sqlBindValues($st);
+            $st->execute();
+            $row = $st->fetch(\PDO::FETCH_NUM);
+            $ems = [
+                'total' => intval($row[0]),
+                'dkim_spf_aligned' => intval($row[1]),
+                'dkim_aligned' => intval($row[2]),
+                'spf_aligned' => intval($row[3])
+            ];
+            $st->closeCursor();
 
-        $st = Database::connection()->prepare(
-            'SELECT COUNT(*) FROM (SELECT `org` FROM `' . Database::tablePrefix('reports') . '` WHERE '
-            . $this->sqlCondition() . ' GROUP BY `org`) AS `orgs`'
-        );
-        $this->sqlBindValues($st);
-        $st->execute();
-        $row = $st->fetch(\PDO::FETCH_NUM);
-        $st->closeCursor();
+            $st = Database::connection()->prepare(
+                'SELECT COUNT(*) FROM (SELECT `org` FROM `' . Database::tablePrefix('reports') . '` WHERE '
+                . $this->sqlCondition() . ' GROUP BY `org`) AS `orgs`'
+            );
+            $this->sqlBindValues($st);
+            $st->execute();
+            $row = $st->fetch(\PDO::FETCH_NUM);
+            $st->closeCursor();
+        } catch (\PDOException $e) {
+            throw new DatabaseException('Failed to get emails summary information', -1, $e);
+        }
 
         return [
             'emails' => $ems,
@@ -178,25 +184,29 @@ class Statistics
      */
     public function ips(): array
     {
-        $st = Database::connection()->prepare(
-            'SELECT `ip`, SUM(`rcount`) AS `rcount`, SUM(IF(`dkim_align` = 2, `rcount`, 0)) AS `dkim_aligned`,'
-            . ' SUM(IF(`spf_align` = 2, `rcount`, 0)) AS `spf_aligned`'
-            . ' FROM `' . Database::tablePrefix('rptrecords') . '` AS `rr`'
-            . ' INNER JOIN `' . Database::tablePrefix('reports') . '` AS `rp` ON `rr`.`report_id` = `rp`.`id`'
-            . ' WHERE ' . $this->sqlCondition() . ' GROUP BY `ip` ORDER BY `rcount` DESC'
-        );
-        $this->sqlBindValues($st);
-        $st->execute();
-        $res = [];
-        while ($row = $st->fetch(\PDO::FETCH_NUM)) {
-            $res[] = [
-                'ip' => inet_ntop($row[0]),
-                'emails' => intval($row[1]),
-                'dkim_aligned' => intval($row[2]),
-                'spf_aligned' => intval($row[3])
-            ];
+        try {
+            $st = Database::connection()->prepare(
+                'SELECT `ip`, SUM(`rcount`) AS `rcount`, SUM(IF(`dkim_align` = 2, `rcount`, 0)) AS `dkim_aligned`,'
+                . ' SUM(IF(`spf_align` = 2, `rcount`, 0)) AS `spf_aligned`'
+                . ' FROM `' . Database::tablePrefix('rptrecords') . '` AS `rr`'
+                . ' INNER JOIN `' . Database::tablePrefix('reports') . '` AS `rp` ON `rr`.`report_id` = `rp`.`id`'
+                . ' WHERE ' . $this->sqlCondition() . ' GROUP BY `ip` ORDER BY `rcount` DESC'
+            );
+            $this->sqlBindValues($st);
+            $st->execute();
+            $res = [];
+            while ($row = $st->fetch(\PDO::FETCH_NUM)) {
+                $res[] = [
+                    'ip' => inet_ntop($row[0]),
+                    'emails' => intval($row[1]),
+                    'dkim_aligned' => intval($row[2]),
+                    'spf_aligned' => intval($row[3])
+                ];
+            }
+            $st->closeCursor();
+        } catch (\PDOException $e) {
+            throw new DatabaseException('Failed to get IPs summary information', -1, $e);
         }
-        $st->closeCursor();
         return $res;
     }
 
@@ -208,24 +218,30 @@ class Statistics
      */
     public function organizations(): array
     {
-        $st = Database::connection()->prepare(
-            'SELECT `org`, COUNT(*), SUM(`rr`.`rcount`) AS `rcount`'
-            . ' FROM `' . Database::tablePrefix('reports') . '` AS `rp`'
-            . ' INNER JOIN (SELECT `report_id`, SUM(`rcount`) AS `rcount` FROM `' . Database::tablePrefix('rptrecords')
-            . '` GROUP BY `report_id`) AS `rr` ON `rp`.`id` = `rr`.`report_id` WHERE ' . $this->sqlCondition()
-            . ' GROUP BY `org` ORDER BY `rcount` DESC'
-        );
-        $this->sqlBindValues($st);
-        $st->execute();
-        $res = [];
-        while ($row = $st->fetch(\PDO::FETCH_NUM)) {
-            $res[] = [
-                'name' => $row[0],
-                'reports' => intval($row[1]),
-                'emails' => intval($row[2])
-            ];
+        try {
+            $st = Database::connection()->prepare(
+                'SELECT `org`, COUNT(*), SUM(`rr`.`rcount`) AS `rcount`'
+                . ' FROM `' . Database::tablePrefix('reports') . '` AS `rp`'
+                . ' INNER JOIN (SELECT `report_id`, SUM(`rcount`) AS `rcount` FROM `'
+                . Database::tablePrefix('rptrecords')
+                . '` GROUP BY `report_id`) AS `rr` ON `rp`.`id` = `rr`.`report_id` WHERE '
+                . $this->sqlCondition()
+                . ' GROUP BY `org` ORDER BY `rcount` DESC'
+            );
+            $this->sqlBindValues($st);
+            $st->execute();
+            $res = [];
+            while ($row = $st->fetch(\PDO::FETCH_NUM)) {
+                $res[] = [
+                    'name' => $row[0],
+                    'reports' => intval($row[1]),
+                    'emails' => intval($row[2])
+                ];
+            }
+            $st->closeCursor();
+        } catch (\PDOException $e) {
+            throw new DatabaseException('Failed to get summary information about organizations', -1, $e);
         }
-        $st->closeCursor();
         return $res;
     }
 

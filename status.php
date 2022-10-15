@@ -22,7 +22,9 @@
 
 namespace Liuch\DmarcSrg;
 
+use Liuch\DmarcSrg\ErrorHandler;
 use Liuch\DmarcSrg\Settings\SettingsList;
+use Liuch\DmarcSrg\Exception\RuntimeException;
 
 require 'init.php';
 
@@ -32,7 +34,6 @@ if (Core::isJson()) {
             Core::auth()->isAllowed();
 
             $result = Core::status()->get();
-
             if (!($result['error_code'] ?? 0)) {
                 $settings_query = $_GET['settings'] ?? '';
                 if (!empty($settings_query)) {
@@ -44,10 +45,9 @@ if (Core::isJson()) {
                     $result['settings'] = $settings;
                 }
             }
-
             Core::sendJson($result);
-        } catch (\Exception $e) {
-            $r = [ 'error_code' => $e->getCode(), 'message' => $e->getMessage() ];
+        } catch (RuntimeException $e) {
+            $r = ErrorHandler::exceptionResult($e);
             if ($e->getCode() == -2) {
                 $r['authenticated'] = 'no';
             }

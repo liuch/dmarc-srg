@@ -58,10 +58,16 @@ class Status
             if (isset($adm_res['message'])) {
                 $res['message'] = $adm_res['message'];
             }
+            if (isset($adm_res['debug_info'])) {
+                $res['debug_info'] = $adm_res['debug_info'];
+            }
         } elseif (isset($adm_res['database']['error_code'])) {
             $res['error_code'] = $adm_res['database']['error_code'];
             if (isset($adm_res['database']['message'])) {
                 $res['message'] = $adm_res['database']['message'];
+            }
+            if (isset($adm_res['database']['debug_info'])) {
+                $res['debug_info'] = $adm_res['database']['debug_info'];
             }
         } elseif (isset($adm_res['message'])) {
             $res['message'] = $adm_res['message'];

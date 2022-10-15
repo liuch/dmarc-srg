@@ -36,8 +36,8 @@
 
 namespace Liuch\DmarcSrg;
 
-use Exception;
 use Liuch\DmarcSrg\Mail\MailBoxes;
+use Liuch\DmarcSrg\Exception\RuntimeException;
 
 require 'init.php';
 
@@ -120,8 +120,8 @@ try {
             }
         }
     }
-} catch (Exception $e) {
-    echo $e->getMessage() . ' (' . $e->getCode() . ')';
+} catch (RuntimeException $e) {
+    echo ErrorHandler::exceptionText($e);
     exit(1);
 }
 

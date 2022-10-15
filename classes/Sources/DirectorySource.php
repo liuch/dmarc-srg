@@ -32,6 +32,8 @@
 namespace Liuch\DmarcSrg\Sources;
 
 use Liuch\DmarcSrg\ReportFile\ReportFile;
+use Liuch\DmarcSrg\Exception\SoftException;
+use Liuch\DmarcSrg\Exception\RuntimeException;
 
 /**
  * This class is designed to process report files from local server directories.
@@ -81,12 +83,12 @@ class DirectorySource extends Source
         if (is_null($this->list)) {
             $this->path = $this->data->toArray()['location'];
             if (!is_dir($this->path)) {
-                throw new \Exception("The {$this->path} directory does not exist!", -1);
+                throw new SoftException("The {$this->path} directory does not exist!");
             }
             try {
                 $fs = new \FilesystemIterator($this->path);
             } catch (\Exception $e) {
-                throw new \Exception('Error accessing directory ' . $this->path, -1, $e);
+                throw new RuntimeException("Error accessing directory {$this->path}", -1, $e);
             }
             $this->list = [];
             foreach ($fs as $entry) {
@@ -115,8 +117,10 @@ class DirectorySource extends Source
      */
     public function accepted(): void
     {
-        if (!@unlink($this->list[$this->index])) {
-            throw new \Exception('Error deleting file from directory ' . $this->path, -1);
+        try {
+            unlink($this->list[$this->index]);
+        } catch (\ErrorException $e) {
+            throw new RuntimeException("Error deleting file from directory {$this->path}", -1, $e);
         }
     }
 
@@ -129,14 +133,21 @@ class DirectorySource extends Source
     {
         $fdir = $this->path . 'failed';
         if (!is_dir($fdir)) {
-            if (!@mkdir($fdir)) {
-                throw new \Exception('Error creating directory ' . $fdir . '/', -1);
+            try {
+                mkdir($fdir);
+            } catch (\ErrorException $e) {
+                throw new RuntimeException("Error creating directory {$fdir}/", -1, $e);
             }
-            chmod($fdir, 0700);
+            try {
+                chmod($fdir, 0700);
+            } catch (\ErrorException $e) {
+            }
         }
         $file = $this->list[$this->index];
-        if (!@rename($file, $fdir . '/' . basename($file))) {
-            throw new \Exception('Error moving file to directory ' . $fdir . '/');
+        try {
+            rename($file, $fdir . '/' . basename($file));
+        } catch (\ErrorException $e) {
+            throw new RuntimeException("Error moving file to directory {$fdir}/", -1, $e);
         }
     }
 

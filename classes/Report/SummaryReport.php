@@ -32,6 +32,7 @@
 namespace Liuch\DmarcSrg\Report;
 
 use Liuch\DmarcSrg\Statistics;
+use Liuch\DmarcSrg\Exception\SoftException;
 
 /**
  * This class is for generating summary data for the specified period and domain
@@ -53,7 +54,7 @@ class SummaryReport
     public function __construct($domain, string $period)
     {
         if (!$domain->exists()) {
-            throw new \Exception('Domain "' . $domain->fqdn() . '" does not exist', -1);
+            throw new SoftException("Domain \"{$domain->fqdn()}\" does not exist");
         }
 
         $stat = null;
@@ -72,7 +73,7 @@ class SummaryReport
                 if (count($av) === 2 && $av[0] === 'lastndays') {
                     $ndays = intval($av[1]);
                     if ($ndays <= 0) {
-                        throw new \Exception('The parameter "days" has an incorrect value', -1);
+                        throw new SoftException('The parameter "days" has an incorrect value');
                     }
                     $stat = Statistics::lastNDays($domain, $ndays);
                     $subject = sprintf(' %d day%s', $ndays, ($ndays > 1 ? 's' : ''));
@@ -80,7 +81,7 @@ class SummaryReport
                 break;
         }
         if (!$stat) {
-            throw new \Exception('The parameter "period" has an incorrect value', -1);
+            throw new SoftException('The parameter "period" has an incorrect value');
         }
         $this->stat = $stat;
         $this->domain = $domain;

@@ -31,7 +31,7 @@
 
 namespace Liuch\DmarcSrg;
 
-use Exception;
+use Liuch\DmarcSrg\SoftException;
 
 /**
  * It's class for accessing to most methods for working with http, json data,
@@ -67,7 +67,7 @@ class Core
     }
 
     /**
-     * Sets of gets the current user's id
+     * Sets or gets the current user's id
      *
      * In case $id is null, the method returns the current user's id.
      * In case $id is integer value, the method sets this value as the current user's id.
@@ -158,16 +158,10 @@ class Core
      */
     public static function sendJson(array $data): void
     {
-        $res_str = null;
-        try {
-            $res_str = json_encode($data);
-            if ($res_str === false) {
-                throw new Exception('Incorrect data format', -1);
-            }
-        } catch (Exception $e) {
+        $res_str = json_encode($data);
+        if ($res_str === false) {
             $res_str = '[]';
         }
-
         header('content-type: application/json; charset=UTF-8');
         echo $res_str;
     }
@@ -278,7 +272,7 @@ class Core
             ]
         )
         ) {
-            throw new Exception('Failed to start a user session', -1);
+            throw new SoftException('Failed to start a user session');
         }
     }
 }

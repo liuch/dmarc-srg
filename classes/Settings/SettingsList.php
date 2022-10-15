@@ -31,9 +31,9 @@
 
 namespace Liuch\DmarcSrg\Settings;
 
-use PDO;
-use Exception;
 use Liuch\DmarcSrg\Database\Database;
+use Liuch\DmarcSrg\Exception\SoftException;
+use Liuch\DmarcSrg\Exception\DatabaseFatalException;
 
 /**
  * This class is designed to work with the list of the settings
@@ -58,43 +58,47 @@ class SettingsList
         $list = [];
         $fmap = [];
 
-        $st = Database::connection()->query(
-            'SELECT `key`, `value` FROM `' . Database::tablePrefix('system') . '` ORDER BY `key`'
-        );
-        while ($row = $st->fetch(PDO::FETCH_NUM)) {
-            $name = $row[0];
-            if (isset(static::$schema[$name])) {
-                $sch_data = &static::$schema[$name];
-                if (!empty($sch_data['public'])) {
-                    $value = $row[1];
-                    switch ($sch_data['type']) {
-                        case 'select':
-                            $list[] = new SettingStringSelect([
-                                'name'  => $name,
-                                'value' => $value
-                            ], true);
-                            $fmap[$name] = true;
-                            break;
-                        case 'integer':
-                            $list[] = new SettingInteger([
-                                'name'  => $name,
-                                'value' => intval($value)
-                            ], true);
-                            $fmap[$name] = true;
-                            break;
-                        case 'string':
-                            $list[] = new SettingString([
-                                'name'  => $name,
-                                'value' => $value
-                            ], true);
-                            $fmap[$name] = true;
-                            break;
+        try {
+            $st = Database::connection()->query(
+                'SELECT `key`, `value` FROM `' . Database::tablePrefix('system') . '` ORDER BY `key`'
+            );
+            while ($row = $st->fetch(\PDO::FETCH_NUM)) {
+                $name = $row[0];
+                if (isset(static::$schema[$name])) {
+                    $sch_data = &static::$schema[$name];
+                    if (!empty($sch_data['public'])) {
+                        $value = $row[1];
+                        switch ($sch_data['type']) {
+                            case 'select':
+                                $list[] = new SettingStringSelect([
+                                    'name'  => $name,
+                                    'value' => $value
+                                ], true);
+                                $fmap[$name] = true;
+                                break;
+                            case 'integer':
+                                $list[] = new SettingInteger([
+                                    'name'  => $name,
+                                    'value' => intval($value)
+                                ], true);
+                                $fmap[$name] = true;
+                                break;
+                            case 'string':
+                                $list[] = new SettingString([
+                                    'name'  => $name,
+                                    'value' => $value
+                                ], true);
+                                $fmap[$name] = true;
+                                break;
+                        }
                     }
                 }
             }
+            $st->closeCursor();
+            unset($sch_data);
+        } catch (\PDOException $e) {
+            throw new DatabaseFatalException('Failed to get a list of the settings', -1, $e);
         }
-        $st->closeCursor();
-        unset($sch_data);
 
         foreach (static::$schema as $sch_name => &$sch_data) {
             if (!isset($fmap[$sch_name]) && !empty($sch_data['public'])) {
@@ -165,7 +169,7 @@ class SettingsList
     public static function checkName($name): void
     {
         if (!isset(self::$schema[$name])) {
-            throw new Exception('Unknown setting name: ' . $name, -1);
+            throw new SoftException('Unknown setting name: ' . $name);
         }
     }
 
@@ -182,7 +186,7 @@ class SettingsList
     {
         self::checkName($name);
         if (empty(self::$schema[$name]['public'])) {
-            throw new Exception('Attempt to access an internal variable', -1);
+            throw new SoftException('Attempt to access an internal variable');
         }
 
         switch (self::$schema[$name]['type']) {

@@ -25,6 +25,9 @@ namespace Liuch\DmarcSrg\ReportLog;
 use Liuch\DmarcSrg\DateTime;
 use Liuch\DmarcSrg\Sources\Source;
 use Liuch\DmarcSrg\Database\Database;
+use Liuch\DmarcSrg\Exception\LogicException;
+use Liuch\DmarcSrg\Exception\SoftException;
+use Liuch\DmarcSrg\Exception\DatabaseFatalException;
 
 class ReportLogItem
 {
@@ -41,7 +44,7 @@ class ReportLogItem
     {
         if (!is_null($source)) {
             if (gettype($source) !== 'integer' || $source <= 0) {
-                throw new \Exception('Invalid parameter passed', -1);
+                throw new LogicException('Invalid parameter passed');
             }
         }
         $this->source = $source;
@@ -88,24 +91,28 @@ class ReportLogItem
         $li->id = $id;
 
         $db = Database::connection();
-        $st = $db->prepare(
-            'SELECT `domain`, `external_id`, `event_time`, `filename`, `source`, `success`, `message` FROM `'
-            . Database::tablePrefix('reportlog') . '` WHERE `id` = ?'
-        );
-        $st->bindValue(1, $id, \PDO::PARAM_INT);
-        $st->execute();
-        $row = $st->fetch(\PDO::FETCH_NUM);
-        if (!$row) {
-            throw new \Exception('The log item is not found', -1);
+        try {
+            $st = $db->prepare(
+                'SELECT `domain`, `external_id`, `event_time`, `filename`, `source`, `success`, `message` FROM `'
+                . Database::tablePrefix('reportlog') . '` WHERE `id` = ?'
+            );
+            $st->bindValue(1, $id, \PDO::PARAM_INT);
+            $st->execute();
+            $row = $st->fetch(\PDO::FETCH_NUM);
+            if (!$row) {
+                throw new SoftException('The log item is not found');
+            }
+            $li->domain      = $row[0];
+            $li->external_id = $row[1];
+            $li->event_time  = new DateTime($row[2]);
+            $li->filename    = $row[3];
+            $li->source      = intval($row[4]);
+            $li->success     = boolval($row[5]);
+            $li->message     = $row[6];
+            $st->closeCursor();
+        } catch (\PDOException $e) {
+            throw new DatabaseFatalException("Failed to get the log item", -1, $e);
         }
-        $li->domain      = $row[0];
-        $li->external_id = $row[1];
-        $li->event_time  = new DateTime($row[2]);
-        $li->filename    = $row[3];
-        $li->source      = intval($row[4]);
-        $li->success     = boolval($row[5]);
-        $li->message     = $row[6];
-        $st->closeCursor();
         return $li;
     }
 
@@ -153,37 +160,40 @@ class ReportLogItem
     public function save()
     {
         $db = Database::connection();
-        $st = null;
-        if (is_null($this->id)) {
-            $st = $db->prepare(
-                'INSERT INTO `' . Database::tablePrefix('reportlog')
-                . '` (`domain`, `external_id`, `event_time`, `filename`, `source`, `success`, `message`)'
-                . ' VALUES (?, ?, ?, ?, ?, ?, ?)'
-            );
-        } else {
-            $st = $db->prepare(
-                'UPDATE `' . Database::tablePrefix('reportlog')
-                . '` SET `domain` = ?, `external_id` = ?, `event_time` = ?, `filename` = ?,'
-                . ' `source` = ?, `success` = ?, `message` = ? WHERE `id` = ?'
-            );
-            $st->bindValue(8, $this->id, \PDO::PARAM_INT);
+        try {
+            if (is_null($this->id)) {
+                $st = $db->prepare(
+                    'INSERT INTO `' . Database::tablePrefix('reportlog')
+                    . '` (`domain`, `external_id`, `event_time`, `filename`, `source`, `success`, `message`)'
+                    . ' VALUES (?, ?, ?, ?, ?, ?, ?)'
+                );
+            } else {
+                $st = $db->prepare(
+                    'UPDATE `' . Database::tablePrefix('reportlog')
+                    . '` SET `domain` = ?, `external_id` = ?, `event_time` = ?, `filename` = ?,'
+                    . ' `source` = ?, `success` = ?, `message` = ? WHERE `id` = ?'
+                );
+                $st->bindValue(8, $this->id, \PDO::PARAM_INT);
+            }
+            $ts = $this->event_time;
+            if (!$ts) {
+                $ts = new DateTime();
+            }
+            $st->bindValue(1, $this->domain, \PDO::PARAM_STR);
+            $st->bindValue(2, $this->external_id, \PDO::PARAM_STR);
+            $st->bindValue(3, $ts->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
+            $st->bindValue(4, $this->filename, \PDO::PARAM_STR);
+            $st->bindValue(5, $this->source, \PDO::PARAM_INT);
+            $st->bindValue(6, $this->success, \PDO::PARAM_BOOL);
+            $st->bindValue(7, $this->message, \PDO::PARAM_STR);
+            $st->execute();
+            if (is_null($this->id)) {
+                $this->id = intval($db->lastInsertId());
+            }
+            $st->closeCursor();
+        } catch (\PDOException $e) {
+            throw new DatabaseFatalException('Failed to save a report log item');
         }
-        $ts = $this->event_time;
-        if (!$ts) {
-            $ts = new DateTime();
-        }
-        $st->bindValue(1, $this->domain, \PDO::PARAM_STR);
-        $st->bindValue(2, $this->external_id, \PDO::PARAM_STR);
-        $st->bindValue(3, $ts->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
-        $st->bindValue(4, $this->filename, \PDO::PARAM_STR);
-        $st->bindValue(5, $this->source, \PDO::PARAM_INT);
-        $st->bindValue(6, $this->success, \PDO::PARAM_BOOL);
-        $st->bindValue(7, $this->message, \PDO::PARAM_STR);
-        $st->execute();
-        if (is_null($this->id)) {
-            $this->id = intval($db->lastInsertId());
-        }
-        $st->closeCursor();
         $this->event_time = $ts;
     }
 }

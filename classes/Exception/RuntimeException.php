@@ -2,7 +2,7 @@
 
 /**
  * dmarc-srg - A php parser, viewer and summary report generator for incoming DMARC reports.
- * Copyright (C) 2020 Aleksey Andreev (liuch)
+ * Copyright (C) 2022 Aleksey Andreev (liuch)
  *
  * Available at:
  * https://github.com/liuch/dmarc-srg
@@ -18,11 +18,26 @@
  *
  * You should have received a copy of the GNU General Public License along with
  * this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * =========================
+ *
+ * This file contains RuntimeException class
+ *
+ * @category Common
+ * @package  DmarcSrg
+ * @author   Aleksey Andreev (liuch)
+ * @license  https://www.gnu.org/licenses/gpl-3.0.html GNU/GPLv3
  */
 
-if (isset($debug) && $debug === 1) {
-    ini_set('error_reporting', E_ALL);
-    ini_set('display_errors', 1);
-    ini_set('display_startup_errors', 1);
-}
+namespace Liuch\DmarcSrg\Exception;
 
+/**
+ * Base RuntimeException
+ */
+class RuntimeException extends \RuntimeException
+{
+    public function __construct(string $message = "", int $code = -1, \Throwable $previous = null)
+    {
+        parent::__construct($message, $code, $previous);
+    }
+}

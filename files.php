@@ -22,10 +22,12 @@
 
 namespace Liuch\DmarcSrg;
 
+use Liuch\DmarcSrg\ErrorHandler;
 use Liuch\DmarcSrg\Report\ReportFetcher;
 use Liuch\DmarcSrg\Sources\DirectorySource;
 use Liuch\DmarcSrg\Sources\UploadedFilesSource;
 use Liuch\DmarcSrg\Directories\DirectoryList;
+use Liuch\DmarcSrg\Exception\RuntimeException;
 
 require 'init.php';
 
@@ -37,6 +39,7 @@ if (Core::method() == 'GET') {
 
     try {
         Core::auth()->isAllowed();
+
         $res = [];
         $up_max = ini_get('max_file_uploads');
         if ($up_max) {
@@ -66,7 +69,7 @@ if (Core::method() == 'GET') {
             $da = $dir->toArray();
             try {
                 $files = $dir->count();
-            } catch (\Exception $e) {
+            } catch (RuntimeException $e) {
                 $files = -1;
             }
             $da['files'] = $files;
@@ -74,13 +77,8 @@ if (Core::method() == 'GET') {
         }
         $res['directories'] = $dirs;
         Core::sendJson($res);
-    } catch (\Exception $e) {
-        Core::sendJson(
-            [
-                'error_code' => $e->getCode(),
-                'message'    => $e->getMessage()
-            ]
-        );
+    } catch (RuntimeException $e) {
+        Core::sendJson(ErrorHandler::exceptionResult($e));
     }
     return;
 }
@@ -88,22 +86,12 @@ if (Core::method() == 'GET') {
 if (Core::method() == 'POST') {
     try {
         Core::auth()->isAllowed();
-    } catch (\Exception $e) {
-        Core::sendJson(
-            [
-                'error_code' => $e->getCode(),
-                'message'    => $e->getMessage()
-            ]
-        );
-        return;
-    }
 
-    $data = Core::getJsonData();
-    if ($data) {
-        if (isset($data['cmd'])) {
-            if ($data['cmd'] === 'load-directory') {
-                if (isset($data['ids']) && gettype($data['ids']) === 'array' && count($data['ids']) > 0) {
-                    try {
+        $data = Core::getJsonData();
+        if ($data) {
+            if (isset($data['cmd'])) {
+                if ($data['cmd'] === 'load-directory') {
+                    if (isset($data['ids']) && gettype($data['ids']) === 'array' && count($data['ids']) > 0) {
                         $done = [];
                         $dirs = [];
                         $list = new DirectoryList();
@@ -126,36 +114,17 @@ if (Core::method() == 'POST') {
                             Core::sendJson(ReportFetcher::makeSummaryResult($results));
                             return;
                         }
-                    } catch (\Exception $e) {
-                        $err_code = $e->getCode();
-                        if ($err_code === 0) {
-                            $err_code = -1;
-                        }
-                        Core::sendJson([
-                            'error_code' => $err_code,
-                            'message'    => $e->getMessage()
-                        ]);
-                        return;
                     }
                 }
             }
-        }
-    } elseif (isset($_FILES['report_file']) && isset($_POST['cmd']) && $_POST['cmd'] === 'upload-report') {
-        try {
+        } elseif (isset($_FILES['report_file']) && isset($_POST['cmd']) && $_POST['cmd'] === 'upload-report') {
             $results = (new ReportFetcher(new UploadedFilesSource($_FILES['report_file'])))->fetch();
             Core::sendJson(ReportFetcher::makeSummaryResult($results));
             return;
-        } catch (\Exception $e) {
-            $err_code = $e->getCode();
-            if ($err_code === 0) {
-                $err_code = -1;
-            }
-            Core::sendJson([
-                'error_code' => $err_code,
-                'message'    => $e->getMessage()
-            ]);
-            return;
         }
+    } catch (RuntimeException $e) {
+        Core::sendJson(ErrorHandler::exceptionResult($e));
+        return;
     }
 }
 

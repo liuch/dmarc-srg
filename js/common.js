@@ -143,6 +143,20 @@ class Common {
 		}
 		return tn;
 	}
+
+	static checkResult(data) {
+		if (data.error_code !== undefined && data.error_code !== 0) {
+			throw data;
+		}
+	}
+
+	static displayError(obj) {
+		console.warn(obj.message || "Unknown error");
+		if (!(obj instanceof Error) && obj.debug_info) {
+			console.warn('Error code: ' + obj.debug_info.code);
+			console.warn('Error content: ' + obj.debug_info.content);
+		}
+	}
 }
 
 Common.tuneDateTimeOutput("auto");

@@ -22,7 +22,8 @@
 
 namespace Liuch\DmarcSrg\Mail;
 
-use Exception;
+use Liuch\DmarcSrg\Exception\SoftException;
+use Liuch\DmarcSrg\Exception\MailboxException;
 
 class MailMessage
 {
@@ -51,7 +52,7 @@ class MailMessage
     public function setSeen()
     {
         if (!@imap_setflag_full($this->conn, strval($this->number), '\\Seen')) {
-            throw new Exception('Failed to make a message seen: ' . imap_last_error(), -1);
+            throw new MailboxException('Failed to make a message seen: ' . imap_last_error());
         }
     }
 
@@ -59,17 +60,17 @@ class MailMessage
     {
         $this->ensureAttachment();
         if ($this->attachments_cnt !== 1) {
-            throw new Exception('Attachment count is not valid (' . $this->attachments_cnt . ')');
+            throw new SoftException("Attachment count is not valid ({$this->attachments_cnt})");
         }
 
         $bytes = $this->attachment->size();
         if ($bytes < 50 || $bytes > 1 * 1024 * 1024) {
-            throw new Exception('Attachment filesize is not valid (' . $bytes . ' bytes)');
+            throw new SoftException("Attachment file size is not valid ({$bytes} bytes)");
         }
 
         $mime_type = $this->attachment->mimeType();
         if (!in_array($mime_type, ['application/zip', 'application/gzip', 'text/xml'])) {
-            throw new Exception('Attachment file type is not valid (' . $mime_type . ')');
+            throw new SoftException("Attachment file type is not valid ({$mime_type})");
         }
     }
 
@@ -83,7 +84,7 @@ class MailMessage
         if ($this->attachments_cnt === -1) {
             $structure = imap_fetchstructure($this->conn, $this->number);
             if ($structure === false) {
-                throw new Exception('FetchStructure failed: ' . imap_last_error(), -1);
+                throw new MailboxException('FetchStructure failed: ' . imap_last_error());
             }
             $this->attachments_cnt = 0;
             $parts = isset($structure->parts) ? $structure->parts : [ $structure ];

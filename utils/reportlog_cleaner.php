@@ -34,8 +34,8 @@
 
 namespace Liuch\DmarcSrg;
 
-use Liuch\DmarcSrg\DateTime;
 use Liuch\DmarcSrg\ReportLog\ReportLog;
+use Liuch\DmarcSrg\Exception\RuntimeException;
 
 require 'init.php';
 
@@ -77,8 +77,8 @@ try {
         }
         $log->delete();
     }
-} catch (\Exception $e) {
-    echo $e->getMessage() . ' (' . $e->getCode() . ')';
+} catch (RuntimeException $e) {
+    echo ErrorHandler::exceptionText($e);
     exit(1);
 }
 

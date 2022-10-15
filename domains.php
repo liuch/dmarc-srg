@@ -50,14 +50,18 @@
 
 namespace Liuch\DmarcSrg;
 
+use Liuch\DmarcSrg\ErrorHandler;
 use Liuch\DmarcSrg\Domains\Domain;
 use Liuch\DmarcSrg\Domains\DomainList;
+use Liuch\DmarcSrg\Exception\SoftException;
+use Liuch\DmarcSrg\Exception\RuntimeException;
 
 require 'init.php';
 
 if (Core::isJson()) {
     try {
         Core::auth()->isAllowed();
+
         if (Core::method() == 'GET') {
             if (isset($_GET['domain'])) {
                 Core::sendJson((new Domain($_GET['domain']))->toArray());
@@ -86,13 +90,13 @@ if (Core::isJson()) {
                 switch ($action) {
                     case 'add':
                         if ($domain->exists()) {
-                            throw new \Exception('The domain already exists', -1);
+                            throw new SoftException('The domain already exists');
                         }
                         $domain->save();
                         break;
                     case 'update':
                         if (!$domain->exists()) {
-                            throw new \Exception('The domain does not exist', -1);
+                            throw new SoftException('The domain does not exist');
                         }
                         $domain->save();
                         break;
@@ -101,7 +105,7 @@ if (Core::isJson()) {
                         unset($domain);
                         break;
                     default:
-                        throw new \Exception('Unknown action. Valid values are "add", "update", "delete".', -1);
+                        throw new SoftException('Unknown action. Valid values are "add", "update", "delete".');
                 }
 
                 $res = [
@@ -115,13 +119,8 @@ if (Core::isJson()) {
                 return;
             }
         }
-    } catch (\Exception $e) {
-        Core::sendJson(
-            [
-                'error_code' => $e->getCode(),
-                'message'    => $e->getMessage()
-            ]
-        );
+    } catch (RuntimeException $e) {
+        Core::sendJson(ErrorHandler::exceptionResult($e));
         return;
     }
 } elseif (Core::method() == 'GET') {

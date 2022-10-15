@@ -22,6 +22,10 @@
 
 namespace Liuch\DmarcSrg\Mail;
 
+use Liuch\DmarcSrg\ErrorHandler;
+use Liuch\DmarcSrg\Exception\LogicException;
+use Liuch\DmarcSrg\Exception\MailboxException;
+
 class MailBox
 {
     private $conn;
@@ -37,7 +41,7 @@ class MailBox
     public function __construct($params)
     {
         if (!is_array($params)) {
-            throw new \Exception('Incorrect mailbox params', -1);
+            throw new LogicException('Incorrect mailbox params');
         }
 
         $this->conn = null;
@@ -87,6 +91,7 @@ class MailBox
                 @imap_close($this->conn);
             } catch (\Exception $e) {
                 $this->resetErrorStack();
+                throw $e;
             }
         }
     }
@@ -126,29 +131,25 @@ class MailBox
 
     public function check()
     {
-        $status = [];
         try {
             $this->ensureConnection();
             $res = @imap_status($this->conn, \imap_utf8_to_mutf7($this->server . $this->mbox), SA_MESSAGES | SA_UNSEEN);
             if ($res === false) {
                 $err_msg = imap_last_error();
                 $this->resetErrorStack();
-                throw new \Exception($err_msg, -1);
+                throw new MailboxException($err_msg);
             }
-            return [
-                'error_code' => 0,
-                'message'    => 'Successfully',
-                'status'     => [
-                    'messages' => $res->messages,
-                    'unseen'   => $res->unseen
-                ]
-            ];
-        } catch (\Exception $e) {
-            return [
-                'error_code' => $e->getCode(),
-                'message'    => $e->getMessage()
-            ];
+        } catch (MailboxException $e) {
+            return ErrorHandler::exceptionResult($e);
         }
+        return [
+            'error_code' => 0,
+            'message'    => 'Successfully',
+            'status'     => [
+                'messages' => $res->messages,
+                'unseen'   => $res->unseen
+            ]
+        ];
     }
 
     public function search($criteria)
@@ -161,7 +162,7 @@ class MailBox
                 return [];
             }
             $this->resetErrorStack();
-            throw new \Exception($err_msg, -1);
+            throw new MailboxException($err_msg);
         }
         return $res;
     }
@@ -176,7 +177,7 @@ class MailBox
                 return [];
             }
             $this->resetErrorStack();
-            throw new \Exception($err_msg, -1);
+            throw new MailboxException($err_msg);
         }
         return $res;
     }
@@ -197,7 +198,7 @@ class MailBox
             $new_mailbox = $srv . $mbo . $this->delim . $mbn;
             if (!@imap_createmailbox($this->conn, $new_mailbox)) {
                 $this->resetErrorStack();
-                throw new \Exception('Failed to create a new mailbox', -1);
+                throw new MailboxException('Failed to create a new mailbox');
             }
             @imap_subscribe($this->conn, $new_mailbox);
             $this->resetErrorStack();
@@ -211,7 +212,7 @@ class MailBox
         if (!@imap_mail_move($this->conn, strval($number), $target)) {
             $err_str = imap_last_error();
             $this->resetErrorStack();
-            throw new \Exception('Failed to move a message: ' . $err_str, -1);
+            throw new MailboxException("Failed to move a message: {$err_str}");
         }
         $this->expunge = true;
     }
@@ -249,7 +250,7 @@ class MailBox
                 @imap_close($this->conn);
             }
             $this->conn = null;
-            throw new \Exception($err_msg ? $err_msg : 'Cannot connect to the mail server', -1);
+            throw new MailboxException($err_msg ?? 'Cannot connect to the mail server');
         }
     }
 

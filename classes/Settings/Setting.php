@@ -31,9 +31,9 @@
 
 namespace Liuch\DmarcSrg\Settings;
 
-use PDO;
-use Exception;
 use Liuch\DmarcSrg\Database\Database;
+use Liuch\DmarcSrg\Exception\SoftException;
+use Liuch\DmarcSrg\Exception\DatabaseException;
 
 /**
  * It's a class for accessing to settings item data
@@ -123,7 +123,7 @@ abstract class Setting
                 }
                 return;
         }
-        throw new Exception('Wrong setting data', -1);
+        throw new SoftException('Wrong setting data');
     }
 
     /**
@@ -161,7 +161,7 @@ abstract class Setting
         $this->value = $value;
         if (!$this->checkValue()) {
             if (!$this->wignore) {
-                throw new Exception('Wrong setting value', -1);
+                throw new SoftException('Wrong setting value');
             }
             $this->resetToDefault();
         }
@@ -212,9 +212,9 @@ abstract class Setting
             $st = $db->prepare(
                 'SELECT COUNT(*) FROM `' . Database::tablePrefix('system') . '` WHERE `key` = ?'
             );
-            $st->bindValue(1, $this->name, PDO::PARAM_STR);
+            $st->bindValue(1, $this->name, \PDO::PARAM_STR);
             $st->execute();
-            $res = $st->fetch(PDO::FETCH_NUM);
+            $res = $st->fetch(\PDO::FETCH_NUM);
             $st->closeCursor();
             $st = null;
             if (intval($res[0]) == 0) {
@@ -228,18 +228,21 @@ abstract class Setting
             }
             switch ($this->type()) {
                 case self::TYPE_INTEGER:
-                    $st->bindValue(1, $this->value, PDO::PARAM_INT);
+                    $st->bindValue(1, $this->value, \PDO::PARAM_INT);
                     break;
                 default:
-                    $st->bindValue(1, $this->value, PDO::PARAM_STR);
+                    $st->bindValue(1, $this->value, \PDO::PARAM_STR);
                     break;
             }
-            $st->bindValue(2, $this->name, PDO::PARAM_STR);
+            $st->bindValue(2, $this->name, \PDO::PARAM_STR);
             $st->execute();
             $db->commit();
-        } catch (Exeption $e) {
+        } catch (\PDOException $e) {
             $db->rollBack();
-            throw new Exception('Failed to update a setting', -1);
+            throw new DatabaseException('Failed to update a setting', -1, $e);
+        } catch (\Exception $e) {
+            $db->rollBack();
+            throw $e;
         } finally {
             if ($st) {
                 $st->closeCursor();
@@ -257,9 +260,9 @@ abstract class Setting
         $st = Database::connection()->prepare(
             'SELECT `value` FROM `' . Database::tablePrefix('system') . '` WHERE `key` = ?'
         );
-        $st->bindValue(1, $this->name, PDO::PARAM_STR);
+        $st->bindValue(1, $this->name, \PDO::PARAM_STR);
         $st->execute();
-        $res = $st->fetch(PDO::FETCH_NUM);
+        $res = $st->fetch(\PDO::FETCH_NUM);
         if ($res) {
             $this->stringToValue($res[0]);
             $st->closeCursor();
@@ -272,7 +275,7 @@ abstract class Setting
     }
 
     /**
-     * Resets the setting value to the default value
+     * Resets the setting value to its default value
      *
      * @return void
      */

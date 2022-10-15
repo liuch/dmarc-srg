@@ -22,9 +22,10 @@
 
 namespace Liuch\DmarcSrg\Database;
 
-use PDO;
-use Exception;
 use Liuch\DmarcSrg\Settings\SettingString;
+use Liuch\DmarcSrg\Exception\SoftException;
+use Liuch\DmarcSrg\Exception\DatabaseException;
+use Liuch\DmarcSrg\Exception\DatabaseExceptionFactory;
 
 class DatabaseUpgrader
 {
@@ -37,7 +38,9 @@ class DatabaseUpgrader
 
         while ($ver !== Database::REQUIRED_VERSION) {
             if (!isset(self::$upways['ver_' . $ver])) {
-                throw new Exception('Upgrading failed: There is no way to upgrade from ' . $ver . ' to ' . Database::REQUIRED_VERSION, -1);
+                throw new SoftException(
+                    "Upgrading failed: There is no way to upgrade from {$ver} to " . Database::REQUIRED_VERSION
+                );
             }
             $um = self::$upways['ver_' . $ver];
             $ver = self::$um();
@@ -59,9 +62,9 @@ class DatabaseUpgrader
                 'INSERT INTO `' . Database::tablePrefix('system') . '` (`key`, `value`) VALUES ("version", "0.1")'
             );
             $db->commit();
-        } catch (Exception $e) {
+        } catch (\PDOException $e) {
             $db->rollBack();
-            throw $e;
+            throw DatabaseExceptionFactory::fromException($e);
         }
         return '0.1';
     }
@@ -84,9 +87,9 @@ class DatabaseUpgrader
             $db->query('UPDATE `' . $dom_tn . '` SET `active` = TRUE, `created_time` = NOW(), `updated_time` = NOW()');
             $db->query('UPDATE `' . Database::tablePrefix('system') . '` SET `value` = "1.0" WHERE `key` = "version"');
             $db->commit();
-        } catch (Exception $e) {
+        } catch (\PDOException $e) {
             $db->rollBack();
-            throw $e;
+            throw DatabaseExceptionFactory::fromException($e);
         }
         return '1.0';
     }
@@ -100,21 +103,23 @@ class DatabaseUpgrader
             $db->query('ALTER TABLE `' . $sys_tn . '` MODIFY COLUMN `key` varchar(64) NOT NULL');
             $db->query('UPDATE `' . $sys_tn . '` SET `value` = "2.0" WHERE `key` = "version"');
             $db->commit();
-        } catch (Exception $d) {
+        } catch (\PDOException $e) {
             $db->rollBack();
-            throw $e;
+            throw DatabaseExceptionFactory::fromException($e);
         }
         return '2.0';
     }
 
     private static function columnExists($db, $table, $column)
     {
-        $st = $db->prepare('SELECT NULL FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `table_schema` = ? AND `table_name` = ? AND `column_name` = ?');
-        $st->bindValue(1, Database::name(), PDO::PARAM_STR);
-        $st->bindValue(2, $table, PDO::PARAM_STR);
-        $st->bindValue(3, $column, PDO::PARAM_STR);
+        $st = $db->prepare(
+            'SELECT NULL FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `table_schema` = ? AND `table_name` = ? AND `column_name` = ?'
+        );
+        $st->bindValue(1, Database::name(), \PDO::PARAM_STR);
+        $st->bindValue(2, $table, \PDO::PARAM_STR);
+        $st->bindValue(3, $column, \PDO::PARAM_STR);
         $st->execute();
-        $res = $st->fetch(PDO::FETCH_NUM);
+        $res = $st->fetch(\PDO::FETCH_NUM);
         $st->closeCursor();
         return $res ? true : false;
     }

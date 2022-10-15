@@ -22,7 +22,12 @@
 
 namespace Liuch\DmarcSrg\Database;
 
+use Liuch\DmarcSrg\ErrorHandler;
 use Liuch\DmarcSrg\Settings\SettingString;
+use Liuch\DmarcSrg\Exception\SoftException;
+use Liuch\DmarcSrg\Exception\RuntimeException;
+use Liuch\DmarcSrg\Exception\DatabaseFatalException;
+use Liuch\DmarcSrg\Exception\DatabaseExceptionFactory;
 
 class Database
 {
@@ -171,9 +176,12 @@ class Database
             if ($ver) {
                 $res['version'] = $ver;
             }
-        } catch (\Exception $e) {
-            $res['error_code'] = $e->getCode();
-            $res['message'] = $e->getMessage();
+        } catch (\PDOException $e) {
+            $res = array_replace($res, ErrorHandler::exceptionResult(
+                new DatabaseFatalException('Failed to get the database information', -1, $e)
+            ));
+        } catch (RuntimeException $e) {
+            $res = array_replace($res, ErrorHandler::exceptionResult($e));
         }
         $res['type']     = self::type();
         $res['name']     = self::name();
@@ -198,9 +206,9 @@ class Database
             try {
                 if ($st->fetch()) {
                     if (empty(self::tablePrefix())) {
-                        throw new \Exception('The database is not empty', -4);
+                        throw new SoftException('The database is not empty', -4);
                     } else {
-                        throw new \Exception('Database tables already exist with the given prefix', -4);
+                        throw new SoftException('Database tables already exist with the given prefix', -4);
                     }
                 }
                 foreach (array_keys(self::$schema) as $table) {
@@ -215,11 +223,10 @@ class Database
             $st->bindValue(1, self::REQUIRED_VERSION, \PDO::PARAM_STR);
             $st->execute();
             $st->closeCursor();
-        } catch (\Exception $e) {
-            return [
-                'error_code' => $e->getCode(),
-                'message'    => $e->getMessage()
-            ];
+        } catch (\PDOException $e) {
+            new DatabaseFatalException('Failed to create required tables in the database', -1, $e);
+        } catch (RuntimeException $e) {
+            return ErrorHandler::exceptionResult($e);
         }
         return [ 'message' => 'The database has been initiated' ];
     }
@@ -243,12 +250,9 @@ class Database
             $st->closeCursor();
             $db->query('SET foreign_key_checks = 1');
         } catch (\PDOException $e) {
-            return [
-                'error_code' => $e->getCode(),
-                'message'    => $e->getMessage()
-            ];
+            new DatabaseFatalException('Failed to drop the database tables', -1, $e);
         }
-        return [ 'message' => 'Database tables have been dropped' ];
+        return [ 'message' => 'The database tables have been dropped' ];
     }
 
     private function establishConnection()
@@ -263,8 +267,8 @@ class Database
                 [ \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION ]
             );
             $this->conn->query('SET time_zone = "+00:00"');
-        } catch (\Exception $e) {
-            throw new \Exception($e->getMessage(), -1);
+        } catch (\PDOException $e) {
+            throw DatabaseExceptionFactory::fromException($e);
         }
     }
 

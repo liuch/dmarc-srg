@@ -36,12 +36,14 @@ use Liuch\DmarcSrg\DateTime;
 use Liuch\DmarcSrg\Domains\Domain;
 use Liuch\DmarcSrg\Domains\DomainList;
 use Liuch\DmarcSrg\Database\Database;
+use Liuch\DmarcSrg\Exception\SoftException;
+use Liuch\DmarcSrg\Exception\DatabaseFatalException;
 
 /**
  * It's the main class for working with the incoming reports, such as:
  *  - getting a list of reports
  *  - deleting several reports at once
- *  - getting the number of reports in the database
+ *  - getting the number of reports stored in the database
  */
 class ReportList
 {
@@ -121,8 +123,8 @@ class ReportList
             }
             $st->closeCursor();
             unset($st);
-        } catch (\Exception $e) {
-            throw new \Exception('Failed to get the report list', -1);
+        } catch (\PDOException $e) {
+            throw new DatabaseFatalException('Failed to get the report list', -1, $e);
         } finally {
             if ($def_limit) {
                 $this->limit = null;
@@ -209,12 +211,12 @@ class ReportList
                             } elseif ($fn == 'month') {
                                 $ma = explode('-', $fv);
                                 if (count($ma) != 2) {
-                                    throw new \Exception('Incorrect date format', -1);
+                                    throw new SoftException('Report list filter: Incorrect date format');
                                 }
                                 $year = (int)$ma[0];
                                 $month = (int)$ma[1];
                                 if ($year < 0 || $month < 1 || $month > 12) {
-                                    throw new \Exception('Incorrect month or year value', -1);
+                                    throw new SoftException('Report list filter: Incorrect month or year value');
                                 }
                                 $filters[0]['a_str'][] = '`begin_time` < ? AND `end_time` >= ?';
                                 $date1 = new DateTime("${year}-${month}-01");
@@ -232,7 +234,7 @@ class ReportList
                                 } else {
                                     $val = count(Common::$align_res) - 1;
                                     if ($fv !== Common::$align_res[$val]) {
-                                        throw new \Exception('Incorrect DKIM filter', -1);
+                                        throw new SoftException('Report list filter: Incorrect DKIM value');
                                     }
                                 }
                                 $filters[1]['a_str'][] = '`dkim_align` = ?';
@@ -243,7 +245,7 @@ class ReportList
                                 } else {
                                     $val = count(Common::$align_res) - 1;
                                     if ($fv !== Common::$align_res[$val]) {
-                                        throw new \Exception('Incorrect SPF filter', -1);
+                                        throw new SoftException('Report list filter: Incorrect SPF value');
                                     }
                                 }
                                 $filters[1]['a_str'][] = '`spf_align` = ?';
@@ -254,7 +256,7 @@ class ReportList
                                 } elseif ($fv === 'unread') {
                                     $val = false;
                                 } else {
-                                    throw new \Exception('Incorrect status filter');
+                                    throw new SoftException('Report list filter: Incorrect status value');
                                 }
                                 $filters[0]['a_str'][] = '`seen` = ?';
                                 $filters[0]['bindings'][] = [ $val, \PDO::PARAM_BOOL ];
@@ -316,8 +318,8 @@ class ReportList
             if (!is_null($this->limit) && $this->limit < $cnt) {
                 $cnt = $this->limit;
             }
-        } catch (\Exception $e) {
-            throw new \Exception('Failed to get the number of reports', -1);
+        } catch (\PDOException $e) {
+            throw new DatabaseFatalException('Failed to get the number of reports', -1, $e);
         }
         return $cnt;
     }
@@ -355,9 +357,12 @@ class ReportList
             $st->closeCursor();
 
             $db->commit();
+        } catch (\PDOException $e) {
+            $db->rollBack();
+            throw new DatabaseFatalException('Failed to delete reports', -1, $e);
         } catch (\Exception $e) {
             $db->rollBack();
-            throw new \Exception('Failed to delete reports', -1);
+            throw $e;
         }
     }
 
@@ -369,13 +374,10 @@ class ReportList
      */
     public static function getFilterList(): array
     {
+        $res['domain'] = (new DomainList())->names();
+
         $res = [];
         $db = Database::connection();
-        try {
-            $res['domain'] = (new DomainList())->names();
-        } catch (\Exception $e) {
-            throw new \Exception('Failed to get a list of domains', -1);
-        }
         $rep_tn = Database::tablePrefix('reports');
         try {
             $months = [];
@@ -390,9 +392,10 @@ class ReportList
             }
             $st->closeCursor();
             $res['month'] = $months;
-        } catch (\Exception $e) {
-            throw new \Exception('Failed to get a list of months', -1);
+        } catch (\PDOException $e) {
+            throw new DatabaseFatalException('Failed to get a list of months', -1, $e);
         }
+
         try {
             $orgs = [];
             // TODO оптимизировать индексом!
@@ -402,8 +405,8 @@ class ReportList
             }
             $st->closeCursor();
             $res['organization'] = $orgs;
-        } catch (\Exception $e) {
-            throw new \Exception('Failed to get a list of organizations', -1);
+        } catch (\PDOException $e) {
+            throw new DatabaseFatalException('Failed to get a list of organizations', -1, $e);
         }
         $res['dkim']   = [ 'pass', 'fail' ];
         $res['spf']    = [ 'pass', 'fail' ];

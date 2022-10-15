@@ -31,9 +31,11 @@
 
 namespace Liuch\DmarcSrg\Report;
 
+use Liuch\DmarcSrg\ErrorHandler;
 use Liuch\DmarcSrg\Report\Report;
 use Liuch\DmarcSrg\Sources\Source;
 use Liuch\DmarcSrg\ReportLog\ReportLogItem;
+use Liuch\DmarcSrg\Exception\RuntimeException;
 
 /**
  * This class is designed to fetch report files from report sources and store them to the database.
@@ -66,7 +68,7 @@ class ReportFetcher
 
         try {
             $this->source->rewind();
-        } catch (\Exception $e) {
+        } catch (RuntimeException $e) {
             return [[ 'source_error' => $e->getMessage() ]];
         }
 
@@ -97,12 +99,9 @@ class ReportFetcher
                 $report  = Report::fromXmlFile($rfile->datastream());
                 $result  = $report->save($fname);
                 $success = true;
-            } catch (\Exception $e) {
+            } catch (RuntimeException $e) {
                 $err_msg = $e->getMessage();
-                $result = [
-                    'error_code' => $e->getCode(),
-                    'message'    => $err_msg
-                ];
+                $result  = ErrorHandler::exceptionResult($e);
             }
             unset($rfile);
 
@@ -113,16 +112,16 @@ class ReportFetcher
                 } else {
                     $this->source->rejected();
                 }
-            } catch (\Exception $e) {
+            } catch (RuntimeException $e) {
                 $err_msg = $e->getMessage();
                 $result['post_processing_message'] = $err_msg;
             }
 
             // Adding a record to the log.
             if (!$err_msg) {
-                $log = ReportLogItem::success($stype, $report, $fname, null);
+                $log = ReportLogItem::success($stype, $report, $fname, null)->save();
             } else {
-                $log = ReportLogItem::failed($stype, $report, $fname, $err_msg);
+                $log = ReportLogItem::failed($stype, $report, $fname, $err_msg)->save();
                 if ($this->source->type() === Source::SOURCE_MAILBOX) {
                     $msg = $this->source->mailMessage();
                     $ov = $msg->overview();
@@ -142,7 +141,6 @@ class ReportFetcher
                     }
                 }
             }
-            $log->save();
             unset($report);
 
             // Adding result to the results array.

@@ -22,8 +22,9 @@
 
 namespace Liuch\DmarcSrg;
 
-use Exception;
+use Liuch\DmarcSrg\ErrorHandler;
 use Liuch\DmarcSrg\Report\Report;
+use Liuch\DmarcSrg\Exception\RuntimeException;
 
 require 'init.php';
 
@@ -58,13 +59,8 @@ if (!empty($_GET['report_id']) && !empty($_GET['domain'])) {
                     }
                 }
             }
-        } catch (Exception $e) {
-            Core::sendJson(
-                [
-                    'error_code' => $e->getCode(),
-                    'message'    => $e->getMessage()
-                ]
-            );
+        } catch (RuntimeException $e) {
+            Core::sendJson(ErrorHandler::exceptionResult($e));
             return;
         }
     } elseif (Core::method() == 'GET') {
@@ -74,4 +70,3 @@ if (!empty($_GET['report_id']) && !empty($_GET['domain'])) {
 }
 
 Core::sendBad();
-

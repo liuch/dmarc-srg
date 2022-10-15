@@ -34,6 +34,9 @@ namespace Liuch\DmarcSrg\Domains;
 use Liuch\DmarcSrg\DateTime;
 use Liuch\DmarcSrg\Database\Database;
 use Liuch\DmarcSrg\Report\ReportList;
+use Liuch\DmarcSrg\Exception\SoftException;
+use Liuch\DmarcSrg\Exception\LogicException;
+use Liuch\DmarcSrg\Exception\DatabaseFatalException;
 
 /**
  * It's a class for accessing to stored domains data
@@ -124,7 +127,7 @@ class Domain
                     return;
                 }
         }
-        throw new \Exception('Wrong domain data', -1);
+        throw new LogicException('Wrong domain data');
     }
 
     /**
@@ -250,8 +253,8 @@ class Domain
                 $st->bindValue(4, $this->id, \PDO::PARAM_INT);
                 $st->execute();
                 $st->closeCursor();
-            } catch (\Exception $e) {
-                throw new \Exception('Failed to update the domain data', -1);
+            } catch (\PDOException $e) {
+                throw new DababaseException('Failed to update the domain data', -1, $e);
             }
         } else {
             try {
@@ -282,8 +285,8 @@ class Domain
                 $this->id = intval($db->lastInsertId());
                 $this->ex_f = true;
                 $this->actv = $actv;
-            } catch (\Exception $e) {
-                throw new \Exception('Failed to insert the domain data', -1);
+            } catch (\PDOException $e) {
+                throw new DatabaseFatalException('Failed to insert the domain data', -1, $e);
             }
         }
     }
@@ -309,14 +312,19 @@ class Domain
             $rlist->setFilter([ 'domain' => $this ]);
             $rcnt = $rlist->count();
             if ($rcnt > 0) {
-                $s1 = 'are';
-                $s2 = 's';
-                if ($rcnt == 1) {
-                    $s1 = 'is';
-                    $s2 = '';
+                switch ($rcnt) {
+                    case 1:
+                        $s1 = 'is';
+                        $s2 = '';
+                        break;
+                    default:
+                        $s1 = 'are';
+                        $s2 = 's';
+                        break;
                 }
-                $msg = "Failed to delete: there $s1 $rcnt incoming report$s2 for this domain";
-                throw new \Exception($msg, -1);
+                throw new SoftException(
+                    "Failed to delete: there {$s1} {$rcnt} incoming report{$s2} for this domain"
+                );
             }
 
             $st = $db->prepare('DELETE FROM `' . Database::tablePrefix('domains') . '` WHERE `id` = ?');
@@ -326,6 +334,9 @@ class Domain
 
             $db->commit();
             $this->ex_f = false;
+        } catch (\PDOException $e) {
+            $db->rollBack();
+            throw new DatabaseFatalException('Failed to delete the domain', -1, $e);
         } catch (\Exception $e) {
             $db->rollBack();
             throw $e;
@@ -344,7 +355,7 @@ class Domain
             $this->fqdn = trim(substr($this->fqdn, 0, -1));
         }
         if ($this->fqdn === '') {
-            throw new \Exception('The domain is empty', -1);
+            throw new SoftException('The domain name must not be an empty string');
         }
     }
 
@@ -359,25 +370,29 @@ class Domain
             return;
         }
 
-        $st = Database::connection()->prepare(
-            'SELECT `id`, `fqdn`, `active`, `description`, `created_time`, `updated_time` FROM `'
-            . Database::tablePrefix('domains') . '` WHERE ' . $this->sqlCondition()
-        );
-        $this->sqlBindValue($st, 1);
-        $st->execute();
-        $res = $st->fetch(\PDO::FETCH_NUM);
-        if (!$res) {
-            $this->ex_f = false;
-            throw new \Exception('There is no such domain', -1);
+        try {
+            $st = Database::connection()->prepare(
+                'SELECT `id`, `fqdn`, `active`, `description`, `created_time`, `updated_time` FROM `'
+                . Database::tablePrefix('domains') . '` WHERE ' . $this->sqlCondition()
+            );
+            $this->sqlBindValue($st, 1);
+            $st->execute();
+            $res = $st->fetch(\PDO::FETCH_NUM);
+            if (!$res) {
+                $this->ex_f = false;
+                throw new SoftException('There is no such domain');
+            }
+            $this->id   = $res[0];
+            $this->fqdn = $res[1];
+            $this->actv = boolval($res[2]);
+            $this->desc = $res[3];
+            $this->c_tm = new DateTime($res[4]);
+            $this->u_tm = new DateTime($res[5]);
+            $st->closeCursor();
+            $this->ex_f = true;
+        } catch (\PDOException $e) {
+            throw new DatabaseFatalException('Failed to fetch the domain data', -1, $e);
         }
-        $this->id   = $res[0];
-        $this->fqdn = $res[1];
-        $this->actv = boolval($res[2]);
-        $this->desc = $res[3];
-        $this->c_tm = new DateTime($res[4]);
-        $this->u_tm = new DateTime($res[5]);
-        $st->closeCursor();
-        $this->ex_f = true;
     }
 
     /**

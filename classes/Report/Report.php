@@ -28,6 +28,9 @@ use Liuch\DmarcSrg\Domains\Domain;
 use Liuch\DmarcSrg\Domains\DomainList;
 use Liuch\DmarcSrg\Database\Database;
 use Liuch\DmarcSrg\Settings\SettingsList;
+use Liuch\DmarcSrg\Exception\SoftException;
+use Liuch\DmarcSrg\Exception\LogicException;
+use Liuch\DmarcSrg\Exception\DatabaseFatalException;
 
 class Report
 {
@@ -44,7 +47,7 @@ class Report
     {
         $data = ReportData::fromXmlFile($fd);
         if (!self::checkData($data)) {
-            throw new \Exception('Incorrect or incomplete report data', -1);
+            throw new SoftException('Incorrect or incomplete report data');
         }
         return new Report($data);
     }
@@ -62,7 +65,7 @@ class Report
         $domain = $this->data['domain'];
         $report_id = $this->data['report_id'];
         if (empty($domain) || empty($report_id)) {
-            throw new \Exception('Not specified report\'s domain or id');
+            throw new SoftException('Not specified report\'s domain or id');
         }
         $this->data = [ 'domain' => $domain, 'report_id' => $report_id, 'records' => [] ];
         $db = Database::connection();
@@ -81,7 +84,7 @@ class Report
             try {
                 $res = $st->fetch(\PDO::FETCH_NUM);
                 if (!$res) {
-                    throw new \Exception('The report was not found', -1);
+                    throw new SoftException('The report was not found');
                 }
                 $id = $res[0];
                 $this->data['date'] = [
@@ -131,11 +134,8 @@ class Report
             } finally {
                 $st->closeCursor();
             }
-        } catch (\Exception $e) {
-            if ($e->getCode() !== -1) {
-                throw new \Exception('Failed to get the report from DB', -1);
-            }
-            throw $e;
+        } catch (\PDOException $e) {
+            throw new DatabaseFatalException('Failed to get the report from DB', -1, $e);
         }
     }
 
@@ -144,7 +144,7 @@ class Report
         $b_ts = $this->data['begin_time'];
         $e_ts = $this->data['end_time'];
         if (!$b_ts->getTimestamp() || !$e_ts->getTimestamp() || $b_ts > $e_ts) {
-            throw new \Exception('Failed to add an incoming report: wrong date range', -1);
+            throw new SoftException('Failed to add an incoming report: wrong date range');
         }
 
         $db = Database::connection();
@@ -156,7 +156,7 @@ class Report
                 // The domain is not found. Let's try to add it automatically.
                 $domain = self::insertDomain($fqdn);
             } elseif (!$domain->active()) {
-                throw new \Exception('Failed to add an incoming report: the domain is inactive', -1);
+                throw new SoftException('Failed to add an incoming report: the domain is inactive');
             }
 
             $ct = new DateTime();
@@ -211,15 +211,15 @@ class Report
             unset($rec_data);
             $db->commit();
             $this->data['loaded_time']  = $ct;
-        } catch (\Exception $e) {
+        } catch (\PDOException $e) {
             $db->rollBack();
             if ($e->getCode() == '23000') {
-                throw new \Exception('This report has already been loaded', -1);
-            } elseif ($e->getCode() == -1) {
-                throw $e;
-            } else {
-                throw new \Exception('Failed to insert the report', -1);
+                throw new SoftException('This report has already been loaded');
             }
+            throw new DatabaseFatalException('Failed to insert the report', -1, $e);
+        } catch (\Exception $e) {
+            $db->rollBack();
+            throw $e;
         }
         return [ 'message' => 'The report is loaded successfully' ];
     }
@@ -232,7 +232,7 @@ class Report
     public function set($name, $value)
     {
         if ($name !== 'seen' && gettype($value) !== 'boolean') {
-            throw new \Exception('Incorrect parameters', -1);
+            throw new LogicException('Incorrect parameters');
         }
 
         $db = Database::connection();
@@ -247,8 +247,8 @@ class Report
             $st->bindValue(3, $this->data['report_id'], \PDO::PARAM_STR);
             $st->execute();
             $st->closeCursor();
-        } catch (\Exception $e) {
-            throw new \Exception('Failed to update the DB record', -1);
+        } catch (\PDOException $e) {
+            throw new DatabaseFatalException('Failed to update the DB record', -1, $e);
         }
         return [ 'message' => 'Ok' ];
     }
@@ -369,8 +369,14 @@ class Report
                     self::$allowed_domains = '<' . $fetcher['allowed_domains'] . '>i';
                 }
             }
-            if (empty(self::$allowed_domains) || @preg_match(self::$allowed_domains, $fqdn) !== 1) {
-                throw new \Exception('Failed to add an incoming report: unknown domain', -1);
+            try {
+                $add = !empty(self::$allowed_domains) && preg_match(self::$allowed_domains, $fqdn) === 1;
+            } catch (\ErrorException $e) {
+                // The regular expression in the config file is wrong
+                $add = false;
+            }
+            if (!$add) {
+                throw new SoftException('Failed to add an incoming report: unknown domain');
             }
         }
 

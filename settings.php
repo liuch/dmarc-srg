@@ -52,7 +52,10 @@
 
 namespace Liuch\DmarcSrg;
 
+use Liuch\DmarcSrg\ErrorHandler;
 use Liuch\DmarcSrg\Settings\SettingsList;
+use Liuch\DmarcSrg\Exception\SoftException;
+use Liuch\DmarcSrg\Exception\RuntimeException;
 
 require 'init.php';
 
@@ -93,18 +96,13 @@ if (Core::isJson()) {
                         ]);
                         break;
                     default:
-                        throw new \Exception('Unknown action. The only valid value is "update".', -1);
+                        throw new SoftException('Unknown action. The only valid value is "update".');
                 }
                 return;
             }
         }
-    } catch (\Exception $e) {
-        Core::sendJson(
-            [
-                'error_code' => $e->getCode(),
-                'message'    => $e->getMessage()
-            ]
-        );
+    } catch (RuntimeException $e) {
+        Core::sendJson(ErrorHandler::exceptionResult($e));
         return;
     }
 } elseif (Core::method() == 'GET') {

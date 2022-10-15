@@ -37,4 +37,14 @@ spl_autoload_register(function ($class) {
 date_default_timezone_set('GMT');
 
 require_once('config/conf.php');
-require_once('debug.php');
+
+set_exception_handler(function ($e) {
+    Liuch\DmarcSrg\ErrorHandler::handleException($e);
+});
+
+set_error_handler(function (int $severity, string $message, string $file, int $line) {
+    if (error_reporting() === 0) {
+        return false;
+    }
+    throw new \ErrorException($message, -1, $severity, $file, $line);
+});

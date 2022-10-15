@@ -44,9 +44,11 @@
 
 namespace Liuch\DmarcSrg;
 
+use Liuch\DmarcSrg\ErrorHandler;
 use Liuch\DmarcSrg\ReportLog\ReportLog;
 use Liuch\DmarcSrg\ReportLog\ReportLogItem;
 use Liuch\DmarcSrg\Settings\SettingsList;
+use Liuch\DmarcSrg\Exception\RuntimeException;
 
 require 'init.php';
 
@@ -77,13 +79,8 @@ if (Core::method() == "GET") {
             $res['sorted_by'] = [ 'column' => 'event_time', 'direction' => $dir ];
             Core::sendJson($res);
             return;
-        } catch (\Exception $e) {
-            Core::sendJson(
-                [
-                    'error_code' => $e->getCode(),
-                    'message'    => $e->getMessage()
-                ]
-            );
+        } catch (RuntimeException $e) {
+            Core::sendJson(ErrorHandler::exceptionResult($e));
             return;
         }
     } else {

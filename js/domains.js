@@ -52,14 +52,12 @@ class DomainList {
 			headers: HTTP_HEADERS,
 			credentials: "same-origin"
 		}).then(function(resp) {
-			if (resp.status !== 200)
+			if (!resp.ok)
 				throw new Error("Failed to fetch the domain list");
 			return resp.json();
 		}).then(function(data) {
 			that._table.display_status(null);
-			if (data.error_code !== undefined && data.error_code !== 0) {
-				throw new Error(data.message || "Unknown error");
-			}
+			Common.checkResult(data);
 			let d = { more: data.more };
 			d.rows = data.domains.map(function(it) {
 				return that._make_row_data(it);
@@ -73,7 +71,7 @@ class DomainList {
 			}
 			that._table.focus();
 		}).catch(function(err) {
-			console.warn(err.message);
+			Common.displayError(err);
 			that._table.display_status("error");
 		});
 	}
@@ -326,21 +324,18 @@ class DomainEditDialog extends ModalDialog {
 			headers: HTTP_HEADERS,
 			credentials: "same-origin"
 		}).then(function(resp) {
-			if (resp.status != 200) {
+			if (!resp.ok)
 				throw new Error("Failed to fetch the domain data");
-			}
 			return resp.json();
 		}).then(function(data) {
 			that._fetched = true;
-			if (data.error_code !== undefined && data.error_code !== 0) {
-				throw new Error(data.message || "Unknown error");
-			}
+			Common.checkResult(data);
 			data.created_time = new Date(data.created_time);
 			data.updated_time = new Date(data.updated_time);
 			that._update_ui(data);
 			that._enable_ui(true);
 		}).catch(function(err) {
-			console.warn(err.message);
+			Common.displayError(err);
 			that._content.appendChild(set_error_status(null, err.message));
 		}).finally(function() {
 			that._content.querySelector(".wait-message").remove();
@@ -426,21 +421,18 @@ class DomainEditDialog extends ModalDialog {
 			credentials: "same-origin",
 			body: JSON.stringify(body)
 		}).then(function(resp) {
-			if (resp.status != 200) {
+			if (!resp.ok)
 				throw new Error("Failed to " + (body.new && "add" || "update") + " the domain data");
-			}
 			return resp.json();
 		}).then(function(data) {
-			if (data.error_code !== undefined && data.error_code !== 0) {
-				throw new Error(data.message || "Unknown error");
-			}
+			Common.checkResult(data);
 			that._result = body;
 			that.hide();
 			Notification.add({
 				text: "The domain " + body.fqdn + " was " + (body.action === "add" && "added" || "updated")
 			});
 		}).catch(function(err) {
-			console.warn(err.message);
+			Common.displayError(err);
 			that._content.appendChild(set_error_status(null, err.message));
 		}).finally(function() {
 			that._content.querySelector(".wait-message").remove();
@@ -474,19 +466,16 @@ class DomainEditDialog extends ModalDialog {
 			credentials: "same-origin",
 			body: JSON.stringify(body)
 		}).then(function(resp) {
-			if (resp.status != 200) {
+			if (!resp.ok)
 				throw new Error("Failed to delete the domain");
-			}
 			return resp.json();
 		}).then(function(data) {
-			if (data.error_code !== undefined && data.error_code !== 0) {
-				throw new Error(data.message || "Unkonwn error");
-			}
+			Common.checkResult(data);
 			that._result = data;
 			that.hide();
 			Notification.add({ text: "The domain " + body.fqdn + " was removed" });
 		}).catch(function(err) {
-			console.warn(err.message);
+			Common.displayError(err);
 			that._content.appendChild(set_error_status(null, err.message));
 		}).finally(function() {
 			that._content.querySelector(".wait-message").remove();

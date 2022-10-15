@@ -55,14 +55,12 @@ class Settings {
 			headers: HTTP_HEADERS,
 			credentials: "same-origin"
 		}).then(function(resp) {
-			if (resp.status !== 200)
+			if (!resp.ok)
 				throw new Error("Failed to fetch the settings");
 			return resp.json();
 		}).then(function(data) {
 			that._table.display_status(null);
-			if (data.error_code !== undefined && data.error_code !== 0) {
-				throw new Error(data.message || "Unknown error");
-			}
+			Common.checkResult(data);
 			let d = { more: data.more };
 			d.rows = data.settings.map(function(it) {
 				return that._make_row_data(it);
@@ -72,7 +70,7 @@ class Settings {
 			that._table.add_frame(fr);
 			that._table.focus();
 		}).catch(function(err) {
-			console.warn(err.message);
+			Common.displayError(err);
 			that._table.display_status("error", err.message);
 		});
 	}
@@ -248,20 +246,17 @@ class SettingEditDialog extends ModalDialog {
 			headers: HTTP_HEADERS,
 			credentials: "same-origin"
 		}).then(function(resp) {
-			if (resp.status != 200) {
+			if (!resp.ok)
 				throw new Error("Failed to fetch setting data for " + that._data.name);
-			}
 			return resp.json();
 		}).then(function(data) {
-			if (data.error_code !== undefined && data.error_code !== 0) {
-				throw new Error(data.message || "Unknown error");
-			}
+			Common.checkResult(data);
 			that._data.value = data.value;
 			that._update_ui(data);
 			that._enable_ui(true);
 			that._fetched = true;
 		}).catch(function(err) {
-			console.warn(err.message);
+			Common.displayError(err);
 			that._content.appendChild(set_error_status(null, err.message));
 		}).finally(function() {
 			that._content.querySelector(".wait-message").remove();
@@ -337,20 +332,17 @@ class SettingEditDialog extends ModalDialog {
 			credentials: "same-origin",
 			body: JSON.stringify(body)
 		}).then(function(resp) {
-			if (resp.status != 200) {
+			if (!resp.ok)
 				throw new Error("Failed to update the setting");
-			}
 			return resp.json();
 		}).then(function(data) {
-			if (data.error_code !== undefined && data.error_code !== 0) {
-				throw new Error(data.message || "Unknown error");
-			}
+			Common.checkResult(data);
 			that._data.value = that._val_el.value;
 			that._result = body;
 			that.hide();
 			Notification.add({ type: "info", text: (data.message || "Updated successfully!") });
 		}).catch(function(err) {
-			console.warn(err.message);
+			Common.displayError(err);
 			that._content.appendChild(set_error_status(null, err.message));
 			Notification.add({ type: "error", text: err.message });
 		}).finally(function() {

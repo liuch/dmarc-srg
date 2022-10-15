@@ -25,8 +25,8 @@ class Files {
 		this._fieldset2   = null;
 		this._dir_table   = null;
 		this._element     = document.getElementById("main-block");
-		this._fcount_info = 0;
-		this._fsize_info  = 0;
+		this._fcount_info = null;
+		this._fsize_info  = null;
 		this._limits      = {
 			upload_max_file_count: 0,
 			upload_max_file_size:  0
@@ -62,6 +62,7 @@ class Files {
 	_create_local_file_uploading_element() {
 		this._fieldset1 = document.createElement("fieldset");
 		this._fieldset1.setAttribute("class", "round-border");
+		this._fieldset1.disabled = true;
 		let lg = document.createElement("legend");
 		lg.appendChild(document.createTextNode("Uploading local report files"));
 		this._fieldset1.appendChild(lg);
@@ -89,22 +90,19 @@ class Files {
 			that._clear_warnings();
 		});
 		fm.addEventListener("submit", function(event) {
-			let fd = new FormData(fm);
 			window.fetch("files.php", {
 				method: "POST",
 				credentials: "same-origin",
-				body: fd
+				body: new FormData(fm)
 			}).then(function(resp) {
-				if (resp.status !== 200) {
+				if (!resp.ok)
 					throw new Error("Failed to upload a report file");
-				}
 				return resp.json();
 			}).then(function(data) {
-				if (data.error_code !== undefined && data.error_code !== 0)
-					Notification.add({ text: (data.message || "Error!"), type: "error" });
-				else
-					Notification.add({ text: (data.message || "Uploaded successfully!"), type: "info" });
+				Common.checkResult(data);
+				Notification.add({ text: (data.message || "Uploaded successfully!"), type: "info" });
 			}).catch(function(err) {
+				Common.displayError(err);
 				Notification.add({ text: (err.message || "Error!"), type: "error" });
 			});
 			event.preventDefault();
@@ -116,6 +114,7 @@ class Files {
 	_create_directory_loading_element() {
 		this._fieldset2 = document.createElement("fieldset");
 		this._fieldset2.setAttribute("class", "round-border");
+		this._fieldset2.disabled = true;
 		let lg = document.createElement("legend");
 		lg.appendChild(document.createTextNode("Loading report files from the server directory"));
 		this._fieldset2.appendChild(lg);
@@ -165,9 +164,8 @@ class Files {
 				credentials: "same-origin",
 				body: JSON.stringify({ cmd: "load-directory", ids: ids })
 			}).then(function(resp) {
-				if (resp.status !== 200) {
+				if (!resp.ok)
 					throw new Error("Failed to load report files");
-				}
 				return resp.json();
 			}).then(function(data) {
 				if (data.error_code !== undefined && data.error_code !== 0)
@@ -248,8 +246,10 @@ class Files {
 
 	_clear_warnings() {
 		[ this._fcount_info, this._fsize_info ].forEach(function(el) {
-			el.classList.remove("state-red");
-			el.classList.add("state-gray");
+			if (el) {
+				el.classList.remove("state-red");
+				el.classList.add("state-gray");
+			}
 		});
 	}
 
@@ -264,8 +264,10 @@ class Files {
 	}
 
 	_set_warning(el) {
-		el.classList.remove("state-gray");
-		el.classList.add("state-red");
+		if (el) {
+			el.classList.remove("state-gray");
+			el.classList.add("state-red");
+		}
 	}
 
 	_check_files(fl_el) {
@@ -334,14 +336,11 @@ class Files {
 			headers: HTTP_HEADERS,
 			credentials: "same-origin"
 		}).then(function(resp) {
-			if (resp.status !== 200) {
+			if (!resp.ok)
 				throw new Error("Failed to get loader data");
-			}
 			return resp.json();
 		}).then(function(data) {
-			if (data.error_code !== undefined && data.error_code !== 0) {
-				throw new Error(data.message || "Unknown error");
-			}
+			Common.checkResult(data);
 			if (files) {
 				that._limits.upload_max_file_count = data.upload_max_file_count;
 				that._limits.upload_max_file_size  = data.upload_max_file_size;
@@ -354,7 +353,7 @@ class Files {
 				that._fieldset2.disabled = false;
 			}
 		}).catch(function(err) {
-			console.warn(err.message);
+			Common.displayError(err);
 			Notification.add({ type: "error", text: err.message });
 			if (files) {
 				that._fieldset1.insertBefore(set_error_status(null, err.message), that._fieldset1.children[0]);

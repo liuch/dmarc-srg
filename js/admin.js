@@ -81,16 +81,15 @@ class Admin {
 			headers: HTTP_HEADERS,
 			credentials: "same-origin"
 		}).then(function(resp) {
-			if (resp.status !== 200)
+			if (!resp.ok)
 				throw new Error("Failed to fetch the admin data");
 			return resp.json();
 		}).then(function(data) {
-			if (data.error_code)
-				throw new Error(data.message || "Failed");
+			Common.checkResult(data);
 			t._state = data;
 			t._fill_data();
 		}).catch(function(err) {
-			console.warn(err.message);
+			Common.displayError(err);
 			t._fill_data(err.message);
 		});
 	}
@@ -104,7 +103,7 @@ class Admin {
 			credentials: "same-origin",
 			body: JSON.stringify(cmd)
 		}).then(function(resp) {
-			if (resp.status !== 200)
+			if (!resp.ok)
 				throw new Error("Failed");
 			return resp.json();
 		}).finally(function() {
@@ -195,8 +194,8 @@ class Admin {
 			if (d) {
 				that._do_db_action(action, title, { password: d.password });
 			}
-		}).catch(function(e) {
-			console.error(e.message);
+		}).catch(function(err) {
+			Common.displayError(err);
 		}).finally(function() {
 			ld.remove();
 		});
@@ -208,12 +207,11 @@ class Admin {
 			d = Object.assign(d, data);
 		}
 		this._send_command(d).then(function(data) {
-			if (data.error_code && data.error_code !== 0)
-				Notification.add({ text: title + ": " + (data.message || "Error!"), type: "error" });
-			else
-				Notification.add({ text: title + ": " + (data.message || "Completed successfully!"), type: "info" });
+			Common.checkResult(data);
+			Notification.add({ text: title + ": " + (data.message || "Completed successfully!"), type: "info" });
 		}).catch(function(err) {
-			Notification.add({ text: title + ": " + (err.message || "Error!"), type: "error" });
+			Common.displayError(err);
+			Notification.add({ text: title + ": " + err.message, type: "error", delay: 10000 });
 		});
 	}
 }
@@ -417,12 +415,11 @@ class SourceListBox extends DropdownListBox {
 			credentials: "same-origin",
 			body: JSON.stringify({ cmd: "checksource", id: id, type: type })
 		}).then(function(resp) {
-			if (resp.status !== 200)
+			if (!resp.ok)
 				throw new Error("Failed");
 			return resp.json();
 		}).then(function(data) {
-			if (data.error_code)
-				throw new Error(data.message || "Failed");
+			Common.checkResult(data);
 			let msg = [ data.message ];
 			if (data.status) {
 				if (type === "mailbox") {
@@ -436,7 +433,7 @@ class SourceListBox extends DropdownListBox {
 			Notification.add({ text: msg, type: "info" });
 			state = "green";
 		}).catch(function(err) {
-			console.warn(err.message);
+			Common.displayError(err);
 			Notification.add({ text: err.message, type: "error" });
 		}).finally(function() {
 			btn.textContent = btn_text;

@@ -27,7 +27,7 @@ class Status {
 		return this._fetch(params || {}).then(function(data) {
 			return data;
 		}).catch(function(err) {
-			console.warn(err.message);
+			Common.displayError(err);
 		});
 	}
 
@@ -57,23 +57,29 @@ class Status {
 				headers: HTTP_HEADERS,
 				credentials: "same-origin"
 			}).then(function(resp) {
-				if (resp.status !== 200)
+				if (!resp.ok)
 					throw new Error("Failed to fetch the status");
 				return resp.json();
 			}).then(function(data) {
-				that._data.state = data.state;
-				that._data.error_code = data.error_code;
-				that._data.message = data.message;
-				that._data.emails = data.emails;
+				that._data = {
+					state:      data.state,
+					error_code: data.error_code,
+					message:    data.message,
+					emails:     data.emails
+				};
+				if (data.exeption)
+					that._data.exeption = data.exeption;
 				that._update_block();
 				if (data.error_code === -2) {
 					LoginDialog.start({ nousername: true });
 				}
 				resolve(data);
 			}).catch(function(err) {
-				that._data.state = "Err";
-				that._data.error_code = -100;
-				that._data.message = err.message;
+				that._data = {
+					state:      "Err",
+					error_code: -100,
+					message:    err.message
+				};
 				that._update_block();
 				reject(err);
 			});

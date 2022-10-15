@@ -32,6 +32,7 @@
 namespace Liuch\DmarcSrg\Sources;
 
 use Liuch\DmarcSrg\ReportFile\ReportFile;
+use Liuch\DmarcSrg\Exception\SoftException;
 
 /**
  * This class is designed to process report files from uploaded files.
@@ -48,13 +49,13 @@ class UploadedFilesSource extends Source
     public function current(): object
     {
         if ($this->data['error'][$this->index] !== UPLOAD_ERR_OK) {
-            throw new \Exception('Failed to upload the report file', $this->data['error'][$this->index]);
+            throw new SoftException('Failed to upload the report file');
         }
 
         $realfname = $this->data['name'][$this->index];
         $tempfname = $this->data['tmp_name'][$this->index];
         if (!is_uploaded_file($tempfname)) {
-            throw new \Exception('Possible file upload attack', -11);
+            throw new SoftException('Possible file upload attack');
         }
 
         return ReportFile::fromFile($tempfname, $realfname, false);

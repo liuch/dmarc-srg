@@ -23,6 +23,7 @@
 namespace Liuch\DmarcSrg\Report;
 
 use Liuch\DmarcSrg\DateTime;
+use Liuch\DmarcSrg\Exception\RuntimeException;
 
 class ReportData
 {
@@ -42,12 +43,12 @@ class ReportData
         );
         xml_set_character_data_handler($parser, 'Liuch\DmarcSrg\Report\ReportData::xmlTagData');
         xml_set_external_entity_ref_handler($parser, function () {
-            throw new \Exception('The XML document has an external entity!', -1);
+            throw new RuntimeException('The XML document has an external entity!');
         });
         try {
             while ($file_data = fread($fd, 4096)) {
                 if (!xml_parse($parser, $file_data, feof($fd))) {
-                    throw new \Exception('XML error!', -1);
+                    throw new RuntimeException('XML error!');
                 }
             }
         } finally {
@@ -208,7 +209,7 @@ class ReportData
         if (!isset(self::$report_tags[self::$tag_id]['children']) ||
             !isset(self::$report_tags[self::$tag_id]['children'][$name])
         ) {
-                throw new \Exception('Unknown tag: ' . $name, -1);
+                throw new RuntimeException("Unknown tag: {$name}");
         }
 
         self::$tag_id = self::$report_tags[self::$tag_id]['children'][$name];

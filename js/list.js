@@ -235,7 +235,7 @@ class ReportList {
 					that._table.seen(id, true);
 				}
 			}).catch(function(err) {
-				console.warn(err.message);
+				Common.displayError(err);
 				LoginDialog.start({ nousername: true });
 			});
 			Router.update_title(ReportWidget.instance().title());
@@ -267,13 +267,12 @@ class ReportList {
 			headers: HTTP_HEADERS,
 			credentials: "same-origin"
 		}).then(function(resp) {
-			if (resp.status !== 200)
+			if (!resp.ok)
 				throw new Error("Failed to fetch the report list");
 			return resp.json();
 		}).then(function(data) {
 			that._table.display_status(null);
-			if (data.error_code !== undefined && data.error_code !== 0)
-				throw new Error(data.message || "Unknown error");
+			Common.checkResult(data);
 			let d = { more: data.more };
 			d.rows = data.reports.map(function(it) {
 				return new ReportTableRow(that._make_row_data(it));
@@ -282,8 +281,8 @@ class ReportList {
 			that._table.add_frame(fr);
 			return fr;
 		}).catch(function(err) {
-			console.warn(err.message);
-			that._table.display_status("error", err.message);
+			Common.displayError(err);
+			that._table.display_status("error");
 		}).finally(function() {
 			that._fetching = false;
 		});
@@ -507,17 +506,16 @@ class ReportListSettingsDialog extends ModalDialog {
 			headers: HTTP_HEADERS,
 			credentials: "same-origin"
 		}).then(function(resp) {
-			if (resp.status !== 200)
+			if (!resp.ok)
 				throw new Error("Failed to fetch the filter list");
 			return resp.json();
 		}).then(function(data) {
-			if (data.error_code !== undefined && data.error_code !== 0)
-				throw new Error(data.message || "Unknown error");
+			Common.checkResult(data);
 			that._data.loaded_filters = data.filters;
 			that._update_ui();
 			that._enable_ui(true);
 		}).catch(function(err) {
-			console.warn(err.message);
+			Common.displayError(err);
 			that._content.appendChild(set_error_status());
 		}).finally(function() {
 			that._content.querySelector(".wait-message").remove();

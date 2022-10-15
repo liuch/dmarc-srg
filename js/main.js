@@ -121,6 +121,11 @@ Router.go = function(url) {
 				Common.ipv6_url = d.settings["ui.ipv6.url"] || '';
 			}
 			if (d.error_code !== -2) {
+				try {
+					Common.checkResult(d);
+				} catch (err) {
+					Common.displayError(err);
+				}
 				let module = Router._url2module(url);
 				if (module) {
 					if (!module.pointer)
@@ -231,18 +236,17 @@ Router._update_menu = function(authenticated) {
 					credentials: "same-origin",
 					body: JSON.stringify({})
 				}).then(function(resp) {
-					if (resp.status !== 200)
+					if (!resp.ok)
 						throw new Error("Failed to log out");
 					return resp.json();
 				}).then(function(data) {
-					if (data.error_code !== undefined && data.error_code !== 0)
-						throw new Error(data.message || "Log out: Unknown error");
+					Common.checkResult(data);
 					Status.instance().reset();
 					Router._clear_data();
 					Router._update_menu("no");
 					Router.update_title("");
 				}).catch(function(err) {
-					console.warn(err.message);
+					Common.displayError(err);
 					m_el.classList.remove("disabled");
 					Notification.add({ type: "error", text: err.message });
 				});

@@ -31,6 +31,8 @@
 
 namespace Liuch\DmarcSrg\Directories;
 
+use Liuch\DmarcSrg\Exception\LogicException;
+
 /**
  * This class is designed to work with the list of report directories which are listed in the configuration file.
  */
@@ -60,7 +62,7 @@ class DirectoryList
     {
         $this->ensureList();
         if ($id <= 0 || $id > count($this->list)) {
-            throw new \Exception('Incorrect directory Id', -1);
+            throw new LogicException('Incorrect directory Id');
         }
         return $this->list[$id - 1];
     }
@@ -127,14 +129,14 @@ class DirectoryList
                         try {
                             $this->list[] = new Directory($id, $directories[$i]);
                             ++$id;
-                        } catch (\Exception $d) {
+                        } catch (LogicException $d) {
                             // Just ignore this directory setting.
                         }
                     }
                 } else {
                     try {
                         $this->list[] = new Directory(1, $directories);
-                    } catch (\Exception $e) {
+                    } catch (LogicException $e) {
                         // Just ignore this directory setting.
                     }
                 }

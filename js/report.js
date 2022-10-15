@@ -37,7 +37,7 @@ class ReportWidget {
 
 	update() {
 		this.show_report().catch(function(err) {
-			console.warn(err.message);
+			Common.displayError(err);
 		});
 	}
 
@@ -77,7 +77,7 @@ class ReportWidget {
 					remove_all_children(that._cn_element);
 					that._cn_element.appendChild(rep.element());
 					rep.set_value("seen", true).catch(function(err) {
-						console.warn(err.message);
+						Common.displayError(err);
 					});
 				}
 				resolve();
@@ -218,7 +218,7 @@ class Report {
 			headers: HTTP_HEADERS,
 			credentials: "same-origin"
 		}).then(function(resp) {
-			if (resp.status !== 200)
+			if (!resp.ok)
 				throw new Error("Failed to fetch report data");
 			return resp.json();
 		}).then(function(data) {
@@ -263,11 +263,11 @@ class Report {
 			credentials: "same-origin",
 			body: JSON.stringify({ name: name, value: value })
 		}).then(function(resp) {
-			if (resp.status != 200)
+			if (!resp.ok)
 				throw new Error("Failed to set report value");
 			return resp.json();
 		}).catch(function(err) {
-			console.warn(err.message);
+			Common.displayError(err);
 		});
 	}
 

@@ -49,6 +49,7 @@ use Liuch\DmarcSrg\Report\ReportFetcher;
 use Liuch\DmarcSrg\Sources\MailboxSource;
 use Liuch\DmarcSrg\Sources\DirectorySource;
 use Liuch\DmarcSrg\Directories\DirectoryList;
+use Liuch\DmarcSrg\Exception\RuntimeException;
 
 require 'init.php';
 
@@ -91,6 +92,13 @@ if ($usage) {
 
 $sou_list = [];
 $problems = [];
+$addError = function (\Throwable $e, array &$errors): void {
+    $err_r = ErrorHandler::exceptionResult($e);
+    $errors['messages'][] = $err_r['message'];
+    if (!$errors['debug_info'] && isset($err_r['debug_info'])) {
+        $errors['debug_info'] = $err_r['debug_info']['content'];
+    }
+};
 
 const MAILBOX_LIST   = 1;
 const DIRECTORY_LIST = 2;
@@ -98,38 +106,40 @@ const FETCHER        = 3;
 
 $state = MAILBOX_LIST;
 if (!$source || $source === 'email') {
+    $errors  = [ 'messages' => [], 'debug_info' => null ];
     $mb_list = new MailBoxes();
-    $failed = null;
     for ($mb_num = 1; $mb_num <= $mb_list->count(); ++$mb_num) {
         try {
             $sou_list[] = new MailboxSource($mb_list->mailbox($mb_num));
-        } catch (\Exception $e) {
-            if (!$failed) {
-                $failed = [ 'state' => $state, 'messages' => [] ];
-            }
-            $failed['messages'][] = $e->getMessage();
+        } catch (RuntimeException $e) {
+            $addError($e, $errors);
         }
     }
-    if ($failed) {
-        $problems[] = $failed;
+    if (count($errors['messages']) > 0) {
+        $problems[] = [
+            'state'      => $state,
+            'messages'   => $errors['messages'],
+            'debug_info' => $errors['debug_info']
+        ];
     }
 }
 
 $state = DIRECTORY_LIST;
 if (!$source || $source === 'directory') {
-    $failed = null;
+    $errors = [ 'messages' => [], 'debug_info' => null ];
     foreach ((new DirectoryList())->list() as $dir) {
         try {
             $sou_list[] = new DirectorySource($dir);
-        } catch (\Exception $e) {
-            if (!$failed) {
-                $failed = [ 'state' => $state, 'messages' => [] ];
-            }
-            $failed['messages'][] = $e->getMessage();
+        } catch (RuntimeException $e) {
+            $addError($e, $errors);
         }
     }
-    if ($failed) {
-        $problems[] = $failed;
+    if (count($errors['messages']) > 0) {
+        $problems[] = [
+            'state'      => $state,
+            'messages'   => $errors['messages'],
+            'debug_info' => $errors['debug_info']
+        ];
     }
 }
 
@@ -165,6 +175,7 @@ try {
 }
 
 if (count($problems) > 0) {
+    $debug_info = null;
     foreach ($problems as $i => $pr) {
         if ($i > 0) {
             echo PHP_EOL;
@@ -194,6 +205,13 @@ if (count($problems) > 0) {
             echo '    - From: ' . ($pr['emailed_from'] ?? '-'), PHP_EOL;
             echo '    - Date: ' . ($pr['emailed_date'] ?? '-'), PHP_EOL;
         }
+        if (!$debug_info && !empty($pr['debug_info'])) {
+            $debug_info = $pr['debug_info'];
+        }
+    }
+    if ($debug_info) {
+        echo PHP_EOL;
+        echo 'Debug information:', PHP_EOL, $debug_info, PHP_EOL;
     }
     exit(1);
 }

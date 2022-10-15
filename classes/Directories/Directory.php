@@ -31,6 +31,11 @@
 
 namespace Liuch\DmarcSrg\Directories;
 
+use Liuch\DmarcSrg\ErrorHandler;
+use Liuch\DmarcSrg\Exception\SoftException;
+use Liuch\DmarcSrg\Exception\LogicException;
+use Liuch\DmarcSrg\Exception\RuntimeException;
+
 /**
  * This class is designed to work with the report directories which are listed in the configuration file.
  */
@@ -52,13 +57,13 @@ class Directory
     public function __construct(int $id, array $data)
     {
         if (isset($data['name']) && gettype($data['name']) !== 'string') {
-            throw new \Exception('Name must be either null or a string value', -1);
+            throw new LogicException('Directory name must be either null or a string value');
         }
         if (!isset($data['location']) || gettype($data['location']) !== 'string') {
-            throw new \Exception('Location must be a string value', -1);
+            throw new LogicException('Directory location must be a string value');
         }
         if (empty($data['location'])) {
-            throw new \Exception('Location must not be an empty string', -1);
+            throw new LogicException('Directory location must not be an empty string');
         }
 
         $this->id       = $id;
@@ -96,11 +101,8 @@ class Directory
         try {
             self::checkPath($this->location, true);
             self::checkPath($this->location . 'failed/', false);
-        } catch (\Exception $e) {
-            return [
-                'error_code' => -1,
-                'message'    => $e->getMessage()
-            ];
+        } catch (RuntimeException $e) {
+            return ErrorHandler::exceptionResult($e);
         }
 
         return [
@@ -120,7 +122,11 @@ class Directory
     public function count(): int
     {
         $cnt = 0;
-        $fs = new \FilesystemIterator($this->location);
+        try {
+            $fs = new \FilesystemIterator($this->location);
+        } catch (\Exception $e) {
+                throw new RuntimeException("Error accessing directory {$this->location}", -1, $e);
+        }
         foreach ($fs as $entry) {
             if ($entry->isFile()) {
                 ++$cnt;
@@ -141,18 +147,18 @@ class Directory
     {
         if (!file_exists($path)) {
             if ($existence) {
-                throw new \Exception($path . ' directory does not exist!');
+                throw new SoftException($path . ' directory does not exist!');
             }
             return;
         }
         if (!is_dir($path)) {
-            throw new \Exception($path . ' is not a directory!');
+            throw new SoftException($path . ' is not a directory!');
         }
         if (!is_readable($path)) {
-            throw new \Exception($path . ' directory is not readable!');
+            throw new SoftException($path . ' directory is not readable!');
         }
         if (!is_writable($path)) {
-            throw new \Exception($path . ' directory is not writable!');
+            throw new SoftException($path . ' directory is not writable!');
         }
     }
 }

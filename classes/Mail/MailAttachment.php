@@ -22,8 +22,8 @@
 
 namespace Liuch\DmarcSrg\Mail;
 
-use Exception;
 use Liuch\DmarcSrg\ReportFile\ReportFile;
+use Liuch\DmarcSrg\Exception\SoftException;
 
 class MailAttachment
 {
@@ -102,6 +102,6 @@ class MailAttachment
             case ENCQUOTEDPRINTABLE:
                 return imap_qprint($this->fetchBody());
         }
-        throw new Exception('Encoding failed: Unknown encoding', -1);
+        throw new SoftException('Encoding failed: Unknown encoding');
     }
 }

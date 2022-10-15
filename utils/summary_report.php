@@ -52,6 +52,7 @@ namespace Liuch\DmarcSrg;
 
 use Liuch\DmarcSrg\Domains\Domain;
 use Liuch\DmarcSrg\Report\SummaryReport;
+use Liuch\DmarcSrg\Exception\RuntimeException;
 
 require 'init.php';
 
@@ -109,8 +110,8 @@ try {
         implode("\r\n", $rep->text()),
         $headers
     );
-} catch (\Exception $e) {
-    echo 'Error: ' . $e->getMessage() . PHP_EOL;
+} catch (RuntimeException $e) {
+    echo ErrorHandler::exceptionText($e);
     exit(1);
 }
 

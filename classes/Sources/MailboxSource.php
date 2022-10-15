@@ -31,8 +31,9 @@
 
 namespace Liuch\DmarcSrg\Sources;
 
-use Exception;
 use Liuch\DmarcSrg\ReportFile\ReportFile;
+use Liuch\DmarcSrg\Exception\SoftException;
+use Liuch\DmarcSrg\Exception\RuntimeException;
 
 /**
  * This class is designed to process report files from an mail box.
@@ -53,8 +54,10 @@ class MailboxSource extends Source
         $this->msg = $this->data->message($this->list[$this->index]);
         try {
             $this->msg->validate();
-        } catch (Exception $e) {
-            throw new \Exception('Incorrect message: ' . $e->getMessage(), -1);
+        } catch (SoftException $e) {
+            throw new SoftException('Incorrect message: ' . $e->getMessage(), $e->getCode());
+        } catch (RuntimeException $e) {
+            throw new RuntimeException('Incorrect message', -1, $e);
         }
         $att = $this->msg->attachment();
         return ReportFile::fromStream($att->datastream(), $att->filename(), $att->mimeType());
@@ -88,6 +91,7 @@ class MailboxSource extends Source
      */
     public function rewind(): void
     {
+        $this->msg   = null;
         $this->list  = $this->data->sort(SORTDATE, 'UNSEEN', false);
         $this->index = 0;
     }

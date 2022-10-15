@@ -2,7 +2,7 @@
 
 /**
  * dmarc-srg - A php parser, viewer and summary report generator for incoming DMARC reports.
- * Copyright (C) 2020 Aleksey Andreev (liuch)
+ * Copyright (C) 2022 Aleksey Andreev (liuch)
  *
  * Available at:
  * https://github.com/liuch/dmarc-srg
@@ -18,22 +18,22 @@
  *
  * You should have received a copy of the GNU General Public License along with
  * this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * =========================
+ *
+ * This file contains LogicException class
+ *
+ * @category Common
+ * @package  DmarcSrg
+ * @author   Aleksey Andreev (liuch)
+ * @license  https://www.gnu.org/licenses/gpl-3.0.html GNU/GPLv3
  */
 
-namespace Liuch\DmarcSrg;
+namespace Liuch\DmarcSrg\Exception;
 
-use Liuch\DmarcSrg\ErrorHandler;
-use Liuch\DmarcSrg\RuntimeException;
-
-require 'init.php';
-
-if (Core::method() == 'POST' && Core::isJson()) {
-    try {
-        Core::sendJson(Core::auth()->logout());
-    } catch (RuntimeException $e) {
-        Core::sendJson(ErrorHandler::exceptionResult($e));
-    }
-    return;
+/**
+ * Base LogicException
+ */
+class LogicException extends \LogicException
+{
 }
-
-Core::sendBad();

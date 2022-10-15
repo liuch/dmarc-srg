@@ -24,6 +24,7 @@ namespace Liuch\DmarcSrg\ReportLog;
 
 use Liuch\DmarcSrg\DateTime;
 use Liuch\DmarcSrg\Database\Database;
+use Liuch\DmarcSrg\Exception\DatabaseFatalException;
 
 class ReportLog
 {
@@ -65,8 +66,8 @@ class ReportLog
             $st->execute();
             $cnt = intval($st->fetch(\PDO::FETCH_NUM)[0]);
             $st->closeCursor();
-        } catch (\Exception $e) {
-            throw new \Exception('Failed to get the log data', -1);
+        } catch (\PDOException $e) {
+            throw new DatabaseFatalException('Failed to get the log data', -1, $e);
         }
         return $cnt;
     }
@@ -109,8 +110,8 @@ class ReportLog
                 }
             }
             $st->closeCursor();
-        } catch (\Exception $e) {
-            throw new \Exception('Failed to get the logs', -1);
+        } catch (\PDOException $e) {
+            throw new DatabaseFatalException('Failed to get the logs', -1, $e);
         } finally {
             if ($def_limit) {
                 $this->rec_limit = 0;
@@ -135,8 +136,8 @@ class ReportLog
             $this->sqlBindValues($st, 0);
             $st->execute();
             $st->closeCursor();
-        } catch (\Exception $e) {
-            throw new \Exception('Failed to remove the log data', -1);
+        } catch (\PDOException $e) {
+            throw new DatabaseFatalException('Failed to remove the log data', -1, $e);
         }
     }
 

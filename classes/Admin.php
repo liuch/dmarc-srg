@@ -34,6 +34,7 @@ namespace Liuch\DmarcSrg;
 use Liuch\DmarcSrg\Mail\MailBoxes;
 use Liuch\DmarcSrg\Database\Database;
 use Liuch\DmarcSrg\Directories\DirectoryList;
+use Liuch\DmarcSrg\Exception\LogicException;
 
 /**
  * It's the main class for accessing administration functions.
@@ -47,10 +48,9 @@ class Admin
      */
     public function state(): array
     {
-        $res = [
-            'database'    => Database::state(),
-            'mailboxes'   => (new MailBoxes())->list()
-        ];
+        $res = [];
+        $res['database']    = Database::state();
+        $res['mailboxes']   = (new MailBoxes())->list();
         $res['directories'] = array_map(function ($dir) {
             return $dir->toArray();
         }, (new DirectoryList())->list());
@@ -83,6 +83,6 @@ class Admin
             case 'directory':
                 return (new DirectoryList())->check($id);
         }
-        throw new \Exception('Unknown resource type', -1);
+        throw new LogicException('Unknown resource type');
     }
 }

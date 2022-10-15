@@ -22,9 +22,10 @@
 
 namespace Liuch\DmarcSrg;
 
-use Exception;
+use Liuch\DmarcSrg\ErrorHandler;
 use Liuch\DmarcSrg\Database\Database;
 use Liuch\DmarcSrg\Database\DatabaseUpgrader;
+use Liuch\DmarcSrg\Exception\RuntimeException;
 
 require 'init.php';
 
@@ -74,13 +75,8 @@ if (Core::isJson()) {
             }
         }
         Core::sendJson([ 'error_code' => -1, 'message' => 'Bad request' ]);
-    } catch (Exception $e) {
-        Core::sendJson(
-            [
-                'error_code' => $e->getCode(),
-                'message'    => $e->getMessage()
-            ]
-        );
+    } catch (RuntimeException $e) {
+        Core::sendJson(ErrorHandler::exceptionResult($e));
     }
     return;
 } elseif (Core::method() == 'GET') {
