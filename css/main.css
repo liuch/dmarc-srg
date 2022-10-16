@@ -212,7 +212,7 @@ textarea.description {
 		display: inline-grid;
 		margin: 0.5em;
 		min-width: 10em;
-        padding: 0.4em;
+		padding: 0.4em;
 		text-align: center;
 		font-size: 0.7em;
 		border: 0.07em solid var(--color-br-strong);
@@ -561,8 +561,8 @@ textarea.description {
 }
 .main-table .report-result {
 	font-size: 75%;
-    width: 3.5em;
-    text-align: center;
+	width: 3.5em;
+	text-align: center;
 }
 .report-result-pass {
 	color: var(--color-st-txtgreen);
