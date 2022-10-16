@@ -55,19 +55,22 @@ class MailMessage
         }
     }
 
-    public function isCorrect()
+    public function validate()
     {
         $this->ensureAttachment();
-        if ($this->attachments_cnt === 1) {
-            $bytes = $this->attachment->size();
-            if ($bytes >= 50 && $bytes <= 1 * 1024 * 1024) {
-                $ext = $this->attachment->extension();
-                if ($ext === 'zip' || $ext === 'gz' || $ext === 'xml') {
-                    return true;
-                }
-            }
+        if ($this->attachments_cnt !== 1) {
+            throw new Exception('Attachment count is not valid (' . $this->attachments_cnt . ')');
         }
-        return false;
+
+        $bytes = $this->attachment->size();
+        if ($bytes < 50 || $bytes > 1 * 1024 * 1024) {
+            throw new Exception('Attachment filesize is not valid (' . $bytes . ' bytes)');
+        }
+
+        $mime_type = $this->attachment->mime_type();
+        if (!in_array($mime_type, ['application/zip', 'application/gzip', 'text/xml'])) {
+            throw new Exception('Attachment file type is not valid (' . $mime_type . ')');
+        }
     }
 
     public function attachment()

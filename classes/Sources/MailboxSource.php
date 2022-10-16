@@ -31,6 +31,7 @@
 
 namespace Liuch\DmarcSrg\Sources;
 
+use Exception;
 use Liuch\DmarcSrg\ReportFile\ReportFile;
 
 /**
@@ -50,11 +51,13 @@ class MailboxSource extends Source
     public function current(): object
     {
         $this->msg = $this->data->message($this->list[$this->index]);
-        if (!$this->msg->isCorrect()) {
-            throw new \Exception('Incorrect email message', -1);
+        try {
+            $this->msg->validate();
+        } catch(Exception $e) {
+            throw new \Exception('Incorrect message: ' . $e->getMessage(), -1);
         }
         $att = $this->msg->attachment();
-        return ReportFile::fromStream($att->datastream(), $att->filename());
+        return ReportFile::fromStream($att->datastream(), $att->filename(), $att->mime_type());
     }
 
     /**
