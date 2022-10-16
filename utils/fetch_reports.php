@@ -195,6 +195,7 @@ if (count($problems) > 0) {
             echo '    - Date: ' . ($pr['emailed_date'] ?? '-'), PHP_EOL;
         }
     }
+    exit(1);
 }
 
 exit(0);
