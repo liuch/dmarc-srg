@@ -123,6 +123,24 @@ class ReportFetcher
                 $log = ReportLogItem::success($stype, $report, $fname, null);
             } else {
                 $log = ReportLogItem::failed($stype, $report, $fname, $err_msg);
+                if ($this->source->type() === Source::SOURCE_MAILBOX) {
+                    $msg = $this->source->mailMessage();
+                    $ov = $msg->overview();
+                    if ($ov) {
+                        if (property_exists($ov, 'from')) {
+                            $result['emailed_from'] = $ov->from;
+                        }
+                        if (property_exists($ov, 'date')) {
+                            $result['emailed_date'] = $ov->date;
+                        }
+                    }
+                }
+                if ($report) {
+                    $rd = $report->get();
+                    if (isset($rd['external_id'])) {
+                        $result['report_id'] = $rd['external_id'];
+                    }
+                }
             }
             $log->save();
             unset($report);

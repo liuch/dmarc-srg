@@ -33,16 +33,24 @@ class ReportFile
     private $gzcutfilter = null;
     private $gzinflatefilter = null;
     private static $filters = [];
+    private static $ext_mime_map = [
+        'xml' => 'text/xml',
+        'gz' => 'application/gzip',
+        'zip' => 'application/zip'
+    ];
 
-    private function __construct($filename, $type, $fd)
+    private function __construct($filename, $type = null, $fd = null, $remove = false, $filepath = null)
     {
         $this->filename = $filename;
-        $this->type = $type;
+        $this->type = $type ?? self::getMimeType($filename, $fd);
+        $this->remove = $remove;
+        $this->filepath = $filepath;
+
         switch ($this->type) {
-            case 'gz':
+            case 'application/gzip':
                 $this->fd = $fd;
                 break;
-            case 'zip':
+            case 'application/zip':
                 if ($fd) {
                     $tmpfname = tempnam(sys_get_temp_dir(), 'dmarc_');
                     if ($tmpfname === false) {
@@ -62,7 +70,7 @@ class ReportFile
     public function __destruct()
     {
         if ($this->fd) {
-            if ($this->type === 'gz' && !$this->filepath) {
+            if ($this->type === 'application/gzip' && !$this->filepath) {
                 $this->enableGzFilter(false);
             }
             gzclose($this->fd);
@@ -75,24 +83,36 @@ class ReportFile
         }
     }
 
+    public static function getMimeType($filename, $fd = null)
+    {
+        if (function_exists('mime_content_type')) {
+            return mime_content_type($fd ?? $filename);
+        }
+
+        $ext = pathinfo(basename($filename), PATHINFO_EXTENSION);
+        return array_key_exists($ext, self::$ext_mime_map) ?
+            self::$ext_mime_map[$ext] :
+            'application/octet-stream';
+    }
+
     public static function fromFile($filepath, $filename = null, $remove = false)
     {
         if (!is_file($filepath)) {
             throw new \Exception('ReportFile: it is not a file', -1);
         }
-        $fname = $filename ? basename($filename) : basename($filepath);
-        $type = pathinfo($fname, PATHINFO_EXTENSION);
-        $rf = new ReportFile($fname, $type, null);
-        $rf->remove = $remove;
-        $rf->filepath = $filepath;
-        return $rf;
+
+        return new ReportFile(
+            $filename ? basename($filename) : basename($filepath),
+            null,
+            null,
+            $remove,
+            $filepath
+        );
     }
 
-    public static function fromStream($fd, $filename)
+    public static function fromStream($fd, $filename, $type)
     {
-        $type = pathinfo($filename, PATHINFO_EXTENSION);
-        $rf = new ReportFile($filename, $type, $fd);
-        return $rf;
+        return new ReportFile($filename, $type, $fd);
     }
 
     public function filename()
@@ -105,7 +125,7 @@ class ReportFile
         if (!$this->fd) {
             $fd = null;
             switch ($this->type) {
-                case 'zip':
+                case 'application/zip':
                     $this->zip = new \ZipArchive();
                     $this->zip->open($this->filepath);
                     if ($this->zip->count() !== 1) {
@@ -128,7 +148,7 @@ class ReportFile
             }
             $this->fd = $fd;
         }
-        if ($this->type === 'gz' && !$this->filepath) {
+        if ($this->type === 'application/gzip' && !$this->filepath) {
             ReportFile::ensureRegisterFilter(
                 'report_gzfile_cut_filter',
                 'Liuch\DmarcSrg\ReportFile\ReportGZFileCutFilter'
