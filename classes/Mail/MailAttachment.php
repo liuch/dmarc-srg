@@ -52,10 +52,10 @@ class MailAttachment
         }
     }
 
-    public function mime_type()
+    public function mimeType()
     {
         return is_null($this->mime_type) ?
-            ($this->mime_type = ReportFile::get_mime_type($this->filename, $this->datastream())) :
+            ($this->mime_type = ReportFile::getMimeType($this->filename, $this->datastream())) :
             $this->mime_type;
     }
 
@@ -104,4 +104,3 @@ class MailAttachment
         throw new Exception('Encoding failed: Unknown encoding', -1);
     }
 }
-

@@ -67,7 +67,7 @@ class MailMessage
             throw new Exception('Attachment filesize is not valid (' . $bytes . ' bytes)');
         }
 
-        $mime_type = $this->attachment->mime_type();
+        $mime_type = $this->attachment->mimeType();
         if (!in_array($mime_type, ['application/zip', 'application/gzip', 'text/xml'])) {
             throw new Exception('Attachment file type is not valid (' . $mime_type . ')');
         }

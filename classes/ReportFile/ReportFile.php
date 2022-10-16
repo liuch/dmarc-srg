@@ -39,10 +39,10 @@ class ReportFile
         'zip' => 'application/zip'
     ];
 
-    private function __construct($filename, $type = null, $fd = null, $remove = null, $filepath = null)
+    private function __construct($filename, $type = null, $fd = null, $remove = false, $filepath = null)
     {
         $this->filename = $filename;
-        $this->type = $type ?? self::get_mime_type($filename, $fd);
+        $this->type = $type ?? self::getMimeType($filename, $fd);
         $this->remove = $remove;
         $this->filepath = $filepath;
 
@@ -83,7 +83,7 @@ class ReportFile
         }
     }
 
-    public static function get_mime_type($filename, $fd = null)
+    public static function getMimeType($filename, $fd = null)
     {
         if (function_exists('mime_content_type')) {
             return mime_content_type($fd ?? $filename);
