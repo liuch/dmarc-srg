@@ -54,9 +54,10 @@ class MailAttachment
 
     public function mimeType()
     {
-        return is_null($this->mime_type) ?
-            ($this->mime_type = ReportFile::getMimeType($this->filename, $this->datastream())) :
-            $this->mime_type;
+        if (is_null($this->mime_type)) {
+            $this->mime_type = ReportFile::getMimeType($this->filename, $this->datastream());
+        }
+        return $this->mime_type;
     }
 
     public function size()
@@ -78,7 +79,7 @@ class MailAttachment
     {
         if (is_null($this->stream)) {
             $this->stream = fopen('php://temp', 'r+');
-            fwrite($this->stream, $this->tostring());
+            fwrite($this->stream, $this->toString());
         }
         rewind($this->stream);
         return $this->stream;
@@ -89,7 +90,7 @@ class MailAttachment
         return imap_fetchbody($this->conn, $this->mnumber, strval($this->number), FT_PEEK);
     }
 
-    private function tostring()
+    private function toString()
     {
         switch ($this->encoding) {
             case ENC7BIT:

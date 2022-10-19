@@ -304,7 +304,7 @@ class ReportList
             );
             $this->sqlBindValues($st, -1);
             $st->execute();
-            $cnt = $st->fetch(\PDO::FETCH_NUM)[0];
+            $cnt = intval($st->fetch(\PDO::FETCH_NUM)[0]);
             $st->closeCursor();
             if (!is_null($this->position)) {
                 $cnt -= ($this->position - 1);

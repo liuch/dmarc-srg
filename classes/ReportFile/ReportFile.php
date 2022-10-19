@@ -42,7 +42,7 @@ class ReportFile
     private function __construct($filename, $type = null, $fd = null, $remove = false, $filepath = null)
     {
         $this->filename = $filename;
-        $this->type = $type ?? self::getMimeType($filename, $fd);
+        $this->type = $type ?? self::getMimeType($filename, $fd, $filepath);
         $this->remove = $remove;
         $this->filepath = $filepath;
 
@@ -83,16 +83,19 @@ class ReportFile
         }
     }
 
-    public static function getMimeType($filename, $fd = null)
+    public static function getMimeType($filename, $fd = null, $filepath = null)
     {
         if (function_exists('mime_content_type')) {
-            return mime_content_type($fd ?? $filename);
+            if ($fd && ($res = mime_content_type($fd))) {
+                return $res;
+            }
+            if ($filepath && ($res = mime_content_type($filepath))) {
+                return $res;
+            }
         }
 
         $ext = pathinfo(basename($filename), PATHINFO_EXTENSION);
-        return array_key_exists($ext, self::$ext_mime_map) ?
-            self::$ext_mime_map[$ext] :
-            'application/octet-stream';
+        return self::$ext_mime_map[$ext] ?? 'application/octet-stream';
     }
 
     public static function fromFile($filepath, $filename = null, $remove = false)

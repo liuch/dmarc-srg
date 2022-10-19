@@ -79,6 +79,7 @@ try {
     }
 } catch (\Exception $e) {
     echo $e->getMessage() . ' (' . $e->getCode() . ')';
+    exit(1);
 }
 
 exit(0);
