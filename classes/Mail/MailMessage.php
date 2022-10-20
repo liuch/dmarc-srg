@@ -124,7 +124,7 @@ class MailMessage
         ];
     }
 
-    private function getAttribute($params, $name)
+    private function getAttribute(&$params, $name)
     {
         // need to check all objects as imap_fetchstructure
         // returns multiple objects with the same attribute name,
