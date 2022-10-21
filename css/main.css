@@ -31,6 +31,8 @@
 		--color-nt-warning:  #ff8;
 		--color-nt-inform:   #8f8;
 		--color-sh-default:  rgba(0,0,0,0.5);
+		--color-lk-default:  #00e;
+		--color-lk-visited:  #551a8b;
 	}
 }
 @media (prefers-color-scheme: dark) {
@@ -66,6 +68,8 @@
 		--color-nt-warning:  #e7a100;
 		--color-nt-inform:   #3fb950;
 		--color-sh-default:  rgba(255,255,255,0.3);
+		--color-lk-default:  #0050c0;
+		--color-lk-visited:  #606090;
 	}
 }
 
@@ -105,6 +109,12 @@ button:disabled, select:disabled, textarea:disabled, input:disabled {
 }
 textarea, input {
 	background-color: var(--color-bg-input);
+}
+a {
+	color: var(--color-lk-default);
+}
+a:visited {
+	color: var(--color-lk-visited);
 }
 h1 {
 	font-size: 1.4em;
@@ -604,6 +614,7 @@ textarea.description {
 	position: relative;
 	display: inline-block;
 	padding: 0.7em 1.5em;
+	color: var(--color-fg-default);
 	background-color: var(--color-bg-button);
 	border: solid 0.07rem #888;
 	border-radius: 1.8em;
