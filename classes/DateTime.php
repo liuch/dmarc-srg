@@ -36,7 +36,7 @@ namespace Liuch\DmarcSrg;
  */
 class DateTime extends \DateTime implements \JsonSerializable
 {
-    public function jsonSerialize()
+    public function jsonSerialize(): string
     {
         return $this->format(\DateTime::ATOM);
     }
