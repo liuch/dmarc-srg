@@ -31,13 +31,40 @@
 
 namespace Liuch\DmarcSrg;
 
+use Liuch\DmarcSrg\Log\LoggerInterface;
+use Liuch\DmarcSrg\Log\LoggerAwareInterface;
 use Liuch\DmarcSrg\Exception\SoftException;
 
 /**
  * Uncaught exception handler
  */
-class ErrorHandler
+class ErrorHandler implements LoggerAwareInterface
 {
+    private static $instance = null;
+
+    private $logger = null;
+
+    /**
+     * Class constructor. Instances should not be created directly
+     * to prevent creating multiple class instances.
+     */
+    private function __construct()
+    {
+    }
+
+    /**
+     * Returns an instance of the class.
+     *
+     * @return self
+     */
+    public static function instance()
+    {
+        if (is_null(self::$instance)) {
+            self::$instance = new ErrorHandler();
+        }
+        return self::$instance;
+    }
+
     /**
      * Handle uncaught exceptions. Used by set_exception_handler and set_error_handler functions
      *
@@ -45,9 +72,13 @@ class ErrorHandler
      *
      * @return void
      */
-    public static function handleException(\Throwable $e): void
+    public function handleException(\Throwable $e): void
     {
         global $debug;
+
+        if ($this->logger) {
+            $this->logger->error(strval($e));
+        }
 
         if (php_sapi_name() === 'cli') {
             echo self::getText($e, $debug);
@@ -85,6 +116,22 @@ class ErrorHandler
         global $debug;
 
         return self::getText($e, $debug);
+    }
+
+    /**
+     * Sets a logger to log uncaught exceptions and errors
+     */
+    public function setLogger(LoggerInterface $logger): void
+    {
+        $this->logger = $logger;
+    }
+
+    /**
+     * Returns the current logger
+     */
+    public static function logger()
+    {
+        return self::instance()->logger;
     }
 
     private static function getResult(\Throwable $e, int $debug): array

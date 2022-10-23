@@ -31,6 +31,7 @@
 
 namespace Liuch\DmarcSrg\Sources;
 
+use Liuch\DmarcSrg\ErrorHandler;
 use Liuch\DmarcSrg\ReportFile\ReportFile;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\RuntimeException;
@@ -120,7 +121,9 @@ class DirectorySource extends Source
         try {
             unlink($this->list[$this->index]);
         } catch (\ErrorException $e) {
-            throw new RuntimeException("Error deleting file from directory {$this->path}", -1, $e);
+            $error_message = "Error deleting file from directory {$this->path}";
+            ErrorHandler::logger()->error($error_message);
+            throw new RuntimeException($error_message, -1, $e);
         }
     }
 
@@ -136,18 +139,23 @@ class DirectorySource extends Source
             try {
                 mkdir($fdir);
             } catch (\ErrorException $e) {
-                throw new RuntimeException("Error creating directory {$fdir}/", -1, $e);
+                $e = new RuntimeException("Error creating directory {$fdir}/", -1, $e);
+                ErrorHandler::logger()->error(strval($e));
+                throw $e;
             }
             try {
                 chmod($fdir, 0700);
             } catch (\ErrorException $e) {
+                ErrorHandler::logger()->error(strval($e));
             }
         }
         $file = $this->list[$this->index];
         try {
             rename($file, $fdir . '/' . basename($file));
         } catch (\ErrorException $e) {
-            throw new RuntimeException("Error moving file to directory {$fdir}/", -1, $e);
+            $e = new RuntimeException("Error moving file to directory {$fdir}/", -1, $e);
+            ErrorHandler::logger()->error(strval($e));
+            throw $e;
         }
     }
 

@@ -83,27 +83,37 @@ class MailBox
 
     public function __destruct()
     {
+        self::resetErrorStack();
         if (!is_null($this->conn)) {
             try {
                 if ($this->expunge) {
-                    @imap_expunge($this->conn);
+                    imap_expunge($this->conn);
                 }
-                @imap_close($this->conn);
-            } catch (\Exception $e) {
-                $this->resetErrorStack();
-                throw $e;
+            } catch (\ErrorException $e) {
             }
+            $this->ensureErrorLog('imap_expunge');
+
+            try {
+                imap_close($this->conn);
+            } catch (\ErrorException $e) {
+            }
+            $this->ensureErrorLog('imap_close');
         }
     }
 
     public function childMailbox(string $mailbox_name)
     {
         $this->ensureConnection();
-        $mb_list = imap_list(
-            $this->conn,
-            \imap_utf8_to_mutf7($this->server),
-            \imap_utf8_to_mutf7($this->mbox) . $this->delim . \imap_utf8_to_mutf7($mailbox_name)
-        );
+        try {
+            $mb_list = imap_list(
+                $this->conn,
+                \imap_utf8_to_mutf7($this->server),
+                \imap_utf8_to_mutf7($this->mbox) . $this->delim . \imap_utf8_to_mutf7($mailbox_name)
+            );
+        } catch (\ErrorException $e) {
+            $mb_list = false;
+        }
+        $this->ensureErrorLog('imap_list');
         if (!$mb_list) {
             return null;
         }
@@ -133,11 +143,18 @@ class MailBox
     {
         try {
             $this->ensureConnection();
-            $res = @imap_status($this->conn, \imap_utf8_to_mutf7($this->server . $this->mbox), SA_MESSAGES | SA_UNSEEN);
-            if ($res === false) {
-                $err_msg = imap_last_error();
-                $this->resetErrorStack();
-                throw new MailboxException($err_msg);
+            try {
+                $res = imap_status(
+                    $this->conn,
+                    \imap_utf8_to_mutf7($this->server . $this->mbox),
+                    SA_MESSAGES | SA_UNSEEN
+                );
+            } catch (\ErrorException $e) {
+                $res = false;
+            }
+            $error_message = $this->ensureErrorLog();
+            if (!$res) {
+                throw new MailboxException($error_message ?? 'Failed to get the mail box status');
             }
         } catch (MailboxException $e) {
             return ErrorHandler::exceptionResult($e);
@@ -155,14 +172,21 @@ class MailBox
     public function search($criteria)
     {
         $this->ensureConnection();
-        $res = @imap_search($this->conn, $criteria);
+        try {
+            $res = imap_search($this->conn, $criteria);
+        } catch (\ErrorException $e) {
+            $res = false;
+        }
+        $error_message = $this->ensureErrorLog('imap_search');
         if ($res === false) {
-            $err_msg = imap_last_error();
-            if (!$err_msg) {
+            if (!$error_message) {
                 return [];
             }
-            $this->resetErrorStack();
-            throw new MailboxException($err_msg);
+            throw new MailboxException(
+                'Failed to search email messages',
+                -1,
+                new \ErrorException($error_message)
+            );
         }
         return $res;
     }
@@ -170,14 +194,21 @@ class MailBox
     public function sort($criteria, $search_criteria, $reverse)
     {
         $this->ensureConnection();
-        $res = @imap_sort($this->conn, $criteria, $reverse ? 1 : 0, SE_NOPREFETCH, $search_criteria);
+        try {
+            $res = imap_sort($this->conn, $criteria, $reverse ? 1 : 0, SE_NOPREFETCH, $search_criteria);
+        } catch (\ErrorException $e) {
+            $res = false;
+        }
+        $error_message = $this->ensureErrorLog('imap_sort');
         if ($res === false) {
-            $err_msg = imap_last_error();
-            if (!$err_msg) {
+            if (!$error_message) {
                 return [];
             }
-            $this->resetErrorStack();
-            throw new MailboxException($err_msg);
+            throw new MailboxException(
+                'Failed to sort email messages',
+                -1,
+                new \ErrorException($error_message)
+            );
         }
         return $res;
     }
@@ -193,26 +224,58 @@ class MailBox
         $srv = \imap_utf8_to_mutf7($this->server);
         $mbo = \imap_utf8_to_mutf7($this->mbox);
         $this->ensureConnection();
-        $mb_list = @imap_list($this->conn, $srv, $mbo . $this->delim . $mbn);
-        if (!$mb_list) {
-            $new_mailbox = $srv . $mbo . $this->delim . $mbn;
-            if (!@imap_createmailbox($this->conn, $new_mailbox)) {
-                $this->resetErrorStack();
-                throw new MailboxException('Failed to create a new mailbox');
-            }
-            @imap_subscribe($this->conn, $new_mailbox);
-            $this->resetErrorStack();
+        try {
+            $mb_list = imap_list($this->conn, $srv, $mbo . $this->delim . $mbn);
+        } catch (\ErrorException $e) {
+            $mb_list = false;
         }
+        $error_message = $this->ensureErrorLog('imap_list');
+        if ($mb_list === false) {
+            throw new MailboxException(
+                'Failed to get the list of mailboxes',
+                -1,
+                new \ErrorException($error_message)
+            );
+        }
+
+        $new_mailbox = $srv . $mbo . $this->delim . $mbn;
+        try {
+            $res = imap_createmailbox($this->conn, $new_mailbox);
+        } catch (\ErrorException $e) {
+            $res = false;
+        }
+        $error_message = $this->ensureErrorLog('imap_createmailbox');
+        if (!$res) {
+            throw new MailboxException(
+                'Failed to create a new mailbox',
+                -1,
+                new \ErrorException($error_message)
+            );
+        }
+
+        try {
+            imap_subscribe($this->conn, $new_mailbox);
+        } catch (\ErrorException $e) {
+        }
+        $this->ensureErrorLog('imap_subscribe');
     }
 
     public function moveMessage($number, $mailbox_name)
     {
         $this->ensureConnection();
         $target = \imap_utf8_to_mutf7($this->mbox) . $this->delim . \imap_utf8_to_mutf7($mailbox_name);
-        if (!@imap_mail_move($this->conn, strval($number), $target)) {
-            $err_str = imap_last_error();
-            $this->resetErrorStack();
-            throw new MailboxException("Failed to move a message: {$err_str}");
+        try {
+            $res = imap_mail_move($this->conn, strval($number), $target);
+        } catch (\ErrorException $e) {
+            $res = false;
+        }
+        $error_message = $this->ensureErrorLog('imap_mail_move');
+        if (!$res) {
+            throw new MailboxException(
+                'Failed to move a message',
+                -1,
+                new \ErrorException($error_message)
+            );
         }
         $this->expunge = true;
     }
@@ -220,43 +283,77 @@ class MailBox
     public function deleteMessage($number)
     {
         $this->ensureConnection();
-        @imap_delete($this->conn, strval($number));
+        try {
+            imap_delete($this->conn, strval($number));
+        } catch (\ErrorException $e) {
+        }
+        $this->ensureErrorLog('imap_delete');
         $this->expunge = true;
+    }
+
+    public static function resetErrorStack()
+    {
+        imap_errors();
+        imap_alerts();
     }
 
     private function ensureConnection()
     {
         if (is_null($this->conn)) {
-            $err_msg = null;
+            $error_message = null;
             $srv = \imap_utf8_to_mutf7($this->server);
-            $this->conn = @imap_open($srv, $this->uname, $this->passw, OP_HALFOPEN);
-            if ($this->conn !== false) {
+            try {
+                $this->conn = imap_open($srv, $this->uname, $this->passw, OP_HALFOPEN);
+            } catch (\ErrorException $e) {
+                $this->conn = null;
+            }
+            if ($this->conn) {
                 $mbx = \imap_utf8_to_mutf7($this->mbox);
-                $mb_list = @imap_getmailboxes($this->conn, $srv, $mbx);
+                try {
+                    $mb_list = imap_getmailboxes($this->conn, $srv, $mbx);
+                } catch (\ErrorException $e) {
+                    $mb_list = null;
+                }
                 if ($mb_list && count($mb_list) === 1) {
                     $this->delim = $mb_list[0]->delimiter ?? '/';
-                    if (@imap_reopen($this->conn, $srv . $mbx)) {
-                        return;
+                    try {
+                        if (imap_reopen($this->conn, $srv . $mbx)) {
+                            return;
+                        }
+                    } catch (\ErrorException $e) {
                     }
                 } else {
-                    $err_msg = "Mailbox `{$this->mbox}` not found";
+                    $error_message = "Mailbox `{$this->mbox}` not found";
                 }
             }
-            if (!$err_msg) {
-                $err_msg = imap_last_error();
+            if (!$error_message) {
+                $error_message = imap_last_error();
+                if (!$error_message) {
+                    $error_message = 'Cannot connect to the mail server';
+                }
             }
-            $this->resetErrorStack();
+            ErrorHandler::logger()->error("IMAP error: {$error_message}");
+            self::resetErrorStack();
             if ($this->conn) {
-                @imap_close($this->conn);
+                try {
+                    imap_close($this->conn);
+                } catch (\ErrorException $e) {
+                }
+                $this->ensureErrorLog('imap_close');
             }
             $this->conn = null;
-            throw new MailboxException($err_msg ?? 'Cannot connect to the mail server');
+            throw new MailboxException($error_message);
         }
     }
 
-    private function resetErrorStack()
+    private function ensureErrorLog(string $prefix = 'IMAP error')
     {
-        imap_errors();
-        imap_alerts();
+        if ($error_message = imap_last_error()) {
+            self::resetErrorStack();
+            $error_message = "{$prefix}: {$error_message}";
+            ErrorHandler::logger()->error($error_message);
+            return $error_message;
+        }
+        return null;
     }
 }

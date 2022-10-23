@@ -24,6 +24,7 @@ namespace Liuch\DmarcSrg\Report;
 
 use Liuch\DmarcSrg\Common;
 use Liuch\DmarcSrg\DateTime;
+use Liuch\DmarcSrg\ErrorHandler;
 use Liuch\DmarcSrg\Domains\Domain;
 use Liuch\DmarcSrg\Domains\DomainList;
 use Liuch\DmarcSrg\Database\Database;
@@ -372,8 +373,10 @@ class Report
             try {
                 $add = !empty(self::$allowed_domains) && preg_match(self::$allowed_domains, $fqdn) === 1;
             } catch (\ErrorException $e) {
-                // The regular expression in the config file is wrong
                 $add = false;
+                ErrorHandler::logger()->warning(
+                    'The allow_domains parameter in the settings has an incorrect regular expression value.'
+                );
             }
             if (!$add) {
                 throw new SoftException('Failed to add an incoming report: unknown domain');
