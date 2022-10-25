@@ -37,7 +37,7 @@ class ReportFile
     private static $filters = [];
     private static $ext_mime_map = [
         'xml' => 'text/xml',
-        'gz' => 'application/gzip',
+        'gz'  => 'application/gzip',
         'zip' => 'application/zip'
     ];
 
@@ -50,6 +50,7 @@ class ReportFile
 
         switch ($this->type) {
             case 'application/gzip':
+            case 'application/x-gzip':
                 $this->fd = $fd;
                 break;
             case 'application/zip':
@@ -72,7 +73,7 @@ class ReportFile
     public function __destruct()
     {
         if ($this->fd) {
-            if ($this->type === 'application/gzip' && !$this->filepath) {
+            if ($this->isGzipStream()) {
                 $this->enableGzFilter(false);
             }
             gzclose($this->fd);
@@ -153,7 +154,7 @@ class ReportFile
             }
             $this->fd = $fd;
         }
-        if ($this->type === 'application/gzip' && !$this->filepath) {
+        if ($this->isGzipStream()) {
             ReportFile::ensureRegisterFilter(
                 'report_gzfile_cut_filter',
                 'Liuch\DmarcSrg\ReportFile\ReportGZFileCutFilter'
@@ -184,5 +185,10 @@ class ReportFile
                 stream_filter_remove($this->gzcutfilter);
             }
         }
+    }
+
+    private function isGzipStream(): bool
+    {
+        return (in_array($this->type, [ 'application/gzip', 'application/x-gzip' ]) && !$this->filepath);
     }
 }

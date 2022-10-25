@@ -79,7 +79,7 @@ class MailMessage
         }
 
         $mime_type = $this->attachment->mimeType();
-        if (!in_array($mime_type, ['application/zip', 'application/gzip', 'text/xml'])) {
+        if (!in_array($mime_type, [ 'application/zip', 'application/gzip', 'application/x-gzip', 'text/xml' ])) {
             throw new SoftException("Attachment file type is not valid ({$mime_type})");
         }
     }
