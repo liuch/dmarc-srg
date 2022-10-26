@@ -230,7 +230,7 @@ class MailBox
             $mb_list = false;
         }
         $error_message = $this->ensureErrorLog('imap_list');
-        if ($mb_list === false) {
+        if (empty($mb_list)) {
             if ($error_message) {
                 throw new MailboxException(
                     'Failed to get the list of mailboxes',
@@ -238,28 +238,28 @@ class MailBox
                     new \ErrorException($error_message)
                 );
             }
-        }
 
-        $new_mailbox = $srv . $mbo . $this->delim . $mbn;
-        try {
-            $res = imap_createmailbox($this->conn, $new_mailbox);
-        } catch (\ErrorException $e) {
-            $res = false;
-        }
-        $error_message = $this->ensureErrorLog('imap_createmailbox');
-        if (!$res) {
-            throw new MailboxException(
-                'Failed to create a new mailbox',
-                -1,
-                new \ErrorException($error_message)
-            );
-        }
+            $new_mailbox = "{$srv}{$mbo}{$this->delim}{$mbn}";
+            try {
+                $res = imap_createmailbox($this->conn, $new_mailbox);
+            } catch (\ErrorException $e) {
+                $res = false;
+            }
+            $error_message = $this->ensureErrorLog('imap_createmailbox');
+            if (!$res) {
+                throw new MailboxException(
+                    'Failed to create a new mailbox',
+                    -1,
+                    new \ErrorException($error_message ?? 'Unknown')
+                );
+            }
 
-        try {
-            imap_subscribe($this->conn, $new_mailbox);
-        } catch (\ErrorException $e) {
+            try {
+                imap_subscribe($this->conn, $new_mailbox);
+            } catch (\ErrorException $e) {
+            }
+            $this->ensureErrorLog('imap_subscribe');
         }
-        $this->ensureErrorLog('imap_subscribe');
     }
 
     public function moveMessage($number, $mailbox_name)
@@ -276,7 +276,7 @@ class MailBox
             throw new MailboxException(
                 'Failed to move a message',
                 -1,
-                new \ErrorException($error_message)
+                new \ErrorException($error_message ?? 'Unknown')
             );
         }
         $this->expunge = true;
