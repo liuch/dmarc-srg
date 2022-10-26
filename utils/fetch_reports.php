@@ -46,6 +46,7 @@ namespace Liuch\DmarcSrg;
 
 use Liuch\DmarcSrg\Mail\MailBoxes;
 use Liuch\DmarcSrg\Report\ReportFetcher;
+use Liuch\DmarcSrg\Sources\Source;
 use Liuch\DmarcSrg\Sources\MailboxSource;
 use Liuch\DmarcSrg\Sources\DirectorySource;
 use Liuch\DmarcSrg\Directories\DirectoryList;
@@ -160,10 +161,14 @@ try {
             }
             if (count($messages) > 0) {
                 $pr = [ 'state' => $state, 'messages' => $messages ];
-                foreach ([ 'report_id', 'emailed_from', 'emailed_date'] as $it) {
+                foreach ([ 'report_id', 'emailed_from', 'emailed_date' ] as $it) {
                     if (isset($res[$it])) {
                         $pr[$it] = $res[$it];
                     }
+                }
+                if ($source->type() === Source::SOURCE_MAILBOX) {
+                    $cont = $source->container();
+                    $pr['mailbox'] = $cont->mailbox() . ' (' . $cont->name() . ')';
                 }
                 $problems[] = $pr;
             }
@@ -200,10 +205,11 @@ if (count($problems) > 0) {
         if (isset($pr['report_id'])) {
             echo "  Report ID: {$pr['report_id']}", PHP_EOL;
         }
-        if (isset($pr['emailed_from']) || isset($pr['emailed_date'])) {
+        if (isset($pr['emailed_from']) || isset($pr['emailed_date']) || isset($pr['mailbox'])) {
             echo '  Email message metadata:', PHP_EOL;
-            echo '    - From: ' . ($pr['emailed_from'] ?? '-'), PHP_EOL;
-            echo '    - Date: ' . ($pr['emailed_date'] ?? '-'), PHP_EOL;
+            echo '    - From:    ' . ($pr['emailed_from'] ?? '-'), PHP_EOL;
+            echo '    - Date:    ' . ($pr['emailed_date'] ?? '-'), PHP_EOL;
+            echo '    - Mailbox: ' . ($pr['mailbox'] ?? '-'), PHP_EOL;
         }
         if (!$debug_info && !empty($pr['debug_info'])) {
             $debug_info = $pr['debug_info'];

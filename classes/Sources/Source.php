@@ -87,4 +87,14 @@ abstract class Source implements \Iterator
      * @return int
      */
     abstract public function type(): int;
+
+    /**
+     * Returns the source itself that was passed to the constructor
+     *
+     * @return class
+     */
+    public function container()
+    {
+        return $this->data;
+    }
 }
