@@ -52,6 +52,7 @@ namespace Liuch\DmarcSrg;
 
 use Liuch\DmarcSrg\Domains\Domain;
 use Liuch\DmarcSrg\Report\SummaryReport;
+use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\RuntimeException;
 
 require 'init.php';
@@ -81,19 +82,17 @@ for ($i = 1; $i < count($argv); ++$i) {
     }
 }
 
-if (!$domain) {
-    echo 'Error: Parameter "domain" is not specified' . PHP_EOL;
-    exit(1);
-}
-if (!$period) {
-    echo 'Error: Parameter "period" is not specified' . PHP_EOL;
-    exit(1);
-}
-if (!$emailto) {
-    $emailto = $mailer['default'];
-}
-
 try {
+    if (!$domain) {
+        throw new SoftException('Parameter "domain" is not specified');
+    }
+    if (!$period) {
+        throw new SoftException('Parameter "period" is not specified');
+    }
+    if (!$emailto) {
+        $emailto = $mailer['default'];
+    }
+
     $rep = new SummaryReport(new Domain($domain), $period);
     $body = $rep->text();
     $subject = $rep->subject();
@@ -110,6 +109,9 @@ try {
         implode("\r\n", $rep->text()),
         $headers
     );
+} catch (SoftException $e) {
+    echo 'Error: ' . $e->getMessage() . PHP_EOL;
+    exit(1);
 } catch (RuntimeException $e) {
     echo ErrorHandler::exceptionText($e);
     exit(1);

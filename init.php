@@ -48,5 +48,5 @@ set_error_handler(function (int $severity, string $message, string $file, int $l
     if (error_reporting() === 0) {
         return false;
     }
-    throw new \ErrorException($message, -1, $severity, $file, $line);
+    throw new \ErrorException($message ?? 'Unknown', -1, $severity, $file, $line);
 });
