@@ -231,11 +231,13 @@ class MailBox
         }
         $error_message = $this->ensureErrorLog('imap_list');
         if ($mb_list === false) {
-            throw new MailboxException(
-                'Failed to get the list of mailboxes',
-                -1,
-                new \ErrorException($error_message)
-            );
+            if ($error_message) {
+                throw new MailboxException(
+                    'Failed to get the list of mailboxes',
+                    -1,
+                    new \ErrorException($error_message)
+                );
+            }
         }
 
         $new_mailbox = $srv . $mbo . $this->delim . $mbn;
