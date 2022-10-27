@@ -222,11 +222,7 @@ class Report {
 				throw new Error("Failed to fetch report data");
 			return resp.json();
 		}).then(function(data) {
-			if (data.error_code !== undefined && data.error_code !== 0) {
-				let err = new Error(data.message || "Unknown error");
-				err.error_code = data.error_code;
-				throw err;
-			}
+			Common.checkResult(data);
 			that._data = data.report;
 			that._error = false;
 			that._error_message = null;
