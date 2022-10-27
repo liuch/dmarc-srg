@@ -96,7 +96,7 @@ class Report
                 $this->data['org_name']     = $res[4];
                 $this->data['email']        = $res[5];
                 $this->data['extra_contact_info'] = $res[6];
-                $this->data['error_string'] = json_decode($res[7], true);
+                $this->data['error_string'] = json_decode($res[7] ?? '', true);
                 $this->data['policy']       = [
                     'adkim' => $res[8],
                     'aspf'  => $res[9],
@@ -122,9 +122,9 @@ class Report
                         'ip'            => inet_ntop($res[1]),
                         'count'         => intval($res[2]),
                         'disposition'   => Common::$disposition[$res[3]],
-                        'reason'        => json_decode($res[4], true),
-                        'dkim_auth'     => json_decode($res[5], true),
-                        'spf_auth'      => json_decode($res[6], true),
+                        'reason'        => json_decode($res[4] ?? '', true),
+                        'dkim_auth'     => json_decode($res[5] ?? '', true),
+                        'spf_auth'      => json_decode($res[6] ?? '', true),
                         'dkim_align'    => Common::$align_res[$res[7]],
                         'spf_align'     => Common::$align_res[$res[8]],
                         'envelope_to'   => $res[9],
