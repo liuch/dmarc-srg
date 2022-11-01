@@ -374,9 +374,10 @@ class ReportList
      */
     public static function getFilterList(): array
     {
+        $res = [];
+
         $res['domain'] = (new DomainList())->names();
 
-        $res = [];
         $db = Database::connection();
         $rep_tn = Database::tablePrefix('reports');
         try {
