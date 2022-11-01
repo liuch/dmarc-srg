@@ -23,6 +23,7 @@
 namespace Liuch\DmarcSrg\Mail;
 
 use Liuch\DmarcSrg\ErrorHandler;
+use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\LogicException;
 use Liuch\DmarcSrg\Exception\MailboxException;
 
@@ -36,6 +37,7 @@ class MailBox
     private $uname;
     private $passw;
     private $delim;
+    private $attrs;
     private $expunge;
 
     public function __construct($params)
@@ -156,6 +158,12 @@ class MailBox
             if (!$res) {
                 throw new MailboxException($error_message ?? 'Failed to get the mail box status');
             }
+
+            if ($this->attrs & \LATT_NOSELECT) {
+                throw new MailboxException('The resource is not a mailbox');
+            }
+
+            $this->checkRights();
         } catch (MailboxException $e) {
             return ErrorHandler::exceptionResult($e);
         }
@@ -318,6 +326,7 @@ class MailBox
                 }
                 if ($mb_list && count($mb_list) === 1) {
                     $this->delim = $mb_list[0]->delimiter ?? '/';
+                    $this->attrs = $mb_list[0]->attributes ?? 0;
                     try {
                         if (imap_reopen($this->conn, $srv . $mbx)) {
                             return;
@@ -357,5 +366,52 @@ class MailBox
             return $error_message;
         }
         return null;
+    }
+
+    private function checkRights(): void
+    {
+        if ($this->attrs & \LATT_NOINFERIORS) {
+            throw new SoftException('The mailbox may not have any children mailboxes');
+        }
+
+        if (!function_exists('imap_getacl')) {
+            return;
+        }
+
+        $mbox = \imap_utf8_to_mutf7($this->mbox);
+        try {
+            $acls = imap_getacl($this->conn, $mbox);
+        } catch (\ErrorException $e) {
+            // It's not possible to get the ACLs information
+            $acls = false;
+        }
+        $this->ensureErrorLog('imap_getacl');
+        if ($acls !== false) {
+            $needed_rights_map = [
+                'l' => 'LOOKUP',
+                'r' => 'READ',
+                's' => 'WRITE-SEEN',
+                't' => 'WRITE-DELETE',
+                'k' => 'CREATE'
+            ];
+            $result = [];
+            $needed_rights = array_keys($needed_rights_map);
+            foreach ([ "#{$this->uname}", '#authenticated', '#anyone' ] as $identifier) {
+                if (isset($acls[$identifier])) {
+                    $rights = $acls[$identifier];
+                    foreach ($needed_rights as $r) {
+                        if (!str_contains($rights, $r)) {
+                            $result[] = $needed_rights_map[$r];
+                        }
+                    }
+                    break;
+                }
+            }
+            if (count($result) > 0) {
+                throw new SoftException(
+                    'Not enough rights. Additionally, these rights are required: ' . implode(', ', $result)
+                );
+            }
+        }
     }
 }
