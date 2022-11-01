@@ -379,7 +379,7 @@ class Report
                 );
             }
             if (!$add) {
-                throw new SoftException('Failed to add an incoming report: unknown domain');
+                throw new SoftException('Failed to add an incoming report: unknown domain: ' . $fqdn);
             }
         }
 
