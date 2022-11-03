@@ -38,10 +38,10 @@ date_default_timezone_set('GMT');
 
 require_once('config/conf.php');
 
-Liuch\DmarcSrg\ErrorHandler::instance()->setLogger(new Liuch\DmarcSrg\Log\PhpSystemLogger());
+Liuch\DmarcSrg\Core::instance()->errorHandler()->setLogger(new Liuch\DmarcSrg\Log\PhpSystemLogger());
 
 set_exception_handler(function ($e) {
-    Liuch\DmarcSrg\ErrorHandler::instance()->handleException($e);
+    Liuch\DmarcSrg\Core::instance()->errorHandler()->handleException($e);
 });
 
 set_error_handler(function (int $severity, string $message, string $file, int $line) {

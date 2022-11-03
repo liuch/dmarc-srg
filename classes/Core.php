@@ -42,9 +42,12 @@ class Core
     public const APP_VERSION = '1.7';
     private const SESSION_NAME = 'session';
     private static $html_file_name = 'index.html';
+
+    private $err_handler = null;
     private static $v_auth = null;
     private static $v_status = null;
     private static $v_admin = null;
+    private static $instance = null;
 
     /**
      * Returns the method of the current http request.
@@ -77,7 +80,7 @@ class Core
      *
      * @return int|bool User id or false in case of error.
      */
-    public static function userId($id = null)
+    public function userId($id = null)
     {
         $start_f = false;
         if ((self::cookie(self::SESSION_NAME) !== '' || $id !== null) && session_status() !== PHP_SESSION_ACTIVE) {
@@ -100,7 +103,7 @@ class Core
      *
      * @return void
      */
-    public static function destroySession(): void
+    public function destroySession(): void
     {
         if (self::cookie(self::SESSION_NAME)) {
             if (session_status() !== PHP_SESSION_ACTIVE) {
@@ -205,7 +208,7 @@ class Core
     public static function auth()
     {
         if (!self::$v_auth) {
-            self::$v_auth = new Auth();
+            self::$v_auth = new Auth(self::instance());
         }
         return self::$v_auth;
     }
@@ -218,7 +221,7 @@ class Core
     public static function status()
     {
         if (!self::$v_status) {
-            self::$v_status = new Status();
+            self::$v_status = new Status(Core::instance());
         }
         return self::$v_status;
     }
@@ -234,6 +237,42 @@ class Core
             self::$v_admin = new Admin();
         }
         return self::$v_admin;
+    }
+
+    /**
+     * Returns a singleton of the class ErrorHandler
+     *
+     * @return ErrorHandler
+     */
+    public function errorHandler()
+    {
+        if (!$this->err_handler) {
+            $this->err_handler = new ErrorHandler($this);
+        }
+        return $this->err_handler;
+    }
+
+    /**
+     * Returns the current logger.
+     * Just a proxy method to return the logger from ErrorHandler
+     *
+     * @return LoggerInterface
+     */
+    public function logger()
+    {
+        return $this->errorHandler()->logger();
+    }
+
+    /**
+     * Returns instance of the object
+     * @return self
+     */
+    public static function instance()
+    {
+        if (!self::$instance) {
+            self::$instance = new Core();
+        }
+        return self::$instance;
     }
 
     /**

@@ -31,7 +31,7 @@
 
 namespace Liuch\DmarcSrg\Sources;
 
-use Liuch\DmarcSrg\ErrorHandler;
+use Liuch\DmarcSrg\Core;
 use Liuch\DmarcSrg\ReportFile\ReportFile;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\RuntimeException;
@@ -122,7 +122,7 @@ class DirectorySource extends Source
             unlink($this->list[$this->index]);
         } catch (\ErrorException $e) {
             $error_message = "Error deleting file from directory {$this->path}";
-            ErrorHandler::logger()->error($error_message);
+            $this->logError($error_message);
             throw new RuntimeException($error_message, -1, $e);
         }
     }
@@ -140,13 +140,13 @@ class DirectorySource extends Source
                 mkdir($fdir);
             } catch (\ErrorException $e) {
                 $e = new RuntimeException("Error creating directory {$fdir}/", -1, $e);
-                ErrorHandler::logger()->error(strval($e));
+                $this->logError(strval($e));
                 throw $e;
             }
             try {
                 chmod($fdir, 0700);
             } catch (\ErrorException $e) {
-                ErrorHandler::logger()->error(strval($e));
+                $this->logError(strval($e));
             }
         }
         $file = $this->list[$this->index];
@@ -154,7 +154,7 @@ class DirectorySource extends Source
             rename($file, $fdir . '/' . basename($file));
         } catch (\ErrorException $e) {
             $e = new RuntimeException("Error moving file to directory {$fdir}/", -1, $e);
-            ErrorHandler::logger()->error(strval($e));
+            $this->logError(strval($e));
             throw $e;
         }
     }
@@ -167,5 +167,15 @@ class DirectorySource extends Source
     public function type(): int
     {
         return Source::SOURCE_DIRECTORY;
+    }
+
+    /**
+     * Logs an error message
+     *
+     * @param string $message
+     */
+    private function logError(string $message): void
+    {
+        Core::instance()->logger()->error($message);
     }
 }

@@ -38,6 +38,18 @@ use Liuch\DmarcSrg\Exception\AuthException;
  */
 class Auth
 {
+    private $core = null;
+
+    /**
+     * The constructor
+     *
+     * @param Core $core
+     */
+    public function __construct(object $core)
+    {
+        $this->core = $core;
+    }
+
     /**
      * Checks if authentication is enabled.
      *
@@ -70,7 +82,7 @@ class Auth
         if ($username !== '' || $admin['password'] === '' || !$this->isAdminPassword($password)) {
             throw new AuthException('Authentication failed. Try again');
         }
-        Core::userId(0);
+        $this->core->userId(0);
         return [
             'error_code' => 0,
             'message'    => 'Authentication succeeded'
@@ -84,7 +96,7 @@ class Auth
      */
     public function logout(): array
     {
-        Core::destroySession();
+        $this->core->destroySession();
         return [
             'error_code' => 0,
             'message'    => 'Logged out successfully'
@@ -101,8 +113,7 @@ class Auth
     public function isAllowed(): void
     {
         if ($this->isEnabled()) {
-            $user_id = Core::userId();
-            if ($user_id === false) {
+            if ($this->core->userId() === false) {
                 throw new AuthException('Authentication needed', -2);
             }
         }

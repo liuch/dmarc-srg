@@ -41,10 +41,10 @@ class Common
      * in Report and ReportList classes
      */
     public static $align_res = [ 'fail', 'unknown', 'pass' ];
+
     /**
      * This array needs for converting the the disposition result text constant to integer value and back
      * in Report and ReportList classes
      */
     public static $disposition = [ 'reject', 'quarantine', 'none' ];
 }
-

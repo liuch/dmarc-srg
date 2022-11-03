@@ -40,29 +40,17 @@ use Liuch\DmarcSrg\Exception\SoftException;
  */
 class ErrorHandler implements LoggerAwareInterface
 {
-    private static $instance = null;
-
+    private $core   = null;
     private $logger = null;
 
     /**
-     * Class constructor. Instances should not be created directly
-     * to prevent creating multiple class instances.
-     */
-    private function __construct()
-    {
-    }
-
-    /**
-     * Returns an instance of the class.
+     * The constructor
      *
-     * @return self
+     * @param Core $core
      */
-    public static function instance()
+    public function __construct(object $core)
     {
-        if (is_null(self::$instance)) {
-            self::$instance = new ErrorHandler();
-        }
-        return self::$instance;
+        $this->core = $core;
     }
 
     /**
@@ -144,7 +132,10 @@ class ErrorHandler implements LoggerAwareInterface
             'error_code' => $code,
             'message'    => $e->getMessage()
         ];
-        if ($debug && (Core::userId() !== false || php_sapi_name() === 'cli') && !($e instanceof SoftException)) {
+        if ($debug &&
+            (Core::instance()->userId() !== false || php_sapi_name() === 'cli') &&
+            !($e instanceof SoftException)
+        ) {
             $prev = $e->getPrevious();
             $res['debug_info'] = [
                 'code'    => ($prev ?? $e)->getCode(),

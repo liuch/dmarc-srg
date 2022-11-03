@@ -22,9 +22,9 @@
 
 namespace Liuch\DmarcSrg\Report;
 
+use Liuch\DmarcSrg\Core;
 use Liuch\DmarcSrg\Common;
 use Liuch\DmarcSrg\DateTime;
-use Liuch\DmarcSrg\ErrorHandler;
 use Liuch\DmarcSrg\Domains\Domain;
 use Liuch\DmarcSrg\Domains\DomainList;
 use Liuch\DmarcSrg\Database\Database;
@@ -374,7 +374,7 @@ class Report
                 $add = !empty(self::$allowed_domains) && preg_match(self::$allowed_domains, $fqdn) === 1;
             } catch (\ErrorException $e) {
                 $add = false;
-                ErrorHandler::logger()->warning(
+                Core::instance()->logger()->warning(
                     'The allow_domains parameter in the settings has an incorrect regular expression value.'
                 );
             }

@@ -22,6 +22,7 @@
 
 namespace Liuch\DmarcSrg\Mail;
 
+use Liuch\DmarcSrg\Core;
 use Liuch\DmarcSrg\ErrorHandler;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\LogicException;
@@ -343,7 +344,7 @@ class MailBox
                     $error_message = 'Cannot connect to the mail server';
                 }
             }
-            ErrorHandler::logger()->error("IMAP error: {$error_message}");
+            Core::instance()->logger()->error("IMAP error: {$error_message}");
             self::resetErrorStack();
             if ($this->conn) {
                 try {
@@ -362,7 +363,7 @@ class MailBox
         if ($error_message = imap_last_error()) {
             self::resetErrorStack();
             $error_message = "{$prefix}: {$error_message}";
-            ErrorHandler::logger()->error($error_message);
+            Core::instance()->logger()->error($error_message);
             return $error_message;
         }
         return null;

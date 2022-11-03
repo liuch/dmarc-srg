@@ -22,7 +22,7 @@
 
 namespace Liuch\DmarcSrg\Mail;
 
-use Liuch\DmarcSrg\ErrorHandler;
+use Liuch\DmarcSrg\Core;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\MailboxException;
 
@@ -46,7 +46,7 @@ class MailMessage
         $res = @imap_fetch_overview($this->conn, strval($this->number));
         if (!isset($res[0])) {
             if ($error_message = imap_last_error()) {
-                ErrorHandler::logger()->error("imap_fetch_overview failed: {$error_message}");
+                Core::instance()->logger()->error("imap_fetch_overview failed: {$error_message}");
             }
             MailBox::resetErrorStack();
             return false;
@@ -61,7 +61,7 @@ class MailMessage
                 $error_message = '?';
             }
             MailBox::resetErrorStack();
-            ErrorHandler::logger()->error("imap_setflag_full failed: {$error_message}");
+            Core::instance()->logger()->error("imap_setflag_full failed: {$error_message}");
             throw new MailboxException("Failed to make a message seen: {$error_message}");
         }
     }

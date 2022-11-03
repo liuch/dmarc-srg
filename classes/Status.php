@@ -38,6 +38,18 @@ use Liuch\DmarcSrg\Settings\SettingsList;
  */
 class Status
 {
+    private $core = null;
+
+    /**
+     * The constructor
+     *
+     * @param Core $core
+     */
+    public function __construct(object $core)
+    {
+        $this->core = $core;
+    }
+
     /**
      * Returns general state of DmarcSrg
      *
@@ -84,7 +96,7 @@ class Status
 
         $auth = null;
         if (Core::auth()->isEnabled()) {
-            $auth = Core::userId() !== false ? 'yes' : 'no';
+            $auth = $this->core->userId() !== false ? 'yes' : 'no';
         } else {
             $auth = 'disabled';
         }
