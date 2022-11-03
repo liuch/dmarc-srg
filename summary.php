@@ -70,7 +70,7 @@ if (Core::isJson() && isset($_GET['mode'])) {
             if (empty($_GET['period'])) {
                 throw new SoftException('Parameter "period" is not specified');
             }
-            $report = new SummaryReport(new Domain($_GET['domain']), $_GET['period']);
+            $report = (new SummaryReport($_GET['period']))->setDomain(new Domain($_GET['domain']));
             if (($_GET['format'] ?? '') === 'raw') {
                 $res = [ 'data' => $report->toArray() ];
             } else {

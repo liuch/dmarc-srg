@@ -39,53 +39,64 @@ use Liuch\DmarcSrg\Exception\SoftException;
  */
 class SummaryReport
 {
-    private $stat    = null;
+    private const LAST_WEEK  = -1;
+    private const LAST_MONTH = -2;
+
+    private $period  = 0;
     private $domain  = null;
+    private $stat    = null;
     private $subject = '';
 
     /**
      * Constructor
      *
-     * @param Domain $domain The domain for which the report is created
      * @param string $period The period for which the report is created
      *                       Must me one of the following values: `lastweek`, `lastmonth`, and `lastndays:N`
      *                       where N is the number of days the report is created for
      */
-    public function __construct($domain, string $period)
+    public function __construct(string $period)
     {
-        if (!$domain->exists()) {
-            throw new SoftException("Domain \"{$domain->fqdn()}\" does not exist");
-        }
-
-        $stat = null;
-        $subject = '';
         switch ($period) {
             case 'lastweek':
-                $stat = Statistics::lastWeek($domain);
+                $period  = self::LAST_WEEK;
                 $subject = ' weekly';
                 break;
             case 'lastmonth':
-                $stat = Statistics::lastMonth($domain);
+                $period  = self::LAST_MONTH;
                 $subject = ' monthly';
                 break;
             default:
+                $ndays = 0;
                 $av = explode(':', $period);
                 if (count($av) === 2 && $av[0] === 'lastndays') {
                     $ndays = intval($av[1]);
                     if ($ndays <= 0) {
                         throw new SoftException('The parameter "days" has an incorrect value');
                     }
-                    $stat = Statistics::lastNDays($domain, $ndays);
                     $subject = sprintf(' %d day%s', $ndays, ($ndays > 1 ? 's' : ''));
                 }
+                $period = $ndays;
                 break;
         }
-        if (!$stat) {
+        if (empty($subject)) {
             throw new SoftException('The parameter "period" has an incorrect value');
         }
-        $this->stat = $stat;
+        $this->period  = $period;
+        $this->subject = "DMARC{$subject} digest";
+    }
+
+    /**
+     * Binds a domain to the report
+     *
+     * @param Domain $domain The domain for which the report is created
+     *
+     * @return self
+     */
+    public function setDomain($domain)
+    {
         $this->domain = $domain;
-        $this->subject = "DMARC{$subject} digest for {$domain->fqdn()}";
+        $this->stat   = null;
+        return $this;
     }
 
     /**
@@ -95,6 +106,8 @@ class SummaryReport
      */
     public function toArray(): array
     {
+        $this->ensureData();
+
         $res = [];
         $stat = $this->stat;
         $range = $stat->range();
@@ -122,6 +135,8 @@ class SummaryReport
      */
     public function text(): array
     {
+        $this->ensureData();
+
         $res = [];
         $res[] = '# Domain: ' . $this->domain->fqdn();
 
@@ -208,5 +223,31 @@ class SummaryReport
             return '0';
         }
         return sprintf('%.0f%%(%d)', $per / $cent * 100, $per);
+    }
+
+    /**
+     * Generates the report if it has not already been done
+     *
+     * @return void
+     */
+    private function ensureData(): void
+    {
+        if (!$this->domain) {
+            throw new LogicException('No one domain was specified');
+        }
+
+        if (!$this->stat) {
+            switch ($this->period) {
+                case self::LAST_WEEK:
+                    $this->stat = Statistics::lastWeek($this->domain);
+                    break;
+                case self::LAST_MONTH:
+                    $this->stat = Statistics::lastMonth($this->domain);
+                    break;
+                default:
+                    $this->stat = Statistics::lastNDays($this->domain, $this->period);
+                    break;
+            }
+        }
     }
 }

@@ -24,7 +24,7 @@
  * This script creates a summary report and sends it by email.
  * The email addresses must be specified in the configuration file.
  * The script have two required parameters: `domain` and `period`, and one optional: `emailto`.
- * The `domain` parameter must contain FQDN
+ * The `domain` parameter must contain a domain name, a comma-separated list of domains, or `all`.
  * The `period` parameter must have one of these values:
  *   `lastmonth`   - to make a report for the last month;
  *   `lastweek`    - to make a report for the last week;
@@ -51,6 +51,7 @@
 namespace Liuch\DmarcSrg;
 
 use Liuch\DmarcSrg\Domains\Domain;
+use Liuch\DmarcSrg\Domains\DomainList;
 use Liuch\DmarcSrg\Report\SummaryReport;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\RuntimeException;
@@ -93,9 +94,45 @@ try {
         $emailto = $mailer['default'];
     }
 
-    $rep = new SummaryReport(new Domain($domain), $period);
-    $body = $rep->text();
+    if ($domain === 'all') {
+        $domains = (new DomainList())->getList()['domains'];
+    } else {
+        $domains = array_map(function ($d) {
+            return new Domain($d);
+        }, explode(',', $domain));
+    }
+
+    $rep = new SummaryReport($period);
+    $body = [];
+    $dom_cnt = count($domains);
+    for ($i = 0; $i < $dom_cnt; ++$i) {
+        $domain = $domains[$i];
+        if ($i > 0) {
+            $body[] = '-----------------------------------';
+            $body[] = '';
+        }
+
+        if ($domain->exists()) {
+            foreach ($rep->setDomain($domain)->text() as &$row) {
+                $body[] = $row;
+            }
+            unset($row);
+        } else {
+            $nf_message = "Domain \"{$domain->fqdn()}\" does not exist";
+            if ($dom_cnt === 1) {
+                throw new SoftException("Domain \"{$domain->fqdn()}\" does not exist");
+            }
+            $body[] = "# {$nf_message}";
+            $body[] = '';
+        }
+    }
+
     $subject = $rep->subject();
+    if ($dom_cnt === 1) {
+        $subject = "{$rep->subject()} for {$domain->fqdn()}";
+    } else {
+        $subject = "{$rep->subject()} for {$dom_cnt} domains";
+    }
 
     global $mailer;
     $headers = [
@@ -106,7 +143,7 @@ try {
     mail(
         $emailto,
         mb_encode_mimeheader($rep->subject(), 'UTF-8'),
-        implode("\r\n", $rep->text()),
+        implode("\r\n", $body),
         $headers
     );
 } catch (SoftException $e) {

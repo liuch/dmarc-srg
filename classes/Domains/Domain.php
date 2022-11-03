@@ -380,7 +380,7 @@ class Domain
             $res = $st->fetch(\PDO::FETCH_NUM);
             if (!$res) {
                 $this->ex_f = false;
-                throw new SoftException('There is no such domain');
+                throw new SoftException('Domain not found');
             }
             $this->id   = $res[0];
             $this->fqdn = $res[1];
