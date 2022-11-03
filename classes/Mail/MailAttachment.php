@@ -32,6 +32,9 @@ class MailAttachment
     private $bytes;
     private $number;
     private $mnumber;
+    private $encoding;
+    private $stream;
+    private $mime_type;
 
     public function __construct($conn, $params)
     {
