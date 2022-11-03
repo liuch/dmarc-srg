@@ -143,7 +143,9 @@ class SummaryReport
         $stat = $this->stat;
 
         $range = $stat->range();
-        $res[] = ' Range: ' . $range[0]->format('M d') . ' - ' . $range[1]->format('M d');
+        $cyear = (new \Datetime())->format('Y');
+        $dform = ($range[0]->format('Y') !== $cyear || $range[1]->format('Y') !== $cyear) ? 'M d Y' : 'M d';
+        $res[] = ' Range: ' . $range[0]->format($dform) . ' - ' . $range[1]->format($dform);
         $res[] = '';
 
         $summ = $stat->summary();
