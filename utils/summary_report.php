@@ -127,7 +127,6 @@ try {
         }
     }
 
-    $subject = $rep->subject();
     if ($dom_cnt === 1) {
         $subject = "{$rep->subject()} for {$domain->fqdn()}";
     } else {
@@ -142,7 +141,7 @@ try {
     ];
     mail(
         $emailto,
-        mb_encode_mimeheader($rep->subject(), 'UTF-8'),
+        mb_encode_mimeheader($subject, 'UTF-8'),
         implode("\r\n", $body),
         $headers
     );
