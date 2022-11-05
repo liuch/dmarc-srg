@@ -60,8 +60,7 @@ class Auth
      */
     public function isEnabled(): bool
     {
-        global $admin;
-        return isset($admin['password']) && $admin['password'] !== null;
+        return $this->core->config('admin/password') !== null;
     }
 
     /**
@@ -78,8 +77,7 @@ class Auth
      */
     public function login(string $username, string $password): array
     {
-        global $admin;
-        if ($username !== '' || $admin['password'] === '' || !$this->isAdminPassword($password)) {
+        if ($username !== '' || $this->core->config('admin/password') === '' || !$this->isAdminPassword($password)) {
             throw new AuthException('Authentication failed. Try again');
         }
         $this->core->userId(0);
@@ -144,7 +142,6 @@ class Auth
      */
     private function isAdminPassword(string $password): bool
     {
-        global $admin;
-        return $password === $admin['password'];
+        return $password === $this->core->config('admin/password');
     }
 }

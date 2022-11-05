@@ -31,9 +31,9 @@ require 'init.php';
 if (Core::isJson()) {
     if (Core::method() == 'GET') {
         try {
-            Core::auth()->isAllowed();
+            Core::instance()->auth()->isAllowed();
 
-            $result = Core::status()->get();
+            $result = Core::instance()->status()->get();
             if (!($result['error_code'] ?? 0)) {
                 $settings_query = $_GET['settings'] ?? '';
                 if (!empty($settings_query)) {

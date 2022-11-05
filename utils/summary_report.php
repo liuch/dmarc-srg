@@ -91,7 +91,7 @@ try {
         throw new SoftException('Parameter "period" is not specified');
     }
     if (!$emailto) {
-        $emailto = $mailer['default'];
+        $emailto = Core::instance()->config('mailer/default');
     }
 
     if ($domain === 'all') {
@@ -133,9 +133,8 @@ try {
         $subject = "{$rep->subject()} for {$dom_cnt} domains";
     }
 
-    global $mailer;
     $headers = [
-        'From'         => $mailer['from'],
+        'From'         => Core::instance()->config('mailer/from'),
         'MIME-Version' => '1.0',
         'Content-Type' => 'text/plain; charset=utf-8'
     ];

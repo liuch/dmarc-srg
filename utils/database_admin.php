@@ -54,7 +54,7 @@ $res = null;
 try {
     switch ($action) {
         case 'status':
-            $res = Core::admin()->state()['database'];
+            $res = Core::instance()->admin()->state()['database'];
             $tcn = 0;
             if (isset($res['tables'])) {
                 foreach ($res['tables'] as &$t) {

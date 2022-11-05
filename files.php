@@ -38,7 +38,7 @@ if (Core::method() == 'GET') {
     }
 
     try {
-        Core::auth()->isAllowed();
+        Core::instance()->auth()->isAllowed();
 
         $res = [];
         $up_max = ini_get('max_file_uploads');
@@ -85,7 +85,7 @@ if (Core::method() == 'GET') {
 
 if (Core::method() == 'POST') {
     try {
-        Core::auth()->isAllowed();
+        Core::instance()->auth()->isAllowed();
 
         $data = Core::getJsonData();
         if ($data) {

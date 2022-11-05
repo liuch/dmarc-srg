@@ -31,7 +31,7 @@ require 'init.php';
 if (!empty($_GET['report_id']) && !empty($_GET['domain'])) {
     if (Core::isJson()) {
         try {
-            Core::auth()->isAllowed();
+            Core::instance()->auth()->isAllowed();
             if (Core::method() == 'GET') {
                 $rep = new Report(
                     [

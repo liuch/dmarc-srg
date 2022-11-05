@@ -31,7 +31,7 @@ require 'init.php';
 if (Core::method() == 'GET') {
     if (Core::isJson() && isset($_GET['list'])) {
         try {
-            Core::auth()->isAllowed();
+            Core::instance()->auth()->isAllowed();
             $lst = explode(',', $_GET['list']);
             $res = [];
             if (array_search('reports', $lst) !== false) {

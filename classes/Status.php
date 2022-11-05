@@ -60,7 +60,7 @@ class Status
      */
     public function get(): array
     {
-        $adm_res = Core::admin()->state();
+        $adm_res = $this->core->admin()->state();
         $res = [
             'state' => $adm_res['state']
         ];
@@ -95,7 +95,7 @@ class Status
         }
 
         $auth = null;
-        if (Core::auth()->isEnabled()) {
+        if ($this->core->auth()->isEnabled()) {
             $auth = $this->core->userId() !== false ? 'yes' : 'no';
         } else {
             $auth = 'disabled';

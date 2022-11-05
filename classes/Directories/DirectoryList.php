@@ -31,6 +31,7 @@
 
 namespace Liuch\DmarcSrg\Directories;
 
+use Liuch\DmarcSrg\Core;
 use Liuch\DmarcSrg\Exception\LogicException;
 
 /**
@@ -117,7 +118,7 @@ class DirectoryList
             return;
         }
 
-        global $directories;
+        $directories = Core::instance()->config('directories');
 
         $this->list = [];
         if (is_array($directories)) {

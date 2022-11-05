@@ -22,6 +22,7 @@
 
 namespace Liuch\DmarcSrg\Mail;
 
+use Liuch\DmarcSrg\Core;
 use Liuch\DmarcSrg\ErrorHandler;
 use Liuch\DmarcSrg\Exception\LogicException;
 use Liuch\DmarcSrg\Exception\RuntimeException;
@@ -34,7 +35,7 @@ class MailBoxes implements \Iterator
 
     public function __construct()
     {
-        global $mailboxes;
+        $mailboxes = Core::instance()->config('mailboxes');
 
         $this->box_list = [];
         if (is_array($mailboxes)) {

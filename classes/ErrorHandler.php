@@ -62,7 +62,7 @@ class ErrorHandler implements LoggerAwareInterface
      */
     public function handleException(\Throwable $e): void
     {
-        global $debug;
+        $debug = $this->core->config('debug', 0);
 
         if ($this->logger) {
             $this->logger->error(strval($e));
@@ -86,9 +86,7 @@ class ErrorHandler implements LoggerAwareInterface
      */
     public static function exceptionResult(\Throwable $e): array
     {
-        global $debug;
-
-        return self::getResult($e, $debug);
+        return self::getResult($e, Core::instance()->config('debug', 0));
     }
 
     /**
@@ -101,9 +99,7 @@ class ErrorHandler implements LoggerAwareInterface
      */
     public static function exceptionText(\Throwable $e): string
     {
-        global $debug;
-
-        return self::getText($e, $debug);
+        return self::getText($e, Core::instance()->config('debug', 0));
     }
 
     /**
@@ -117,9 +113,9 @@ class ErrorHandler implements LoggerAwareInterface
     /**
      * Returns the current logger
      */
-    public static function logger()
+    public function logger()
     {
-        return self::instance()->logger;
+        return $this->logger;
     }
 
     private static function getResult(\Throwable $e, int $debug): array

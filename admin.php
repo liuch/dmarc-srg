@@ -31,18 +31,19 @@ require 'init.php';
 
 if (Core::isJson()) {
     try {
-        Core::auth()->isAllowed();
+        $core = Core::instance();
+        $core->auth()->isAllowed();
         if (Core::method() == 'GET') {
-            Core::sendJson(Core::admin()->state());
+            Core::sendJson($core->admin()->state());
             return;
         } elseif (Core::method() == 'POST') {
             $data = Core::getJsonData();
             if ($data) {
                 $cmd = $data['cmd'];
                 if (in_array($cmd, [ 'initdb', 'droptables', 'upgradedb' ])) {
-                    if (Core::auth()->isEnabled()) {
+                    if ($core->auth()->isEnabled()) {
                         $pwd = isset($data['password']) ? $data['password'] : null;
-                        Core::auth()->checkAdminPassword($pwd);
+                        $core->auth()->checkAdminPassword($pwd);
                     }
                 }
                 if ($cmd === 'initdb') {
@@ -57,7 +58,7 @@ if (Core::isJson()) {
                         $type = $data['type'];
                         if (gettype($id) === 'integer' && gettype($type) === 'string') {
                             Core::sendJson(
-                                Core::admin()->checkSource($id, $type)
+                                $core->admin()->checkSource($id, $type)
                             );
                             return;
                         }

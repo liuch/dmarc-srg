@@ -30,10 +30,9 @@ require 'init.php';
 if (Core::method() == 'POST' && Core::isJson()) {
     $jdata = Core::getJsonData();
     if ($jdata && isset($jdata['password'])) {
-        $username = isset($jdata['username']) ? strval($jdata['username']) : '';
         try {
             Core::sendJson(
-                Core::auth()->login($username, strval($jdata['password']))
+                Core::instance()->auth()->login(strval($jdata['username'] ?? ''), strval($jdata['password'] ?? ''))
             );
         } catch (RuntimeException $e) {
             Core::sendJson(ErrorHandler::exceptionResult($e));

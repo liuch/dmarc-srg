@@ -31,6 +31,7 @@
 
 namespace Liuch\DmarcSrg\Report;
 
+use Liuch\DmarcSrg\Core;
 use Liuch\DmarcSrg\ErrorHandler;
 use Liuch\DmarcSrg\Report\Report;
 use Liuch\DmarcSrg\Sources\Source;
@@ -64,8 +65,6 @@ class ReportFetcher
      */
     public function fetch(): array
     {
-        global $fetcher;
-
         try {
             $this->source->rewind();
         } catch (RuntimeException $e) {
@@ -76,10 +75,10 @@ class ReportFetcher
         $stype = $this->source->type();
         switch ($stype) {
             case Source::SOURCE_MAILBOX:
-                $limit = $fetcher['mailboxes']['messages_maximum'] ?? 0;
+                $limit = Core::instance()->config('fetcher/mailboxes/messages_maximum', 0);
                 break;
             case Source::SOURCE_DIRECTORY:
-                $limit = $fetcher['directories']['files_maximum'] ?? 0;
+                $limit = Core::instance()->config('fetcher/directories/files_maximum', 0);
                 break;
         }
         $limit = intval($limit);

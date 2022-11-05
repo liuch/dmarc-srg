@@ -22,6 +22,7 @@
 
 namespace Liuch\DmarcSrg\Database;
 
+use Liuch\DmarcSrg\Core;
 use Liuch\DmarcSrg\ErrorHandler;
 use Liuch\DmarcSrg\Settings\SettingString;
 use Liuch\DmarcSrg\Exception\SoftException;
@@ -52,20 +53,17 @@ class Database
 
     public static function type()
     {
-        global $database;
-        return $database['type'];
+        return Core::instance()->config('database/type');
     }
 
     public static function name()
     {
-        global $database;
-        return $database['name'];
+        return Core::instance()->config('database/name');
     }
 
     public static function location()
     {
-        global $database;
-        return $database['host'];
+        return Core::instance()->config('database/host');
     }
 
     /**
@@ -78,8 +76,7 @@ class Database
      */
     public static function tablePrefix(string $postfix = ''): string
     {
-        global $database;
-        return ($database['table_prefix'] ?? '') . $postfix;
+        return Core::instance()->config('database/table_prefix', '') . $postfix;
     }
 
     /**
@@ -257,7 +254,7 @@ class Database
 
     private function establishConnection()
     {
-        global $database;
+        $database = Core::instance()->config('database');
         try {
             $dsn = "{$database['type']}:host={$database['host']};dbname={$database['name']};charset=utf8";
             $this->conn = new \PDO(

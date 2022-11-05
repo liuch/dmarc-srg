@@ -55,7 +55,7 @@ require 'init.php';
 if (Core::method() == "GET") {
     if (Core::isJson()) {
         try {
-            Core::auth()->isAllowed();
+            Core::instance()->auth()->isAllowed();
 
             if (isset($_GET['id'])) {
                 return Core::sendJson(ReportLogItem::byId(intval($_GET['id']))->toArray());

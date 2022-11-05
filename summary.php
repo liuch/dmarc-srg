@@ -53,7 +53,7 @@ require 'init.php';
 
 if (Core::isJson() && isset($_GET['mode'])) {
     try {
-        Core::auth()->isAllowed();
+        Core::instance()->auth()->isAllowed();
 
         $mode = $_GET['mode'];
         if ($mode === 'options') {

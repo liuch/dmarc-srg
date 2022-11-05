@@ -365,9 +365,9 @@ class Report
     {
         if (DomainList::count() !== 0) {
             if (is_null(self::$allowed_domains)) {
-                global $fetcher;
-                if (!empty($fetcher['allowed_domains'])) {
-                    self::$allowed_domains = '<' . $fetcher['allowed_domains'] . '>i';
+                $allowed = Core::instance()->config('fetcher/allowed_domains', '');
+                if (!empty($allowed)) {
+                    self::$allowed_domains = "<{$allowed}>i";
                 }
             }
             try {

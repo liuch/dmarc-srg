@@ -29,7 +29,7 @@ require 'init.php';
 
 if (Core::method() == 'POST' && Core::isJson()) {
     try {
-        Core::sendJson(Core::auth()->logout());
+        Core::sendJson(Core::instance()->auth()->logout());
     } catch (RuntimeException $e) {
         Core::sendJson(ErrorHandler::exceptionResult($e));
     }

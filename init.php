@@ -36,9 +36,14 @@ spl_autoload_register(function ($class) {
 
 date_default_timezone_set('GMT');
 
-require_once('config/conf.php');
-
-Liuch\DmarcSrg\Core::instance()->errorHandler()->setLogger(new Liuch\DmarcSrg\Log\PhpSystemLogger());
+$core = new Liuch\DmarcSrg\Core([
+    'auth'     => [ 'Liuch\DmarcSrg\Auth' ],
+    'admin'    => [ 'Liuch\DmarcSrg\Admin' ],
+    'ehandler' => [ 'Liuch\DmarcSrg\ErrorHandler' ],
+    'config'   => [ 'Liuch\DmarcSrg\Config', [ 'config/conf.php' ] ],
+    'status'   => [ 'Liuch\DmarcSrg\Status' ]
+]);
+$core->errorHandler()->setLogger(new Liuch\DmarcSrg\Log\PhpSystemLogger());
 
 set_exception_handler(function ($e) {
     Liuch\DmarcSrg\Core::instance()->errorHandler()->handleException($e);
@@ -48,5 +53,5 @@ set_error_handler(function (int $severity, string $message, string $file, int $l
     if (error_reporting() === 0) {
         return false;
     }
-    throw new \ErrorException($message ?? 'Unknown', -1, $severity, $file, $line);
+    throw new \ErrorException($message, -1, $severity, $file, $line);
 });

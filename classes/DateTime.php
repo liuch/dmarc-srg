@@ -21,7 +21,7 @@
  *
  * =========================
  *
- * This file contains the class Core
+ * This file contains the class DateTime
  *
  * @category API
  * @package  DmarcSrg

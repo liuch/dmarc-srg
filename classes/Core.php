@@ -31,7 +31,8 @@
 
 namespace Liuch\DmarcSrg;
 
-use Liuch\DmarcSrg\SoftException;
+use Liuch\DmarcSrg\Exception\SoftException;
+use Liuch\DmarcSrg\Exception\LogicException;
 
 /**
  * It's class for accessing to most methods for working with http, json data,
@@ -43,11 +44,23 @@ class Core
     private const SESSION_NAME = 'session';
     private static $html_file_name = 'index.html';
 
-    private $err_handler = null;
-    private static $v_auth = null;
-    private static $v_status = null;
-    private static $v_admin = null;
+    private $modules = [];
     private static $instance = null;
+
+    /**
+     * The constructor
+     *
+     * @param array $params Array with modules to be bind to
+     */
+    public function __construct($params)
+    {
+        foreach ([ 'admin', 'auth', 'config', 'ehandler', 'status' ] as $key) {
+            if (isset($params[$key])) {
+                $this->modules[$key] = $params[$key];
+            }
+        }
+        self::$instance = $this;
+    }
 
     /**
      * Returns the method of the current http request.
@@ -201,55 +214,43 @@ class Core
     }
 
     /**
-     * Returns a singleton of the class Auth.
+     * Returns an instance of the class Auth.
      *
-     * @return Auth instance of Auth
+     * @return Auth
      */
-    public static function auth()
+    public function auth()
     {
-        if (!self::$v_auth) {
-            self::$v_auth = new Auth(self::instance());
-        }
-        return self::$v_auth;
+        return $this->getModule('auth', true);
     }
 
     /**
-     * Returns a singleton of the class Status.
+     * Returns an instance of the class Status.
      *
      * @return Status instance of Status
      */
-    public static function status()
+    public function status()
     {
-        if (!self::$v_status) {
-            self::$v_status = new Status(Core::instance());
-        }
-        return self::$v_status;
+        return $this->getModule('status', true);
     }
 
     /**
-     * Returns a singleton of the class Admin.
+     * Returns an instance of the class Admin.
      *
      * @return Admin instance of Admin
      */
-    public static function admin()
+    public function admin()
     {
-        if (!self::$v_admin) {
-            self::$v_admin = new Admin();
-        }
-        return self::$v_admin;
+        return $this->getModule('admin', false);
     }
 
     /**
-     * Returns a singleton of the class ErrorHandler
+     * Returns an instance of the class ErrorHandler
      *
      * @return ErrorHandler
      */
     public function errorHandler()
     {
-        if (!$this->err_handler) {
-            $this->err_handler = new ErrorHandler($this);
-        }
-        return $this->err_handler;
+        return $this->getModule('ehandler', true);
     }
 
     /**
@@ -265,14 +266,25 @@ class Core
 
     /**
      * Returns instance of the object
+     *
      * @return self
      */
     public static function instance()
     {
-        if (!self::$instance) {
-            self::$instance = new Core();
-        }
         return self::$instance;
+    }
+
+    /**
+     * Returns the config value by its name
+     *
+     * @param string $name    Config item name. Hierarchy supported via '/'
+     * @param mixed  $default Value to be returned if the required config item is missing or null
+     *
+     * @return mixed
+     */
+    public function config(string $name, $default = null)
+    {
+        return $this->getModule('config', false)->get($name, $default);
     }
 
     /**
@@ -313,5 +325,31 @@ class Core
         ) {
             throw new SoftException('Failed to start a user session');
         }
+    }
+
+    /**
+     * Returns a module instance by its name. Lazy initialization is used.
+     *
+     * @param string $name Module name
+     * @param bool   $core Whether to pass $this to the constructor
+     *
+     * @return object
+     */
+    private function getModule(string $name, bool $core)
+    {
+        $module = $this->modules[$name] ?? null;
+        switch (gettype($module)) {
+            case 'array':
+                if ($core) {
+                    $module = new $module[0]($this, ...($module[1] ?? []));
+                } else {
+                    $module = new $module[0](...($module[1] ?? []));
+                }
+                $this->modules[$name] = $module;
+                break;
+            case 'NULL':
+                throw new LogicException('Attempt to initiate an unloaded module ' . $name);
+        }
+        return $module;
     }
 }

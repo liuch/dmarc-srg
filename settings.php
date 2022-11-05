@@ -61,7 +61,7 @@ require 'init.php';
 
 if (Core::isJson()) {
     try {
-        Core::auth()->isAllowed();
+        Core::instance()->auth()->isAllowed();
         if (Core::method() == 'GET') {
             if (isset($_GET['name'])) {
                 Core::sendJson(SettingsList::getSettingByName($_GET['name'])->toArray());
