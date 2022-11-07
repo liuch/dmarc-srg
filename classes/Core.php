@@ -42,7 +42,7 @@ class Core
 {
     public const APP_VERSION = '1.7';
     private const SESSION_NAME = 'session';
-    private static $html_file_name = 'index.html';
+    private const HTML_FILE_NAME = 'index.html';
 
     private $modules = [];
     private static $instance = null;
@@ -157,11 +157,8 @@ class Core
      */
     public static function sendHtml(): void
     {
-        if (file_exists(Core::$html_file_name)) {
-            if (ob_get_level() != 0) {
-                ob_end_clean();
-            }
-            readfile(Core::$html_file_name);
+        if (file_exists(Core::HTML_FILE_NAME)) {
+            readfile(Core::HTML_FILE_NAME);
         }
     }
 
