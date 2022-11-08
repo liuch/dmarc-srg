@@ -98,7 +98,7 @@ try {
         throw new SoftException('Parameter "period" is not specified');
     }
     if (!in_array($format, [ 'text', 'html', 'text+html' ], true)) {
-        throw new SoftException('Unkown email message format: ' . $format);
+        throw new SoftException('Unknown email message format: ' . $format);
     }
     if (!$emailto) {
         $emailto = Core::instance()->config('mailer/default');
