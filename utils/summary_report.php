@@ -23,13 +23,15 @@
  *
  * This script creates a summary report and sends it by email.
  * The email addresses must be specified in the configuration file.
- * The script have two required parameters: `domain` and `period`, and one optional: `emailto`.
+ * The script have two required parameters: `domain` and `period`, and two optional: `emailto` and `format`.
  * The `domain` parameter must contain a domain name, a comma-separated list of domains, or `all`.
  * The `period` parameter must have one of these values:
  *   `lastmonth`   - to make a report for the last month;
  *   `lastweek`    - to make a report for the last week;
  *   `lastndays:N` - to make a report for the last N days;
  * The `emailto` parameter is optional. Set it if you want to use a different email address to sent the report to.
+ * The `format` parameter is optional. It provides the ability to specify the email message format.
+ * Possible values are: `text`, `html`, `text+html`. The default value is `text`.
  *
  * Some examples:
  *
@@ -50,6 +52,7 @@
 
 namespace Liuch\DmarcSrg;
 
+use Liuch\DmarcSrg\Mail\MailBody;
 use Liuch\DmarcSrg\Domains\Domain;
 use Liuch\DmarcSrg\Domains\DomainList;
 use Liuch\DmarcSrg\Report\SummaryReport;
@@ -66,6 +69,7 @@ if (php_sapi_name() !== 'cli') {
 $domain  = null;
 $period  = null;
 $emailto = null;
+$format  = 'text';
 for ($i = 1; $i < count($argv); ++$i) {
     $av = explode('=', $argv[$i]);
     if (count($av) == 2) {
@@ -79,6 +83,9 @@ for ($i = 1; $i < count($argv); ++$i) {
             case 'emailto':
                 $emailto = $av[1];
                 break;
+            case 'format':
+                $format = $av[1];
+                break;
         }
     }
 }
@@ -89,6 +96,9 @@ try {
     }
     if (!$period) {
         throw new SoftException('Parameter "period" is not specified');
+    }
+    if (!in_array($format, [ 'text', 'html', 'text+html' ], true)) {
+        throw new SoftException('Unkown email message format: ' . $format);
     }
     if (!$emailto) {
         $emailto = Core::instance()->config('mailer/default');
@@ -103,27 +113,62 @@ try {
     }
 
     $rep = new SummaryReport($period);
-    $body = [];
+    switch ($format) {
+        case 'text':
+            $text = [];
+            $html = null;
+            break;
+        case 'html':
+            $text = null;
+            $html = [];
+            break;
+        default:
+            $text = [];
+            $html = [];
+            break;
+    }
+    if (!is_null($html)) {
+        $html[] = '<html><body>';
+    }
     $dom_cnt = count($domains);
     for ($i = 0; $i < $dom_cnt; ++$i) {
-        $domain = $domains[$i];
         if ($i > 0) {
-            $body[] = '-----------------------------------';
-            $body[] = '';
+            if (!is_null($text)) {
+                $text[] = '-----------------------------------';
+                $text[] = '';
+            }
+            if (!is_null($html)) {
+                $html[] = '<hr style="margin:2em 0;" />';
+            }
         }
 
+        $domain = $domains[$i];
         if ($domain->exists()) {
-            foreach ($rep->setDomain($domain)->text() as &$row) {
-                $body[] = $row;
+            $rep->setDomain($domain);
+            if (!is_null($text)) {
+                foreach ($rep->text() as &$row) {
+                    $text[] = $row;
+                }
+                unset($row);
             }
-            unset($row);
+            if (!is_null($html)) {
+                foreach ($rep->html() as &$row) {
+                    $html[] = $row;
+                }
+                unset($row);
+            }
         } else {
             $nf_message = "Domain \"{$domain->fqdn()}\" does not exist";
             if ($dom_cnt === 1) {
                 throw new SoftException("Domain \"{$domain->fqdn()}\" does not exist");
             }
-            $body[] = "# {$nf_message}";
-            $body[] = '';
+            if (!is_null($text)) {
+                $text[] = "# {$nf_message}";
+                $text[] = '';
+            }
+            if (!is_null($html)) {
+                $html[] = '<h2>' . htmlspecialchars($nf_message) . '</h2>';
+            }
         }
     }
 
@@ -133,15 +178,25 @@ try {
         $subject = "{$rep->subject()} for {$dom_cnt} domains";
     }
 
+    $mbody = new MailBody();
+    if (!is_null($text)) {
+        $mbody->setText($text);
+    }
+    if (!is_null($html)) {
+        $html[] = '</body></html>';
+        $mbody->setHtml($html);
+    }
+
     $headers = [
         'From'         => Core::instance()->config('mailer/from'),
         'MIME-Version' => '1.0',
-        'Content-Type' => 'text/plain; charset=utf-8'
+        'Content-Type' => $mbody->contentType()
     ];
+
     mail(
         $emailto,
         mb_encode_mimeheader($subject, 'UTF-8'),
-        implode("\r\n", $body),
+        implode("\r\n", $mbody->content()),
         $headers
     );
 } catch (SoftException $e) {
