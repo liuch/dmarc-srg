@@ -117,11 +117,11 @@ class Admin {
 			let d = this._state.database || [];
 			this._database.set_data({
 				root: {
-					name:     d.name,
-					type:     d.type,
+					name:     d.name || "-",
+					type:     d.type || "-",
 					correct:  d.correct,
-					message:  d.message,
-					location: d.location
+					message:  d.message || "-",
+					location: d.location || "-"
 				},
 				groups: [
 					{ name: "Tables", items: this._state.database.tables || [] }
