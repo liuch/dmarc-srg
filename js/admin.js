@@ -225,7 +225,7 @@ Admin.db_actions = [
 	},
 	{
 		name:       "Drop",
-		action:     "droptables",
+		action:     "cleandb",
 		title:      "Drop tables",
 		long_title: "Drop all the tables from the database"
 	},

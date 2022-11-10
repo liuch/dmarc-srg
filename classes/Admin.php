@@ -32,7 +32,6 @@
 namespace Liuch\DmarcSrg;
 
 use Liuch\DmarcSrg\Mail\MailBoxes;
-use Liuch\DmarcSrg\Database\Database;
 use Liuch\DmarcSrg\Directories\DirectoryList;
 use Liuch\DmarcSrg\Exception\LogicException;
 
@@ -41,6 +40,18 @@ use Liuch\DmarcSrg\Exception\LogicException;
  */
 class Admin
 {
+    private $core = null;
+
+    /**
+     * The constructor of the class
+     *
+     * @param Core $core Instace of the Core class
+     */
+    public function __construct($core)
+    {
+        $this->core = $core;
+    }
+
     /**
      * Returns information about the database, directories, and mailboxes as an array.
      *
@@ -49,7 +60,7 @@ class Admin
     public function state(): array
     {
         $res = [];
-        $res['database']    = Database::state();
+        $res['database']    = $this->core->database()->state();
         $res['mailboxes']   = (new MailBoxes())->list();
         $res['directories'] = array_map(function ($dir) {
             return $dir->toArray();

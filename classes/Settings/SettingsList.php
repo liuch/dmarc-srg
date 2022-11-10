@@ -31,9 +31,8 @@
 
 namespace Liuch\DmarcSrg\Settings;
 
-use Liuch\DmarcSrg\Database\Database;
+use Liuch\DmarcSrg\Core;
 use Liuch\DmarcSrg\Exception\SoftException;
-use Liuch\DmarcSrg\Exception\DatabaseFatalException;
 
 /**
  * This class is designed to work with the list of the settings
@@ -43,7 +42,18 @@ class SettingsList
     public const ORDER_ASCENT  = 0;
     public const ORDER_DESCENT = 1;
 
+    private $db    = null;
     private $order = self::ORDER_ASCENT;
+
+    /**
+     * The constructor
+     *
+     * @param DatabaseController $db Connector to the current database
+     */
+    public function __construct($db = null)
+    {
+        $this->db = $db ?? Core::instance()->database();
+    }
 
     /**
      * Returns a list of the settings
@@ -55,72 +65,28 @@ class SettingsList
      */
     public function getList(): array
     {
-        $list = [];
-        $fmap = [];
-
-        try {
-            $st = Database::connection()->query(
-                'SELECT `key`, `value` FROM `' . Database::tablePrefix('system') . '` ORDER BY `key`'
-            );
-            while ($row = $st->fetch(\PDO::FETCH_NUM)) {
-                $name = $row[0];
-                if (isset(static::$schema[$name])) {
-                    $sch_data = &static::$schema[$name];
-                    if (!empty($sch_data['public'])) {
-                        $value = $row[1];
-                        switch ($sch_data['type']) {
-                            case 'select':
-                                $list[] = new SettingStringSelect([
-                                    'name'  => $name,
-                                    'value' => $value
-                                ], true);
-                                $fmap[$name] = true;
-                                break;
-                            case 'integer':
-                                $list[] = new SettingInteger([
-                                    'name'  => $name,
-                                    'value' => intval($value)
-                                ], true);
-                                $fmap[$name] = true;
-                                break;
-                            case 'string':
-                                $list[] = new SettingString([
-                                    'name'  => $name,
-                                    'value' => $value
-                                ], true);
-                                $fmap[$name] = true;
-                                break;
-                        }
-                    }
-                }
-            }
-            $st->closeCursor();
-            unset($sch_data);
-        } catch (\PDOException $e) {
-            throw new DatabaseFatalException('Failed to get a list of the settings', -1, $e);
-        }
-
-        foreach (static::$schema as $sch_name => &$sch_data) {
-            if (!isset($fmap[$sch_name]) && !empty($sch_data['public'])) {
-                $sch_def = $sch_data['default'];
+        $db_map = $this->db->getMapper('setting')->list();
+        foreach (static::$schema as $name => &$sch_data) {
+            if ($sch_data['public'] ?? false) {
+                $value = $db_map[$name] ?? $sch_data['default'];
                 switch ($sch_data['type']) {
                     case 'select':
                         $list[] = new SettingStringSelect([
-                            'name'  => $sch_name,
-                            'value' => $sch_def
-                        ]);
+                            'name'  => $name,
+                            'value' => $value
+                        ], true, $this->db);
                         break;
                     case 'integer':
                         $list[] = new SettingInteger([
-                            'name'  => $sch_name,
-                            'value' => $sch_def
-                        ]);
+                            'name'  => $name,
+                            'value' => intval($value)
+                        ], true, $this->db);
                         break;
                     case 'string':
                         $list[] = new SettingString([
-                            'name'  => $sch_name,
-                            'value' => $sch_def
-                        ]);
+                            'name'  => $name,
+                            'value' => $value
+                        ], true, $this->db);
                         break;
                 }
             }
@@ -129,12 +95,7 @@ class SettingsList
 
         $dir = $this->order == self::ORDER_ASCENT ? 1 : -1;
         usort($list, static function ($a, $b) use ($dir) {
-            $an = $a->name();
-            $bn = $b->name();
-            if ($an === $bn) {
-                return 0;
-            }
-            return (($an < $bn) ? -1 : 1) * $dir;
+            return ($a->name() <=> $b->name()) * $dir;
         });
 
         return [
@@ -185,7 +146,7 @@ class SettingsList
     public static function getSettingByName(string $name)
     {
         self::checkName($name);
-        if (empty(self::$schema[$name]['public'])) {
+        if (!(self::$schema[$name]['public'] ?? false)) {
             throw new SoftException('Attempt to access an internal variable');
         }
 

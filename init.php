@@ -41,7 +41,8 @@ $core = new Liuch\DmarcSrg\Core([
     'admin'    => [ 'Liuch\DmarcSrg\Admin' ],
     'ehandler' => [ 'Liuch\DmarcSrg\ErrorHandler' ],
     'config'   => [ 'Liuch\DmarcSrg\Config', [ 'config/conf.php' ] ],
-    'status'   => [ 'Liuch\DmarcSrg\Status' ]
+    'status'   => [ 'Liuch\DmarcSrg\Status' ],
+    'database' => [ 'Liuch\DmarcSrg\Database\DatabaseController' ]
 ]);
 $core->errorHandler()->setLogger(new Liuch\DmarcSrg\Log\PhpSystemLogger());
 

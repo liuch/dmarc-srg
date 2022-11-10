@@ -23,8 +23,6 @@
 namespace Liuch\DmarcSrg;
 
 use Liuch\DmarcSrg\ErrorHandler;
-use Liuch\DmarcSrg\Database\Database;
-use Liuch\DmarcSrg\Database\DatabaseUpgrader;
 use Liuch\DmarcSrg\Exception\RuntimeException;
 
 require 'init.php';
@@ -40,17 +38,17 @@ if (Core::isJson()) {
             $data = Core::getJsonData();
             if ($data) {
                 $cmd = $data['cmd'];
-                if (in_array($cmd, [ 'initdb', 'droptables', 'upgradedb' ])) {
+                if (in_array($cmd, [ 'initdb', 'cleandb', 'upgradedb' ])) {
                     if ($core->auth()->isEnabled()) {
                         $pwd = isset($data['password']) ? $data['password'] : null;
                         $core->auth()->checkAdminPassword($pwd);
                     }
                 }
                 if ($cmd === 'initdb') {
-                    Core::sendJson(Database::initDb());
+                    Core::sendJson($core->database()->initDb());
                     return;
-                } elseif ($cmd === 'droptables') {
-                    Core::sendJson(Database::dropTables());
+                } elseif ($cmd === 'cleandb') {
+                    Core::sendJson($core->database()->cleanDb());
                     return;
                 } elseif ($cmd === 'checksource') {
                     if (isset($data['id']) && isset($data['type'])) {
@@ -64,7 +62,8 @@ if (Core::isJson()) {
                         }
                     }
                 } elseif ($cmd === 'upgradedb') {
-                    DatabaseUpgrader::go();
+                    $db = Core::instance()->database();
+                    $db->getMapper('upgrader')->go($db::REQUIRED_VERSION);
                     Core::sendJson(
                         [
                             'error_code' => 0,

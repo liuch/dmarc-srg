@@ -31,9 +31,9 @@
 
 namespace Liuch\DmarcSrg\Settings;
 
-use Liuch\DmarcSrg\Database\Database;
+use Liuch\DmarcSrg\Core;
 use Liuch\DmarcSrg\Exception\SoftException;
-use Liuch\DmarcSrg\Exception\DatabaseException;
+use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
 
 /**
  * It's a class for accessing to settings item data
@@ -47,6 +47,7 @@ abstract class Setting
     public const TYPE_INTEGER       = 2;
     public const TYPE_STRING_SELECT = 3;
 
+    protected $db      = null;
     protected $name    = null;
     protected $value   = null;
     protected $wignore = false;
@@ -89,18 +90,20 @@ abstract class Setting
      * (new Setting([ 'name' => 'some.setting', 'value' => 'some string value' ])->save(); - will add
      * this setting to the database if it does not exist in it or update the value of the setting.
      *
-     * @param string|array $data    Some setting data to identify it
-     *                              string value is treated as a name
-     *                              array has these fields: `name`, `value`
-     *                              and usually uses for creating a new setting item.
-     * @param boolean      $wignore If true the wrong value is reset to the default
-     *                              or it throws an exception otherwise.
+     * @param string|array       $data    Some setting data to identify it
+     *                                    string value is treated as a name
+     *                                    array has these fields: `name`, `value`
+     *                                    and usually uses for creating a new setting item.
+     * @param boolean            $wignore If true the wrong value is reset to the default
+     *                                    or it throws an exception otherwise.
+     * @param DatabaseController $db      The database controller
      *
      * @return void
      */
-    public function __construct($data, bool $wignore = false)
+    public function __construct($data, bool $wignore = false, $db = null)
     {
         $this->wignore = $wignore;
+        $this->db      = $db ?? Core::instance()->database();
         switch (gettype($data)) {
             case 'string':
                 $this->name = $data;
@@ -205,49 +208,7 @@ abstract class Setting
      */
     public function save(): void
     {
-        $db = Database::connection();
-        $st = null;
-        $db->beginTransaction();
-        try {
-            $st = $db->prepare(
-                'SELECT COUNT(*) FROM `' . Database::tablePrefix('system') . '` WHERE `key` = ?'
-            );
-            $st->bindValue(1, $this->name, \PDO::PARAM_STR);
-            $st->execute();
-            $res = $st->fetch(\PDO::FETCH_NUM);
-            $st->closeCursor();
-            $st = null;
-            if (intval($res[0]) == 0) {
-                $st = $db->prepare(
-                    'INSERT INTO `' . Database::tablePrefix('system') . '` (`value`, `key`) VALUES (?, ?)'
-                );
-            } else {
-                $st = $db->prepare(
-                    'UPDATE `' . Database::tablePrefix('system') . '` SET `value` = ? WHERE `key` = ?'
-                );
-            }
-            switch ($this->type()) {
-                case self::TYPE_INTEGER:
-                    $st->bindValue(1, $this->value, \PDO::PARAM_INT);
-                    break;
-                default:
-                    $st->bindValue(1, $this->value, \PDO::PARAM_STR);
-                    break;
-            }
-            $st->bindValue(2, $this->name, \PDO::PARAM_STR);
-            $st->execute();
-            $db->commit();
-        } catch (\PDOException $e) {
-            $db->rollBack();
-            throw new DatabaseException('Failed to update a setting', -1, $e);
-        } catch (\Exception $e) {
-            $db->rollBack();
-            throw $e;
-        } finally {
-            if ($st) {
-                $st->closeCursor();
-            }
-        }
+        $this->db->getMapper('setting')->save($this->name, $this->valueToString());
     }
 
     /**
@@ -257,19 +218,14 @@ abstract class Setting
      */
     private function fetchData(): void
     {
-        $st = Database::connection()->prepare(
-            'SELECT `value` FROM `' . Database::tablePrefix('system') . '` WHERE `key` = ?'
-        );
-        $st->bindValue(1, $this->name, \PDO::PARAM_STR);
-        $st->execute();
-        $res = $st->fetch(\PDO::FETCH_NUM);
-        if ($res) {
-            $this->stringToValue($res[0]);
-            $st->closeCursor();
-            if (!$this->checkValue()) {
-                $this->resetToDefault();
-            }
-        } else {
+        try {
+            $res = $this->db->getMapper('setting')->value($this->name);
+        } catch (DatabaseNotFoundException $e) {
+            $this->resetToDefault();
+            return;
+        }
+        $this->stringToValue($res);
+        if (!$this->checkValue()) {
             $this->resetToDefault();
         }
     }

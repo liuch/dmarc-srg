@@ -22,30 +22,34 @@
 
 namespace Liuch\DmarcSrg\ReportLog;
 
-use Liuch\DmarcSrg\DateTime;
-use Liuch\DmarcSrg\Database\Database;
-use Liuch\DmarcSrg\Exception\DatabaseFatalException;
+use Liuch\DmarcSrg\Core;
 
 class ReportLog
 {
     public const ORDER_ASCENT  = 1;
     public const ORDER_DESCENT = 2;
 
-    private $from_time = null;
-    private $till_time = null;
-    private $direction = self::ORDER_ASCENT;
+    private $db        = null;
+    private $filter    = [
+            'from_time' => null,
+            'till_time' => null
+    ];
+    private $order     = [
+            'direction' => 'ascent'
+    ];
     private $rec_limit = 0;
-    private $position  = null;
+    private $position  = 0;
 
-    public function __construct($from_time, $till_time)
+    public function __construct($from_time, $till_time, $db = null)
     {
-        $this->from_time = $from_time;
-        $this->till_time = $till_time;
+        $this->filter['from_time'] = $from_time;
+        $this->filter['till_time'] = $till_time;
+        $this->db = $db ?? Core::instance()->database();
     }
 
     public function setOrder(int $dir)
     {
-        $this->direction = $dir;
+        $this->order['direction'] = ($dir === self::ORDER_DESCENT ? 'descent' : 'ascent');
     }
 
     public function setMaxCount(int $n)
@@ -55,68 +59,29 @@ class ReportLog
 
     public function count()
     {
-        $cnt = 0;
-        $db = Database::connection();
-        try {
-            $st = $db->prepare(
-                'SELECT COUNT(*) FROM `' . Database::tablePrefix('reportlog') . '`'
-                . $this->sqlCondition() . $this->sqlLimit(false)
-            );
-            $this->sqlBindValues($st, 0);
-            $st->execute();
-            $cnt = intval($st->fetch(\PDO::FETCH_NUM)[0]);
-            $st->closeCursor();
-        } catch (\PDOException $e) {
-            throw new DatabaseFatalException('Failed to get the log data', -1, $e);
-        }
-        return $cnt;
+        $limit = [ 'offset' => 0, 'count' => $this->rec_limit ];
+        return $this->db->getMapper('report-log')->count($this->filter, $limit);
     }
 
     public function getList(int $pos)
     {
         $this->position = $pos;
-        $def_limit = false;
-        if ($this->rec_limit === 0) {
-            $this->rec_limit = 25;
-            $def_limit = true;
-        }
+        $max_rec = $this->rec_limit > 0 ? $this->rec_limit : 25;
 
-        $db = Database::connection();
-        try {
-            $st = $db->prepare(
-                'SELECT `id`, `domain`, `event_time`, `source`, `success`, `message` FROM `'
-                . Database::tablePrefix('reportlog') . '`'
-                . $this->sqlCondition()
-                . $this->sqlOrder()
-                . $this->sqlLimit(true)
-            );
-            $this->sqlBindValues($st, 1);
-            $st->execute();
-            $r_cnt = 0;
-            $list = [];
+        $limit  = [ 'offset' => $pos, 'count' => $max_rec + 1 ];
+
+        $list = $this->db->getMapper('report-log')->list($this->filter, $this->order, $limit);
+        if (count($list) > $max_rec) {
+            $more = true;
+            unset($list[$max_rec]);
+        } else {
             $more = false;
-            while ($res = $st->fetch(\PDO::FETCH_NUM)) {
-                if (++$r_cnt <= $this->rec_limit) {
-                    $list[] = [
-                        'id'         => intval($res[0]),
-                        'domain'     => $res[1],
-                        'event_time' => new DateTime($res[2]),
-                        'source'     => ReportLogItem::sourceToString(intval($res[3])),
-                        'success'    => boolval($res[4]),
-                        'message'    => $res[5]
-                    ];
-                } else {
-                    $more = true;
-                }
-            }
-            $st->closeCursor();
-        } catch (\PDOException $e) {
-            throw new DatabaseFatalException('Failed to get the logs', -1, $e);
-        } finally {
-            if ($def_limit) {
-                $this->rec_limit = 0;
-            }
         }
+        foreach ($list as &$it) {
+            $it['source'] = ReportLogItem::sourceToString($it['source']);
+        }
+        unset($it);
+
         return [
             'items' => $list,
             'more'  => $more
@@ -125,71 +90,7 @@ class ReportLog
 
     public function delete()
     {
-        $db = Database::connection();
-        try {
-            $st = $db->prepare(
-                'DELETE FROM `' . Database::tablePrefix('reportlog') . '`'
-                . $this->sqlCondition()
-                . $this->sqlOrder()
-                . $this->sqlLimit(false)
-            );
-            $this->sqlBindValues($st, 0);
-            $st->execute();
-            $st->closeCursor();
-        } catch (\PDOException $e) {
-            throw new DatabaseFatalException('Failed to remove the log data', -1, $e);
-        }
-    }
-
-    private function sqlCondition()
-    {
-        $res = '';
-        if (!is_null($this->from_time) || !is_null($this->till_time)) {
-            $res = ' WHERE';
-            if (!is_null($this->from_time)) {
-                $res .= ' `event_time` >= ?';
-                if (!is_null($this->till_time)) {
-                    $res .= ' AND';
-                }
-            }
-            if (!is_null($this->till_time)) {
-                $res .= ' `event_time` < ?';
-            }
-        }
-        return $res;
-    }
-
-    private function sqlOrder()
-    {
-        return ' ORDER BY `event_time` ' . ($this->direction === self::ORDER_ASCENT ? 'ASC' : 'DESC');
-    }
-
-    private function sqlLimit(bool $with_position)
-    {
-        $res = '';
-        if ($this->rec_limit > 0) {
-            $res = ' LIMIT ?';
-            if ($with_position) {
-                $res .= ', ?';
-            }
-        }
-        return $res;
-    }
-
-    private function sqlBindValues($st, int $inc_limit)
-    {
-        $pos = 0;
-        if (!is_null($this->from_time)) {
-            $st->bindValue(++$pos, $this->from_time->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
-        }
-        if (!is_null($this->till_time)) {
-            $st->bindValue(++$pos, $this->till_time->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
-        }
-        if ($this->rec_limit > 0 && $inc_limit >= 0) {
-            if (!is_null($this->position)) {
-                $st->bindValue(++$pos, $this->position, \PDO::PARAM_INT);
-            }
-            $st->bindValue(++$pos, $this->rec_limit + $inc_limit, \PDO::PARAM_INT);
-        }
+        $limit = [ 'offset' => 0, 'count' => $this->rec_limit ];
+        $this->db->getMapper('report-log')->delete($this->filter, $this->order, $limit);
     }
 }

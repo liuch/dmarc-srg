@@ -21,7 +21,7 @@
  *
  * =========================
  *
- * This file contains the class Core
+ * This file contains the Core class
  *
  * @category API
  * @package  DmarcSrg
@@ -54,7 +54,7 @@ class Core
      */
     public function __construct($params)
     {
-        foreach ([ 'admin', 'auth', 'config', 'ehandler', 'status' ] as $key) {
+        foreach ([ 'admin', 'auth', 'config', 'database', 'ehandler', 'status' ] as $key) {
             if (isset($params[$key])) {
                 $this->modules[$key] = $params[$key];
             }
@@ -237,7 +237,17 @@ class Core
      */
     public function admin()
     {
-        return $this->getModule('admin', false);
+        return $this->getModule('admin', true);
+    }
+
+    /**
+     * Returns an instance of the class Database.
+     *
+     * @return DatabaseController
+     */
+    public function database()
+    {
+        return $this->getModule('database', true);
     }
 
     /**

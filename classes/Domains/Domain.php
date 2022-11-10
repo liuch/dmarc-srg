@@ -31,12 +31,10 @@
 
 namespace Liuch\DmarcSrg\Domains;
 
-use Liuch\DmarcSrg\DateTime;
-use Liuch\DmarcSrg\Database\Database;
-use Liuch\DmarcSrg\Report\ReportList;
+use Liuch\DmarcSrg\Core;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\LogicException;
-use Liuch\DmarcSrg\Exception\DatabaseFatalException;
+use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
 
 /**
  * It's a class for accessing to stored domains data
@@ -46,13 +44,16 @@ use Liuch\DmarcSrg\Exception\DatabaseFatalException;
  */
 class Domain
 {
-    private $id   = null;
-    private $fqdn = null;
-    private $actv = null;
-    private $desc = null;
-    private $c_tm = null;
-    private $u_tm = null;
+    private $db   = null;
     private $ex_f = null;
+    private $data = [
+            'id'           => null,
+            'fqdn'         => null,
+            'active'       => null,
+            'description'  => null,
+            'created_time' => null,
+            'updated_time' => null
+    ];
 
     /**
      * It's a constructor of the class
@@ -63,24 +64,26 @@ class Domain
      * (new Domain([ 'fqdn' => 'example.com', 'description' => 'an expample domain' ])->save(); - will add
      * this domain to the database if it does not exist in it.
      *
-     * @param int|string|array $data Some domain data to identify it
-     *                               int value is treated as domain id
-     *                               string value is treated as a FQDN
-     *                               array has these fields: `id`, `fqdn`, `active`, `description`
-     *                               and usually uses for creating a new domain item.
-     *                               Note: The values of the fields `created_time` and `updated_time`
-     *                               will be ignored while saving to the database.
+     * @param int|string|array   $data Some domain data to identify it
+     *                                 int value is treated as domain id
+     *                                 string value is treated as a FQDN
+     *                                 array has these fields: `id`, `fqdn`, `active`, `description`
+     *                                 and usually uses for creating a new domain item.
+     *                                 Note: The values of the fields `created_time` and `updated_time`
+     *                                 will be ignored while saving to the database.
+     * @param DatabaseController $db   The database controller
      *
      * @return void
      */
-    public function __construct($data)
+    public function __construct($data, $db = null)
     {
+        $this->db = $db ?? Core::instance()->database();
         switch (gettype($data)) {
             case 'integer':
-                $this->id = $data;
+                $this->data['id'] = $data;
                 return;
             case 'string':
-                $this->fqdn = strtolower($data);
+                $this->data['fqdn'] = strtolower($data);
                 $this->checkFqdn();
                 return;
             case 'array':
@@ -88,42 +91,42 @@ class Domain
                     if (gettype($data['id']) !== 'integer') {
                         break;
                     }
-                    $this->id = $data['id'];
+                    $this->data['id'] = $data['id'];
                 }
                 if (isset($data['fqdn'])) {
                     if (gettype($data['fqdn']) !== 'string') {
                         break;
                     }
-                    $this->fqdn = strtolower($data['fqdn']);
+                    $this->data['fqdn'] = strtolower($data['fqdn']);
                     $this->checkFqdn();
                 }
                 if (isset($data['active'])) {
                     if (gettype($data['active']) !== 'boolean') {
                         break;
                     }
-                    $this->actv = $data['active'];
+                    $this->data['active'] = $data['active'];
                 } else {
-                    $this->actv = false;
+                    $this->data['active'] = false;
                 }
                 if (isset($data['description'])) {
                     if (gettype($data['description']) !== 'string') {
                         break;
                     }
-                    $this->desc = $data['description'];
+                    $this->data['description'] = $data['description'];
                 }
                 if (isset($data['created_time'])) {
                     if (gettype($data['created_time']) !== 'object') {
                         break;
                     }
-                    $this->c_tm = $data['created_time'];
+                    $this->data['created_time'] = $data['created_time'];
                 }
                 if (isset($data['updated_time'])) {
                     if (gettype($data['updated_time']) !== 'object') {
                         break;
                     }
-                    $this->u_tm = $data['updated_time'];
+                    $this->data['updated_time'] = $data['updated_time'];
                 }
-                if (!is_null($this->id) || !is_null($this->fqdn)) {
+                if (!is_null($this->data['id']) || !is_null($this->data['fqdn'])) {
                     return;
                 }
         }
@@ -138,19 +141,7 @@ class Domain
     public function exists(): bool
     {
         if (is_null($this->ex_f)) {
-            $st = Database::connection()->prepare(
-                'SELECT `id` FROM `' . Database::tablePrefix('domains') . '` WHERE ' . $this->sqlCondition()
-            );
-            $this->sqlBindValue($st, 1);
-            $st->execute();
-            $res = $st->fetch(\PDO::FETCH_NUM);
-            $st->closeCursor();
-            if ($res) {
-                $this->id = intval($res[0]);
-                $this->ex_f = true;
-            } else {
-                $this->ex_f = false;
-            }
+            $this->ex_f = $this->db->getMapper('domain')->exists($this->data);
         }
         return $this->ex_f;
     }
@@ -162,10 +153,10 @@ class Domain
      */
     public function id(): int
     {
-        if (is_null($this->id)) {
+        if (is_null($this->data['id'])) {
             $this->fetchData();
         }
-        return $this->id;
+        return $this->data['id'];
     }
 
     /**
@@ -175,10 +166,10 @@ class Domain
      */
     public function fqdn(): string
     {
-        if (is_null($this->fqdn)) {
+        if (is_null($this->data['fqdn'])) {
             $this->fetchData();
         }
-        return $this->fqdn;
+        return $this->data['fqdn'];
     }
 
     /**
@@ -191,10 +182,10 @@ class Domain
      */
     public function active(): bool
     {
-        if (is_null($this->actv)) {
+        if (is_null($this->data['active'])) {
             $this->fetchData();
         }
-        return $this->actv;
+        return $this->data['active'];
     }
 
     /**
@@ -204,10 +195,10 @@ class Domain
      */
     public function description()
     {
-        if (is_null($this->id) || is_null($this->fqdn)) {
+        if (is_null($this->data['id']) || is_null($this->data['fqdn'])) {
             $this->fetchData();
         }
-        return $this->desc;
+        return $this->data['description'];
     }
 
     /**
@@ -217,16 +208,12 @@ class Domain
      */
     public function toArray(): array
     {
-        if (is_null($this->id) || is_null($this->fqdn)) {
+        if (is_null($this->data['id']) || is_null($this->data['fqdn'])) {
             $this->fetchData();
         }
-        return [
-            'fqdn'         => $this->fqdn,
-            'active'       => $this->actv,
-            'description'  => $this->desc,
-            'created_time' => $this->c_tm,
-            'updated_time' => $this->u_tm
-        ];
+        $res = $this->data;
+        unset($res['id']);
+        return $res;
     }
 
     /**
@@ -239,56 +226,8 @@ class Domain
      */
     public function save(): void
     {
-        $db = Database::connection();
-        $this->u_tm = new DateTime();
-        if ($this->exists()) {
-            try {
-                $st = $db->prepare(
-                    'UPDATE `' . Database::tablePrefix('domains')
-                    . '` SET `active` = ?, `description` = ?, `updated_time` = ? WHERE `id` = ?'
-                );
-                $st->bindValue(1, $this->actv, \PDO::PARAM_BOOL);
-                $st->bindValue(2, $this->desc, \PDO::PARAM_STR);
-                $st->bindValue(3, $this->u_tm->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
-                $st->bindValue(4, $this->id, \PDO::PARAM_INT);
-                $st->execute();
-                $st->closeCursor();
-            } catch (\PDOException $e) {
-                throw new DababaseException('Failed to update the domain data', -1, $e);
-            }
-        } else {
-            try {
-                $actv = $this->actv ?? false;
-                $this->c_tm = $this->u_tm;
-                if (is_null($this->desc)) {
-                    $sql1 = '';
-                    $sql2 = '';
-                } else {
-                    $sql1 = ', `description`';
-                    $sql2 = ', ?';
-                }
-                $st = $db->prepare(
-                    'INSERT INTO `' . Database::tablePrefix('domains')
-                    . '` (`fqdn`, `active`' . $sql1 . ', `created_time`, `updated_time`)'
-                    . ' VALUES (?, ?' . $sql2 . ', ?, ?)'
-                );
-                $idx = 0;
-                $st->bindValue(++$idx, $this->fqdn, \PDO::PARAM_STR);
-                $st->bindValue(++$idx, $actv, \PDO::PARAM_BOOL);
-                if (!is_null($this->desc)) {
-                    $st->bindValue(++$idx, $this->desc, \PDO::PARAM_STR);
-                }
-                $st->bindValue(++$idx, $this->c_tm->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
-                $st->bindValue(++$idx, $this->u_tm->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
-                $st->execute();
-                $st->closeCursor();
-                $this->id = intval($db->lastInsertId());
-                $this->ex_f = true;
-                $this->actv = $actv;
-            } catch (\PDOException $e) {
-                throw new DatabaseFatalException('Failed to insert the domain data', -1, $e);
-            }
-        }
+        $this->db->getMapper('domain')->save($this->data);
+        $this->ex_f = true;
     }
 
     /**
@@ -301,46 +240,11 @@ class Domain
      */
     public function delete(): void
     {
-        if (is_null($this->id)) {
+        if (is_null($this->data['id'])) {
             $this->fetchData();
         }
-
-        $db = Database::connection();
-        $db->beginTransaction();
-        try {
-            $rlist = new ReportList(1);
-            $rlist->setFilter([ 'domain' => $this ]);
-            $rcnt = $rlist->count();
-            if ($rcnt > 0) {
-                switch ($rcnt) {
-                    case 1:
-                        $s1 = 'is';
-                        $s2 = '';
-                        break;
-                    default:
-                        $s1 = 'are';
-                        $s2 = 's';
-                        break;
-                }
-                throw new SoftException(
-                    "Failed to delete: there {$s1} {$rcnt} incoming report{$s2} for this domain"
-                );
-            }
-
-            $st = $db->prepare('DELETE FROM `' . Database::tablePrefix('domains') . '` WHERE `id` = ?');
-            $st->bindValue(1, $this->id, \PDO::PARAM_INT);
-            $st->execute();
-            $st->closeCursor();
-
-            $db->commit();
-            $this->ex_f = false;
-        } catch (\PDOException $e) {
-            $db->rollBack();
-            throw new DatabaseFatalException('Failed to delete the domain', -1, $e);
-        } catch (\Exception $e) {
-            $db->rollBack();
-            throw $e;
-        }
+        $this->db->getMapper('domain')->delete($this->data);
+        $this->ex_f = false;
     }
 
     /**
@@ -350,13 +254,14 @@ class Domain
      */
     private function checkFqdn(): void
     {
-        $this->fqdn = trim($this->fqdn);
-        if (substr($this->fqdn, -1) === '.') {
-            $this->fqdn = trim(substr($this->fqdn, 0, -1));
+        $fqdn = trim($this->data['fqdn']);
+        if (substr($fqdn, -1) === '.') {
+            $fqdn = trim(substr($fqdn, 0, -1));
         }
-        if ($this->fqdn === '') {
+        if ($fqdn === '') {
             throw new SoftException('The domain name must not be an empty string');
         }
+        $this->data['fqdn'] = $fqdn;
     }
 
     /**
@@ -371,57 +276,11 @@ class Domain
         }
 
         try {
-            $st = Database::connection()->prepare(
-                'SELECT `id`, `fqdn`, `active`, `description`, `created_time`, `updated_time` FROM `'
-                . Database::tablePrefix('domains') . '` WHERE ' . $this->sqlCondition()
-            );
-            $this->sqlBindValue($st, 1);
-            $st->execute();
-            $res = $st->fetch(\PDO::FETCH_NUM);
-            if (!$res) {
-                $this->ex_f = false;
-                throw new SoftException('Domain not found');
-            }
-            $this->id   = $res[0];
-            $this->fqdn = $res[1];
-            $this->actv = boolval($res[2]);
-            $this->desc = $res[3];
-            $this->c_tm = new DateTime($res[4]);
-            $this->u_tm = new DateTime($res[5]);
-            $st->closeCursor();
+            $this->db->getMapper('domain')->fetch($this->data);
             $this->ex_f = true;
-        } catch (\PDOException $e) {
-            throw new DatabaseFatalException('Failed to fetch the domain data', -1, $e);
-        }
-    }
-
-    /**
-     * Returns a condition string for a WHERE statement based on existing domain data
-     *
-     * @return string Condition string
-     */
-    private function sqlCondition(): string
-    {
-        if (!is_null($this->id)) {
-            return '`id` = ?';
-        }
-        return '`fqdn` = ?';
-    }
-
-    /**
-     * Binds values for SQL queries based on existing domain data
-     *
-     * @param PDOStatement $st  PDO Statement to bind to
-     * @param ind          $pos The start position for binding
-     *
-     * @return void
-     */
-    private function sqlBindValue($st, int $pos): void
-    {
-        if (!is_null($this->id)) {
-            $st->bindValue($pos, $this->id, \PDO::PARAM_INT);
-        } else {
-            $st->bindValue($pos, $this->fqdn, \PDO::PARAM_STR);
+        } catch (DatabaseNotFoundException $e) {
+            $this->ex_f = false;
+            throw new SoftException('Domain not found');
         }
     }
 }

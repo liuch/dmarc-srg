@@ -62,7 +62,7 @@ if (Core::method() == 'GET') {
                 $res = $list->getList($pos);
             }
             if (array_search('filters', $lst) !== false) {
-                $res['filters'] = ReportList::getFilterList();
+                $res['filters'] = (new ReportList())->getFilterList();
             }
             Core::sendJson($res);
         } catch (RuntimeException $e) {

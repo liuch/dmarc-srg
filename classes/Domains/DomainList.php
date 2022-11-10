@@ -31,15 +31,25 @@
 
 namespace Liuch\DmarcSrg\Domains;
 
-use Liuch\DmarcSrg\DateTime;
-use Liuch\DmarcSrg\Database\Database;
-use Liuch\DmarcSrg\Exception\DatabaseFatalException;
+use Liuch\DmarcSrg\Core;
 
 /**
  * This class is designed to work with the list of domains
  */
 class DomainList
 {
+    private $db = null;
+
+    /**
+     * The constructor
+     *
+     * @param DatabaseController $db The database controller
+     */
+    public function __construct($db = null)
+    {
+        $this->db = $db ?? Core::instance()->database();
+    }
+
     /**
      * Returns a list of domains from the database
      *
@@ -47,29 +57,9 @@ class DomainList
      */
     public function getList(): array
     {
-        $st = null;
         $list = [];
-        try {
-            $st = Database::connection()->query(
-                'SELECT `id`, `fqdn`, `active`, `description`, `created_time`, `updated_time` FROM `'
-                . Database::tablePrefix('domains') . '`'
-            );
-            while ($row = $st->fetch(\PDO::FETCH_NUM)) {
-                $list[] = new Domain([
-                    'id'           => intval($row[0]),
-                    'fqdn'         => $row[1],
-                    'active'       => boolval($row[2]),
-                    'description'  => $row[3],
-                    'created_time' => new DateTime($row[4]),
-                    'updated_time' => new DateTime($row[5])
-                ]);
-            }
-        } catch (\PDOException $e) {
-            throw new DatabaseFatalException('Failed to get the domain list', -1, $e);
-        } finally {
-            if ($st) {
-                $st->closeCursor();
-            }
+        foreach ($this->db->getMapper('domain')->list() as $dd) {
+            $list[] = new Domain($dd, $this->db);
         }
         return [
             'domains' => $list,
@@ -84,46 +74,6 @@ class DomainList
      */
     public function names(): array
     {
-        $st = null;
-        $res = [];
-        try {
-            $st = Database::connection()->query(
-                'SELECT `fqdn` FROM `' . Database::tablePrefix('domains') . '` ORDER BY `fqdn`'
-            );
-            while ($row = $st->fetch(\PDO::FETCH_NUM)) {
-                $res[] = $row[0];
-            }
-        } catch (\PDOException $e) {
-            new DatabaseFatalException('Failed to get a list of domain names', -1, $e);
-        } finally {
-            if ($st) {
-                $st->closeCursor();
-            }
-        }
-        return $res;
-    }
-
-    /**
-     * Returns the total number of domains in the database
-     *
-     * @return int The total number of domains
-     */
-    public static function count(): int
-    {
-        $st = null;
-        try {
-            $st = Database::connection()->query(
-                'SELECT COUNT(*) FROM `' . Database::tablePrefix('domains') . '`',
-                \PDO::FETCH_NUM
-            );
-            $res = intval($st->fetchColumn(0));
-        } catch (\PDOException $e) {
-            new DatabaseFatalException('Failed to get the number of domains', -1, $e);
-        } finally {
-            if ($st) {
-                $st->closeCursor();
-            }
-        }
-        return $res;
+        return $this->db->getMapper('domain')->names();
     }
 }

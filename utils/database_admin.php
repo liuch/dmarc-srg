@@ -54,7 +54,7 @@ $res = null;
 try {
     switch ($action) {
         case 'status':
-            $res = Core::instance()->admin()->state()['database'];
+            $res = Core::instance()->database()->state();
             $tcn = 0;
             if (isset($res['tables'])) {
                 foreach ($res['tables'] as &$t) {
@@ -68,17 +68,18 @@ try {
             echo 'Tables:  ', $tcn, PHP_EOL;
             break;
         case 'init':
-            $res = Database::initDb();
+            $res = Core::instance()->database()->initDb();
             break;
         case 'upgrade':
             $cur_ver = (new SettingString('version'))->value();
             if ($cur_ver === '') {
                 $cur_ver = 'n/a';
             }
+            $db = Core::instance()->database();
             echo "Current version:  {$cur_ver}", PHP_EOL;
-            echo 'Required version: ', Database::REQUIRED_VERSION, PHP_EOL;
-            if ($cur_ver !== Database::REQUIRED_VERSION) {
-                DatabaseUpgrader::go();
+            echo 'Required version: ', $db::REQUIRED_VERSION, PHP_EOL;
+            if ($cur_ver !== $db::REQUIRED_VERSION) {
+                $db->getMapper('upgrader')->go($db::REQUIRED_VERSION);
                 $res = [
                     'error_code' => 0,
                     'message'    => 'Upgrated successfully'
@@ -91,7 +92,7 @@ try {
             }
             break;
         case 'drop':
-            $res = Database::dropTables();
+            $res = Core::instance()->database()->cleanDb();
             break;
         default:
             echo "Usage: {$argv[0]} status|init|upgrade|drop", PHP_EOL;
