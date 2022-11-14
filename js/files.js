@@ -168,13 +168,15 @@ class Files {
 					throw new Error("Failed to load report files");
 				return resp.json();
 			}).then(function(data) {
-				if (data.error_code !== undefined && data.error_code !== 0)
-					Notification.add({ text: (data.message || "Error!"), type: "error" });
-				else
+				if (!data.error_code) {
 					Notification.add({ text: (data.message || "Loaded successfully!"), type: "info" });
-				if (data.other_errors)
+				}
+				if (data.other_errors) {
 					that._notify_other_errors(data.other_errors);
+				}
+				Common.checkResult(data);
 			}).catch(function(err) {
+				Common.displayError(err);
 				Notification.add({ text: (err.message || "Error!"), type: "error" });
 			}).finally(function() {
 				that._fetch_data(false, true);
