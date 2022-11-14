@@ -74,6 +74,9 @@ class MailMessage
         }
 
         $bytes = $this->attachment->size();
+        if ($bytes === -1) {
+            throw new SoftException("Failed to get attached file size. Wrong message format?");
+        }
         if ($bytes < 50 || $bytes > 1 * 1024 * 1024) {
             throw new SoftException("Attachment file size is not valid ({$bytes} bytes)");
         }
@@ -128,7 +131,7 @@ class MailMessage
 
         return [
             'filename' => imap_utf8($filename),
-            'bytes'    => $part->bytes,
+            'bytes'    => isset($part->bytes) ? $part->bytes : -1,
             'number'   => $number,
             'mnumber'  => $this->number,
             'encoding' => $part->encoding
