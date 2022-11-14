@@ -56,12 +56,12 @@ $mailboxes = [
  * and all others will be moved to subdirectory `failed`, that will be created
  * automatically if it does not exist.
  */
-$directories = [
-    // Just for displaying in web-admin. Not necessary.
-    'name'     => 'Rua-Dir',
-    // The directory location
-    'location' => '/var/spool/dmarc-srg/rua'
-];
+//$directories = [
+//    // Just for displaying in web-admin. Not necessary.
+//    'name'     => 'Rua-Dir',
+//    // The directory location
+//    'location' => '/var/spool/dmarc-srg/rua'
+//];
 
 $admin = [
     // Set this value to null or remove this parameter to disable authentication
