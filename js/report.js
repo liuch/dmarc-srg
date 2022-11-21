@@ -76,7 +76,9 @@ class ReportWidget {
 				if (that._rep_id === report_id) {
 					remove_all_children(that._cn_element);
 					that._cn_element.appendChild(rep.element());
-					rep.set_value("seen", true).catch(function(err) {
+					rep.set_value("seen", true).then(function(data) {
+						Common.checkResult(data);
+					}).catch(function(err) {
 						Common.displayError(err);
 					});
 				}
