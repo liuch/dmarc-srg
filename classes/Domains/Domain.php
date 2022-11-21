@@ -80,7 +80,7 @@ class Domain
                 $this->id = $data;
                 return;
             case 'string':
-                $this->fqdn = $data;
+                $this->fqdn = strtolower($data);
                 $this->checkFqdn();
                 return;
             case 'array':
@@ -94,7 +94,7 @@ class Domain
                     if (gettype($data['fqdn']) !== 'string') {
                         break;
                     }
-                    $this->fqdn = $data['fqdn'];
+                    $this->fqdn = strtolower($data['fqdn']);
                     $this->checkFqdn();
                 }
                 if (isset($data['active'])) {
