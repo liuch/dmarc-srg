@@ -44,21 +44,20 @@ if (php_sapi_name() !== 'cli') {
     exit(1);
 }
 
-if (!isset($cleaner['reportlog']['days_old'])) {
-    exit(0);
-}
-$days = $cleaner['reportlog']['days_old'];
+$core = Core::instance();
+
+$days = $core->config('cleaner/reportlog/days_old', -1);
 if (gettype($days) !== 'integer' || $days < 0) {
     exit(0);
 }
 $days_date = (new DateTime())->sub(new \DateInterval("P{$days}D"));
-$maximum = isset($cleaner['reportlog']['delete_maximum']) ?
-    $cleaner['reportlog']['delete_maximum'] : 0;
+
+$maximum = $core->config('cleaner/reportlog/delete_maximum', 0);
 if (gettype($maximum) !== 'integer' || $maximum < 0) {
     exit(0);
 }
-$leave = isset($cleaner['reportlog']['leave_minimum']) ?
-    $cleaner['reportlog']['leave_minimum'] : 0;
+
+$leave = $core->config('cleaner/reportlog/leave_minimum', 0);
 if (gettype($leave) !== 'integer' || $leave < 0) {
     exit(0);
 }

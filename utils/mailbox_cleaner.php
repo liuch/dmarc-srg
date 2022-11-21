@@ -46,25 +46,25 @@ if (php_sapi_name() !== 'cli') {
     exit(1);
 }
 
-if (!isset($cleaner['mailboxes']['days_old'])) {
-    exit(0);
-}
-$days = $cleaner['mailboxes']['days_old'];
+$core = Core::instance();
+
+$days = $core->config('cleaner/mailboxes/days_old', -1);
 if (gettype($days) !== 'integer' || $days < 0) {
     exit(0);
 }
-$days_date = strtotime('- ' . $days . ' days');
-$maximum = isset($cleaner['mailboxes']['delete_maximum']) ?
-    $cleaner['mailboxes']['delete_maximum'] : 0;
+$days_date = (new DateTime())->sub(new \DateInterval("P{$days}D"));
+
+$maximum = $core->config('cleaner/mailboxes/delete_maximum', 0);
 if (gettype($maximum) !== 'integer' || $maximum < 0) {
     exit(0);
 }
-$leave = isset($cleaner['mailboxes']['leave_minimum']) ?
-    $cleaner['mailboxes']['leave_minimum'] : 0;
+
+$leave = $core->config('cleaner/mailboxes/leave_minimum', 0);
 if (gettype($leave) !== 'integer' || $leave < 0) {
     exit(0);
 }
-switch ($cleaner['mailboxes']['failed'] ?? 'no') {
+
+switch ($core->config('cleaner/mailboxes/failed', 'no')) {
     case 'seen':
         $f_criteria = 'SEEN';
         break;
