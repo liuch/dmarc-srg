@@ -20,26 +20,6 @@ class CoreTest extends \PHPUnit\Framework\TestCase
         $this->assertSame('some_method', $this->core->method());
     }
 
-    public function testRequestHeaders(): void
-    {
-        $this->markTestIncomplete();
-    }
-
-    public function testUserId(): void
-    {
-        $this->markTestIncomplete();
-    }
-
-    public function testDestroySession(): void
-    {
-        $this->markTestIncomplete();
-    }
-
-    public function testIsJson(): void
-    {
-        $this->markTestIncomplete();
-    }
-
     public function testSendHtml(): void
     {
         ob_start();
@@ -61,16 +41,6 @@ class CoreTest extends \PHPUnit\Framework\TestCase
         $output = ob_get_contents();
         ob_end_clean();
         $this->assertJsonStringEqualsJsonString(json_encode($data), $output);
-    }
-
-    public function testSendBad(): void
-    {
-        $this->markTestIncomplete();
-    }
-
-    public function testGetJsonData(): void
-    {
-        $this->markTestIncomplete();
     }
 
     public function testAuthInstance(): void

@@ -1,4 +1,4 @@
 #!/usr/bin/env sh
 
-phpunit --bootstrap init.php tests
+phpunit --color --bootstrap init.php tests
 
