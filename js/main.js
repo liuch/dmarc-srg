@@ -218,50 +218,52 @@ Router._update_menu = function(authenticated) {
 			}
 		}
 	}
-	l_el = document.createElement("li");
-	l_el.setAttribute("id", "auth-action");
-	let a_el = document.createElement("a");
-	a_el.setAttribute("href", "");
-	if (authenticated == "yes") {
-		a_el.appendChild(document.createTextNode("Log out"));
-		a_el.addEventListener("click", function(event) {
-			event.preventDefault();
-			if (!this.classList.contains("disabled")) {
-				let m_el = this;
-				m_el.classList.add("disabled");
-				window.fetch("logout.php", {
-					method: "POST",
-					cache: "no-store",
-					headers: Object.assign(HTTP_HEADERS, HTTP_HEADERS_POST),
-					credentials: "same-origin",
-					body: JSON.stringify({})
-				}).then(function(resp) {
-					if (!resp.ok)
-						throw new Error("Failed to log out");
-					return resp.json();
-				}).then(function(data) {
-					Common.checkResult(data);
-					Status.instance().reset();
-					Router._clear_data();
-					Router._update_menu("no");
-					Router.update_title("");
-				}).catch(function(err) {
-					Common.displayError(err);
-					m_el.classList.remove("disabled");
-					Notification.add({ type: "error", text: err.message });
-				});
-			}
-		});
+	if (authenticated !== "disabled") {
+		l_el = document.createElement("li");
+		l_el.setAttribute("id", "auth-action");
+		let a_el = document.createElement("a");
+		a_el.setAttribute("href", "");
+		if (authenticated == "yes") {
+			a_el.appendChild(document.createTextNode("Log out"));
+			a_el.addEventListener("click", function(event) {
+				event.preventDefault();
+				if (!this.classList.contains("disabled")) {
+					let m_el = this;
+					m_el.classList.add("disabled");
+					window.fetch("logout.php", {
+						method: "POST",
+						cache: "no-store",
+						headers: Object.assign(HTTP_HEADERS, HTTP_HEADERS_POST),
+						credentials: "same-origin",
+						body: JSON.stringify({})
+					}).then(function(resp) {
+						if (!resp.ok)
+							throw new Error("Failed to log out");
+						return resp.json();
+					}).then(function(data) {
+						Common.checkResult(data);
+						Status.instance().reset();
+						Router._clear_data();
+						Router._update_menu("no");
+						Router.update_title("");
+					}).catch(function(err) {
+						Common.displayError(err);
+						m_el.classList.remove("disabled");
+						Notification.add({ type: "error", text: err.message });
+					});
+				}
+			});
+		}
+		else if (authenticated == "no") {
+			a_el.appendChild(document.createTextNode("Log in"));
+			a_el.addEventListener("click", function(event) {
+				event.preventDefault();
+				LoginDialog.start({ nousername: true });
+			});
+		}
+		l_el.appendChild(a_el);
+		m_el.appendChild(l_el);
 	}
-	else if (authenticated == "no") {
-		a_el.appendChild(document.createTextNode("Log in"));
-		a_el.addEventListener("click", function(event) {
-			event.preventDefault();
-			LoginDialog.start({ nousername: true });
-		});
-	}
-	l_el.appendChild(a_el);
-	m_el.appendChild(l_el);
 };
 
 Router._clear_data = function() {
