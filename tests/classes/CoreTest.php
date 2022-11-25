@@ -27,7 +27,7 @@ class CoreTest extends \PHPUnit\Framework\TestCase
         $output = ob_get_contents();
         ob_end_clean();
         $this->assertIsString($output);
-        $this->assertSame('32a560657b018557f3e9595218a878a7', md5($output));
+        $this->assertStringEqualsFile('index.html', $output);
     }
 
     /**
