@@ -105,10 +105,26 @@ class Status {
 		let passed = this._data.emails.dkim_spf_aligned;
 		let forwarded = this._data.emails.dkim_aligned + this._data.emails.spf_aligned;
 		let failed = total - passed - forwarded;
-		this._set_element_data("processed", total === -1 && "?" || total, total !== -1 && "state-blue" || null);
-		this._set_element_data("passed", this._formatted_statistic(passed, total), total !== -1 && "state-green" || null);
-		this._set_element_data("forwarded", this._formatted_statistic(forwarded, total), total !== -1 && "state-green" || null);
-		this._set_element_data("failed", this._formatted_statistic(failed, total), total !== -1 && "state-red" || null);
+		this._set_element_data(
+			"processed",
+			(total === -1 || total === undefined) && "?" || total,
+			total !== -1 && "state-blue" || null
+		);
+		this._set_element_data(
+			"passed",
+			this._formatted_statistic(passed, total),
+			total !== -1 && "state-green" || null
+		);
+		this._set_element_data(
+			"forwarded",
+			this._formatted_statistic(forwarded, total),
+			total !== -1 && "state-green" || null
+		);
+		this._set_element_data(
+			"failed",
+			this._formatted_statistic(failed, total),
+			total !== -1 && "state-red" || null
+		);
 		{
 			let el = document.getElementById("stat-block");
 			if (days > 0) {
