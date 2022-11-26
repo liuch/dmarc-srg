@@ -181,11 +181,20 @@ class SummaryReport
 
         if (count($rdata['organizations']) > 0) {
             $res[] = '## Organizations';
-            $res[] = sprintf(' %-15s %8s %8s', '', 'emails', 'reports');
+
+            $org_len = 15;
+            foreach ($rdata['organizations'] as &$org) {
+                $org_len = max($org_len, mb_strlen($org['name']));
+            }
+            unset($org);
+
+            $org_len = min($org_len, 55);
+            $res[] = sprintf(" %-{$org_len}s %8s %8s", '', 'emails', 'reports');
+            $frm_str = " %-{$org_len}s %8d %8d";
             foreach ($rdata['organizations'] as &$org) {
                 $res[] = sprintf(
-                    ' %-15s %8d %8d',
-                    $org['name'],
+                    $frm_str,
+                    trim($org['name']),
                     $org['emails'],
                     $org['reports']
                 );
