@@ -31,12 +31,13 @@
 
 namespace Liuch\DmarcSrg\Database\Mariadb;
 
+use Liuch\DmarcSrg\Database\StatisticsMapperInterface;
 use Liuch\DmarcSrg\Exception\DatabaseFatalException;
 
 /**
  * StatisticsMapper class implementation for MariaDB
  */
-class StatisticsMapper
+class StatisticsMapper implements StatisticsMapperInterface
 {
     private $connector = null;
 
@@ -143,6 +144,7 @@ class StatisticsMapper
         }
         return $res;
     }
+
     /**
      * Returns a list of organizations that sent the reports with some statistics for each one
      *

@@ -32,6 +32,7 @@
 namespace Liuch\DmarcSrg\Database\Mariadb;
 
 use Liuch\DmarcSrg\DateTime;
+use Liuch\DmarcSrg\Database\DomainMapperInterface;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\DatabaseFatalException;
 use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
@@ -39,7 +40,7 @@ use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
 /**
  * DomainMapper class implementation for MariaDB
  */
-class DomainMapper
+class DomainMapper implements DomainMapperInterface
 {
     private $connector = null;
 

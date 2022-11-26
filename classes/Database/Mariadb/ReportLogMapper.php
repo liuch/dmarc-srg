@@ -32,13 +32,14 @@
 namespace Liuch\DmarcSrg\Database\Mariadb;
 
 use Liuch\DmarcSrg\DateTime;
+use Liuch\DmarcSrg\Database\ReportLogMapperInterface;
 use Liuch\DmarcSrg\Exception\DatabaseFatalException;
 use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
 
 /**
  * ReportLogMapper class implementation for MariaDB
  */
-class ReportLogMapper
+class ReportLogMapper implements ReportLogMapperInterface
 {
     private $connector = null;
 

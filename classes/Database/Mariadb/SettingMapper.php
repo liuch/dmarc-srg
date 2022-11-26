@@ -31,13 +31,14 @@
 
 namespace Liuch\DmarcSrg\Database\Mariadb;
 
+use Liuch\DmarcSrg\Database\SettingMapperInterface;
 use Liuch\DmarcSrg\Exception\DatabaseFatalException;
 use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
 
 /**
  * SettingMapper class implementation for MariaDB
  */
-class SettingMapper
+class SettingMapper implements SettingMapperInterface
 {
     private $connector = null;
 

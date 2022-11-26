@@ -31,6 +31,7 @@
 
 namespace Liuch\DmarcSrg\Database\Mariadb;
 
+use Liuch\DmarcSrg\Database\UpgraderMapperInterface;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\DatabaseFatalException;
 use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
@@ -38,7 +39,7 @@ use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
 /**
  * UpgraderMapper class implementation for MariaDB
  */
-class UpgraderMapper
+class UpgraderMapper implements UpgraderMapperInterface
 {
     private $connector = null;
 

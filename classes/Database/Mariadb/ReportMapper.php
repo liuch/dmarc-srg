@@ -35,6 +35,7 @@ use Liuch\DmarcSrg\Core;
 use Liuch\DmarcSrg\Common;
 use Liuch\DmarcSrg\DateTime;
 use Liuch\DmarcSrg\Settings\SettingsList;
+use Liuch\DmarcSrg\Database\ReportMapperInterface;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\LogicException;
 use Liuch\DmarcSrg\Exception\DatabaseFatalException;
@@ -43,7 +44,7 @@ use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
 /**
  * ReportMapper class implementation for MariaDB
  */
-class ReportMapper
+class ReportMapper implements ReportMapperInterface
 {
     private $connector = null;
 
