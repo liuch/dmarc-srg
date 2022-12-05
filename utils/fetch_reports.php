@@ -175,7 +175,7 @@ try {
         }
         unset($res);
     }
-} catch (\Exception $e) {
+} catch (RuntimeException $e) {
     $problems[] = [ 'state' => $state, 'messages' => [ $e->getMessage() ] ];
 }
 
