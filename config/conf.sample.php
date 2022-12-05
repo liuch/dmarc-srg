@@ -65,7 +65,7 @@ $mailboxes = [
 
 $admin = [
     // Set this value to null or remove this parameter to disable authentication
-    // Note: The authentication is always failed with an empty password. Change it if you want to use the web ui.
+    // Note: The authentication always fails with an empty string password. Change it if you want to use the web ui.
     'password' => '',
 ];
 
@@ -73,11 +73,47 @@ $admin = [
 $fetcher = [
     'mailboxes' => [
         // How many messages will be fetched at once maximum. 0 to disable any limiting.
-        'messages_maximum' => 10
+        'messages_maximum' => 10,
+
+        /**
+         * What to do with the email message when a report from it has been successfully processed
+         * and saved to the database. The following actions are available:
+         * 'mark_seen'   - Mark the email message as seen.
+         * 'delete'      - Delete email message from the mailbox.
+         * 'move_to:dir' - Move the email message to child mailbox with name 'dir'.
+         *                 The child mailbox will be created it doesn't exist.
+         * Note: You can specify multiple actions by putting them in an array. For example:
+         * 'when_done' => [ 'mark_seen', 'move_to:done' ],
+         * The default value is 'mark_seen'.
+         */
+        'when_done' => 'mark_seen',
+
+        /**
+         * What to do with the email message when a report from it has been rejected.
+         * The same actions are available as for the when_done.
+         * The default value is 'move_to:failed'.
+         */
+        'when_failed' => 'move_to:failed'
     ],
     'directories' => [
         // How many report files will be processed at once maximum. 0 to disable any limiting.
-        'files_maximum' => 50
+        'files_maximum' => 50,
+
+        /**
+         * What to do with the report file when it has been successfully processed.
+         * The folowing actions are available: 'delete', 'move_to'. See the when_done for mailboxes
+         * for detailed description.
+         * The default value is 'delete'.
+         */
+        'when_done'        => 'delete',
+
+        /**
+         * What to do with the report file when it has been rejected.
+         * The same actions are available as for the when_done.
+         * The default value is 'move_to:failed'.
+         *
+         */
+        'when_failed'      => 'move_to:failed'
     ],
     /**
      * Domains matching this regular expression will be automatically added to the database from processed
@@ -105,23 +141,34 @@ $cleaner = [
     'mailboxes' => [
         // Will remove messages older than (days)
         'days_old'       => 30,
+
         // How many messages will be removed at once maximum.
         'delete_maximum' => 50,
+
         // How many messages must be leave in the mailbox minimum.
         'leave_minimum'  => 100,
-        // Cleaning up the mailbox that failed reports are moved to. This box is also subject
-        // to the restrictions mentioned above. The valid values are:
-        // 'none' - no action with it. Default value.
-        // 'seen' - only seen messages will be removed
-        // 'any'  - all messages will be removed
+
+        /**
+         * Status of emails to be deleted for mailboxes where successfully processed emails and rejected emails
+         * are located. If it is the same mailbox, then the more forgiving criteria of the two will be used.
+         * The valid values are:
+         * 'none' - no action with it. The default value for rejected mail messages.
+         * 'seen' - only seen messages will be removed. The default value for successully processed mail messages.
+         * 'any'  - all messages will be removed.
+         * Note: In the mailbox, where letters with incoming DMARC reports initially come in, unseen messages
+         * will not be deleted in any case.
+         */
+        'done'           => 'seen',
         'failed'         => 'none'
     ],
+
     // It is used in utils/reports_cleaner.php
     'reports' => [
         'days_old'       => 30,
         'delete_maximum' => 50,
         'leave_minimum'  => 100
     ],
+
     // It is used in utils/reportlog_cleaner.php
     'reportlog' => [
         'days_old'       => 30,

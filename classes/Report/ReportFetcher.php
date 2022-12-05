@@ -71,17 +71,26 @@ class ReportFetcher
             return [[ 'source_error' => $e->getMessage() ]];
         }
 
+        $core  = Core::instance();
         $limit = 0;
         $stype = $this->source->type();
         switch ($stype) {
             case Source::SOURCE_MAILBOX:
-                $limit = Core::instance()->config('fetcher/mailboxes/messages_maximum', 0);
+                $s_act = $core->config('fetcher/mailboxes/when_done', '');
+                $f_act = $core->config('fetcher/mailboxes/when_failed', '');
+                $limit = $core->config('fetcher/mailboxes/messages_maximum', 0);
                 break;
             case Source::SOURCE_DIRECTORY:
-                $limit = Core::instance()->config('fetcher/directories/files_maximum', 0);
+                $s_act = $core->config('fetcher/directories/when_done', '');
+                $f_act = $core->config('fetcher/directories/when_failed', '');
+                $limit = $core->config('fetcher/directories/files_maximum', 0);
                 break;
         }
         $limit = intval($limit);
+        $this->source->setParams([
+            'when_done'   => $s_act,
+            'when_failed' => $f_act
+        ]);
 
         $results = [];
         while ($this->source->valid()) {

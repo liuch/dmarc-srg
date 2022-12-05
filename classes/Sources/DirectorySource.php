@@ -41,8 +41,35 @@ use Liuch\DmarcSrg\Exception\RuntimeException;
  */
 class DirectorySource extends Source
 {
-    private $list  = null;
-    private $index = 0;
+    private $list   = null;
+    private $index  = 0;
+    private $params = null;
+
+    /**
+     * Sets parameters that difine the behavior of the source
+     *
+     * @param $params Key-value array
+     *                'when_done'   => one or more rules to be executed after successful report processing
+     *                                 (array|string)
+     *                'when_failed' => one or more rules to be executed after report processing fails
+     *                                 (array|string)
+     *
+     * @return void
+     */
+    public function setParams(array $params): void
+    {
+        $this->params = [];
+        $this->params['when_done'] = SourceAction::fromSetting(
+            $params['when_done'] ?? [],
+            SourceAction::FLAG_BASENAME,
+            'delete'
+        );
+        $this->params['when_failed'] = SourceAction::fromSetting(
+            $params['when_failed'] ?? [],
+            SourceAction::FLAG_BASENAME,
+            'move_to:failed'
+        );
+    }
 
     /**
      * Returns an instance of the ReportFile class for the current file.
@@ -98,6 +125,9 @@ class DirectorySource extends Source
                 }
             }
         }
+        if (is_null($this->params)) {
+            $this->setParams([]);
+        }
         $this->index = 0;
     }
 
@@ -112,11 +142,72 @@ class DirectorySource extends Source
     }
 
     /**
-     * Removes the accepted report file.
+     * Processes the accepted report file according to the settings
      *
      * @return void
      */
     public function accepted(): void
+    {
+        $this->processReportFileActions($this->params['when_done']);
+    }
+
+    /**
+     * Processes the rejected report file according to the settings
+     *
+     * @return void
+     */
+    public function rejected(): void
+    {
+        $this->processReportFileActions($this->params['when_failed']);
+    }
+
+    /**
+     * Returns type of the source.
+     *
+     * @return int
+     */
+    public function type(): int
+    {
+        return Source::SOURCE_DIRECTORY;
+    }
+
+    /**
+     * Logs an error message
+     *
+     * @param string $message
+     */
+    private function logError(string $message): void
+    {
+        Core::instance()->logger()->error($message);
+    }
+
+    /**
+     * Processes the current report file according to settings
+     *
+     * @param array $actions List of actions to apply to the file
+     *
+     * @return void
+     */
+    private function processReportFileActions(array &$actions): void
+    {
+        foreach ($actions as $sa) {
+            switch ($sa->type) {
+                case SourceAction::ACTION_DELETE:
+                    $this->deleteReportFile();
+                    break;
+                case SourceAction::ACTION_MOVE:
+                    $this->moveReportFile($sa->param);
+                    break;
+            }
+        }
+    }
+
+    /**
+     * Deletes the current report file
+     *
+     * @return void
+     */
+    private function deleteReportFile(): void
     {
         try {
             unlink($this->list[$this->index]);
@@ -128,13 +219,15 @@ class DirectorySource extends Source
     }
 
     /**
-     *  Moves the rejected report file to the `failed` directory.
+     * Moves the current report file
+     *
+     * @param string $dir_name Directory name where to move the report file to
      *
      * @return void
      */
-    public function rejected(): void
+    private function moveReportFile(string $dir_name): void
     {
-        $fdir = $this->path . 'failed';
+        $fdir = $this->path . $dir_name;
         if (!is_dir($fdir)) {
             try {
                 mkdir($fdir);
@@ -157,25 +250,5 @@ class DirectorySource extends Source
             $this->logError(strval($e));
             throw $e;
         }
-    }
-
-    /**
-     * Returns type of the source.
-     *
-     * @return int
-     */
-    public function type(): int
-    {
-        return Source::SOURCE_DIRECTORY;
-    }
-
-    /**
-     * Logs an error message
-     *
-     * @param string $message
-     */
-    private function logError(string $message): void
-    {
-        Core::instance()->logger()->error($message);
     }
 }

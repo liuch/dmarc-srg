@@ -37,6 +37,7 @@
 namespace Liuch\DmarcSrg;
 
 use Liuch\DmarcSrg\Mail\MailBoxes;
+use Liuch\DmarcSrg\Sources\SourceAction;
 use Liuch\DmarcSrg\Exception\RuntimeException;
 
 require 'init.php';
@@ -64,37 +65,67 @@ if (gettype($leave) !== 'integer' || $leave < 0) {
     exit(0);
 }
 
-switch ($core->config('cleaner/mailboxes/failed', 'no')) {
-    case 'seen':
-        $f_criteria = 'SEEN';
-        break;
-    case 'any':
-        $f_criteria = 'ALL';
-        break;
-    default:
-        $f_criteria = null;
-        break;
-}
-
 // Get a list of the configured email boxes
 $mb_list = new MailBoxes();
-
-if ($mb_list->count() === 0) {
+$mb_cnt  = $mb_list->count();
+if ($mb_cnt === 0) {
     // There are no configured mailboxes
     exit(0);
 }
 
-try {
-    foreach ($mb_list as $mbox) {
-        $cr_a = [ 'SEEN', $f_criteria ];
-        for ($cr_i = 0; $cr_i < 2; ++$cr_i) {
-            $criteria = $cr_a[$cr_i];
-            if ($cr_i === 1) {
-                $mbox = $criteria ? $mbox->childMailbox('failed') : null;
+// Get the names of mailboxes where processed messages are moved to.
+$dirs = [];
+foreach ([ [ 'done', '', 1 ], [ 'failed', 'failed', 0 ] ] as $it) {
+    $opt_nm  = $it[0];
+    $def_opt = $it[1];
+    $def_cri = $it[2];
+    $actions = SourceAction::fromSetting($core->config("fetcher/mailboxes/when_{$opt_nm}", ''), 0, '');
+    if (count($actions) === 0) {
+        $dir = $def_opt;
+    } else {
+        $dir = null;
+        foreach ($actions as $act) {
+            if ($act->type === SourceAction::ACTION_MOVE) {
+                $dir = $act->param;
+                break;
             }
-            if ($mbox) {
-                $s_res = $mbox->sort(SORTDATE, $criteria, false);
+        }
+        if (is_null($dir)) {
+            continue;
+        }
+    }
+    switch (strtolower($core->config("cleaner/mailboxes/{$opt_nm}", ''))) {
+        case 'any':
+            $cri = 2;
+            break;
+        case 'seen':
+            $cri = 1;
+            break;
+        case '':
+            $cri = $def_cri;
+            break;
+        default:
+            $cri = 0;
+            break;
+    }
+    if (empty($dir) && $cri > 1) {
+        $cri = 1;
+    }
+    $dirs[$dir] = min(($dirs[$dir] ?? $cri), $cri);
+}
 
+try {
+    for ($mb_idx = 1; $mb_idx <= $mb_cnt; ++$mb_idx) {
+        foreach ($dirs as $dir_name => $i_criteria) {
+            if ($i_criteria > 0) {
+                $criteria = $i_criteria === 2 ? 'ALL' : 'SEEN';
+                $mbox = $mb_list->mailbox($mb_idx);
+                if (!empty($dir_name)) {
+                    if (!($mbox = $mbox->childMailbox($dir_name))) {
+                        continue;
+                    }
+                }
+                $s_res = $mbox->sort(SORTDATE, $criteria, false);
                 $max = $maximum > 0 ? $maximum : -1;
                 $lv = $leave === 0 ? count($s_res) : count($s_res) - $leave;
                 $i = 0;
@@ -103,7 +134,11 @@ try {
                     $msg = $mbox->message($m_num);
                     $mo = $msg->overview();
                     if (isset($mo->date)) {
-                        $md = strtotime($mo->date);
+                        try {
+                            $md = new DateTime($mo->date);
+                        } catch (\Exception $e) {
+                            $md = false;
+                        }
                         if ($md !== false) {
                             if ($md > $days_date) {
                                 break;

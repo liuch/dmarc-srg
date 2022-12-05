@@ -55,6 +55,21 @@ abstract class Source implements \Iterator
     }
 
     /**
+     * Sets parameters that difine the behavior of the source
+     *
+     * @param $params Key-value array
+     *                'when_done'   => one or more rules to be executed after successful report processing
+     *                                 (array|string)
+     *                'when_failed' => one or more rules to be executed after report processing fails
+     *                                 (array|string)
+     *
+     * @return void
+     */
+    public function setParams(array $params): void
+    {
+    }
+
+    /**
      * Iterator interface methods
      */
     abstract public function current(): object;

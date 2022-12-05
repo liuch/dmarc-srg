@@ -40,9 +40,36 @@ use Liuch\DmarcSrg\Exception\RuntimeException;
  */
 class MailboxSource extends Source
 {
-    private $list  = null;
-    private $index = 0;
-    private $msg   = null;
+    private $list   = null;
+    private $index  = 0;
+    private $msg    = null;
+    private $params = null;
+
+    /**
+     * Sets parameters that difine the behavior of the source
+     *
+     * @param $params Key-value array
+     *                'when_done'   => one or more rules to be executed after successful report processing
+     *                                 (array|string)
+     *                'when_failed' => one or more rules to be executed after report processing fails
+     *                                 (array|string)
+     *
+     * @return void
+     */
+    public function setParams(array $params): void
+    {
+        $this->params = [];
+        $this->params['when_done'] = SourceAction::fromSetting(
+            $params['when_done'] ?? [],
+            0,
+            'mark_seen'
+        );
+        $this->params['when_failed'] = SourceAction::fromSetting(
+            $params['when_failed'] ?? [],
+            0,
+            'move_to:failed'
+        );
+    }
 
     /**
      * Returns an instance of the ReportFile class for the current email message.
@@ -94,6 +121,9 @@ class MailboxSource extends Source
         $this->msg   = null;
         $this->list  = $this->data->sort(SORTDATE, 'UNSEEN', false);
         $this->index = 0;
+        if (is_null($this->params)) {
+            $this->setParams([]);
+        }
     }
 
     /**
@@ -107,27 +137,25 @@ class MailboxSource extends Source
     }
 
     /**
-     * Marks the accepted email message with flag Seen.
+     * Processes the accepted email messages according to the settings
      *
      * @return void
      */
     public function accepted(): void
     {
         if ($this->msg) {
-            $this->msg->setSeen();
+            $this->processMessageActions($this->params['when_done']);
         }
     }
 
     /**
-     * Moves the rejected email message to folder `failed`.
-     * If the folder does not exits, it will be created.
+     * Processes the rejected email messages according to the settings
      *
      * @return void
      */
     public function rejected(): void
     {
-        $this->data->ensureMailbox('failed');
-        $this->data->moveMessage($this->list[$this->index], 'failed');
+        $this->processMessageActions($this->params['when_failed']);
     }
 
     /**
@@ -148,5 +176,63 @@ class MailboxSource extends Source
     public function mailMessage()
     {
         return $this->msg;
+    }
+
+    /**
+     * Processes the current report message according to settings
+     *
+     * @param array $actions List of actions to apply to the message
+     *
+     * @return void
+     */
+    private function processMessageActions(array &$actions): void
+    {
+        foreach ($actions as $sa) {
+            switch ($sa->type) {
+                case SourceAction::ACTION_SEEN:
+                    $this->markMessageSeen();
+                    break;
+                case SourceAction::ACTION_MOVE:
+                    $this->moveMessage($sa->param);
+                    break;
+                case SourceAction::ACTION_DELETE:
+                    $this->deleteMessage();
+                    break;
+            }
+        }
+    }
+
+    /**
+     * Marks the current report message as seen
+     *
+     * @return void
+     */
+    public function markMessageSeen(): void
+    {
+        $this->msg->setSeen();
+    }
+
+    /**
+     * Moves the current report message
+     *
+     * @param string $mbox_name Child mailbox name where to move the current message to.
+     *                          If the target mailbox does not exists, it will be created.
+     *
+     * @return void
+     */
+    private function moveMessage(string $mbox_name): void
+    {
+        $this->data->ensureMailbox($mbox_name);
+        $this->data->moveMessage($this->list[$this->index], $mbox_name);
+    }
+
+    /**
+     * Deletes the current report message
+     *
+     * @return void
+     */
+    private function deleteMessage(): void
+    {
+        $this->data->deleteMessage($this->list[$this->index]);
     }
 }
