@@ -66,13 +66,13 @@ class MailBox
         $flags = $params['encryption'] ?? '';
         switch ($flags) {
             case 'ssl':
+            default:
                 $flags = '/ssl';
                 break;
             case 'none':
                 $flags = '/notls';
                 break;
             case 'starttls':
-            default:
                 $flags = '/tls';
                 break;
         }
