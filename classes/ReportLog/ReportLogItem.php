@@ -84,13 +84,14 @@ class ReportLogItem
     /**
      * Returns an instance of ReportLogItem with the passed Id
      *
-     * @param int $id an Id of item to return
+     * @param int                $id Item Id to return
+     * @param DatabaseController $db The database controller
      *
      * @return ReportLogItem an instance of ReportLogItem with the specified Id.
      */
-    public static function byId(int $id)
+    public static function byId(int $id, $db = null)
     {
-        $li = new ReportLogItem(null, null, null);
+        $li = new ReportLogItem(null, null, $db);
         $li->data['id'] = $id;
         try {
             $li->db->getMapper('report-log')->fetch($li->data);
