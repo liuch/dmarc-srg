@@ -333,7 +333,7 @@ class ReportMapper implements ReportMapperInterface
                 'SELECT COUNT(*) FROM `' . $this->connector->tablePrefix('reports') . '` AS `rp`'
                 . $this->sqlConditionList($f_data, ' WHERE ', 0)
             );
-            $l_empty = [];
+            $l_empty = [ 'offset' => 0, 'count' => 0 ];
             $this->sqlBindValues($st, $f_data, $l_empty);
             $st->execute();
             $cnt = intval($st->fetch(\PDO::FETCH_NUM)[0]);
