@@ -290,6 +290,10 @@ textarea.description {
 	.small-cards .table-body .table-row.selected, .small-cards.focused .table-body .table-row.selected {
 		background-color: unset;
 	}
+	.small-cards .table-row.colspanned .table-cell {
+		text-align: center;
+		border: none !important;
+	}
 	.custom-value .setting-value {
 		font-weight: normal;
 	}
