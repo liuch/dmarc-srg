@@ -28,6 +28,7 @@ use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
 
 class Report
 {
+    private $db   = null;
     private $data = null;
 
     public function __construct($data, $db = null)

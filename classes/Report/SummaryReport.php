@@ -258,8 +258,8 @@ class SummaryReport
             $res[] = " <caption {$c1a}>Total records: {$s_cnt}</caption>";
             $res[] = ' <thead>';
             $style = "style=\"{$d3s}{$d5s}\"";
-            $res[] = "  <tr><th {$rs2} {$style}>IP address</th><th ${rs2} {$style}>Email volume</th>" .
-                     "<th ${cs3} {$style}>SPF</th><th {$cs3} {$style}>DKIM</th></tr>";
+            $res[] = "  <tr><th {$rs2} {$style}>IP address</th><th {$rs2} {$style}>Email volume</th>" .
+                     "<th {$cs3} {$style}>SPF</th><th {$cs3} {$style}>DKIM</th></tr>";
             $style = "style=\"{$d2s}{$d3s}{$d5s}\"";
             $res[] = "  <tr><th {$style}>pass</th><th {$style}>fail</th><th {$style}>rate</th>" .
                      "<th {$style}>pass</th><th {$style}>fail</th><th {$style}>rate</th></tr>";
@@ -296,13 +296,13 @@ class SummaryReport
             $res[] = "<table {$t2a}>";
             $res[] = " <caption {$c1a}>Total records: {$o_cnt}</caption>";
             $res[] = ' <thead>';
-            $style = "style=\"${d3s}{$d5s}\"";
+            $style = "style=\"{$d3s}{$d5s}\"";
             $res[] = "  <tr><th {$style}>Name</th><th {$style}>Emails</th><th {$style}>Reports</th></tr>";
             $res[] = ' </thead>';
             $res[] = ' <tbody>';
             foreach ($rdata['organizations'] as &$row) {
                 $name   = htmlspecialchars($row['name']);
-                $style2 = "style=\"${d3s}{$d4s}{$d5s}\"";
+                $style2 = "style=\"{$d3s}{$d4s}{$d5s}\"";
                 $res[] = "  <tr><td {$style}>{$name}</td>" .
                          "<td {$style2}>{$row['emails']}</td>" .
                          "<td {$style2}>{$row['reports']}</td></tr>";

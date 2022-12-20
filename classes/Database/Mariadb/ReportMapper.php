@@ -595,7 +595,7 @@ class ReportMapper implements ReportMapperInterface
                                     throw new SoftException('Report list filter: Incorrect month or year value');
                                 }
                                 $filters[0]['a_str'][] = '`begin_time` < ? AND `end_time` >= ?';
-                                $date1 = new DateTime("${year}-${month}-01");
+                                $date1 = new DateTime("{$year}-{$month}-01");
                                 $date2 = (clone $date1)->modify('first day of next month');
                                 $date1->add(new \DateInterval('PT10S'));
                                 $date2->sub(new \DateInterval('PT10S'));

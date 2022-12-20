@@ -41,6 +41,7 @@ use Liuch\DmarcSrg\Exception\RuntimeException;
  */
 class Directory
 {
+    private $id       = null;
     private $name     = null;
     private $location = null;
 
