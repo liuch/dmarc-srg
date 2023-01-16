@@ -87,10 +87,12 @@ class ReportFetcher
                 break;
         }
         $limit = intval($limit);
-        $this->source->setParams([
-            'when_done'   => $s_act,
-            'when_failed' => $f_act
-        ]);
+        if ($stype === Source::SOURCE_MAILBOX || $stype === Source::SOURCE_DIRECTORY) {
+            $this->source->setParams([
+                'when_done'   => $s_act,
+                'when_failed' => $f_act
+            ]);
+        }
 
         $results = [];
         while ($this->source->valid()) {
