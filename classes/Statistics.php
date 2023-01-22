@@ -89,7 +89,7 @@ class Statistics
     {
         $r = new Statistics($domain, $db);
         $r->range['date1'] = new DateTime('monday last week');
-        $r->range['date2'] = (clone $r->date1)->add(new \DateInterval('P7D'));
+        $r->range['date2'] = (clone $r->range['date1'])->add(new \DateInterval('P7D'));
         return $r;
     }
 
