@@ -27,6 +27,8 @@
 		--color-dg-wait:     #080;
 		--color-st-txtblue:  #00f;
 		--color-st-txtgreen: #080;
+		--color-st-txtyellow: #ee0;
+		--color-st-txtorange: #f90;
 		--color-st-txtred:   #f00;
 		--color-nt-error:    #f88;
 		--color-nt-warning:  #ff8;
@@ -65,6 +67,8 @@
 		--color-dg-wait:     #c58208;
 		--color-st-txtblue:  #4040ff;
 		--color-st-txtgreen: #009300;
+		--color-st-txtyellow: #eeee00;
+		--color-st-txtorange: #ff9900;
 		--color-st-txtred:   #f22;
 		--color-nt-error:    #da3633;
 		--color-nt-warning:  #e7a100;
@@ -435,17 +439,23 @@ textarea.description {
 .state-red .state-background {
 	background-color: #f00;
 }
+.state-orange .state-text {
+	color: var(--color-st-txtorange);
+}
+.state-orange .state-background {
+	background-color: #f90;
+}
+.state-yellow .state-text {
+	color: var(--color-st-txtyellow);
+}
+.state-yellow .state-background {
+	background-color: #ee0;
+}
 .state-green .state-text {
 	color: var(--color-st-txtgreen);
 }
 .state-green .state-background {
 	background-color: #080;
-}
-.state-yellow .state-text {
-	color: #f80;
-}
-.state-yellow .state-background {
-	background-color: #f80;
 }
 .state-gray .state-text {
 	color: #888;
