@@ -293,6 +293,8 @@ class ReportMapper implements ReportMapperInterface
             $st = $db->prepare(
                 'SELECT `org`, `begin_time`, `end_time`, `fqdn`, `external_id`, `seen`, SUM(`rcount`) AS `rcount`,'
                 . ' MIN(`dkim_align`) AS `dkim_align`, MIN(`spf_align`) AS `spf_align`,'
+                . ' SUM(IF(`disposition` = 0,1,0)) AS `disposition_reject`,'
+                . ' SUM(IF(`disposition` = 1,1,0)) AS `disposition_quarantine`,'
                 . ' MIN(`disposition`) AS `disposition` FROM `' . $this->connector->tablePrefix('rptrecords')
                 . '` AS `rr` RIGHT JOIN (SELECT `rp`.`id`, `org`, `begin_time`, `end_time`, `external_id`,'
                 . ' `fqdn`, `seen` FROM `' . $this->connector->tablePrefix('reports')
@@ -316,7 +318,9 @@ class ReportMapper implements ReportMapperInterface
                     'messages'    => $row[6],
                     'dkim_align'  => Common::$align_res[$row[7]],
                     'spf_align'   => Common::$align_res[$row[8]],
-                    'disposition' => Common::$disposition[$row[9]]
+                    'disposition_reject' => $row[9],
+                    'disposition_quarantine' => $row[10],
+                    'disposition' => Common::$disposition[$row[11]]
                 ];
             }
             $st->closeCursor();
@@ -569,7 +573,7 @@ class ReportMapper implements ReportMapperInterface
      * The valid filter item names
      */
     private static $filters_available = [
-        'domain', 'month', 'before_time', 'organization', 'dkim', 'spf', 'status'
+        'domain', 'month', 'before_time', 'organization', 'dkim', 'spf', 'status', 'disposition'
     ];
 
     /**
@@ -651,6 +655,13 @@ class ReportMapper implements ReportMapperInterface
                                 }
                                 $filters[0]['a_str'][] = '`seen` = ?';
                                 $filters[0]['bindings'][] = [ $val, \PDO::PARAM_BOOL ];
+                            } elseif ($fn == 'disposition') {
+                                $val = array_search($fv, Common::$disposition);
+                                if($val === false) {
+                                    throw new SoftException('Report list filter: Incorrect disposition value');
+                                }
+                                $filters[1]['a_str'][] = '`disposition` <= ?';
+                                $filters[1]['bindings'][] = [ $val, \PDO::PARAM_INT ];
                             }
                         }
                         break;

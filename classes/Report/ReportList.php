@@ -32,6 +32,7 @@
 namespace Liuch\DmarcSrg\Report;
 
 use Liuch\DmarcSrg\Core;
+use Liuch\DmarcSrg\Common;
 
 /**
  * It's the main class for working with the incoming reports, such as:
@@ -200,6 +201,7 @@ class ReportList
             'organization' => $reportMapper->organizations(),
             'dkim'         => [ 'pass', 'fail' ],
             'spf'          => [ 'pass', 'fail' ],
+            'disposition'  => Common::$disposition,
             'status'       => [ 'read', 'unread' ]
         ];
     }
