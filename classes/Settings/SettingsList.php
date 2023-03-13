@@ -172,7 +172,7 @@ class SettingsList
             'type'    => 'integer',
             'public'  => true,
             'minimum' => 1,
-            'maximum' => 365,
+            'maximum' => 3650,
             'default' => 30
         ],
         'report-view.sort-records-by' => [

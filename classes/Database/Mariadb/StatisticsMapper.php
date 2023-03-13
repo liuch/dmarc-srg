@@ -89,10 +89,10 @@ class StatisticsMapper implements StatisticsMapperInterface
             $ems = [
                 'total' => intval($row[0]),
                 'dkim_spf_aligned' => intval($row[1]),
-                'dkim_aligned' => intval($row[2]),
-                'spf_aligned' => intval($row[3]),
-                'rejected' => intval($row[4]),
-                'quarantined' => intval($row[5])
+                'dkim_aligned'     => intval($row[2]),
+                'spf_aligned'      => intval($row[3]),
+                'rejected'         => intval($row[4]),
+                'quarantined'      => intval($row[5])
             ];
             $st->closeCursor();
 
@@ -127,7 +127,9 @@ class StatisticsMapper implements StatisticsMapperInterface
         try {
             $st = $this->connector->dbh()->prepare(
                 'SELECT `ip`, SUM(`rcount`) AS `rcount`, SUM(IF(`dkim_align` = 2, `rcount`, 0)) AS `dkim_aligned`,'
-                . ' SUM(IF(`spf_align` = 2, `rcount`, 0)) AS `spf_aligned`'
+                . ' SUM(IF(`spf_align` = 2, `rcount`, 0)) AS `spf_aligned`,'
+                . ' SUM(IF(`disposition` = 0, `rcount`, 0)),'
+                . ' SUM(IF(`disposition` = 1, `rcount`, 0))'
                 . ' FROM `' . $this->connector->tablePrefix('rptrecords') . '` AS `rr`'
                 . ' INNER JOIN `' . $this->connector->tablePrefix('reports')
                 . '` AS `rp` ON `rr`.`report_id` = `rp`.`id`'
@@ -141,7 +143,9 @@ class StatisticsMapper implements StatisticsMapperInterface
                     'ip'           => inet_ntop($row[0]),
                     'emails'       => intval($row[1]),
                     'dkim_aligned' => intval($row[2]),
-                    'spf_aligned'  => intval($row[3])
+                    'spf_aligned'  => intval($row[3]),
+                    'rejected'     => intval($row[4]),
+                    'quarantined'  => intval($row[5])
                 ];
             }
             $st->closeCursor();
