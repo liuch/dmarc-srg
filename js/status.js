@@ -97,7 +97,9 @@ class Status {
 				total: -1,
 				spf_aligned: 0,
 				dkim_aligned: 0,
-				dkim_spf_aligned: 0
+				dkim_spf_aligned: 0,
+				quarantined: 0,
+				rejected: 0
 			};
 		}
 		let days = this._data.emails.days;
@@ -105,9 +107,11 @@ class Status {
 		let passed = this._data.emails.dkim_spf_aligned;
 		let forwarded = this._data.emails.dkim_aligned + this._data.emails.spf_aligned;
 		let failed = total - passed - forwarded;
+		let quarantined = this._data.emails.quarantined
+		let rejected = this._data.emails.rejected
 		this._set_element_data(
 			"processed",
-			(total === -1 || total === undefined) && "?" || total,
+			(total === -1 || total === undefined) && "?" || this._iso_formatted(total),
 			total !== -1 && "state-blue" || null
 		);
 		this._set_element_data(
@@ -123,6 +127,16 @@ class Status {
 		this._set_element_data(
 			"failed",
 			this._formatted_statistic(failed, total),
+			total !== -1 && "state-yellow" || null
+		);
+		this._set_element_data(
+			"quarantined",
+			this._formatted_statistic(quarantined, total),
+			total !== -1 && "state-orange" || null
+		);
+		this._set_element_data(
+			"rejected",
+			this._formatted_statistic(rejected, total),
 			total !== -1 && "state-red" || null
 		);
 		{
@@ -134,6 +148,24 @@ class Status {
 				el.removeAttribute("title");
 			}
 		}
+	}
+
+	_iso_formatted(val) {
+		let f = 1;
+		let u = "";
+		if (val > 1000000000) {
+			f = 1000000000;
+			u = "G";
+		}
+		else if (val > 1000000) {
+			f = 1000000;
+			u = "M";
+		}
+		else if (val > 1000) {
+			f = 1000;
+			u = "K";
+		}
+		return (Math.round((val/f + Number.EPSILON) * 100) / 100)+u
 	}
 
 	_formatted_statistic(val, total) {
@@ -187,7 +219,7 @@ Status.instance = function() {
 	return this._instance;
 }
 
-Status._element_list = [ "processed", "passed", "forwarded", "failed" ];
+Status._element_list = [ "processed", "passed", "forwarded", "failed", "quarantined", "rejected" ];
 
 Status._element_data = {
 	processed: {
@@ -201,6 +233,12 @@ Status._element_data = {
 	},
 	failed:	{
 		text: "Not aligned"
+	},
+	quarantined:	{
+		text: "Quarantined"
+	},
+	rejected:	{
+		text: "Rejected"
 	}
 };
 

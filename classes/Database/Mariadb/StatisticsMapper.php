@@ -63,6 +63,8 @@ class StatisticsMapper implements StatisticsMapperInterface
      *                              'dkim_spf_aligned' => Both DKIM and SPF aligned (int)
      *                              'dkim_aligned'     => Only DKIM aligned (int)
      *                              'spf_aligned'      => Only SPF aligned (int)
+     *                              'quarantiend'      => Quarantined (int)
+     *                              'rejected'         => Rejected (int)
      *                          ];
      */
     public function summary($domain, array &$range): array
@@ -73,7 +75,9 @@ class StatisticsMapper implements StatisticsMapperInterface
             $st = $db->prepare(
                 'SELECT SUM(`rcount`), SUM(IF(`dkim_align` = 2 AND `spf_align` = 2, `rcount`, 0)),'
                 . ' SUM(IF(`dkim_align` = 2 AND `spf_align` <> 2, `rcount`, 0)),'
-                . ' SUM(IF(`dkim_align` <> 2 AND `spf_align` = 2, `rcount`, 0))'
+                . ' SUM(IF(`dkim_align` <> 2 AND `spf_align` = 2, `rcount`, 0)),'
+                . ' SUM(IF(`disposition` = 0, `rcount`, 0)),'
+                . ' SUM(IF(`disposition` = 1, `rcount`, 0))'
                 . ' FROM `' . $this->connector->tablePrefix('rptrecords') . '` AS `rr`'
                 . ' INNER JOIN `' . $this->connector->tablePrefix('reports')
                 . '` AS `rp` ON `rr`.`report_id` = `rp`.`id`'
@@ -86,7 +90,9 @@ class StatisticsMapper implements StatisticsMapperInterface
                 'total' => intval($row[0]),
                 'dkim_spf_aligned' => intval($row[1]),
                 'dkim_aligned' => intval($row[2]),
-                'spf_aligned' => intval($row[3])
+                'spf_aligned' => intval($row[3]),
+                'rejected' => intval($row[4]),
+                'quarantined' => intval($row[5])
             ];
             $st->closeCursor();
 

@@ -194,7 +194,9 @@ class ReportList {
 			{ content: "Reporting Organization" },
 			{ content: "Report ID", class: "report-id" },
 			{ content: "Messages" },
-			{ content: "Result" }
+			{ content: "Result" },
+			{ content: "Quarantined" },
+			{ content: "Rejected" }
 		].forEach(function(col) {
 			let c = this._table.add_column(col);
 			if (c.name() === this._sort.column) {
@@ -300,6 +302,8 @@ class ReportList {
 		rd.cells.push({ content: d.report_id, class: "report-id" });
 		rd.cells.push({ content: d.messages, label: "Messages" });
 		rd.cells.push(new StatusColumn({ dkim_align: d.dkim_align, spf_align: d.spf_align }));
+		rd.cells.push({ content: d.disposition_reject, label: "Rejected" });
+		rd.cells.push({ content: d.disposition_quarantine, label: "Quarantined" });
 		return rd;
 	}
 
@@ -407,6 +411,7 @@ class ReportListSettingsDialog extends ModalDialog {
 			{ name: "organization", title: "Organization" },
 			{ name: "dkim", title: "DKIM result" },
 			{ name: "spf", title: "SPF result" },
+			{ name: "disposition", title: "Disposition" },
 			{ name: "status", title: "Status" }
 		];
 	}

@@ -45,6 +45,8 @@ interface StatisticsMapperInterface
      *                              'dkim_spf_aligned' => Both DKIM and SPF aligned (int)
      *                              'dkim_aligned'     => Only DKIM aligned (int)
      *                              'spf_aligned'      => Only SPF aligned (int)
+     *                              'quarantined'      => Quarantined (int)
+     *                              'rejected'         => Rejected (int)
      *                          ];
      */
     public function summary($domain, array &$range): array;
