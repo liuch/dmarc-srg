@@ -294,7 +294,6 @@ class ReportMapper implements ReportMapperInterface
                 . $cond_str1 . $order_str . $limit_str
             );
 	    $this->sqlBindValues($st, $f_data, $limit);
-	    //$st->debugDumpParams();
             $st->execute();
             while ($row = $st->fetch(\PDO::FETCH_NUM)) {
                 $list[] = [
