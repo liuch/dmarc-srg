@@ -206,8 +206,8 @@ class ReportList
             'month'        => $reportMapper->months(),
             'organization' => $reportMapper->organizations(),
             'dkim'         => [ 'pass', 'fail' ],
-	    'spf'          => [ 'pass', 'fail' ],
-	    'disposition'  => Common::$disposition,
+            'spf'          => [ 'pass', 'fail' ],
+            'disposition'  => Common::$disposition,
             'status'       => [ 'read', 'unread' ]
         ];
     }

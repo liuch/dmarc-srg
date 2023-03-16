@@ -180,9 +180,9 @@ class SummaryReport
                     $it['ip'],
                     $total,
                     $spf_str,
-		    $dkim_str,
-		    $qua_str,
-		    $rej_str
+                    $dkim_str,
+                    $qua_str,
+                    $rej_str
                 );
             }
             unset($it);
@@ -283,8 +283,8 @@ class SummaryReport
             $style = "style=\"{$d2s}{$d3s}{$d5s}\"";
             $res[] = "  <tr><th {$style}>pass</th><th {$style}>fail</th><th {$style}>rate</th>" .
                      "<th {$style}>pass</th><th {$style}>fail</th><th {$style}>rate</th>".
-		     "<th {$style}>qurantined</th><th {$style}>rate</th>".
-		     "<th {$style}>rejected</th><th {$style}>rate</th></tr>";
+                     "<th {$style}>qurantined</th><th {$style}>rate</th>".
+                     "<th {$style}>rejected</th><th {$style}>rate</th></tr>";
             $res[] = ' </thead>';
             $res[] = ' <tbody>';
             foreach ($rdata['sources'] as &$row) {
@@ -296,10 +296,10 @@ class SummaryReport
                 $dkim_a = $row['dkim_aligned'];
                 $dkim_n = $total - $dkim_a;
                 $dkim_p = sprintf('%.0f%%', $dkim_a / $total * 100);
-		$qua_a  = $row['quarantined'];
-		$qua_p  = sprintf('%.0f%%', $qua_a / $total * 100);
-		$rej_a  = $row['rejected'];
-		$rej_p  = sprintf('%.0f%%', $rej_a / $total * 100);
+                $qua_a  = $row['quarantined'];
+                $qua_p  = sprintf('%.0f%%', $qua_a / $total * 100);
+                $rej_a  = $row['rejected'];
+                $rej_p  = sprintf('%.0f%%', $rej_a / $total * 100);
                 $style  = "style=\"{$d3s}{$d5s}";
 
                 $row_str  = "  <tr><td {$style}\">{$ip}</td><td {$style}{$d4s}\">{$total}</td>";
@@ -307,7 +307,7 @@ class SummaryReport
                 $row_str .= "<td {$style}{$d4s}{$add_orange($spf_n)}\">{$spf_n}</td>";
                 $row_str .= "<td {$style}{$d4s}\">{$spf_p}</td>";
                 $row_str .= "<td {$style}{$d4s}{$add_green($dkim_a)}\">{$dkim_a}</td>";
-		$row_str .= "<td {$style}{$d4s}{$add_orange($dkim_n)}\">{$dkim_n}</td>";
+                $row_str .= "<td {$style}{$d4s}{$add_orange($dkim_n)}\">{$dkim_n}</td>";
                 $row_str .= "<td {$style}{$d4s}\">{$dkim_p}</td>";
                 $row_str .= "<td {$style}{$d4s}{$add_orange($qua_a)}\">{$qua_a}</td>";
                 $row_str .= "<td {$style}{$d4s}\">{$qua_p}</td>";
@@ -408,18 +408,18 @@ class SummaryReport
         $aligned   = $summ['emails']['dkim_spf_aligned'] +
                      $summ['emails']['dkim_aligned'] +
                      $summ['emails']['spf_aligned'];
-	$n_aligned = $total - $aligned;
-	$rejected  = $summ['emails']['rejected'];
-	$quarantined = $summ['emails']['quarantined'];
+        $n_aligned = $total - $aligned;
+        $rejected  = $summ['emails']['rejected'];
+        $quarantined = $summ['emails']['quarantined'];
 
         $rdata['summary'] = [
             'total'         => $total,
             'organizations' => $summ['organizations']
         ];
 
-	$rdata['summary']['aligned']     = $aligned;
+        $rdata['summary']['aligned']     = $aligned;
         $rdata['summary']['quarantined'] = $quarantined;
-	$rdata['summary']['rejected']    = $rejected;
+        $rdata['summary']['rejected']    = $rejected;
 
         if ($total > 0) {
             $rdata['summary']['n_aligned'] = $n_aligned;

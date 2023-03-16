@@ -282,9 +282,9 @@ class ReportMapper implements ReportMapperInterface
         try {
             $st = $db->prepare(
                 'SELECT `org`, `begin_time`, `end_time`, `fqdn`, external_id, `seen`, SUM(`rcount`) AS `rcount`,'
-		. ' MIN(`dkim_align`) AS `dkim_align`, MIN(`spf_align`) AS `spf_align`,'
-		. ' SUM(IF(`disposition` = 0,1,0)) AS `disposition_reject`,'
-		. ' SUM(IF(`disposition` = 1,1,0)) AS `disposition_quarantine`,'
+                . ' MIN(`dkim_align`) AS `dkim_align`, MIN(`spf_align`) AS `spf_align`,'
+                . ' SUM(IF(`disposition` = 0,1,0)) AS `disposition_reject`,'
+                . ' SUM(IF(`disposition` = 1,1,0)) AS `disposition_quarantine`,'
                 . ' MIN(`disposition`) AS `disposition` FROM `' . $this->connector->tablePrefix('rptrecords')
                 . '` AS `rr` RIGHT JOIN (SELECT `rp`.`id`, `org`, `begin_time`, `end_time`, `external_id`,'
                 . ' `fqdn`, `seen` FROM `' . $this->connector->tablePrefix('reports')
@@ -293,7 +293,7 @@ class ReportMapper implements ReportMapperInterface
                 . ') AS `rp` ON `rp`.`id` = `rr`.`report_id` GROUP BY `rp`.`id`'
                 . $cond_str1 . $order_str . $limit_str
             );
-	    $this->sqlBindValues($st, $f_data, $limit);
+            $this->sqlBindValues($st, $f_data, $limit);
             $st->execute();
             while ($row = $st->fetch(\PDO::FETCH_NUM)) {
                 $list[] = [
