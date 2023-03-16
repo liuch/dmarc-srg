@@ -349,15 +349,16 @@ class Report {
 	}
 
 	_create_reason_fragment(data) {
-		if (data.length == 1) {
-			let fr = document.createDocumentFragment();
-			if (data[0].type)
-				fr.appendChild(create_report_result_element("type", data[0].type, true, ""));
+		let fr = document.createDocumentFragment();
+		data.forEach(function(rec) {
+			let block = document.createElement("div");
+			if (rec.type)
+				block.appendChild(create_report_result_element("type", rec.type, true, ""));
 			if (data[0].comment)
-				fr.appendChild(create_report_result_element("comment", data[0].comment, true, ""));
-			return fr;
-		}
-		return "TODO !!!";
+				block.appendChild(create_report_result_element("comment", rec.comment, true, ""));
+			fr.appendChild(block);
+		});
+		return fr;
 	}
 
 	_create_identifiers_fragment(data) {
@@ -374,31 +375,33 @@ class Report {
 	_create_dkim_auth_fragment(data) {
 		if (!data)
 			return "n/a";
-		if (data.length == 1) {
-			let fr = document.createDocumentFragment();
-			if (data[0].domain)
-				fr.appendChild(create_report_result_element("domain", data[0].domain, true, ""));
-			if (data[0].selector)
-				fr.appendChild(create_report_result_element("selector", data[0].selector, true, ""));
-			if (data[0].result)
-				fr.appendChild(create_report_result_element("result", data[0].result, true));
-			return fr;
-		}
-		return "TODO !!!";
+		let fr = document.createDocumentFragment();
+		data.forEach(function(rec) {
+			let block = document.createElement("div");
+			if (rec.domain)
+				block.appendChild(create_report_result_element("domain", rec.domain, true, ""));
+			if (rec.selector)
+				block.appendChild(create_report_result_element("selector", rec.selector, true, ""));
+			if (rec.result)
+				block.appendChild(create_report_result_element("result", rec.result, true));
+			fr.appendChild(block);
+		});
+		return fr;
 	}
 
 	_create_spf_auth_fragment(data) {
 		if (!data)
 			return "n/a";
-		if (data.length == 1) {
-			let fr = document.createDocumentFragment();
-			if (data[0].domain)
-				fr.appendChild(create_report_result_element("domain", data[0].domain, true, ""));
-			if (data[0].result)
-				fr.appendChild(create_report_result_element("result", data[0].result, true));
-			return fr;
-		}
-		return "TODO !!!";
+		let fr = document.createDocumentFragment();
+		data.forEach(function(rec) {
+			let block = document.createElement("div");
+			if (rec.domain)
+				block.appendChild(create_report_result_element("domain", rec.domain, true, ""));
+			if (rec.result)
+				block.appendChild(create_report_result_element("result", rec.result, true));
+			fr.appendChild(block);
+		});
+		return fr;
 	}
 
 	_create_pub_policy_fragment(data) {
