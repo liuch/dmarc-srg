@@ -280,17 +280,18 @@ class ReportMapper implements ReportMapperInterface
         $cond_str1 = $this->sqlConditionList($f_data, ' HAVING ', 1);
         $limit_str = $this->sqlLimit($limit);
         try {
+
             $st = $db->prepare(
-                'SELECT org, begin_time, end_time, fqdn, external_id, seen, SUM(rcount) AS rcount,'
-                . ' MIN(dkim_align) AS dkim_align, MIN(spf_align) AS spf_align,'
-                . ' MIN(disposition) AS disposition FROM ' . $this->connector->tablePrefix('rptrecords')
-                . ' AS rr RIGHT JOIN (SELECT rp.id, org, begin_time, end_time, external_id,'
-                . ' fqdn, seen FROM ' . $this->connector->tablePrefix('reports')
-                . ' AS rp INNER JOIN ' . $this->connector->tablePrefix('domains')
-                . ' AS d ON d.id = rp.domain_id' . $cond_str0 . $order_str
-                . ') AS rp ON rp.id = rr.report_id GROUP BY rp.id'
-                . $cond_str1 . $order_str . $limit_str
-            );
+				'SELECT org, begin_time, end_time, fqdn, external_id, seen, SUM(rcount) AS rcount,'
+				. ' MIN(dkim_align) AS dkim_align, MIN(spf_align) AS spf_align,'
+				. ' MIN(disposition) AS disposition FROM ' . $this->connector->tablePrefix('reports')
+				. ' AS rp LEFT JOIN ' . $this->connector->tablePrefix('rptrecords')
+				. ' AS rr ON rp.id = rr.report_id'
+				. ' INNER JOIN ' . $this->connector->tablePrefix('domains')
+				. ' AS d ON d.id = rp.domain_id'
+				. ' GROUP BY rp.id'
+				. $cond_str1 . $order_str . $limit_str
+			);
             $this->sqlBindValues($st, $f_data, $limit);
             $st->execute();
             while ($row = $st->fetch(\PDO::FETCH_NUM)) {
@@ -311,6 +312,7 @@ class ReportMapper implements ReportMapperInterface
             }
             $st->closeCursor();
         } catch (\PDOException $e) {
+		var_dump($e);
             throw new DatabaseFatalException('Failed to get the report list', -1, $e);
         }
         return $list;
@@ -414,12 +416,12 @@ class ReportMapper implements ReportMapperInterface
         $res = [];
         $rep_tn = $this->connector->tablePrefix('reports');
         try {
-            $st = $this->connector->dbh()->query(
-                'SELECT DISTINCT DATE_FORMAT(date, "%Y-%m") AS month FROM'
-                . ' ((SELECT DISTINCT begin_time AS date FROM ' . $rep_tn
-                . ') UNION (SELECT DISTINCT end_time AS date FROM ' . $rep_tn
-                . ')) AS r ORDER BY month DESC'
-            );
+		    $st = $this->connector->dbh()->query(
+				'SELECT DISTINCT strftime("%Y-%m", date) AS month FROM'
+				. ' (SELECT DISTINCT begin_time AS date FROM ' . $rep_tn
+				. ' UNION SELECT DISTINCT end_time AS date FROM ' . $rep_tn
+				. ') AS r ORDER BY month DESC'
+			);
             while ($row = $st->fetch(\PDO::FETCH_NUM)) {
                 $res[] = $row[0];
             }
