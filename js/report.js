@@ -314,6 +314,14 @@ class Report {
 		return el;
 	}
 
+	_get_row_container(ctn, data) {
+		if (data.length < 2)
+			return ctn;
+		let div = document.createElement("div")
+		ctn.appendChild(div);
+		return div;
+	}
+
 	_create_data_item(title, data) {
 		let el = document.createElement("div");
 		el.setAttribute("class", "report-item");
@@ -327,12 +335,14 @@ class Report {
 		tl.appendChild(document.createTextNode(title + ": "));
 		tl.setAttribute("class", "title");
 		fr.appendChild(tl);
-		let dt = document.createElement("span");
+		if (typeof(data) !== "object")
+			data = document.createTextNode(data);
+		let dt = document.createElement(data.childNodes.length > 1 ? "div" : "span");
 		dt.setAttribute("class", "value");
-		if (typeof(data) === "object")
-			dt.appendChild(data);
-		else
-			dt.appendChild(document.createTextNode(data));
+		dt.appendChild(data);
+		if (Array.from(dt.children).find(function(ch) {
+			return ch.tagName === "DIV";
+		})) dt.classList.add("rows");
 		fr.appendChild(dt);
 		return fr;
 	}
@@ -349,15 +359,15 @@ class Report {
 	}
 
 	_create_reason_fragment(data) {
-		if (data.length == 1) {
-			let fr = document.createDocumentFragment();
-			if (data[0].type)
-				fr.appendChild(create_report_result_element("type", data[0].type, true, ""));
-			if (data[0].comment)
-				fr.appendChild(create_report_result_element("comment", data[0].comment, true, ""));
-			return fr;
-		}
-		return "TODO !!!";
+		let fr = document.createDocumentFragment();
+		data.forEach(function(rec) {
+			let ctn = this._get_row_container(fr, data);
+			if (rec.type)
+				ctn.appendChild(create_report_result_element("type", rec.type, true, ""));
+			if (rec.comment)
+				ctn.appendChild(create_report_result_element("comment", rec.comment, true, ""));
+		}.bind(this));
+		return fr;
 	}
 
 	_create_identifiers_fragment(data) {
@@ -374,31 +384,31 @@ class Report {
 	_create_dkim_auth_fragment(data) {
 		if (!data)
 			return "n/a";
-		if (data.length == 1) {
-			let fr = document.createDocumentFragment();
-			if (data[0].domain)
-				fr.appendChild(create_report_result_element("domain", data[0].domain, true, ""));
-			if (data[0].selector)
-				fr.appendChild(create_report_result_element("selector", data[0].selector, true, ""));
-			if (data[0].result)
-				fr.appendChild(create_report_result_element("result", data[0].result, true));
-			return fr;
-		}
-		return "TODO !!!";
+		let fr = document.createDocumentFragment();
+		data.forEach(function(rec) {
+			let ctn = this._get_row_container(fr, data);
+			if (rec.domain)
+				ctn.appendChild(create_report_result_element("domain", rec.domain, true, ""));
+			if (rec.selector)
+				ctn.appendChild(create_report_result_element("selector", rec.selector, true, ""));
+			if (rec.result)
+				ctn.appendChild(create_report_result_element("result", rec.result, true));
+		}.bind(this));
+		return fr;
 	}
 
 	_create_spf_auth_fragment(data) {
 		if (!data)
 			return "n/a";
-		if (data.length == 1) {
-			let fr = document.createDocumentFragment();
-			if (data[0].domain)
-				fr.appendChild(create_report_result_element("domain", data[0].domain, true, ""));
-			if (data[0].result)
-				fr.appendChild(create_report_result_element("result", data[0].result, true));
-			return fr;
-		}
-		return "TODO !!!";
+		let fr = document.createDocumentFragment();
+		data.forEach(function(rec) {
+			let ctn = this._get_row_container(fr, data);
+			if (rec.domain)
+				ctn.appendChild(create_report_result_element("domain", rec.domain, true, ""));
+			if (rec.result)
+				ctn.appendChild(create_report_result_element("result", rec.result, true));
+		}.bind(this));
+		return fr;
 	}
 
 	_create_pub_policy_fragment(data) {

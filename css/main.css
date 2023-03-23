@@ -603,7 +603,7 @@ textarea.description {
 	cursor: auto;
 }
 .report-record > .header {
-	padding: 0.3em 0;
+	padding: 0.4em 0;
 	border-bottom: solid 0.1rem var(--color-br-default);
 	border-radius: 0.3em 0.3em 0 0;
 	background-color: var(--color-bg-header);
@@ -645,10 +645,21 @@ textarea.description {
 .report-item {
 	display: inline-flex;
 	width: 98%;
-	margin: 0.2em 0;
+	padding: .3em 0;
+}
+.report-record .report-item {
+	min-height: 1.9em;
+}
+.report-record .report-item:not(:last-child) {
+	border-bottom: 0.1em solid var(--color-br-weak);
 }
 .report-item .title {
 	min-width: 30%;
+}
+.value.rows {
+	display: flex;
+	flex-direction: column;
+	row-gap: .3em;
 }
 .report-item .title, .report-item .value {
 	text-align: left;
