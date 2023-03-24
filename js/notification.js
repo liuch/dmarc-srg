@@ -60,7 +60,9 @@ class Notification {
 		});
 		if (this._params.delay > 0) {
 			setTimeout(function() {
-				el.remove();
+				el.style.transition = "opacity 2s ease-in-out";
+				el.style.opacity = 0;
+				setTimeout(function() { el.remove(); }, 2000);
 			}, this._params.delay);
 		}
 		return el;
