@@ -93,13 +93,13 @@ class SourceAction
     /**
      * The getter
      *
-     * @param string $name Property name. Must be one of the following: 'type', 'name', 'param'
+     * @param string $name Property name. Must be one of the following: 'type', 'param'
      *
      * @return mixed
      */
     public function __get(string $name)
     {
-        if (in_array($name, [ 'type', 'name', 'param' ])) {
+        if (in_array($name, [ 'type', 'param' ])) {
             return $this->$name;
         }
         throw new LogicException('Undefined property: ' . $name);
