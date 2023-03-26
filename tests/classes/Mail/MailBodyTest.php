@@ -6,6 +6,9 @@ use Liuch\DmarcSrg\Mail\MailBody;
 
 class MailBodyTest extends \PHPUnit\Framework\TestCase
 {
+    private $text = null;
+    private $html = null;
+
     public function setUp(): void
     {
         $this->text = [ 'text string' ];

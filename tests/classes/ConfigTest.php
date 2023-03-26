@@ -6,6 +6,8 @@ use Liuch\DmarcSrg\Exception\LogicException;
 
 class ConfigTest extends \PHPUnit\Framework\TestCase
 {
+    private $conf = null;
+
     public function setUp(): void
     {
         $this->conf = new Config('tests/conf_test_file.php');
