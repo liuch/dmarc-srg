@@ -41,6 +41,7 @@ use Liuch\DmarcSrg\Exception\RuntimeException;
  */
 class DirectorySource extends Source
 {
+    private $path   = null;
     private $list   = null;
     private $index  = 0;
     private $params = null;
