@@ -165,7 +165,7 @@ class ReportWidget {
 		this._cn_element = cn;
 		bd.appendChild(cn);
 
-		let cb = document.createElement("a");
+		let cb = document.createElement("button");
 		cb.setAttribute("class", "btn close-btn");
 		cb.appendChild(document.createTextNode("Close"));
 		this._close_btn = cb;
