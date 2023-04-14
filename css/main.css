@@ -3,6 +3,7 @@
 		--color-fg-default:  #000;
 		--color-fg-disabled: #666;
 		--color-fg-muted:    #666;
+		--color-fg-accent:   #0969da;
 		--color-fg-custom:   #666;
 		--color-fg-menu:     #333;
 		--color-bg-default:  #fff;
@@ -40,6 +41,7 @@
 		--color-fg-default:  #c9d1d9;
 		--color-fg-disabled: #484f58;
 		--color-fg-muted:    #8b949e;
+		--color-fg-accent:   #2f81f7;
 		--color-fg-custom:   #aaadbb;
 		--color-fg-menu:     #9ca6b1;
 		--color-bg-default:  #0d1117;
@@ -106,6 +108,10 @@ button:disabled, select:disabled{
 button:disabled, select:disabled, textarea:disabled, input:disabled {
 	color: var(--color-fg-disabled);
 	border-color: var(--color-br-disabled);
+}
+a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible {
+	outline: 2px solid var(--color-fg-accent);
+	outline-offset: -2px;
 }
 textarea, input {
 	background-color: var(--color-bg-input);
