@@ -110,8 +110,8 @@ class MailBox
         try {
             $mb_list = imap_list(
                 $this->conn,
-                \imap_utf8_to_mutf7($this->server),
-                \imap_utf8_to_mutf7($this->mbox) . $this->delim . \imap_utf8_to_mutf7($mailbox_name)
+                self::utf8ToMutf7($this->server),
+                self::utf8ToMutf7($this->mbox) . $this->delim . self::utf8ToMutf7($mailbox_name)
             );
         } catch (\ErrorException $e) {
             $mb_list = false;
@@ -149,7 +149,7 @@ class MailBox
             try {
                 $res = imap_status(
                     $this->conn,
-                    \imap_utf8_to_mutf7($this->server . $this->mbox),
+                    self::utf8ToMutf7($this->server . $this->mbox),
                     SA_MESSAGES | SA_UNSEEN
                 );
             } catch (\ErrorException $e) {
@@ -229,9 +229,9 @@ class MailBox
 
     public function ensureMailbox($mailbox_name)
     {
-        $mbn = \imap_utf8_to_mutf7($mailbox_name);
-        $srv = \imap_utf8_to_mutf7($this->server);
-        $mbo = \imap_utf8_to_mutf7($this->mbox);
+        $mbn = self::utf8ToMutf7($mailbox_name);
+        $srv = self::utf8ToMutf7($this->server);
+        $mbo = self::utf8ToMutf7($this->mbox);
         $this->ensureConnection();
         try {
             $mb_list = imap_list($this->conn, $srv, $mbo . $this->delim . $mbn);
@@ -274,7 +274,7 @@ class MailBox
     public function moveMessage($number, $mailbox_name)
     {
         $this->ensureConnection();
-        $target = \imap_utf8_to_mutf7($this->mbox) . $this->delim . \imap_utf8_to_mutf7($mailbox_name);
+        $target = self::utf8ToMutf7($this->mbox) . $this->delim . self::utf8ToMutf7($mailbox_name);
         try {
             $res = imap_mail_move($this->conn, strval($number), $target);
         } catch (\ErrorException $e) {
@@ -312,14 +312,14 @@ class MailBox
     {
         if (is_null($this->conn)) {
             $error_message = null;
-            $srv = \imap_utf8_to_mutf7($this->server);
+            $srv = self::utf8ToMutf7($this->server);
             try {
                 $this->conn = imap_open($srv, $this->uname, $this->passw, OP_HALFOPEN);
             } catch (\ErrorException $e) {
                 $this->conn = null;
             }
             if ($this->conn) {
-                $mbx = \imap_utf8_to_mutf7($this->mbox);
+                $mbx = self::utf8ToMutf7($this->mbox);
                 try {
                     $mb_list = imap_getmailboxes($this->conn, $srv, $mbx);
                 } catch (\ErrorException $e) {
@@ -379,7 +379,7 @@ class MailBox
             return;
         }
 
-        $mbox = \imap_utf8_to_mutf7($this->mbox);
+        $mbox = self::utf8ToMutf7($this->mbox);
         try {
             $acls = imap_getacl($this->conn, $mbox);
         } catch (\ErrorException $e) {
@@ -414,5 +414,17 @@ class MailBox
                 );
             }
         }
+    }
+
+    /**
+     * It's a replacement for the standard function imap_utf8_to_mutf7
+     *
+     * @param string $s A UTF-8 encoded string
+     *
+     * @return string|false
+     */
+    private static function utf8ToMutf7(string $s)
+    {
+        return mb_convert_encoding($s, 'UTF7-IMAP', 'UTF-8');
     }
 }
