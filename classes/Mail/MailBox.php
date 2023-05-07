@@ -86,21 +86,8 @@ class MailBox
 
     public function __destruct()
     {
-        self::resetErrorStack();
-        if (!is_null($this->conn)) {
-            try {
-                if ($this->expunge) {
-                    imap_expunge($this->conn);
-                }
-            } catch (\ErrorException $e) {
-            }
-            $this->ensureErrorLog('imap_expunge');
-
-            try {
-                imap_close($this->conn);
-            } catch (\ErrorException $e) {
-            }
-            $this->ensureErrorLog('imap_close');
+        if (extension_loaded('imap')) {
+            $this->cleanup();
         }
     }
 
@@ -413,6 +400,31 @@ class MailBox
                     'Not enough rights. Additionally, these rights are required: ' . implode(', ', $result)
                 );
             }
+        }
+    }
+
+    /**
+     * Deletes messages marked for deletion, if any, and closes the connection
+     *
+     * @return void
+     */
+    private function cleanup(): void
+    {
+        self::resetErrorStack();
+        if (!is_null($this->conn)) {
+            try {
+                if ($this->expunge) {
+                    imap_expunge($this->conn);
+                }
+            } catch (\ErrorException $e) {
+            }
+            $this->ensureErrorLog('imap_expunge');
+
+            try {
+                imap_close($this->conn);
+            } catch (\ErrorException $e) {
+            }
+            $this->ensureErrorLog('imap_close');
         }
     }
 
