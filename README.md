@@ -74,6 +74,7 @@ There are two ways to do that: by using the web interface or by running the foll
 In general, DmarcSrg is designed to automatically receive incoming DMARC reports, process them and send summary reports to the specified e-mail address, so a web interface as well as a web-server is optional. Most of the work is done by periodically running php scripts, which are located in the utils directory.
 
 ### Utils
+- `utils/check_config.php` - checks your configuration.
 - `utils/database_admin.php` - performs some administration functions with the database.
 - `utils/fetch_reports.php` - fetches DMARC reports from mailboxes and server local directories and saves them to the database.
 - `utils/mailbox_cleaner.php` - deletes old DMARC report email messages in mailboxes.
