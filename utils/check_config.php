@@ -171,6 +171,7 @@ try {
             $startChecking('Imap extension');
             if (extension_loaded('imap')) {
                 $endChecking();
+                echo "  * Checking mailboxes ({$mb_lcnt})", PHP_EOL;
                 for ($mb_num = 1; $mb_num <= $mb_lcnt; ++$mb_num) {
                     $mb = $mb_list->mailbox($mb_num);
                     echo "    - {$mb->name()}", PHP_EOL;
@@ -199,6 +200,7 @@ try {
             $endChecking('No directories found', RESULT_SUCCESS);
         } else {
             $endChecking("{$dir_lcnt} director" . ($dir_lcnt > 1 ? 'ies' : 'y') . ' found', RESULT_SUCCESS);
+            echo "  * Checking directories ({$dir_lcnt})", PHP_EOL;
             foreach ($dir_list as $dir) {
                 $dir_a = $dir->toArray();
                 echo "    - {$dir_a['name']}", PHP_EOL;
