@@ -301,7 +301,14 @@ class MailBox
             $error_message = null;
             $srv = self::utf8ToMutf7($this->server);
             try {
-                $this->conn = imap_open($srv, $this->uname, $this->passw, OP_HALFOPEN);
+                $this->conn = imap_open(
+                    $srv,
+                    $this->uname,
+                    $this->passw,
+                    OP_HALFOPEN,
+                    0,
+                    [ 'DISABLE_AUTHENTICATOR' => 'GSSAPI' ]
+                );
             } catch (\ErrorException $e) {
                 $this->conn = null;
             }
