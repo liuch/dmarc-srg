@@ -40,6 +40,7 @@ class MailBox
     private $delim;
     private $attrs;
     private $expunge;
+    private $options;
 
     public function __construct($params)
     {
@@ -82,6 +83,22 @@ class MailBox
 
         $this->server = sprintf('{%s/imap%s}', $this->host, $flags);
         $this->expunge = false;
+        $this->options = [];
+
+        $auth_exclude = $params['auth_exclude'] ?? null;
+        switch (gettype($auth_exclude)) {
+            case 'string':
+                $auth_exclude = [ $auth_exclude ];
+                break;
+            case 'array':
+                break;
+            default:
+                $auth_exclude = null;
+                break;
+        }
+        if ($auth_exclude) {
+            $this->options['DISABLE_AUTHENTICATOR'] = $auth_exclude;
+        }
     }
 
     public function __destruct()
@@ -307,7 +324,7 @@ class MailBox
                     $this->passw,
                     OP_HALFOPEN,
                     0,
-                    [ 'DISABLE_AUTHENTICATOR' => 'GSSAPI' ]
+                    $this->options
                 );
             } catch (\ErrorException $e) {
                 $this->conn = null;

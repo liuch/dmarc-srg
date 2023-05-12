@@ -44,7 +44,10 @@ $mailboxes = [
     // Mailbox password.
     'password'        => 'password',
     // Mailbox name
-    'mailbox'         => 'INBOX'
+    'mailbox'         => 'INBOX',
+    // IMAP authorization methods to be excluded.
+    // For example: 'auth_exclude' => [ 'GSSAPI', 'NTLM' ]
+    'auth_exclude'    => []
 ];
 
 /**
