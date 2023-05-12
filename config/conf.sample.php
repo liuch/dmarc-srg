@@ -28,14 +28,14 @@ $database = [
  * mailbox settings in an array.
  */
 $mailboxes = [
-    // Just for displaying in web-admin. Not necessary.
+    // Just for displaying in the web-admin and utilities. Not necessary.
     'name'            => 'Dmarc-Rua',
     // Host of the email server. You can specify a port separated by a colon.
     'host'            => 'yourdomain.net',
-     // Connection encryption method. The valid values are:
-     // 'none'     - without encryption (strongly not recommend).
-     // 'ssl'      - SSL/TLS on a separate port, for IMAP it is usually port 993. Default value.
-     // 'starttls' - STARTTLS method, usually on the standard IMAP port 143.
+    // Connection encryption method. The valid values are:
+    // 'none'     - without encryption (strongly not recommend).
+    // 'ssl'      - SSL/TLS on a separate port, for IMAP it is usually port 993. Default value.
+    // 'starttls' - STARTTLS method, usually on the standard IMAP port 143.
     'encryption'      => 'ssl',
     // Set true if you want to connect to the IMAP server without certificate validation
     'novalidate-cert' => false,
@@ -57,7 +57,7 @@ $mailboxes = [
  * automatically if it does not exist.
  */
 //$directories = [
-//    // Just for displaying in web-admin. Not necessary.
+//    // Just for displaying in the web-admin and utilities. Not necessary.
 //    'name'     => 'Rua-Dir',
 //    // The directory location
 //    'location' => '/var/spool/dmarc-srg/rua'
