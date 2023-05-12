@@ -85,19 +85,21 @@ class MailBox
         $this->expunge = false;
         $this->options = [];
 
-        $auth_exclude = $params['auth_exclude'] ?? null;
-        switch (gettype($auth_exclude)) {
-            case 'string':
-                $auth_exclude = [ $auth_exclude ];
-                break;
-            case 'array':
-                break;
-            default:
-                $auth_exclude = null;
-                break;
-        }
-        if ($auth_exclude) {
-            $this->options['DISABLE_AUTHENTICATOR'] = $auth_exclude;
+        if (isset($params['auth_exclude'])) {
+            $auth_exclude = $params['auth_exclude'];
+            switch (gettype($auth_exclude)) {
+                case 'string':
+                    $auth_exclude = [ $auth_exclude ];
+                    break;
+                case 'array':
+                    break;
+                default:
+                    $auth_exclude = null;
+                    break;
+            }
+            if ($auth_exclude) {
+                $this->options['DISABLE_AUTHENTICATOR'] = $auth_exclude;
+            }
         }
     }
 
