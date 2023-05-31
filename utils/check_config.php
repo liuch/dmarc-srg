@@ -92,6 +92,10 @@ $endChecking = function (string $message = '', int $result = 0) use (&$e_cnt, &$
 
 $core = Core::instance();
 
+ob_start(null, 0, PHP_OUTPUT_HANDLER_FLUSHABLE | PHP_OUTPUT_HANDLER_REMOVABLE);
+$core->config('debug'); // Just in order to load the config file
+$empty_buf = empty(ob_get_flush());
+
 try {
     echo '=== GENERAL INFORMATION ===', PHP_EOL;
     $uname = implode(' ', array_map(function ($mode) {
@@ -139,6 +143,12 @@ try {
         }
     } else {
         $endChecking('Fileperms failed', RESULT_ERROR);
+    }
+    $startChecking('Checking the output buffer');
+    if ($empty_buf) {
+        $endChecking();
+    } else {
+        $endChecking('There are extra characters before the "<?php" string');
     }
 
     echo PHP_EOL, '=== DATABASE ===', PHP_EOL;
