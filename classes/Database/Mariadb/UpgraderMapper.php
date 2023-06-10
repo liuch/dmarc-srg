@@ -166,6 +166,32 @@ class UpgraderMapper implements UpgraderMapperInterface
     }
 
     /**
+     * Upgrades the database structure from v2.0 to v3.0
+     *
+     * @return string New version of the database structure
+     */
+    private function up20(): string
+    {
+        $db = $this->connector->dbh();
+        // Transaction would be useful here but it doesn't work with ALTER TABLE in MySQL/MariaDB
+        try {
+            $rep_tn = $this->connector->tablePrefix('reports');
+            if (!$this->columnExists($db, $rep_tn, 'policy_np')) {
+                $db->query(
+                    'ALTER TABLE `' . $rep_tn . '` ADD COLUMN `policy_np` varchar(20) NULL AFTER `policy_sp`'
+                );
+            }
+            $sys_tn = $this->connector->tablePrefix('system');
+            $db->query(
+                'UPDATE `' . $sys_tn . '` SET `value` = "3.0" WHERE `key` = "version"'
+            );
+        } catch (\PDOException $e) {
+            throw $this->dbFatalException($e);
+        }
+        return '3.0';
+    }
+
+    /**
      * Checks if the spefied column exists in the spefied table of the database
      *
      * @param object $db     Connection handle of the database
@@ -204,6 +230,7 @@ class UpgraderMapper implements UpgraderMapperInterface
     private static $upways = [
         'ver_null' => 'upNull',
         'ver_0.1'  => 'up01',
-        'ver_1.0'  => 'up10'
+        'ver_1.0'  => 'up10',
+        'ver_2.0'  => 'up20'
     ];
 }

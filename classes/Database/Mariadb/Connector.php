@@ -389,6 +389,10 @@ class Connector extends DatabaseConnector
                     'definition' => 'varchar(20) NULL'
                 ],
                 [
+                    'name' => 'policy_np',
+                    'definition' => 'varchar(20) NULL'
+                ],
+                [
                     'name' => 'policy_pct',
                     'definition' => 'varchar(20) NULL'
                 ],

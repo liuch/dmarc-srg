@@ -255,6 +255,7 @@ class ReportData
                 'ASPF'   => 'policy_aspf',
                 'P'      => 'policy_p',
                 'SP'     => 'policy_sp',
+                'NP'     => 'policy_np',
                 'PCT'    => 'policy_pct',
                 'FO'     => 'policy_fo'
             ]
@@ -286,6 +287,7 @@ class ReportData
         'policy_aspf'  => [ 'parent' => 'p_p', 'header' => true, 'default' => null ],
         'policy_p'     => [ 'parent' => 'p_p', 'header' => true, 'default' => null ],
         'policy_sp'    => [ 'parent' => 'p_p', 'header' => true, 'default' => null ],
+        'policy_np'    => [ 'parent' => 'p_p', 'header' => true, 'default' => null ],
         'policy_pct'   => [ 'parent' => 'p_p', 'header' => true, 'default' => null ],
         'policy_fo'    => [ 'parent' => 'p_p', 'header' => true, 'default' => null ],
         'row' => [
