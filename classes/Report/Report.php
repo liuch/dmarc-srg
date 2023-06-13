@@ -110,6 +110,7 @@ class Report
             'policy_aspf'        => [ 'required' => false, 'type' => 'string' ],
             'policy_p'           => [ 'required' => false, 'type' => 'string' ],
             'policy_sp'          => [ 'required' => false, 'type' => 'string' ],
+            'policy_np'          => [ 'required' => false, 'type' => 'string' ],
             'policy_pct'         => [ 'required' => false, 'type' => 'string' ],
             'policy_fo'          => [ 'required' => false, 'type' => 'string' ],
             'records'            => [ 'required' => true,  'type' => 'array'  ]

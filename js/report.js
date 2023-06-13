@@ -415,18 +415,12 @@ class Report {
 		if (!data)
 			return "n/a";
 		let fr = document.createDocumentFragment();
-		if (data.adkim)
-			fr.appendChild(create_report_result_element("adkim", data.adkim, true, ""));
-		if (data.aspf)
-			fr.appendChild(create_report_result_element("aspf", data.aspf, true, ""));
-		if (data.p)
-			fr.appendChild(create_report_result_element("p", data.p, true, ""));
-		if (data.sp)
-			fr.appendChild(create_report_result_element("sp", data.sp, true, ""));
-		if (data.pct)
-			fr.appendChild(create_report_result_element("pct", data.pct, true, ""));
-		if (data.fo)
-			fr.appendChild(create_report_result_element("fo", data.fo, true, ""));
+		[
+			[ "adkim", data.adkim ], [ "aspf", data.aspf ], [ "p", data.p ], [ "sp", data.sp ],
+			[ "np", data.np ], [ "pct", data.pct ], [ "fo", data.fo ]
+		].forEach(function(pol) {
+			if (pol[1]) fr.appendChild(create_report_result_element(pol[0], pol[1], true, ""));
+		});
 		return fr;
 	}
 }

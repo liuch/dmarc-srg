@@ -76,7 +76,8 @@ class ReportMapper implements ReportMapperInterface
         try {
             $st = $db->prepare(
                 'SELECT `rp`.`id`, `begin_time`, `end_time`, `loaded_time`, `org`, `email`, `extra_contact_info`,'
-                . ' `error_string`, `policy_adkim`, `policy_aspf`, `policy_p`, `policy_sp`, `policy_pct`, `policy_fo`'
+                . ' `error_string`, `policy_adkim`, `policy_aspf`, `policy_p`, `policy_sp`, `policy_np`,'
+                . ' `policy_pct`, `policy_fo`'
                 . ' FROM `' . $this->connector->tablePrefix('reports') . '` AS `rp`'
                 . ' INNER JOIN `' . $this->connector->tablePrefix('domains')
                     . '` AS `dom` ON `dom`.`id` = `rp`.`domain_id`'
@@ -103,8 +104,9 @@ class ReportMapper implements ReportMapperInterface
                 'aspf'  => $res[9],
                 'p'     => $res[10],
                 'sp'    => $res[11],
-                'pct'   => $res[12],
-                'fo'    => $res[13]
+                'np'    => $res[12],
+                'pct'   => $res[13],
+                'fo'    => $res[14]
             ];
 
             $order_str = $this->sqlOrderRecords();
@@ -166,8 +168,8 @@ class ReportMapper implements ReportMapperInterface
                 'INSERT INTO `' . $this->connector->tablePrefix('reports')
                 . '` (`domain_id`, `begin_time`, `end_time`, `loaded_time`, `org`, `external_id`, `email`,'
                 . ' `extra_contact_info`, `error_string`, `policy_adkim`, `policy_aspf`, `policy_p`,'
-                . ' `policy_sp`, `policy_pct`, `policy_fo`, `seen`)'
-                . ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)'
+                . ' `policy_sp`, `policy_np`, `policy_pct`, `policy_fo`, `seen`)'
+                . ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)'
             );
             $st->bindValue(1, $domain_data['id'], \PDO::PARAM_INT);
             $st->bindValue(2, $data['begin_time']->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
@@ -182,8 +184,9 @@ class ReportMapper implements ReportMapperInterface
             $st->bindValue(11, $data['policy_aspf'], \PDO::PARAM_STR);
             $st->bindValue(12, $data['policy_p'], \PDO::PARAM_STR);
             $st->bindValue(13, $data['policy_sp'], \PDO::PARAM_STR);
-            $st->bindValue(14, $data['policy_pct'], \PDO::PARAM_STR);
-            $st->bindValue(15, $data['policy_fo'], \PDO::PARAM_STR);
+            $st->bindValue(14, $data['policy_np'], \PDO::PARAM_STR);
+            $st->bindValue(15, $data['policy_pct'], \PDO::PARAM_STR);
+            $st->bindValue(16, $data['policy_fo'], \PDO::PARAM_STR);
             $st->execute();
             $new_id = intval($db->lastInsertId());
             $st->closeCursor();
