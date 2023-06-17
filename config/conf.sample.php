@@ -10,7 +10,7 @@ $database = [
     'user'         => 'dmarc_user',
     'password'     => 'password',
     /**
-     * This parameter can be usefull if the database is shared with other applications
+     * This parameter can be useful if the database is shared with other applications
      * to avoid conflicting table names. You do not need to specify this parameter
      * if you use a dedicated database.
      * Example value: dmarc_
@@ -137,8 +137,24 @@ $fetcher = [
 // Settings for sending summary reports if it is necessary.
 // It uses in utils/summary_report.php
 $mailer = [
+    /**
+     * Method used to send email
+     * 'default' - use PHP standard mail(). The default value.
+     * 'smtp' - send via smtp. See below for required parameters.
+     */
+    'method'  => 'default',
     'from'    => 'postmaster@yourdomain.net',
     'default' => 'user@yourdomain.net'
+
+    // For method 'smtp' you need to enter the following parameters:
+
+    // Host server in the format scheme://host:port, where scheme is 'ssl' for
+    // SMTPS, or 'tls' for STARTTLS
+    // 'smtp_host' => 'ssl://host:465',
+    // 'username'  => '',
+    // 'password'  => '',
+    // Name to use in the from address, default none.
+    // 'from_name' => '',
 ];
 
 //

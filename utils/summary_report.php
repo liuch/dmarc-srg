@@ -58,6 +58,8 @@ use Liuch\DmarcSrg\Domains\DomainList;
 use Liuch\DmarcSrg\Report\SummaryReport;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\RuntimeException;
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
 
 require 'init.php';
 
@@ -179,28 +181,66 @@ try {
     } else {
         $subject = "{$rep->subject()} for {$dom_cnt} domains";
     }
-
-    $mbody = new MailBody();
-    if (!is_null($text)) {
-        $mbody->setText($text);
-    }
     if (!is_null($html)) {
         $html[] = '</body></html>';
-        $mbody->setHtml($html);
     }
 
-    $headers = [
-        'From'         => $core->config('mailer/from'),
-        'MIME-Version' => '1.0',
-        'Content-Type' => $mbody->contentType()
-    ];
+    if ($core->config('mailer/method', 'default') === 'smtp') {
+        $phpMailerPath = dirname(__DIR__) . '/includes/PHPMailer/';
+        require $phpMailerPath . 'Exception.php';
+        require $phpMailerPath . 'PHPMailer.php';
+        require $phpMailerPath . 'SMTP.php';
 
-    mail(
-        $emailto,
-        mb_encode_mimeheader($subject, 'UTF-8'),
-        implode("\r\n", $mbody->content()),
-        $headers
-    );
+        $phpMailer = new PHPMailer();
+        $phpMailer->isSMTP();
+        if ($core->config('debug', 0)) {
+            $phpMailer->SMTPDebug = SMTP::DEBUG_SERVER;
+        }
+        $phpMailer->SMTPAuth = true;
+        $phpMailer->Host = $core->config('mailer/smtp_host');
+        $phpMailer->Username = $core->config('mailer/username');
+        $phpMailer->Password = $core->config('mailer/password');
+        $phpMailer->setFrom($core->config('mailer/from'),
+            $core->config('mailer/from_name', ''));
+        $phpMailer->addAddress($emailto);
+        $phpMailer->Subject = $subject;
+
+        if (!is_null($html)) {
+            $phpMailer->isHTML(true);
+            $phpMailer->Body = implode("\r\n", $html);
+            if (!is_null($text)) {
+                $phpMailer->AltBody = implode("\r\n", $text);
+            }
+        } else {
+            $phpMailer->Body = implode("\r\n", $text);
+        }
+        if (!$phpMailer->send()) {
+            echo 'Mailer Error: ' . $phpMailer->ErrorInfo . PHP_EOL;
+            exit(1);
+        }
+    } else {
+        $mbody = new MailBody();
+        if (!is_null($text)) {
+            $mbody->setText($text);
+        }
+        if (!is_null($html)) {
+            $mbody->setHtml($html);
+        }
+
+        $headers = [
+            'From'         => $core->config('mailer/from'),
+            'MIME-Version' => '1.0',
+            'Content-Type' => $mbody->contentType()
+        ];
+
+        mail(
+            $emailto,
+            mb_encode_mimeheader($subject, 'UTF-8'),
+            implode("\r\n", $mbody->content()),
+            $headers
+        );
+
+    }
 } catch (SoftException $e) {
     echo 'Error: ' . $e->getMessage() . PHP_EOL;
     exit(1);
