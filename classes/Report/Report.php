@@ -65,8 +65,13 @@ class Report
     {
         $b_ts = $this->data['begin_time'];
         $e_ts = $this->data['end_time'];
-        if (!$b_ts->getTimestamp() || !$e_ts->getTimestamp() || $b_ts > $e_ts) {
-            throw new SoftException('Failed to add an incoming report: wrong date range');
+        if (!$b_ts->getTimestamp() || !$e_ts->getTimestamp()
+            || strlen($b_ts->format('Y')) !== 4 || strlen($e_ts->format('Y')) !== 4
+        ) {
+            throw new SoftException('Failed to add an incoming report: wrong date value');
+        }
+        if ($b_ts > $e_ts) {
+            throw new SoftException('Failed to add an incoming report: start date is later than end date');
         }
 
         $this->db->getMapper('report')->save($this->data);
