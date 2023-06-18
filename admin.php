@@ -67,7 +67,7 @@ if (Core::isJson()) {
                     Core::sendJson(
                         [
                             'error_code' => 0,
-                            'message'    => 'Upgrated successfully'
+                            'message'    => 'Upgraded successfully'
                         ]
                     );
                     return;
