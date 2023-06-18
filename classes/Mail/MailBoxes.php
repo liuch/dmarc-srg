@@ -77,7 +77,7 @@ class MailBoxes implements \Iterator
     public function mailbox($id)
     {
         if (!is_int($id) || $id <= 0 || $id > count($this->box_list)) {
-            throw new LogicException("Incorrect mailbox Id: {$i}");
+            throw new LogicException("Incorrect mailbox Id: {$id}");
         }
         return $this->box_list[$id - 1];
     }

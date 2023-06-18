@@ -58,7 +58,8 @@ if (Core::method() == "GET") {
             Core::instance()->auth()->isAllowed();
 
             if (isset($_GET['id'])) {
-                return Core::sendJson(ReportLogItem::byId(intval($_GET['id']))->toArray());
+                Core::sendJson(ReportLogItem::byId(intval($_GET['id']))->toArray());
+                return;
             }
 
             $pos = $_GET['position'] ?? 0;
