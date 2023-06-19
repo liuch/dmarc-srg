@@ -82,7 +82,7 @@ try {
                 $db->getMapper('upgrader')->go($db::REQUIRED_VERSION);
                 $res = [
                     'error_code' => 0,
-                    'message'    => 'Upgrated successfully'
+                    'message'    => 'Upgraded successfully'
                 ];
             } else {
                 $res = [

@@ -2,7 +2,7 @@
 A php parser, viewer and summary report generator for incoming DMARC reports.
 
 ## Features
-* View a table of parsed reports;
+* View a table of parsed reports
 * Easily identify potential DMARC related issues through colors;
 * Filter report list by domain, month, reporting organization and more;
 * View DKIM/SPF details for each report;

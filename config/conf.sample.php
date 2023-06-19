@@ -10,7 +10,7 @@ $database = [
     'user'         => 'dmarc_user',
     'password'     => 'password',
     /**
-     * This pamemeter can be usefull if the database is shared with other applications
+     * This parameter can be usefull if the database is shared with other applications
      * to avoid conflicting table names. You do not need to specify this parameter
      * if you use a dedicated database.
      * Example value: dmarc_
@@ -156,7 +156,7 @@ $cleaner = [
          * are located. If it is the same mailbox, then the more forgiving criteria of the two will be used.
          * The valid values are:
          * 'none' - no action with it. The default value for rejected mail messages.
-         * 'seen' - only seen messages will be removed. The default value for successully processed mail messages.
+         * 'seen' - only seen messages will be removed. The default value for successfully processed mail messages.
          * 'any'  - all messages will be removed.
          * Note: In the mailbox, where letters with incoming DMARC reports initially come in, unseen messages
          * will not be deleted in any case.
