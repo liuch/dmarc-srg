@@ -61,7 +61,7 @@ interface ReportMapperInterface
      *
      * @param array   $data  Report data
      * @param string  $name  Property name. Currently only `seen` is supported.
-     * @param variant $value Property value
+     * @param mixed   $value Property value
      *
      * @return void
      */

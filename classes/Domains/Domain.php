@@ -40,7 +40,7 @@ use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
  * It's a class for accessing to stored domains data
  *
  * This class is designed for storing and manipulating domain data.
- * All queries to the datatabase are made in lazy mode.
+ * All queries to the database are made in lazy mode.
  */
 class Domain
 {
@@ -64,14 +64,14 @@ class Domain
      * (new Domain([ 'fqdn' => 'example.com', 'description' => 'an expample domain' ])->save(); - will add
      * this domain to the database if it does not exist in it.
      *
-     * @param int|string|array   $data Some domain data to identify it
-     *                                 int value is treated as domain id
-     *                                 string value is treated as a FQDN
-     *                                 array has these fields: `id`, `fqdn`, `active`, `description`
-     *                                 and usually uses for creating a new domain item.
-     *                                 Note: The values of the fields `created_time` and `updated_time`
-     *                                 will be ignored while saving to the database.
-     * @param DatabaseController $db   The database controller
+     * @param int|string|array                            $data Some domain data to identify it
+     *                                                          int value is treated as domain id
+     *                                                          string value is treated as a FQDN
+     *                                                          array has these fields: `id`, `fqdn`, `active`, `description`
+     *                                                          and usually uses for creating a new domain item.
+     *                                                          Note: The values of the fields `created_time` and `updated_time`
+     *                                                          will be ignored while saving to the database.
+     * @param \Liuch\DmarcSrg\Database\DatabaseController $db   The database controller
      *
      * @return void
      */

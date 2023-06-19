@@ -36,7 +36,7 @@ interface ReportLogMapperInterface
     /**
      * Fetches data of report log item from the database by id
      *
-     * @param Report log data
+     * @param \Liuch\DmarcSrg\Report\Report $data log data
      *
      * @return void
      */

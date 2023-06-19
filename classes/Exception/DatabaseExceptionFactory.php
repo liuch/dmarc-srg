@@ -39,7 +39,7 @@ class DatabaseExceptionFactory
     /**
      * Creates a DatabaseException instance with an appropriate message based on the passed class's name and error code.
      *
-     * @param Exception $origin The original exception
+     * @param \Exception $origin The original exception
      *
      * @return DatabaseException
      */

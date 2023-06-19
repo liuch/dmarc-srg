@@ -36,8 +36,8 @@ interface StatisticsMapperInterface
     /**
      * Returns summary information for the specified domain and date range
      *
-     * @param Domain|null $domain Domain for which the information is needed. Null is for all domains.
-     * @param array       $range  Array with two dates
+     * @param \Liuch\DmarcSrg\Domains\Domain|null $domain Domain for which the information is needed. Null is for all domains.
+     * @param array                              $range  Array with two dates
      *
      * @return array Array with Summary information:
      *                          'emails' => [
@@ -52,8 +52,8 @@ interface StatisticsMapperInterface
     /**
      * Returns a list of ip-addresses from which the e-mail messages were received, with some statistics for each one
      *
-     * @param Domain|null $domain Domain for which the information is needed. Null is for all domains.
-     * @param array       $range  Array with two dates
+     * @param \Liuch\DmarcSrg\Domains\Domain|null $domain Domain for which the information is needed. Null is for all domains.
+     * @param array                               $range  Array with two dates
      *
      * @return array A list of ip-addresses with fields `ip`, `emails`, `dkim_aligned`, `spf_aligned`
      */
@@ -62,8 +62,8 @@ interface StatisticsMapperInterface
     /**
      * Returns a list of organizations that sent the reports with some statistics for each one
      *
-     * @param Domain|null $domain Domain for which the information is needed. Null is for all domains.
-     * @param array       $range  Array with two dates
+     * @param \Liuch\DmarcSrg\Domains\Domain|null $domain Domain for which the information is needed. Null is for all domains.
+     * @param array                               $range  Array with two dates
      *
      * @return array List of organizations with fields `name`, `reports`, `emails`
      */

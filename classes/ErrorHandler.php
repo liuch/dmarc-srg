@@ -56,7 +56,7 @@ class ErrorHandler implements LoggerAwareInterface
     /**
      * Handle uncaught exceptions. Used by set_exception_handler and set_error_handler functions
      *
-     * @param Throwable $e an exception to handle. For set_error_handler it is ErrorException.
+     * @param \Throwable $e an exception to handle. For set_error_handler it is ErrorException.
      *
      * @return void
      */
@@ -80,7 +80,7 @@ class ErrorHandler implements LoggerAwareInterface
      * Returns an result array based on the passed exception's data.
      * If the debug mode is enabled, the `debug_info` field will be added to the result.
      *
-     * @param Throwable $e an exception for which the result is generated
+     * @param \Throwable $e an exception for which the result is generated
      *
      * @return array
      */
@@ -93,7 +93,7 @@ class ErrorHandler implements LoggerAwareInterface
      * Returns information about the passed exception as text.
      * If the debug is enabled, debug information will be added.
      *
-     * @param Throwable $e an exception for which the text is generated
+     * @param \Throwable $e an exception for which the text is generated
      *
      * @return string
      */

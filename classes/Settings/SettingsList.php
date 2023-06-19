@@ -48,7 +48,7 @@ class SettingsList
     /**
      * The constructor
      *
-     * @param DatabaseController $db Connector to the current database
+     * @param \Liuch\DmarcSrg\Database\DatabaseController $db Connector to the current database
      */
     public function __construct($db = null)
     {

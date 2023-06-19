@@ -89,7 +89,7 @@ class SummaryReport
     /**
      * Binds a domain to the report
      *
-     * @param Domain $domain The domain for which the report is created
+     * @param \Liuch\DmarcSrg\Domains\Domain $domain The domain for which the report is created
      *
      * @return self
      */

@@ -54,8 +54,8 @@ class StatisticsMapper implements StatisticsMapperInterface
     /**
      * Returns summary information for the specified domain and date range
      *
-     * @param Domain|null $domain Domain for which the information is needed. Null is for all domains.
-     * @param array       $range  Array with two dates
+     * @param \Liuch\DmarcSrg\Domains\Domain|null $domain Domain for which the information is needed. Null is for all domains.
+     * @param array                               $range  Array with two dates
      *
      * @return array Array with Summary information:
      *                          'emails' => [
@@ -111,8 +111,8 @@ class StatisticsMapper implements StatisticsMapperInterface
     /**
      * Returns a list of ip-addresses from which the e-mail messages were received, with some statistics for each one
      *
-     * @param Domain|null $domain Domain for which the information is needed. Null is for all domains.
-     * @param array       $range  Array with two dates
+     * @param \Liuch\DmarcSrg\Domains\Domain|null $domain Domain for which the information is needed. Null is for all domains.
+     * @param array                               $range  Array with two dates
      *
      * @return array A list of ip-addresses with fields `ip`, `emails`, `dkim_aligned`, `spf_aligned`
      */
@@ -148,8 +148,8 @@ class StatisticsMapper implements StatisticsMapperInterface
     /**
      * Returns a list of organizations that sent the reports with some statistics for each one
      *
-     * @param Domain|null $domain Domain for which the information is needed. Null is for all domains.
-     * @param array       $range  Array with two dates
+     * @param \Liuch\DmarcSrg\Domains\Domain|null $domain Domain for which the information is needed. Null is for all domains.
+     * @param array                               $range  Array with two dates
      *
      * @return array List of organizations with fields `name`, `reports`, `emails`
      */
@@ -202,9 +202,9 @@ class StatisticsMapper implements StatisticsMapperInterface
     /**
      * Binds values for SQL queries
      *
-     * @param PDOStatement $st     PDO Statement to bind to
-     * @param Domain|null  $domain Domain for the condition
-     * @param array        $range  Date range for the condition
+     * @param \PDOStatement                         $st     PDO Statement to bind to
+     * @param \Liuch\DmarcSrg\Domains\Domain|null   $domain Domain for the condition
+     * @param array                                 $range  Date range for the condition
      *
      * @return void
      */

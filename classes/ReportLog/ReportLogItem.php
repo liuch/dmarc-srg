@@ -84,8 +84,8 @@ class ReportLogItem
     /**
      * Returns an instance of ReportLogItem with the passed Id
      *
-     * @param int                $id Item Id to return
-     * @param DatabaseController $db The database controller
+     * @param int                                        $id Item Id to return
+     * @param \Liuch\DmarcSrg\Database\DatabaseController $db The database controller
      *
      * @return ReportLogItem an instance of ReportLogItem with the specified Id.
      */

@@ -243,7 +243,7 @@ class Core
     /**
      * Returns an instance of the class Database.
      *
-     * @return DatabaseController
+     * @return Database\DatabaseController
      */
     public function database()
     {
@@ -264,7 +264,7 @@ class Core
      * Returns the current logger.
      * Just a proxy method to return the logger from ErrorHandler
      *
-     * @return LoggerInterface
+     * @return Log\LoggerInterface
      */
     public function logger()
     {
