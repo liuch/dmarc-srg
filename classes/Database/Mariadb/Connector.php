@@ -159,7 +159,7 @@ class Connector extends DatabaseConnector
     }
 
     /**
-     * Inites the database.
+     * Initiates the database.
      *
      * This method creates needed tables and indexes in the database.
      * The method will fail if the database already have tables with the table prefix.
