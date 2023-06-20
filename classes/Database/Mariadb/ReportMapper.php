@@ -232,9 +232,9 @@ class ReportMapper implements ReportMapperInterface
      *
      * It has nothing to do with the fields of the report itself.
      *
-     * @param array   $data  Report data
-     * @param string  $name  Property name. Currently only `seen` is supported.
-     * @param bool    $value Property value
+     * @param array  $data  Report data
+     * @param string $name  Property name. Currently only `seen` is supported.
+     * @param mixed  $value Property value
      *
      * @return void
      */

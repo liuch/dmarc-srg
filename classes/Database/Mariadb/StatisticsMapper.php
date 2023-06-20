@@ -202,9 +202,9 @@ class StatisticsMapper implements StatisticsMapperInterface
     /**
      * Binds values for SQL queries
      *
-     * @param \PDOStatement                         $st     PDO Statement to bind to
-     * @param \Liuch\DmarcSrg\Domains\Domain|null   $domain Domain for the condition
-     * @param array                                 $range  Date range for the condition
+     * @param \PDOStatement                       $st     PDO Statement to bind to
+     * @param \Liuch\DmarcSrg\Domains\Domain|null $domain Domain for the condition
+     * @param array                               $range  Date range for the condition
      *
      * @return void
      */

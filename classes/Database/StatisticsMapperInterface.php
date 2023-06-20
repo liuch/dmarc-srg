@@ -37,7 +37,7 @@ interface StatisticsMapperInterface
      * Returns summary information for the specified domain and date range
      *
      * @param \Liuch\DmarcSrg\Domains\Domain|null $domain Domain for which the information is needed. Null is for all domains.
-     * @param array                              $range  Array with two dates
+     * @param array                               $range  Array with two dates
      *
      * @return array Array with Summary information:
      *                          'emails' => [
