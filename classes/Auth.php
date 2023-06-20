@@ -38,6 +38,7 @@ use Liuch\DmarcSrg\Exception\AuthException;
  */
 class Auth
 {
+    /** @var Core */
     private $core = null;
 
     /**

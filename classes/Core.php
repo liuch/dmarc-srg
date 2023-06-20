@@ -45,6 +45,7 @@ class Core
     private const HTML_FILE_NAME = 'index.html';
 
     private $modules = [];
+    /** @var self|null */
     private static $instance = null;
 
     /**

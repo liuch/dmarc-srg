@@ -39,12 +39,13 @@ use Liuch\DmarcSrg\Exception\DatabaseFatalException;
  */
 class StatisticsMapper implements StatisticsMapperInterface
 {
+    /** @var \Liuch\DmarcSrg\Database\DatabaseConnector */
     private $connector = null;
 
     /**
      * The constructor
      *
-     * @param Connector $connector DatabaseConnector
+     * @param \Liuch\DmarcSrg\Database\DatabaseConnector $connector
      */
     public function __construct(object $connector)
     {

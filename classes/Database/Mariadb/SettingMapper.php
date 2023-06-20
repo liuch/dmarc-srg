@@ -40,12 +40,13 @@ use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
  */
 class SettingMapper implements SettingMapperInterface
 {
+    /** @var \Liuch\DmarcSrg\Database\DatabaseConnector */
     private $connector = null;
 
     /**
      * The constructor
      *
-     * @param Connector $connector DatabaseConnector
+     * @param \Liuch\DmarcSrg\Database\DatabaseConnector $connector
      */
     public function __construct(object $connector)
     {

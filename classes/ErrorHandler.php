@@ -40,7 +40,9 @@ use Liuch\DmarcSrg\Exception\SoftException;
  */
 class ErrorHandler implements LoggerAwareInterface
 {
+    /** @var Core */
     private $core   = null;
+    /** @var LoggerInterface|null */
     private $logger = null;
 
     /**
@@ -112,6 +114,8 @@ class ErrorHandler implements LoggerAwareInterface
 
     /**
      * Returns the current logger
+     *
+     * @return LoggerInterface|null
      */
     public function logger()
     {

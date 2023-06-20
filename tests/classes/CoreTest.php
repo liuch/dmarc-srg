@@ -4,6 +4,7 @@ namespace Liuch\DmarcSrg;
 
 class CoreTest extends \PHPUnit\Framework\TestCase
 {
+    /** @var Core */
     private $core = null;
 
     public function setUp(): void

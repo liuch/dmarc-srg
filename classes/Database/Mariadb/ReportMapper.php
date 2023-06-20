@@ -46,6 +46,7 @@ use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
  */
 class ReportMapper implements ReportMapperInterface
 {
+    /** @var \Liuch\DmarcSrg\Database\DatabaseConnector */
     private $connector = null;
 
     private static $allowed_domains = null;
@@ -53,7 +54,7 @@ class ReportMapper implements ReportMapperInterface
     /**
      * The constructor
      *
-     * @param Connector $connector DatabaseConnector
+     * @param \Liuch\DmarcSrg\Database\DatabaseConnector $connector
      */
     public function __construct(object $connector)
     {
