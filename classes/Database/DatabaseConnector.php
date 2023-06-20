@@ -68,7 +68,7 @@ abstract class DatabaseConnector
     /**
      * Returns an instance of PDO class
      *
-     * @return PDO
+     * @return \PDO
      */
     abstract public function dbh(): object;
 

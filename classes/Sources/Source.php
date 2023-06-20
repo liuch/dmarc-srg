@@ -45,7 +45,7 @@ abstract class Source implements \Iterator
     /**
      * Constructor
      *
-     * @param mixed Data to reach report files
+     * @param mixed $data Data to reach report files
      *
      * @return void
      */
@@ -55,7 +55,7 @@ abstract class Source implements \Iterator
     }
 
     /**
-     * Sets parameters that difine the behavior of the source
+     * Sets parameters that define the behavior of the source
      *
      * @param $params Key-value array
      *                'when_done'   => one or more rules to be executed after successful report processing
@@ -106,7 +106,7 @@ abstract class Source implements \Iterator
     /**
      * Returns the source itself that was passed to the constructor
      *
-     * @return class
+     * @return mixed
      */
     public function container()
     {

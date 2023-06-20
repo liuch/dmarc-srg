@@ -36,6 +36,7 @@ use Liuch\DmarcSrg\Database\DomainMapperInterface;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\DatabaseFatalException;
 use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
+use Liuch\DmarcSrg\Exception\DatabaseException;
 
 /**
  * DomainMapper class implementation for MariaDB
@@ -138,7 +139,7 @@ class DomainMapper implements DomainMapperInterface
                 $st->execute();
                 $st->closeCursor();
             } catch (\PDOException $e) {
-                throw new DababaseException('Failed to update the domain data', -1, $e);
+                throw new DatabaseException('Failed to update the domain data', -1, $e);
             }
         } else {
             try {
@@ -315,9 +316,9 @@ class DomainMapper implements DomainMapperInterface
     /**
      * Binds values for SQL queries based on existing domain data
      *
-     * @param PDOStatement $st   PDO Statement to bind to
-     * @param ind          $pos  Start position for binding
-     * @param array        $data Domain data
+     * @param \PDOStatement $st   PDO Statement to bind to
+     * @param int           $pos  Start position for binding
+     * @param array         $data Domain data
      *
      * @return void
      */

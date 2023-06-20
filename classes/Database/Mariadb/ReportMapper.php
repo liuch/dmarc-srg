@@ -232,9 +232,9 @@ class ReportMapper implements ReportMapperInterface
      *
      * It has nothing to do with the fields of the report itself.
      *
-     * @param array   $data  Report data
-     * @param string  $name  Property name. Currently only `seen` is supported.
-     * @param variant $value Property value
+     * @param array  $data  Report data
+     * @param string $name  Property name. Currently only `seen` is supported.
+     * @param mixed  $value Property value
      *
      * @return void
      */
@@ -521,9 +521,9 @@ class ReportMapper implements ReportMapperInterface
     /**
      * Binds a nullable array to an SQL query as a json string
      *
-     * @param PDOStatement $st   DB statement object
-     * @param int          $idx  Bind position
-     * @param array        $data JSON data or null
+     * @param \PDOStatement $st   DB statement object
+     * @param int           $idx  Bind position
+     * @param array         $data JSON data or null
      *
      * @return void
      */
@@ -680,7 +680,7 @@ class ReportMapper implements ReportMapperInterface
      * @param array  $f_data Array with prepared filter data
      * @param string $prefix Prefix, which will be added to the beginning of the condition string,
      *                       but only in the case when the condition string is not empty.
-     * @param int    $f_id   Index of the filter
+     * @param int    $f_idx  Index of the filter
      *
      * @return string the condition string
      */
@@ -711,9 +711,9 @@ class ReportMapper implements ReportMapperInterface
     /**
      * Binds the values of the filter and the limit to SQL query
      *
-     * @param PDOStatement $st     Prepared SQL statement to bind to
-     * @param array        $f_data Array with prepared filter data
-     * @param array        $limit  Key-value array with two keys: `offset` and `count`
+     * @param \PDOStatement $st     Prepared SQL statement to bind to
+     * @param array         $f_data Array with prepared filter data
+     * @param array         $limit  Key-value array with two keys: `offset` and `count`
      *
      * @return void
      */
@@ -737,10 +737,10 @@ class ReportMapper implements ReportMapperInterface
     /**
      * Binds the values of the specified filter item to SQL query
      *
-     * @param PDOStatement $st         Prepared SQL statement to bind to
-     * @param array        $f_data     Array with prepared filter data
-     * @param int          $filter_idx Index of the filter to bind to
-     * @param int          $bind_pos   Start bind position (pointer). It will be increaded with each binding.
+     * @param \PDOStatement $st         Prepared SQL statement to bind to
+     * @param array         $f_data     Array with prepared filter data
+     * @param int           $filter_idx Index of the filter to bind to
+     * @param int           $bind_pos   Start bind position (pointer). It will be increased with each binding.
      *
      * @return void
      */

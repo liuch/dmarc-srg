@@ -56,7 +56,7 @@ class ReportLogMapper implements ReportLogMapperInterface
     /**
      * Fetches data of report log item from the database by id
      *
-     * @param Report log data
+     * @param \Liuch\DmarcSrg\Report\Report $data log data
      *
      * @return void
      */
@@ -286,9 +286,9 @@ class ReportLogMapper implements ReportLogMapperInterface
     /**
      * Binds the values of the filter and the limit to SQL query
      *
-     * @param PDOStatement $st     Prepared SOL statement to bind to
-     * @param array        $filter Key-value array with filter data
-     * @param array        $limit  Key-value array with limit data
+     * @param \PDOStatement $st     Prepared SOL statement to bind to
+     * @param array         $filter Key-value array with filter data
+     * @param array         $limit  Key-value array with limit data
      *
      * @return void
      */

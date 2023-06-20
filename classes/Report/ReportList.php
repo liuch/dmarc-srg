@@ -54,7 +54,7 @@ class ReportList
     /**
      * The constructor
      *
-     * @param DatabaseController $db The database controller
+     * @param \Liuch\DmarcSrg\Database\DatabaseController $db The database controller
      */
     public function __construct($db = null)
     {

@@ -48,8 +48,8 @@ class Statistics
     /**
      * The constructor of the class, it only uses in static methods of this class
      *
-     * @param Domain|null        $domain The domain for which you need to get statistics, null for all the domains.
-     * @param DatabaseController $db     The database controller
+     * @param Domains\Domain|null         $domain The domain for which you need to get statistics, null for all the domains.
+     * @param Database\DatabaseController $db     The database controller
      *
      * @return void
      */
@@ -62,10 +62,10 @@ class Statistics
     /**
      * Returns an instance of the class for the period from $date1 to $date2
      *
-     * @param Domain|null        $domain See the constructor for the details
-     * @param DateTime           $date1  The date you need statistics from
-     * @param DateTime           $date2  The date you need statistics to (not included)
-     * @param DatabaseController $db     The database controller
+     * @param Domains\Domain|null         $domain See the constructor for the details
+     * @param DateTime                    $date1  The date you need statistics from
+     * @param DateTime                    $date2  The date you need statistics to (not included)
+     * @param Database\DatabaseController $db     The database controller
      *
      * @return Statistics Instance of the class
      */
@@ -80,8 +80,8 @@ class Statistics
     /**
      * Returns an instance of the class for the last week
      *
-     * @param Domain|null        $domain See the constructor for the details
-     * @param DatabaseController $db     The database controller
+     * @param Domains\Domain|null         $domain See the constructor for the details
+     * @param Database\DatabaseController $db     The database controller
      *
      * @return Statistics Instance of the class
      */
@@ -96,8 +96,8 @@ class Statistics
     /**
      * Returns an instance of the class for the last month
      *
-     * @param Domain|null        $domain See the construct for the details
-     * @param DatabaseController $db     The database controller
+     * @param Domains\Domain|null         $domain See the construct for the details
+     * @param Database\DatabaseController $db     The database controller
      *
      * @return Statistics Instance of the class
      */
@@ -112,9 +112,9 @@ class Statistics
     /**
      * Returns an instance of the class for the last N days
      *
-     * @param Domain|null        $domain See the construct for the details
-     * @param int                $ndays  Number of days
-     * @param DatabaseController $db     The database controller
+     * @param Domains\Domain|null         $domain See the construct for the details
+     * @param int                         $ndays  Number of days
+     * @param Database\DatabaseController $db     The database controller
      *
      * @return Statistics Instance of the class
      */

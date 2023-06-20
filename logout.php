@@ -23,7 +23,7 @@
 namespace Liuch\DmarcSrg;
 
 use Liuch\DmarcSrg\ErrorHandler;
-use Liuch\DmarcSrg\RuntimeException;
+use Liuch\DmarcSrg\Exception\RuntimeException;
 
 require 'init.php';
 

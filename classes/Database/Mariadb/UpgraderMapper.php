@@ -192,11 +192,11 @@ class UpgraderMapper implements UpgraderMapperInterface
     }
 
     /**
-     * Checks if the spefied column exists in the spefied table of the database
+     * Checks if the specified column exists in the specified table of the database
      *
      * @param object $db     Connection handle of the database
      * @param string $table  Table name with the prefix
-     * @param string $columb Column name
+     * @param string $column Column name
      *
      * @return bool
      */
@@ -218,7 +218,7 @@ class UpgraderMapper implements UpgraderMapperInterface
     /**
      * Return an instance of DatabaseFatalException
      *
-     * @param Exception $e The original exception
+     * @param \Exception $e The original exception
      *
      * @return DatabaseFatalException
      */

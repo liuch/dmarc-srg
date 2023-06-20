@@ -171,7 +171,7 @@ class MailboxSource extends Source
     /**
      * Returns the current email message.
      *
-     * @return MailMessage|null
+     * @return \Liuch\DmarcSrg\Mail\MailMessage|null
      */
     public function mailMessage()
     {

@@ -47,8 +47,8 @@ class DatabaseController
     /**
      * The constructor
      *
-     * @param Core  $core      Instace of the Core class
-     * @param class $connector The connector class of the current database
+     * @param \Liuch\DmarcSrg\Core $core      Instance of the Core class
+     * @param DatabaseConnector    $connector The connector class of the current database
      */
     public function __construct($core, $connector = null)
     {

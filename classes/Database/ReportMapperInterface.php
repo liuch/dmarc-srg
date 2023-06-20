@@ -59,9 +59,9 @@ interface ReportMapperInterface
      *
      * It has nothing to do with the fields of the report itself.
      *
-     * @param array   $data  Report data
-     * @param string  $name  Property name. Currently only `seen` is supported.
-     * @param variant $value Property value
+     * @param array  $data  Report data
+     * @param string $name  Property name. Currently only `seen` is supported.
+     * @param mixed  $value Property value
      *
      * @return void
      */

@@ -39,7 +39,7 @@ use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
  * It's a class for accessing to settings item data
  *
  * This class is designed for storing and manipulating one item of settings data.
- * All queries to the datatabase are made in lazy mode.
+ * All queries to the database are made in lazy mode.
  */
 abstract class Setting
 {
@@ -90,13 +90,13 @@ abstract class Setting
      * (new Setting([ 'name' => 'some.setting', 'value' => 'some string value' ])->save(); - will add
      * this setting to the database if it does not exist in it or update the value of the setting.
      *
-     * @param string|array       $data    Some setting data to identify it
-     *                                    string value is treated as a name
-     *                                    array has these fields: `name`, `value`
-     *                                    and usually uses for creating a new setting item.
-     * @param boolean            $wignore If true the wrong value is reset to the default
-     *                                    or it throws an exception otherwise.
-     * @param DatabaseController $db      The database controller
+     * @param string|array                                $data    Some setting data to identify it
+     *                                                             string value is treated as a name
+     *                                                             array has these fields: `name`, `value`
+     *                                                             and usually uses for creating a new setting item.
+     * @param boolean                                     $wignore If true the wrong value is reset to the default
+     *                                                             or it throws an exception otherwise.
+     * @param \Liuch\DmarcSrg\Database\DatabaseController $db      The database controller
      *
      * @return void
      */
@@ -155,7 +155,7 @@ abstract class Setting
     /**
      * Assigns the passed value to the setting
      *
-     * @param mixed Value to assign
+     * @param mixed $value Value to assign
      *
      * @return void
      */

@@ -45,7 +45,7 @@ class Admin
     /**
      * The constructor of the class
      *
-     * @param Core $core Instace of the Core class
+     * @param Core $core Instance of the Core class
      */
     public function __construct($core)
     {
