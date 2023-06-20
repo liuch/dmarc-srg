@@ -174,8 +174,6 @@ class DatabaseController
                     break;
                 default:
                     throw new RuntimeException('Unknown database type: ' . $this->conf_data['type']);
-                    $type = null;
-                    break;
             }
             $c_name = __NAMESPACE__ . '\\' . \ucfirst($type) . '\\Connector';
             $this->connector = new $c_name($this->conf_data);
