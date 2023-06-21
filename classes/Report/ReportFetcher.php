@@ -72,7 +72,6 @@ class ReportFetcher
         }
 
         $core  = Core::instance();
-        $limit = 0;
         $stype = $this->source->type();
         switch ($stype) {
             case Source::SOURCE_MAILBOX:
@@ -85,6 +84,8 @@ class ReportFetcher
                 $f_act = $core->config('fetcher/directories/when_failed', '');
                 $limit = $core->config('fetcher/directories/files_maximum', 0);
                 break;
+            default:
+                throw new RuntimeException('Unknown source type');
         }
         $limit = intval($limit);
         if ($stype === Source::SOURCE_MAILBOX || $stype === Source::SOURCE_DIRECTORY) {

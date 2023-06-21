@@ -190,6 +190,9 @@ abstract class Setting
             case self::TYPE_STRING_SELECT:
                 $type = 'select';
                 break;
+            default:
+                $type = '';
+                break;
         }
         return [
             'type'    => $type,

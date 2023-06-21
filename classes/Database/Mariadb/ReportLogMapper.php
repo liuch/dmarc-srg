@@ -56,7 +56,7 @@ class ReportLogMapper implements ReportLogMapperInterface
     /**
      * Fetches data of report log item from the database by id
      *
-     * @param \Liuch\DmarcSrg\Report\Report $data log data
+     * @param array $data Log data
      *
      * @return void
      */

@@ -124,6 +124,7 @@ class MailBody
             $content[] = '--' . $this->boundary();
             switch ($type) {
                 case 'text':
+                default:
                     $ctype = 'text/plain';
                     break;
                 case 'html':

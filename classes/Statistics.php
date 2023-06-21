@@ -48,8 +48,9 @@ class Statistics
     /**
      * The constructor of the class, it only uses in static methods of this class
      *
-     * @param Domains\Domain|null         $domain The domain for which you need to get statistics, null for all the domains.
-     * @param Database\DatabaseController $db     The database controller
+     * @param Domains\Domain|null              $domain The domain for which you need to get statistics,
+     *                                                 null for all the domains.
+     * @param Database\DatabaseController|null $db     The database controller
      *
      * @return void
      */

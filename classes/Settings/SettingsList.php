@@ -33,6 +33,7 @@ namespace Liuch\DmarcSrg\Settings;
 
 use Liuch\DmarcSrg\Core;
 use Liuch\DmarcSrg\Exception\SoftException;
+use Liuch\DmarcSrg\Exception\RuntimeException;
 
 /**
  * This class is designed to work with the list of the settings
@@ -65,6 +66,7 @@ class SettingsList
      */
     public function getList(): array
     {
+        $list = [];
         $db_map = $this->db->getMapper('setting')->list();
         foreach (static::$schema as $name => &$sch_data) {
             if ($sch_data['public'] ?? false) {
@@ -157,6 +159,8 @@ class SettingsList
                 return new SettingStringSelect($name);
             case 'integer':
                 return new SettingInteger($name);
+            default:
+                throw new RuntimeException('Unknown setting type');
         }
     }
 

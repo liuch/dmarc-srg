@@ -80,7 +80,7 @@ class Config
             }
             $data = $data[$key];
             if (!isset($path[$nm_i])) {
-                return $data ?? $default;
+                return $data;
             }
         } while (gettype($data) === 'array');
 
