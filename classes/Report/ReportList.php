@@ -59,6 +59,7 @@ class ReportList
     public function __construct($db = null)
     {
         $this->db = $db ?? Core::instance()->database();
+        $this->resetOrderParams();
     }
 
     /**
@@ -77,18 +78,13 @@ class ReportList
      */
     public function getList(int $pos): array
     {
-        $order = [
-            'field'     => 'begin_time',
-            'direction' => ($this->order ?? self::ORDER_DESCENT) === self::ORDER_ASCENT ? 'ascent' : 'descent'
-        ];
-
         $max_rec = $this->limit > 0 ? $this->limit : 25;
         $limit = [
             'offset' => $pos,
             'count'  => $max_rec + 1
         ];
 
-        $list = $this->db->getMapper('report')->list($this->filter, $order, $limit);
+        $list = $this->db->getMapper('report')->list($this->filter, $this->order, $limit);
         if (count($list) > $max_rec) {
             $more = true;
             unset($list[$max_rec]);
@@ -117,9 +113,11 @@ class ReportList
                 $direction = self::ORDER_DESCENT;
             }
             $this->order = [
-                'field'     => $field,
-                'direction' => $direction
+                'field'     => 'begin_time',
+                'direction' => $direction === self::ORDER_ASCENT ? 'ascent' : 'descent'
             ];
+        } else {
+            $this->resetOrderParams();
         }
     }
 
@@ -182,12 +180,8 @@ class ReportList
      */
     public function delete(): void
     {
-        $order = [
-            'field'     => 'begin_time',
-            'direction' => ($this->order ?? self::ORDER_DESCENT) === self::ORDER_ASCENT ? 'ascent' : 'descent'
-        ];
         $limit = [ 'offset' => 0, 'count' => $this->limit ];
-        $this->db->getMapper('report')->delete($this->filter, $order, $limit);
+        $this->db->getMapper('report')->delete($this->filter, $this->order, $limit);
     }
 
     /**
@@ -207,6 +201,19 @@ class ReportList
             'dkim'         => [ 'pass', 'fail' ],
             'spf'          => [ 'pass', 'fail' ],
             'status'       => [ 'read', 'unread' ]
+        ];
+    }
+
+    /**
+     * Resets the sort params
+     *
+     * @return void
+     */
+    private function resetOrderParams(): void
+    {
+        $this->order = [
+            'field'     => 'begin_time',
+            'direction' => 'descent'
         ];
     }
 }
