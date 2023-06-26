@@ -18,3 +18,12 @@ indent_style = tab
 
 [/*.{php,html}]
 insert_final_newline = false
+
+[LICENSE]
+indent_size = false
+
+[tests/classes/**/*.php]
+indent_size = false
+
+[classes/Report/SummaryReport.php]
+indent_size = false
