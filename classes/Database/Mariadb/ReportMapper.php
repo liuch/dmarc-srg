@@ -54,7 +54,7 @@ class ReportMapper implements ReportMapperInterface
     /**
      * The constructor
      *
-     * @param \Liuch\DmarcSrg\Database\DatabaseConnector $connector
+     * @param \Liuch\DmarcSrg\Database\DatabaseConnector $connector DatabaseConnector instance of the current database
      */
     public function __construct(object $connector)
     {
