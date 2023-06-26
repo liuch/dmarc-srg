@@ -41,12 +41,13 @@ use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
  */
 class ReportLogMapper implements ReportLogMapperInterface
 {
+    /** @var \Liuch\DmarcSrg\Database\DatabaseConnector */
     private $connector = null;
 
     /**
      * The constructor
      *
-     * @param Connector $connector DatabaseConnector
+     * @param \Liuch\DmarcSrg\Database\DatabaseConnector $connector DatabaseConnector instance of the current database
      */
     public function __construct(object $connector)
     {

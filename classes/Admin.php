@@ -40,6 +40,7 @@ use Liuch\DmarcSrg\Exception\LogicException;
  */
 class Admin
 {
+    /** @var Core */
     private $core = null;
 
     /**

@@ -38,8 +38,11 @@ use Liuch\DmarcSrg\DateTime;
  */
 class Statistics
 {
+    /** @var Database\DatabaseController*/
     private $db     = null;
+    /** @var Domains\Domain|null */
     private $domain = null;
+    /** @var array<string,DateTime|null> */
     private $range  = [
             'date1' => null,
             'date2' => null
@@ -130,7 +133,7 @@ class Statistics
     /**
      * Returns the date from and the date to in an array
      *
-     * @return array - The range of the statistics
+     * @return DateTime[] - The range of the statistics
      */
     public function range(): array
     {

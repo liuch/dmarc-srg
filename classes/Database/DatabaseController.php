@@ -42,6 +42,7 @@ class DatabaseController
     public const REQUIRED_VERSION = '3.0';
 
     private $conf_data = null;
+    /** @var DatabaseConnector */
     private $connector = null;
 
     /**
@@ -117,7 +118,7 @@ class DatabaseController
     }
 
     /**
-     * Inites the database.
+     * Initiates the database.
      *
      * This method creates needed tables and indexes in the database.
      * The method will fail if the database already have tables with the table prefix.
@@ -174,8 +175,6 @@ class DatabaseController
                     break;
                 default:
                     throw new RuntimeException('Unknown database type: ' . $this->conf_data['type']);
-                    $type = null;
-                    break;
             }
             $c_name = __NAMESPACE__ . '\\' . \ucfirst($type) . '\\Connector';
             $this->connector = new $c_name($this->conf_data);

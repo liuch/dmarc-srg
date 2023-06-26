@@ -38,6 +38,7 @@ use Liuch\DmarcSrg\Settings\SettingsList;
  */
 class Status
 {
+    /** @var Core */
     private $core = null;
 
     /**

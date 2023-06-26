@@ -43,12 +43,13 @@ use Liuch\DmarcSrg\Exception\DatabaseException;
  */
 class DomainMapper implements DomainMapperInterface
 {
+    /** @var \Liuch\DmarcSrg\Database\DatabaseConnector */
     private $connector = null;
 
     /**
      * The constructor
      *
-     * @param Connector $connector DatabaseConnector
+     * @param \Liuch\DmarcSrg\Database\DatabaseConnector $connector DatabaseConnector instance of the current database
      */
     public function __construct(object $connector)
     {

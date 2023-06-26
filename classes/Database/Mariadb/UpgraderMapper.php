@@ -41,12 +41,13 @@ use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
  */
 class UpgraderMapper implements UpgraderMapperInterface
 {
+    /** @var Connector */
     private $connector = null;
 
     /**
      * The constructor
      *
-     * @param Connector $connector DatabaseConnector
+     * @param Connector $connector
      */
     public function __construct(object $connector)
     {

@@ -39,6 +39,7 @@ use Liuch\DmarcSrg\Exception\SoftException;
  */
 class UploadedFilesSource extends Source
 {
+    /** @var int */
     private $index = 0;
 
     /**

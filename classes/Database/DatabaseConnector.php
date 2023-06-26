@@ -103,7 +103,7 @@ abstract class DatabaseConnector
     }
 
     /**
-     * Inites the database.
+     * Initiates the database.
      *
      * @return void
      */
