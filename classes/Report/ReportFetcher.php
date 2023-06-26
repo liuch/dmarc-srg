@@ -84,6 +84,11 @@ class ReportFetcher
                 $f_act = $core->config('fetcher/directories/when_failed', '');
                 $limit = $core->config('fetcher/directories/files_maximum', 0);
                 break;
+            case Source::SOURCE_UPLOADED_FILE:
+                $s_act = '';
+                $f_act = '';
+                $limit = 0;
+                break;
             default:
                 throw new RuntimeException('Unknown source type');
         }
