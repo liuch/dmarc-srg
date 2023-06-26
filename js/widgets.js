@@ -947,9 +947,9 @@ class AboutDialog extends ModalDialog {
 
 		let lblock = document.createElement("div");
 		lblock.appendChild(document.createTextNode(
-			"This program is free software: you can redistribute it and/or modify it\
- under the terms of the GNU General Public License as published by the Free\
- Software Foundation, either version 3 of the License."
+			"This program is free software: you can redistribute it and/or modify it"
+			+ " under the terms of the GNU General Public License as published by"
+			+ " the Free Software Foundation, either version 3 of the License."
 		));
 		this._content.appendChild(lblock);
 	}
