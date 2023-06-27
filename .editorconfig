@@ -1,0 +1,20 @@
+# EditorConfig https://editorconfig.org/
+# For checking: https://github.com/editorconfig-checker/editorconfig-checker
+
+root = true
+
+[*]
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.{js,html,css}]
+indent_style = tab
+
+[*.php]
+indent_style = space
+indent_size = unset
+
+[LICENSE]
+indent_size = false
