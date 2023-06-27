@@ -138,4 +138,3 @@ LoginDialog.start = function (params) {
 		login = null;
 	});
 };
-

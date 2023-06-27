@@ -134,4 +134,3 @@ Each directory specified in the configuration file is scanned for presence of fi
 
 ## Uploaded report files from the web interface
 Uploading report files via the web interface is pretty standard. The upload result can be seen in a popup message and in the internal log. The number of simultaneously uploaded files and their size are limited only by the settings of your server (See `upload_max_filesize` and `post_max_size` in your `php.ini` file).
-

@@ -352,4 +352,3 @@ class SettingEditDialog extends ModalDialog {
 		});
 	}
 }
-

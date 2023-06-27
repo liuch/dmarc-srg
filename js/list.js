@@ -528,4 +528,3 @@ class ReportListSettingsDialog extends ModalDialog {
 		});
 	}
 }
-

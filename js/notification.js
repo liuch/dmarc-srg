@@ -83,4 +83,3 @@ Notification.defaults = {
 	type: "info",
 	delay: 5000
 };
-

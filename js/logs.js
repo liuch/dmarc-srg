@@ -301,4 +301,3 @@ class LogItemDialog extends ModalDialog {
 		this._msg_el.textContent  = this._data.message || "n/a";
 	}
 }
-

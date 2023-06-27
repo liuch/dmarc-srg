@@ -202,4 +202,3 @@ Status._element_data = {
 		text: "Not aligned"
 	}
 };
-

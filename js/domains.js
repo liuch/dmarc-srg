@@ -483,4 +483,3 @@ class DomainEditDialog extends ModalDialog {
 		});
 	}
 }
-

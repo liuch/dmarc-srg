@@ -391,4 +391,3 @@ class DirectoryCheckboxCell extends ITableCell {
 		return this._content;
 	}
 }
-

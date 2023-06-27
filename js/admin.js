@@ -675,4 +675,3 @@ class StatusIndicator extends ListBoxColumn {
 		}
 	}
 }
-

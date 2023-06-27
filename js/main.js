@@ -332,4 +332,3 @@ Router._routes = {
 };
 
 window.onload = Router.start;
-

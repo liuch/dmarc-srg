@@ -534,4 +534,3 @@ class SummaryReport {
 		return "" + Math.round(per / cent * 100, per) + "% (" + per + ")";
 	}
 }
-

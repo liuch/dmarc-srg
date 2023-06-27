@@ -160,4 +160,3 @@ class Common {
 }
 
 Common.tuneDateTimeOutput("auto");
-

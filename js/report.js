@@ -424,4 +424,3 @@ class Report {
 		return fr;
 	}
 }
-
