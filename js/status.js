@@ -42,47 +42,46 @@ class Status {
 	}
 
 	_fetch(params) {
-		let p_string = '';
+		let url = new URL("status.php", document.location);
 		if (params.settings && params.settings.length) {
-			let uparams = new URLSearchParams();
-			uparams.set("settings", params.settings.join(','));
-			p_string = '?' + uparams.toString();
+			url.searchParams.set("settings", params.settings.join(","));
 		}
+		(new URL(document.location)).searchParams.getAll("filter[]").forEach(function(fval) {
+			url.searchParams.append("filter[]", fval);
+		});
 
 		let that = this;
-		return new Promise(function(resolve, reject) {
-			window.fetch("status.php" + p_string, {
-				method: "GET",
-				cache: "no-store",
-				headers: HTTP_HEADERS,
-				credentials: "same-origin"
-			}).then(function(resp) {
-				if (!resp.ok)
-					throw new Error("Failed to fetch the status");
-				return resp.json();
-			}).then(function(data) {
-				that._data = {
-					state:      data.state,
-					error_code: data.error_code,
-					message:    data.message,
-					emails:     data.emails
-				};
-				if (data.exeption)
-					that._data.exeption = data.exeption;
-				that._update_block();
-				if (data.error_code === -2) {
-					LoginDialog.start({ nousername: true });
-				}
-				resolve(data);
-			}).catch(function(err) {
-				that._data = {
-					state:      "Err",
-					error_code: -100,
-					message:    err.message
-				};
-				that._update_block();
-				reject(err);
-			});
+		return window.fetch(url, {
+			method: "GET",
+			cache: "no-store",
+			headers: HTTP_HEADERS,
+			credentials: "same-origin"
+		}).then(function(resp) {
+			if (!resp.ok)
+				throw new Error("Failed to fetch the status");
+			return resp.json();
+		}).then(function(data) {
+			that._data = {
+				state:      data.state,
+				error_code: data.error_code,
+				message:    data.message,
+				emails:     data.emails
+			};
+			if (data.exeption)
+				that._data.exeption = data.exeption;
+			that._update_block();
+			if (data.error_code === -2) {
+				LoginDialog.start({ nousername: true });
+			}
+			return data;
+		}).catch(function(err) {
+			that._data = {
+				state:      "Err",
+				error_code: -100,
+				message:    err.message
+			};
+			that._update_block();
+			throw err;
 		});
 	}
 
@@ -127,8 +126,8 @@ class Status {
 		);
 		{
 			let el = document.getElementById("stat-block");
-			if (days > 0) {
-				el.setAttribute("title", "Statistics for the last " + days + " days");
+			if (typeof(days) === "string") {
+				el.setAttribute("title", "Statistics for " + days);
 			}
 			else {
 				el.removeAttribute("title");

@@ -22,7 +22,7 @@
 
 namespace Liuch\DmarcSrg;
 
-use Liuch\DmarcSrg\ErrorHandler;
+use Liuch\DmarcSrg\Domains\Domain;
 use Liuch\DmarcSrg\Settings\SettingsList;
 use Liuch\DmarcSrg\Exception\RuntimeException;
 
@@ -45,6 +45,30 @@ if (Core::isJson()) {
                     $result['settings'] = $settings;
                 }
             }
+
+            if (!isset($result['error_code']) || $result['error_code'] === 0) {
+                $filter = Common::getFilter();
+                if (isset($filter['domain'])) {
+                    $domain = new Domain($filter['domain']);
+                } else {
+                    $domain = null;
+                }
+                if (isset($filter['month'])) {
+                    $range = Common::monthToRange($filter['month']);
+                    $stat = Statistics::fromTo($domain, $range[0], $range[1]);
+                    $days = $range[0]->format('F Y') . ' (filtered)';
+                } else {
+                    $days = SettingsList::getSettingByName('status.emails-for-last-n-days')->value();
+                    $stat = Statistics::lastNDays($domain, $days);
+                    $days = "the last {$days} days";
+                }
+                if ($filter) {
+                    $stat->setFilter($filter);
+                }
+                $result['emails'] = $stat->summary()['emails'];
+                $result['emails']['days'] = $days;
+            }
+
             Core::sendJson($result);
         } catch (RuntimeException $e) {
             $r = ErrorHandler::exceptionResult($e);

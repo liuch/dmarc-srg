@@ -47,6 +47,7 @@ class Statistics
             'date1' => null,
             'date2' => null
     ];
+    private $filter = [];
 
     /**
      * The constructor of the class, it only uses in static methods of this class
@@ -147,7 +148,7 @@ class Statistics
      */
     public function summary(): array
     {
-        return $this->db->getMapper('statistics')->summary($this->domain, $this->range);
+        return $this->db->getMapper('statistics')->summary($this->domain, $this->range, $this->filter);
     }
 
     /**
@@ -158,7 +159,7 @@ class Statistics
      */
     public function ips(): array
     {
-        return $this->db->getMapper('statistics')->ips($this->domain, $this->range);
+        return $this->db->getMapper('statistics')->ips($this->domain, $this->range, $this->filter);
     }
 
     /**
@@ -168,6 +169,22 @@ class Statistics
      */
     public function organizations(): array
     {
-        return $this->db->getMapper('statistics')->organizations($this->domain, $this->range);
+        return $this->db->getMapper('statistics')->organizations($this->domain, $this->range, $this->filter);
+    }
+
+    /**
+     * Sets fiter values for the returning information
+     *
+     * @param array $filter Key-value array with filtering parameters:
+     *                      'dkim'         => string, 'fail' or 'pass'
+     *                      'organization' => string
+     *                      'spf'          => string, 'fail' or 'pass'
+     *                      'status'       => string, 'read' or 'unread'
+     *
+     * @return void
+     */
+    public function setFilter(array $filter): void
+    {
+        $this->filter = $filter;
     }
 }

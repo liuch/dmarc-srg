@@ -88,13 +88,6 @@ class Status
             $res['message'] = $adm_res['database']['message'];
         }
 
-        if (!isset($res['error_code']) || $res['error_code'] === 0) {
-            $days = SettingsList::getSettingByName('status.emails-for-last-n-days')->value();
-            $stat = Statistics::lastNDays(null, $days);
-            $res['emails'] = $stat->summary()['emails'];
-            $res['emails']['days'] = $days;
-        }
-
         $auth = null;
         if ($this->core->auth()->isEnabled()) {
             $auth = $this->core->userId() !== false ? 'yes' : 'no';

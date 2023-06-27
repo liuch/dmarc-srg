@@ -38,18 +38,7 @@ if (Core::method() == 'GET') {
                 $pos = isset($_GET['position']) ? intval($_GET['position']) : 0;
                 $dir = isset($_GET['direction']) ? $_GET['direction'] : 'ascent';
                 $order = isset($_GET['order']) ? $_GET['order'] : 'begin_time';
-                $filter = null;
-                if (isset($_GET['filter'])) {
-                    $filter = [];
-                    $pa = gettype($_GET['filter']) == 'array' ?
-                        $_GET['filter'] : [ $_GET['filter'] ];
-                    foreach ($pa as $it) {
-                        $ia = explode(':', $it, 2);
-                        if (count($ia) == 2) {
-                            $filter[$ia[0]] = $ia[1];
-                        }
-                    }
-                }
+                $filter = Common::getFilter();
                 $list = new ReportList();
                 if ($filter) {
                     $list->setFilter($filter);

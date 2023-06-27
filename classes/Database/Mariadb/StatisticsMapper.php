@@ -31,8 +31,10 @@
 
 namespace Liuch\DmarcSrg\Database\Mariadb;
 
-use Liuch\DmarcSrg\Database\StatisticsMapperInterface;
+use Liuch\DmarcSrg\Common;
+use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\DatabaseFatalException;
+use Liuch\DmarcSrg\Database\StatisticsMapperInterface;
 
 /**
  * StatisticsMapper class implementation for MariaDB
@@ -55,8 +57,10 @@ class StatisticsMapper implements StatisticsMapperInterface
     /**
      * Returns summary information for the specified domain and date range
      *
-     * @param \Liuch\DmarcSrg\Domains\Domain|null $domain Domain for which the information is needed. Null is for all domains.
+     * @param \Liuch\DmarcSrg\Domains\Domain|null $domain Domain for which the information is needed.
+     *                                                    Null is for all domains.
      * @param array                               $range  Array with two dates
+     * @param array                               $filter Array with filtering parameters
      *
      * @return array Array with Summary information:
      *                          'emails' => [
@@ -66,11 +70,12 @@ class StatisticsMapper implements StatisticsMapperInterface
      *                              'spf_aligned'      => Only SPF aligned (int)
      *                          ];
      */
-    public function summary($domain, array &$range): array
+    public function summary($domain, array &$range, array &$filter): array
     {
         $is_domain = $domain ? true : false;
         $db = $this->connector->dbh();
         try {
+            $f_data = $this->prepareFilterData($domain, $range, $filter);
             $st = $db->prepare(
                 'SELECT SUM(`rcount`), SUM(IF(`dkim_align` = 2 AND `spf_align` = 2, `rcount`, 0)),'
                 . ' SUM(IF(`dkim_align` = 2 AND `spf_align` <> 2, `rcount`, 0)),'
@@ -78,9 +83,9 @@ class StatisticsMapper implements StatisticsMapperInterface
                 . ' FROM `' . $this->connector->tablePrefix('rptrecords') . '` AS `rr`'
                 . ' INNER JOIN `' . $this->connector->tablePrefix('reports')
                 . '` AS `rp` ON `rr`.`report_id` = `rp`.`id`'
-                . $this->sqlCondition($is_domain)
+                . $this->sqlCondition($f_data, ' WHERE ', 0) . $this->sqlCondition($f_data, ' AND ', 1)
             );
-            $this->sqlBindValues($st, $domain, $range);
+            $this->sqlBindValues($st, $f_data, [ 0, 1 ]);
             $st->execute();
             $row = $st->fetch(\PDO::FETCH_NUM);
             $ems = [
@@ -91,11 +96,24 @@ class StatisticsMapper implements StatisticsMapperInterface
             ];
             $st->closeCursor();
 
-            $st = $db->prepare(
-                'SELECT COUNT(*) FROM (SELECT `org` FROM `' . $this->connector->tablePrefix('reports') . '`'
-                . $this->sqlCondition($is_domain) . ' GROUP BY `org`) AS `orgs`'
-            );
-            $this->sqlBindValues($st, $domain, $range);
+            if (!isset($filter['dkim']) && !isset($filter['spf'])) {
+                $st = $db->prepare(
+                    'SELECT COUNT(*) FROM (SELECT `org` FROM `' . $this->connector->tablePrefix('reports') . '`'
+                    . $this->sqlCondition($f_data, ' WHERE ', 0) . ' GROUP BY `org`) AS `orgs`'
+                );
+            } else {
+                $st = $db->prepare(
+                    'SELECT COUNT(*) FROM (SELECT `org` FROM ('
+                    . 'SELECT `org`, MIN(`dkim_align`) as `dkim_align`, MIN(`spf_align`) AS `spf_align`'
+                    . ' FROM `' . $this->connector->tablePrefix('reports') . '` AS `rp`'
+                    . ' INNER JOIN `' . $this->connector->tablePrefix('rptrecords') . '` AS `rr`'
+                    . ' ON `rp`.`id` = `rr`.`report_id`' . $this->sqlCondition($f_data, ' WHERE ', 0)
+                    . ' GROUP BY `rr`.`report_id`'
+                    . ') AS `sr`' . $this->sqlCondition($f_data, ' WHERE ', 1) . ' GROUP BY `org`) AS `orgs`'
+                );
+            }
+
+            $this->sqlBindValues($st, $f_data, [ 0, 1 ]);
             $st->execute();
             $row = $st->fetch(\PDO::FETCH_NUM);
             $st->closeCursor();
@@ -112,23 +130,27 @@ class StatisticsMapper implements StatisticsMapperInterface
     /**
      * Returns a list of ip-addresses from which the e-mail messages were received, with some statistics for each one
      *
-     * @param \Liuch\DmarcSrg\Domains\Domain|null $domain Domain for which the information is needed. Null is for all domains.
+     * @param \Liuch\DmarcSrg\Domains\Domain|null $domain Domain for which the information is needed.
+     *                                                    Null is for all domains.
      * @param array                               $range  Array with two dates
+     * @param array                               $filter Array with filtering parameters
      *
      * @return array A list of ip-addresses with fields `ip`, `emails`, `dkim_aligned`, `spf_aligned`
      */
-    public function ips($domain, array &$range): array
+    public function ips($domain, array &$range, array &$filter): array
     {
         try {
+            $f_data = $this->prepareFilterData($domain, $range, $filter);
             $st = $this->connector->dbh()->prepare(
                 'SELECT `ip`, SUM(`rcount`) AS `rcount`, SUM(IF(`dkim_align` = 2, `rcount`, 0)) AS `dkim_aligned`,'
                 . ' SUM(IF(`spf_align` = 2, `rcount`, 0)) AS `spf_aligned`'
                 . ' FROM `' . $this->connector->tablePrefix('rptrecords') . '` AS `rr`'
                 . ' INNER JOIN `' . $this->connector->tablePrefix('reports')
                 . '` AS `rp` ON `rr`.`report_id` = `rp`.`id`'
-                . $this->sqlCondition($domain ? true : false) . ' GROUP BY `ip` ORDER BY `rcount` DESC'
+                . $this->sqlCondition($f_data, ' WHERE ', 0) . $this->sqlCondition($f_data, ' AND ', 1)
+                . ' GROUP BY `ip` ORDER BY `rcount` DESC'
             );
-            $this->sqlBindValues($st, $domain, $range);
+            $this->sqlBindValues($st, $f_data, [ 0, 1 ]);
             $st->execute();
             $res = [];
             while ($row = $st->fetch(\PDO::FETCH_NUM)) {
@@ -149,24 +171,28 @@ class StatisticsMapper implements StatisticsMapperInterface
     /**
      * Returns a list of organizations that sent the reports with some statistics for each one
      *
-     * @param \Liuch\DmarcSrg\Domains\Domain|null $domain Domain for which the information is needed. Null is for all domains.
+     * @param \Liuch\DmarcSrg\Domains\Domain|null $domain Domain for which the information is needed.
+     *                                                    Null is for all domains.
      * @param array                               $range  Array with two dates
+     * @param array                               $filter Array with filtering parameters
      *
      * @return array List of organizations with fields `name`, `reports`, `emails`
      */
-    public function organizations($domain, array &$range): array
+    public function organizations($domain, array &$range, array &$filter): array
     {
         try {
+            $f_data = $this->prepareFilterData($domain, $range, $filter);
             $st = $this->connector->dbh()->prepare(
                 'SELECT `org`, COUNT(*), SUM(`rr`.`rcount`) AS `rcount`'
                 . ' FROM `' . $this->connector->tablePrefix('reports') . '` AS `rp`'
                 . ' INNER JOIN (SELECT `report_id`, SUM(`rcount`) AS `rcount` FROM `'
-                . $this->connector->tablePrefix('rptrecords')
-                . '` GROUP BY `report_id`) AS `rr` ON `rp`.`id` = `rr`.`report_id`'
-                . $this->sqlCondition($domain ? true : false)
+                . $this->connector->tablePrefix('rptrecords') . '`'
+                . $this->sqlCondition($f_data, ' WHERE ', 1)
+                . ' GROUP BY `report_id`) AS `rr` ON `rp`.`id` = `rr`.`report_id`'
+                . $this->sqlCondition($f_data, ' WHERE ', 0)
                 . ' GROUP BY `org` ORDER BY `rcount` DESC'
             );
-            $this->sqlBindValues($st, $domain, $range);
+            $this->sqlBindValues($st, $f_data, [ 1, 0 ]);
             $st->execute();
             $res = [];
             while ($row = $st->fetch(\PDO::FETCH_NUM)) {
@@ -184,40 +210,126 @@ class StatisticsMapper implements StatisticsMapperInterface
     }
 
     /**
+     * Valid filter item names
+     */
+    private static $filters_available = [
+        'organization', 'dkim', 'spf', 'status'
+    ];
+
+    /**
+     * Returns prepared filter data for SQL queries
+     *
+     * @param \Liuch\DmarcSrg\Domains\Domain|null $domain Domain for the condition
+     * @param array                               $range  Date range
+     * @param array                               $filter Key-value array with filtering parameters
+     *
+     * @return array
+     */
+    private function prepareFilterData($domain, array &$range, array &$filter): array
+    {
+        $sql_cond1 = [];
+        $sql_cond2 = [];
+        $bindings1 = [];
+        $bindings2 = [];
+        if ($domain) {
+            $sql_cond1[] = '`domain_id` = ?';
+            $bindings1[] = [ $domain->id(), \PDO::PARAM_INT ];
+        }
+        $sql_cond1[] = '`begin_time` < ? AND `end_time` >= ?';
+        $bindings1[] = [
+            (clone $range['date2'])->sub(new \DateInterval('PT10S'))->format('Y-m-d H:i:s'), \PDO::PARAM_STR
+        ];
+        $bindings1[] = [
+            (clone $range['date1'])->add(new \DateInterval('PT10S'))->format('Y-m-d H:i:s'), \PDO::PARAM_STR
+        ];
+        foreach (self::$filters_available as $fname) {
+            if (empty($filter[$fname])) {
+                continue;
+            }
+            $fvalue = $filter[$fname];
+            switch ($fname) {
+                case 'organization':
+                    $sql_cond1[] = '`org` = ?';
+                    $bindings1[] = [ $fvalue, \PDO::PARAM_STR ];
+                    break;
+                case 'dkim':
+                    if ($fvalue === Common::$align_res[0]) {
+                        $val = 0;
+                    } else {
+                        $val = count(Common::$align_res) - 1;
+                        if ($fvalue !== Common::$align_res[$val]) {
+                            throw new SoftException('Filter: Incorrect DKIM value');
+                        }
+                    }
+                    $sql_cond2[] = '`dkim_align` = ?';
+                    $bindings2[] = [ $val, \PDO::PARAM_INT ];
+                    break;
+                case 'spf':
+                    if ($fvalue === Common::$align_res[0]) {
+                        $val = 0;
+                    } else {
+                        $val = count(Common::$align_res) - 1;
+                        if ($fvalue !== Common::$align_res[$val]) {
+                            throw new SoftException('Filter: Incorrect SPF value');
+                        }
+                    }
+                    $sql_cond2[] = '`spf_align` = ?';
+                    $bindings2[] = [ $val, \PDO::PARAM_INT ];
+                    break;
+                case 'status':
+                    if ($fvalue === 'read') {
+                        $val = true;
+                    } elseif ($fvalue === 'unread') {
+                        $val = false;
+                    } else {
+                        throw new SoftException('Filter: Incorrect status value');
+                    }
+                    $sql_cond1[] = '`seen` = ?';
+                    $bindings1[] = [ $val, \PDO::PARAM_BOOL ];
+                    break;
+            }
+        }
+        return [
+            'sql_cond' => [ $sql_cond1, $sql_cond2 ],
+            'bindings' => [ $bindings1, $bindings2 ]
+        ];
+    }
+
+    /**
      * Returns a condition string for WHERE statement
      *
-     * @param bool $with_domain Is it needed to add a condition for a domain
+     * @param array  $f_data  Array with prepared filter data
+     * @param string $prefix  Prefix, which will be added to the beginning of the condition string,
+     *                        but only in the case when the condition string is not empty.
+     * @param int    $num     Part number
      *
      * @return string Condition string
      */
-    private function sqlCondition($with_domain): string
+    private function sqlCondition(array &$f_data, string $prefix, int $num): string
     {
-        $res = ' WHERE ';
-        if ($with_domain) {
-            $res .= 'domain_id = ? AND ';
+        if (count($f_data['sql_cond'][$num]) > 0) {
+            return $prefix . implode(' AND ', $f_data['sql_cond'][$num]);
         }
-        $res .= '`begin_time` < ? AND `end_time` >= ?';
-        return $res;
+        return '';
     }
 
     /**
      * Binds values for SQL queries
      *
-     * @param \PDOStatement                       $st     PDO Statement to bind to
-     * @param \Liuch\DmarcSrg\Domains\Domain|null $domain Domain for the condition
-     * @param array                               $range  Date range for the condition
+     * @param \PDOStatement $st     PDO Statement to bind to
+     * @param array         $f_data Array with prepared filter data
+     * @param array         $order  Parameter binding order
      *
      * @return void
      */
-    private function sqlBindValues(object $st, $domain, array &$range): void
+    private function sqlBindValues(object $st, array &$f_data, array $order): void
     {
         $pnum = 0;
-        if ($domain) {
-            $st->bindValue(++$pnum, $domain->id(), \PDO::PARAM_INT);
+        foreach ($order as $idx) {
+            foreach ($f_data['bindings'][$idx] as &$it) {
+                $st->bindValue(++$pnum, $it[0], $it[1]);
+            }
+            unset($it);
         }
-        $ds1 = (clone $range['date1'])->add(new \DateInterval('PT10S'))->format('Y-m-d H:i:s');
-        $ds2 = (clone $range['date2'])->sub(new \DateInterval('PT10S'))->format('Y-m-d H:i:s');
-        $st->bindValue(++$pnum, $ds2, \PDO::PARAM_STR);
-        $st->bindValue(++$pnum, $ds1, \PDO::PARAM_STR);
     }
 }
