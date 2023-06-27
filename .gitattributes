@@ -1,0 +1,10 @@
+.php  text diff=php
+
+# Adding files or folders to this file will exclude them from "git archive"
+# and from GitHub code download for tags/releases
+.gitattributes export-ignore
+.gitignore export-ignore
+.github export-ignore
+.editorconfig export-ignore
+tests/ export-ignore
+screenshots/ export-ignore
