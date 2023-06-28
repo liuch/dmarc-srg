@@ -104,7 +104,7 @@ $fetcher = [
 
         /**
          * What to do with the report file when it has been successfully processed.
-         * The folowing actions are available: 'delete', 'move_to'. See the when_done for mailboxes
+         * The following actions are available: 'delete', 'move_to'. See the when_done for mailboxes
          * for detailed description.
          * The default value is 'delete'.
          */
