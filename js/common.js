@@ -27,10 +27,8 @@ const HTTP_HEADERS_POST = {
 };
 
 function remove_all_children(el) {
-	while (el.children.length > 0)
-		el.removeChild(el.children[0]);
-	while (el.childNodes.length > 0)
-		el.removeChild(el.childNodes[0]);
+	while (el.firstChild)
+		el.lastChild.remove();
 }
 
 function set_wait_status(el, text) {
