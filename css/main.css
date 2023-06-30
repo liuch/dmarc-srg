@@ -99,7 +99,7 @@ button, select, textarea, input {
 button, select {
 	background-color: var(--color-bg-button);
 }
-button:hover, select:hover {
+button:hover, select:hover, button.toolbar:hover {
 	background-color: var(--color-bg-hover);
 }
 button:disabled, select:disabled{
@@ -335,7 +335,7 @@ textarea.description {
 .wait-message {
 	margin: 0.3em;
 }
-.panel-container .wait-message, .panel-container .error-message {
+.panel-container .wait-message, .panel-container .error-message, .report-records .nodata {
 	margin: 1em;
 }
 .dialog .wait-message {
@@ -603,6 +603,7 @@ textarea.description {
 	cursor: pointer;
 	border-bottom: solid 0.1rem var(--color-br-default);
 	background-color: var(--color-bg-title);
+	z-index: 1;
 }
 .report-modal > .report-header > .header-text {
 	padding: 0.5rem;
@@ -640,6 +641,7 @@ textarea.description {
 	box-shadow: 0 3px 15px var(--color-sh-default);
 }
 .report-records {
+	position: relative;
 	margin-top: 1rem;
 	padding-top: 1rem;
 	border-top: solid 0.1rem var(--color-br-default);
@@ -724,4 +726,32 @@ button.options-button {
 }
 .about .vertical-content {
 	max-width: 30em;
+}
+button.toolbar {
+	position: absolute;
+	right: 0;
+	padding: .1em .5em;
+	border: none;
+	border-radius: unset;
+	background-color: unset;
+	cursor: pointer;
+}
+button.toolbar::before, button.toolbar::after {
+	content: "";
+	position: absolute;
+	box-sizing: border-box;
+	width: 1em;
+	height: 100%;
+	border-top: .07em solid var(--color-br-input);
+	border-bottom: .07em solid var(--color-br-input);
+}
+button.toolbar::before {
+	top: 0;
+	left: 0;
+	border-left: .07em solid var(--color-br-input);
+}
+button.toolbar::after {
+	right: 0;
+	bottom: 0;
+	border-right: .07em solid var(--color-br-input);
 }

@@ -958,3 +958,115 @@ Software Foundation, either version 3 of the License."
 		this.hide();
 	}
 }
+
+class ReportFilterDialog extends ModalDialog {
+	constructor(params) {
+		params ||= {};
+		super({ title: params.title || "Filter settings", buttons: [ "apply", "reset" ] });
+		this._data    = params;
+		this._content = null;
+		let item_list = params.item_list || [];
+		this._ui_data = [
+			{ name: "domain", title: "Domain" },
+			{ name: "month", title: "Month" },
+			{ name: "organization", title: "Organization" },
+			{ name: "dkim", title: "DKIM result" },
+			{ name: "spf", title: "SPF result" },
+			{ name: "status", title: "Status" }
+		].reduce(function(res, item) {
+			if (item_list.includes(item.name))
+				res.push(item);
+			return res;
+		}, []);
+	}
+
+	show() {
+		this._update_ui();
+		return super.show();
+	}
+
+	_gen_content() {
+		let fs = document.createElement("fieldset");
+		fs.setAttribute("class", "round-border titled-input");
+		let lg = document.createElement("legend");
+		lg.appendChild(document.createTextNode("Filter by"));
+		fs.appendChild(lg);
+		this._ui_data.forEach(function(ud) {
+			let el = this._create_select_label(ud.title, fs);
+			ud.element = el;
+		}, this);
+		this._content.appendChild(fs);
+		this._content.classList.add("vertical-content");
+		if (!this._data.loaded_filters)
+			this._fetch_data();
+	}
+
+	_create_select_label(text, c_el) {
+		let lb = document.createElement("label");
+		let sp = document.createElement("span");
+		sp.appendChild(document.createTextNode(text + ": "));
+		lb.appendChild(sp);
+		let sl = document.createElement("select");
+		lb.appendChild(sl);
+		c_el.appendChild(lb);
+		return sl;
+	}
+
+	_enable_ui(enable) {
+		let list = this._element.querySelector("form").elements;
+		for (let i = 0; i < list.length; ++i)
+			list[i].disabled = !enable;
+	}
+
+	_update_ui() {
+		this._update_filters();
+	}
+
+	_update_filters() {
+		let data = this._data.loaded_filters || {};
+		let vals = this._data.filter || {};
+		this._ui_data.forEach(function(ud) {
+			this._update_select_element(ud.element, data[ud.name], vals[ud.name]);
+		}, this);
+	}
+
+	_update_select_element(sl, d, v) {
+		remove_all_children(sl);
+		let ao = document.createElement("option");
+		ao.setAttribute("value", "");
+		ao.setAttribute("selected", "selected");
+		ao.appendChild(document.createTextNode("Any"));
+		sl.appendChild(ao);
+		let v2 = "";
+		if (d) {
+			let op = null;
+			d.forEach(function(fs) {
+				op = document.createElement("option");
+				op.setAttribute("value", fs);
+				op.appendChild(document.createTextNode(fs));
+				if (fs === v) {
+					v2 = v;
+				}
+				sl.appendChild(op);
+			}, this);
+		}
+		sl.value = v2;
+	}
+
+	_submit() {
+		let res = {};
+		let fdata = {};
+		this._ui_data.forEach(function(ud) {
+			let el = ud.element;
+			let val = el.options[el.selectedIndex].value;
+			res[ud.name] = val;
+			fdata[ud.name] = val;
+		});
+		this._data.filter = fdata;
+		this._result = res;
+		this.hide();
+	}
+
+	_fetch_data() {
+	}
+}

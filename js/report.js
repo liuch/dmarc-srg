@@ -188,12 +188,22 @@ ReportWidget.instance = function() {
 }
 
 class Report {
-	constructor(domain, report_id) {
+	constructor(domain, report_id, filter) {
 		this._data = null;
 		this._error = false;
+		this._filter = filter;
+		this._filter_btn = null;
+		this._records_el = null;
 		this._error_message = null;
 		this._domain = domain;
 		this._report_id = report_id;
+		if (!this._filter) {
+			this._filter = {};
+			if (window.sessionStorage) {
+				this._filter.dkim = window.sessionStorage.getItem("ReportView.filter.dkim");
+				this._filter.spf  = window.sessionStorage.getItem("ReportView.filter.spf");
+			}
+		}
 	}
 
 	id() {
@@ -237,7 +247,10 @@ class Report {
 	}
 
 	element() {
-		return this._create_element();
+		let el = this._create_element();
+		this._apply_filter();
+		this._update_filter_button();
+		return el;
 	}
 
 	set_value(name, value) {
@@ -290,8 +303,11 @@ class Report {
 		// Records
 		let rs = document.createElement("div");
 		rs.setAttribute("class", "report-records");
+		rs.appendChild(this._get_filter_button());
 		let hd = document.createElement("h5");
+		hd.id = "records-title";
 		hd.appendChild(document.createTextNode("Records"));
+		hd.appendChild(document.createElement("span"));
 		rs.appendChild(hd);
 		this._data.records.forEach(function(rec) {
 			let tl = document.createElement("div");
@@ -310,7 +326,12 @@ class Report {
 			rs.appendChild(tl);
 
 		}, this);
+		let nd = document.createElement("div");
+		nd.classList.add("nodata", "hidden");
+		nd.textContent = "There are no records to display. Try changing the filter options.";
+		rs.appendChild(nd);
 		el.appendChild(rs);
+		this._records_el = rs;
 		return el;
 	}
 
@@ -422,5 +443,100 @@ class Report {
 			if (pol[1]) fr.appendChild(create_report_result_element(pol[0], pol[1], true, ""));
 		});
 		return fr;
+	}
+
+	_get_filter_button() {
+		let btn = document.createElement("button");
+		btn.classList.add("toolbar");
+		btn.textContent = "filter: ";
+		btn.appendChild(document.createElement("span"));
+		btn.addEventListener("click", function(event) {
+			btn.disabled = true;
+			let dlg = new FilterDialog({ filter: this._filter });
+			document.getElementById("main-block").prepend(dlg.element());
+			dlg.show().then(function(res) {
+				if (res && (res.dkim !== this._filter.dkim || res.spf !== this._filter.spf)) {
+					this._filter = res;
+					this._apply_filter();
+					this._update_filter_button();
+					if (window.sessionStorage) {
+						window.sessionStorage.setItem("ReportView.filter.dkim", res.dkim);
+						window.sessionStorage.setItem("ReportView.filter.spf", res.spf);
+					}
+				}
+			}.bind(this)).finally(function() {
+				dlg.element().remove();
+				btn.disabled = false;
+				btn.focus();
+			});
+		}.bind(this));
+		this._filter_btn = btn;
+		return btn;
+	}
+
+	_apply_filter() {
+		if (!this._records_el)
+			return;
+		let rtitle = this._records_el.querySelector("#records-title");
+		if (!rtitle)
+			return;
+		let total = this._data.records.length;
+		let displ = 0;
+		let filter = this._filter;
+		let e_list = this._records_el.querySelectorAll(".report-record");
+		for (let i = 0; i < total; ++i) {
+			let rec = this._data.records[i];
+			if ((!filter.dkim || filter.dkim === rec.dkim_align) && (!filter.spf || filter.spf === rec.spf_align)) {
+				e_list[i].classList.remove("hidden");
+				++displ;
+			}
+			else {
+				e_list[i].classList.add("hidden");
+			}
+		}
+		let tstr = null;
+		if (total === displ)
+			tstr = total;
+		else
+			tstr = displ + "/" + total;
+		rtitle.childNodes[1].textContent = " (" + tstr + ")";
+		let nd = this._records_el.querySelector(".nodata");
+		if (displ > 0)
+			nd.classList.add("hidden");
+		else
+			nd.classList.remove("hidden");
+	}
+
+	_update_filter_button() {
+		let ea = [ [ "dkim", this._filter.dkim ], [ "spf", this._filter.spf ] ].reduce(function(res, it) {
+			if (it[1]) {
+				let el = document.createElement("span");
+				el.classList.add("report-result-" + it[1]);
+				el.textContent = it[0];
+				res.push(el);
+			}
+			return res;
+		}, []);
+		let bt = this._filter_btn.childNodes[1];
+		remove_all_children(bt);
+		if (ea.length > 0) {
+			bt.appendChild(ea[0]);
+			if (ea[1]) {
+				bt.appendChild(document.createTextNode(", "));
+				bt.appendChild(ea[1]);
+			}
+		}
+		else
+			bt.textContent = "none";
+	}
+}
+
+class FilterDialog extends ReportFilterDialog {
+	constructor(params) {
+		params.title = "Records filtering";
+		params.item_list = [ "dkim", "spf" ];
+		let pfa = [ "pass", "fail" ];
+		params.loaded_filters = { "dkim": pfa, "spf":  pfa };
+		super(params);
 	}
 }
