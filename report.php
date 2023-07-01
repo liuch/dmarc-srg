@@ -22,21 +22,24 @@
 
 namespace Liuch\DmarcSrg;
 
+use Liuch\DmarcSrg\DateTime;
 use Liuch\DmarcSrg\ErrorHandler;
 use Liuch\DmarcSrg\Report\Report;
 use Liuch\DmarcSrg\Exception\RuntimeException;
 
 require 'init.php';
 
-if (!empty($_GET['report_id']) && !empty($_GET['domain'])) {
+if (!empty($_GET['org']) && !empty($_GET['time']) && !empty($_GET['domain']) && !empty($_GET['report_id'])) {
     if (Core::isJson()) {
         try {
             Core::instance()->auth()->isAllowed();
             if (Core::method() == 'GET') {
                 $rep = new Report(
                     [
-                        'domain'    => $_GET['domain'],
-                        'report_id' => $_GET['report_id']
+                        'domain'     => $_GET['domain'],
+                        'org'        => $_GET['org'],
+                        'begin_time' => new DateTime($_GET['time']),
+                        'report_id'  => $_GET['report_id']
                     ]
                 );
                 $rep->fetch();
@@ -50,8 +53,10 @@ if (!empty($_GET['report_id']) && !empty($_GET['domain'])) {
                         $value = $jdata['value'];
                         $rep = new Report(
                             [
-                                'domain'    => $_GET['domain'],
-                                'report_id' => $_GET['report_id']
+                                'domain'     => $_GET['domain'],
+                                'org'        => $_GET['org'],
+                                'begin_time' => new DateTime($_GET['time']),
+                                'report_id'  => $_GET['report_id']
                             ]
                         );
                         Core::sendJson($rep->set($name, $value));

@@ -406,7 +406,7 @@ class Connector extends DatabaseConnector
                 ]
             ],
             'additional' => 'PRIMARY KEY (`id`),' .
-                            ' UNIQUE KEY `external_id` (`domain_id`, `external_id`),' .
+                            ' UNIQUE KEY `org_time_id` (`domain_id`, `begin_time`, `org`, `external_id`),' .
                             ' KEY (`begin_time`), KEY (`end_time`),' .
                             ' KEY `org` (`org`, `begin_time`)',
             'table_options' => 'ENGINE=InnoDB DEFAULT CHARSET=utf8'

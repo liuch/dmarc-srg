@@ -48,12 +48,7 @@ class Report
 
     public function fetch()
     {
-        $domain = $this->data['domain'];
-        $report_id = $this->data['report_id'];
-        if (empty($domain) || empty($report_id)) {
-            throw new SoftException('Not specified report\'s domain or id');
-        }
-        $this->data = [ 'domain' => $domain, 'report_id' => $report_id ];
+        $this->prepareData(true);
         try {
             $this->db->getMapper('report')->fetch($this->data);
         } catch (DatabaseNotFoundException $e) {
@@ -85,10 +80,7 @@ class Report
 
     public function set($name, $value)
     {
-        if (empty($this->data['domain']) || empty($this->data['report_id'])) {
-            throw new SoftException('Not specified report\'s domain or id');
-        }
-
+        $this->prepareData(false);
         $this->db->getMapper('report')->setProperty($this->data, $name, $value);
         return [ 'message' => 'Ok' ];
     }
@@ -166,5 +158,28 @@ class Report
             }
         }
         return true;
+    }
+
+    /**
+     * Checks and prepares report data for queries
+     *
+     * @param bool $replace If true, it leaves only the data required for the request
+     *
+     * @return void
+     */
+    private function prepareData(bool $replace): void
+    {
+        $data = [];
+        foreach ([ 'domain', 'begin_time', 'org', 'report_id'] as $fld) {
+            if (empty($this->data[$fld])) {
+                throw new SoftException('Not enough data to identify the report');
+            }
+            if ($replace) {
+                $data[$fld] = $this->data[$fld];
+            }
+        }
+        if ($replace) {
+            $this->data = $data;
+        }
     }
 }

@@ -226,13 +226,15 @@ class ReportList {
 	}
 
 	_display_report(data, id) {
-		if (data.domain && data.report_id) {
-			let url = new URL("report.php", document.location.href);
+		if (data.domain && data.time && data.org && data.report_id) {
+			let url = new URL("report.php", document.location);
+			url.searchParams.set("org", data.org);
+			url.searchParams.set("time", data.time);
 			url.searchParams.set("domain", data.domain);
 			url.searchParams.set("report_id", data.report_id);
-			window.history.pushState({ from: "list" }, "", url.toString());
+			window.history.pushState({ from: "list" }, "", url);
 			let that = this;
-			ReportWidget.instance().show_report(data.domain, data.report_id).then(function() {
+			ReportWidget.instance().show_report(data.domain, data.time, data.org, data.report_id).then(function() {
 				if (!that._table.seen(id)) {
 					that._table.seen(id, true);
 				}
@@ -293,7 +295,11 @@ class ReportList {
 	}
 
 	_make_row_data(d) {
-		let rd = { cells: [], userdata: { domain: d.domain, report_id: d.report_id }, seen: d.seen && true || false }
+		let rd = {
+			cells: [],
+			userdata: { domain: d.domain, time: d.date.begin, org: d.org_name, report_id: d.report_id },
+			seen: d.seen && true || false
+		};
 		rd.cells.push({ content: d.domain, label: "Domain" });
 		let d1 = new Date(d.date.begin);
 		let d2 = new Date(d.date.end);

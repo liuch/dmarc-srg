@@ -53,27 +53,30 @@ class ReportWidget {
 		}
 	}
 
-	show_report(domain, report_id) {
+	show_report(domain, report_time, org, report_id) {
 		this.element();
 		let that = this;
 		return new Promise(function(resolve, reject) {
-			if (!domain || !report_id) {
-				let sp = (new URL(document.location.href)).searchParams;
+			if (!domain || !report_time || !org || !report_id) {
+				let sp = (new URL(document.location)).searchParams;
 				domain = sp.get("domain");
+				report_time = sp.get("time");
+				org = sp.get("org");
 				report_id = sp.get("report_id");
-				if (!domain || !report_id) {
-					set_error_status(this._cn_element, err.message);
-					reject(new Error("Domain and report_id must be specified"));
+				if (!domain || !report_time || !org || !report_id) {
+					let err_msg = "Domain, report time, reporting organization, report ID must be specified";
+					set_error_status(that._cn_element, err_msg);
+					reject(new Error(err_msg));
 				}
 			}
 			that._id_element.childNodes[0].nodeValue = report_id;
 			set_wait_status(that._cn_element);
-			that._rep_id = report_id;
+			that._rep_id = report_id + report_time;
 			that._element.classList.remove("report-hidden");
 			that._close_btn.classList.add("active");
-			let rep = new Report(domain, report_id);
+			let rep = new Report(domain, report_time, org, report_id);
 			rep.fetch().then(function() {
-				if (that._rep_id === report_id) {
+				if (that._rep_id === report_id + report_time) {
 					remove_all_children(that._cn_element);
 					that._cn_element.appendChild(rep.element());
 					rep.set_value("seen", true).then(function(data) {
@@ -188,15 +191,17 @@ ReportWidget.instance = function() {
 }
 
 class Report {
-	constructor(domain, report_id, filter) {
+	constructor(domain, report_time, org, report_id, filter) {
 		this._data = null;
 		this._error = false;
 		this._filter = filter;
 		this._filter_btn = null;
 		this._records_el = null;
 		this._error_message = null;
+		this._org = org;
 		this._domain = domain;
 		this._report_id = report_id;
+		this._report_time = report_time;
 		if (!this._filter) {
 			this._filter = {};
 			if (window.sessionStorage) {
@@ -219,12 +224,15 @@ class Report {
 	}
 
 	fetch() {
-		let u_params = new URLSearchParams();
+		let url = new URL("report.php", document.location);
+		let u_params = url.searchParams;
+		u_params.set("org", this._org);
+		u_params.set("time", this._report_time);
 		u_params.set("domain", this._domain);
 		u_params.set("report_id", this._report_id);
 
 		let that = this;
-		return window.fetch("report.php?" + u_params.toString(), {
+		return window.fetch(url, {
 			method: "GET",
 			cache: "no-store",
 			headers: HTTP_HEADERS,
@@ -263,11 +271,14 @@ class Report {
 			return Promise.resolve({});
 		}
 
-		let url_params = new URLSearchParams();
+		let url = new URL("report.php", document.location);
+		let url_params = url.searchParams;
 		url_params.set("action", "set");
+		url_params.set("org", this._org);
+		url_params.set("time", this._report_time);
 		url_params.set("domain", this._domain);
 		url_params.set("report_id", this._report_id);
-		return window.fetch("report.php?" + url_params.toString(), {
+		return window.fetch(url, {
 			method: "POST",
 			cache: "no-store",
 			headers: Object.assign(HTTP_HEADERS, HTTP_HEADERS_POST),

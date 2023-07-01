@@ -193,6 +193,36 @@ class UpgraderMapper implements UpgraderMapperInterface
     }
 
     /**
+     * Upgrades the database structure from v3.0 to v3.1
+     *
+     * @return string New version of the database
+     */
+    private function up30(): string
+    {
+        $db = $this->connector->dbh();
+        try {
+            $rep_tn = $this->connector->tablePrefix('reports');
+            if (!$this->indexExists($db, $rep_tn, 'org_time_id')) {
+                $db->query(
+                    'CREATE INDEX `org_time_id` ON `' . $rep_tn . '` (`domain_id`, `begin_time`, `org`, `external_id`)'
+                );
+            }
+            if ($this->indexExists($db, $rep_tn, 'external_id')) {
+                $db->query(
+                    'DROP INDEX `external_id` ON `' . $rep_tn . '`'
+                );
+            }
+            $sys_tn = $this->connector->tablePrefix('system');
+            $db->query(
+                'UPDATE `' . $sys_tn . '` SET `value` = "3.1" WHERE `key` = "version"'
+            );
+        } catch (\PDOException $e) {
+            throw $this->dbFatalException($e);
+        }
+        return '3.1';
+    }
+
+    /**
      * Checks if the specified column exists in the specified table of the database
      *
      * @param object $db     Connection handle of the database
@@ -217,6 +247,29 @@ class UpgraderMapper implements UpgraderMapperInterface
     }
 
     /**
+     * Checks if the specified index exists in the specified table of the database
+     *
+     * @param object $db    Database connection handle
+     * @param string $table Table name with the prefix
+     * @param string $index Index name to check
+     *
+     * @return bool
+     */
+    private function indexExists($db, string $table, string $index): bool
+    {
+        $st = $db->prepare(
+            'SELECT 1 FROM `INFORMATION_SCHEMA`.`STATISTICS`'
+            . ' WHERE `table_schema` = DATABASE() AND `table_name` = ? AND `index_name` = ? LIMIT 1'
+        );
+        $st->bindValue(1, $table, \PDO::PARAM_STR);
+        $st->bindValue(2, $index, \PDO::PARAM_STR);
+        $st->execute();
+        $res = $st->fetch(\PDO::FETCH_NUM);
+        $st->closeCursor();
+        return $res ? true : false;
+    }
+
+    /**
      * Return an instance of DatabaseFatalException
      *
      * @param \Exception $e The original exception
@@ -232,6 +285,7 @@ class UpgraderMapper implements UpgraderMapperInterface
         'ver_null' => 'upNull',
         'ver_0.1'  => 'up01',
         'ver_1.0'  => 'up10',
-        'ver_2.0'  => 'up20'
+        'ver_2.0'  => 'up20',
+        'ver_3.0'  => 'up30'
     ];
 }
