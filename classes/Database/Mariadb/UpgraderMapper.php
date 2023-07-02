@@ -235,11 +235,10 @@ class UpgraderMapper implements UpgraderMapperInterface
     {
         $st = $db->prepare(
             'SELECT NULL FROM `INFORMATION_SCHEMA`.`COLUMNS`'
-            . ' WHERE `table_schema` = ? AND `table_name` = ? AND `column_name` = ?'
+            . ' WHERE `table_schema` = DATABASE() AND `table_name` = ? AND `column_name` = ?'
         );
-        $st->bindValue(1, $this->connector->dbName(), \PDO::PARAM_STR);
-        $st->bindValue(2, $table, \PDO::PARAM_STR);
-        $st->bindValue(3, $column, \PDO::PARAM_STR);
+        $st->bindValue(1, $table, \PDO::PARAM_STR);
+        $st->bindValue(2, $column, \PDO::PARAM_STR);
         $st->execute();
         $res = $st->fetch(\PDO::FETCH_NUM);
         $st->closeCursor();

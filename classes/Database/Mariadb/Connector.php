@@ -55,16 +55,6 @@ class Connector extends DatabaseConnector
     }
 
     /**
-     * Returns the name of the database
-     *
-     * @return string
-     */
-    public function dbName(): string
-    {
-        return $this->name;
-    }
-
-    /**
      * Returns information about the database as an array.
      *
      * @return array May contain the following fields:
