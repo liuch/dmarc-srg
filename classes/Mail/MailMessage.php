@@ -101,8 +101,24 @@ class MailMessage
             }
             $this->attachments_cnt = 0;
             $parts = isset($structure->parts) ? $structure->parts : [ $structure ];
+
+            $allParts = [];
             foreach ($parts as $index => &$part) {
-                $att_part = $this->scanAttachmentPart($part, $index + 1);
+                $msgIndex = $index + 1;
+                // when it's an entire attached message: MESSAGE/RFC822
+                if (isset($part->parts) && count($part->parts) > 0) {
+                    foreach ($part->parts as $subIndex => &$subPart) {
+                        $allParts[$msgIndex . '.' . $subIndex + 1] = $subPart;
+                    }
+                    unset($subPart);// Remove the last dangling reference
+                    continue;
+                }
+                $allParts[$msgIndex] = $part;
+            }
+            unset($part);// Remove the last dangling reference
+
+            foreach ($allParts as $parNbr => &$part) {
+                $att_part = $this->scanAttachmentPart($part, $parNbr);
                 if ($att_part) {
                     ++$this->attachments_cnt;
                     if (!$this->attachment) {
@@ -110,11 +126,15 @@ class MailMessage
                     }
                 }
             }
-            unset($part);
+            unset($part);// Remove the last dangling reference
         }
     }
 
-    private function scanAttachmentPart(&$part, $number)
+    /**
+     * @param string $parNbr
+     * @return array|null
+     */
+    private function scanAttachmentPart(&$part, $parNbr)
     {
         $filename = null;
         if ($part->ifdparameters) {
@@ -132,7 +152,7 @@ class MailMessage
         return [
             'filename' => imap_utf8($filename),
             'bytes'    => isset($part->bytes) ? $part->bytes : -1,
-            'number'   => $number,
+            'number'   => $parNbr,
             'mnumber'  => $this->number,
             'encoding' => $part->encoding
         ];

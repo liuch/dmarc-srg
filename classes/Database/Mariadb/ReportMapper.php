@@ -181,7 +181,7 @@ class ReportMapper implements ReportMapperInterface
             $st->bindValue(4, $ct->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
             $st->bindValue(5, $data['org'], \PDO::PARAM_STR);
             $st->bindValue(6, $data['external_id'], \PDO::PARAM_STR);
-            $st->bindValue(7, $data['email'], \PDO::PARAM_STR);
+            $st->bindValue(7, $data['email'] ?? '', \PDO::PARAM_STR);
             $st->bindValue(8, $data['extra_contact_info'], \PDO::PARAM_STR);
             self::sqlBindJson($st, 9, $data['error_string']);
             $st->bindValue(10, $data['policy_adkim'], \PDO::PARAM_STR);
