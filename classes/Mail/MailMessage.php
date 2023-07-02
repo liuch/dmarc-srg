@@ -110,10 +110,12 @@ class MailMessage
                     foreach ($part->parts as $subIndex => &$subPart) {
                         $allParts[$msgIndex . '.' . $subIndex + 1] = $subPart;
                     }
+                    unset($subPart);// Remove the last dangling reference
                     continue;
                 }
                 $allParts[$msgIndex] = $part;
             }
+            unset($part);// Remove the last dangling reference
 
             foreach ($allParts as $parNbr => &$part) {
                 $att_part = $this->scanAttachmentPart($part, $parNbr);
@@ -123,8 +125,8 @@ class MailMessage
                         $this->attachment = new MailAttachment($this->conn, $att_part);
                     }
                 }
-                unset($part);
             }
+            unset($part);// Remove the last dangling reference
         }
     }
 
