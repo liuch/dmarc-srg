@@ -303,7 +303,7 @@ class Report {
 		let d1 = new Date(this._data.date.begin);
 		let d2 = new Date(this._data.date.end);
 		md.appendChild(this._create_data_item("Date range", d1.toUIString(true) + " - " + d2.toUIString(true)));
-		md.appendChild(this._create_data_item("Email", this._data.email));
+		md.appendChild(this._create_data_item("Email", this._data.email || "n/a"));
 		if (this._data.extra_contact_info)
 			md.appendChild(this._create_data_item("Extra contact info", this._data.extra_contact_info));
 		md.appendChild(this._create_data_item("Published policy", this._create_pub_policy_fragment(this._data.policy)));
