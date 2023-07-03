@@ -284,7 +284,7 @@ class Files {
 			res = false;
 			this._set_warning(this._fcount_info);
 			let message = "You can only upload " + this._limits.upload_max_file_count + " files.";
-			Notification.add({ type: "error", text: message, delay: 10000 });
+			Notification.add({ type: "error", text: message, delay: 10000, name: "max-files" });
 		}
 
 		let bf_cnt = 0;
@@ -299,7 +299,8 @@ class Files {
 			Notification.add({
 				type: "error",
 				text: "" + bf_cnt + " file" + (bf_cnt > 1 && "s" || "") + " exceed the maximum allowed size.",
-				delay: 10000
+				delay: 10000,
+				name: "max-size"
 			});
 		}
 

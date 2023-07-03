@@ -88,7 +88,10 @@ class Status {
 	_update_block() {
 		this._ensure_element_created();
 		if (this._data.error_code) {
-			Notification.add({ text: "[" + this._data.error_code + "] " + this._data.message, type: "error" });
+			let p = { text: "[" + this._data.error_code + "] " + this._data.message, type: "error" };
+			if (this._data.error_code === -2)
+				p.name = "auth";
+			Notification.add(p);
 		}
 		if (!this._data.emails) {
 			this._data.emails = {

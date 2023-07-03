@@ -144,7 +144,7 @@ Router.go = function(url) {
 				}
 			}
 			if (d.state && d.state !== "Ok" && !d.error_code && d.message) {
-				Notification.add({ type: "warn", text: d.message, delay: 20000 });
+				Notification.add({ type: "warn", text: d.message, delay: 20000, name: "st-err" });
 			}
 			if (d.version !== Router._app_ver) {
 				Router._app_ver = d.version;
@@ -249,7 +249,7 @@ Router._update_menu = function(authenticated) {
 					}).catch(function(err) {
 						Common.displayError(err);
 						m_el.classList.remove("disabled");
-						Notification.add({ type: "error", text: err.message });
+						Notification.add({ type: "error", text: err.message, name: "auth" });
 					});
 				}
 			});

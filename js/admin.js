@@ -208,10 +208,10 @@ class Admin {
 		}
 		this._send_command(d).then(function(data) {
 			Common.checkResult(data);
-			Notification.add({ text: title + ": " + (data.message || "Completed successfully!"), type: "info" });
+			Notification.add({ text: title + ": " + (data.message || "Completed successfully!"), type: "info", name: "db-act" });
 		}).catch(function(err) {
 			Common.displayError(err);
-			Notification.add({ text: title + ": " + err.message, type: "error", delay: 10000 });
+			Notification.add({ text: title + ": " + err.message, type: "error", delay: 10000, name: "db-act" });
 		});
 	}
 }

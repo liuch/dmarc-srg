@@ -103,7 +103,7 @@ class LoginDialog extends ModalDialog {
 		}).then(function(data) {
 			Common.checkResult(data);
 			that._result = data;
-			Notification.add({ type: "info", text: data.message || "Successfully!" });
+			Notification.add({ type: "info", text: data.message || "Successfully!", name: "auth" });
 			hide = true;
 		}).catch(function(err) {
 			that._pass.value = "";

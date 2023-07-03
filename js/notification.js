@@ -113,6 +113,8 @@ class Notification {
 			this._timer = null;
 		}
 		this._element.remove();
+		if (this._params.name)
+			Notification.names.delete(this._params.name);
 	}
 }
 
@@ -123,6 +125,11 @@ Notification.add = function(params) {
 	}
 	let notif = new Notification(params);
 	document.getElementById("notifications-block").appendChild(notif.element());
+	if (params.name) {
+		if (Notification.names.has(params.name))
+			Notification.names.get(params.name)._remove();
+		Notification.names.set(params.name, notif);
+	}
 	return notif;
 }
 
@@ -130,3 +137,5 @@ Notification.defaults = {
 	type: "info",
 	delay: 5000
 };
+
+Notification.names = new Map();
