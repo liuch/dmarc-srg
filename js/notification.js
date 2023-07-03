@@ -20,7 +20,9 @@
 
 class Notification {
 	constructor(params) {
+		this._timer = null;
 		this._params = params;
+		this._started = 0;
 		this._element = this._create_element();
 	}
 
@@ -56,16 +58,61 @@ class Notification {
 		el.appendChild(btn);
 		el.addEventListener("click", function(event) {
 			if (event.target.classList.contains("notif-close"))
-				this.remove();
-		});
-		if (this._params.delay > 0) {
-			setTimeout(function() {
-				el.style.transition = "opacity 2s ease-in-out";
-				el.style.opacity = 0;
-				setTimeout(function() { el.remove(); }, 2000);
-			}, this._params.delay);
-		}
+				this._remove();
+		}.bind(this));
+		el.addEventListener("mouseover", function() {
+			this._hold();
+		}.bind(this));
+		el.addEventListener("mouseout", function() {
+			this._release();
+		}.bind(this));
+		if (this._params.delay > 0)
+			this._set_timeout();
 		return el;
+	}
+
+	_set_timeout() {
+		let delay = this._params.delay;
+		if (this._started)
+			delay -= Date.now() - this._started;
+		else
+			this._started = Date.now();
+		if (delay > 0) {
+			this._timer = setTimeout(function() {
+				this._dissolve();
+			}.bind(this), delay);
+		}
+		else
+			this._dissolve();
+	}
+
+	_hold() {
+		if (this._timer) {
+			clearTimeout(this._timer);
+			this._timer = null;
+			this._element.classList.remove("invisible");
+		}
+	}
+
+	_release () {
+		if (this._params.delay > 0)
+			this._set_timeout();
+	}
+
+	_dissolve() {
+		this._element.classList.add("invisible");
+		this._timer = setTimeout(function() {
+			this._timer = null;
+			this._remove();
+		}.bind(this), 2000);
+	}
+
+	_remove() {
+		if (this._timer) {
+			clearTimeout(this._timer);
+			this._timer = null;
+		}
+		this._element.remove();
 	}
 }
 

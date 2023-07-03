@@ -17,9 +17,14 @@
 	padding: 0.75rem 2rem 0.75rem 0.75rem;
 	overflow-wrap: break-word;
 	word-break: normal;
+	transition: opacity 2s ease-in-out;
 }
 .notification:not(:last-child) {
 	margin-bottom: 0.2rem;
+}
+.notification:hover {
+	border: 1px solid #ccc;
+	opacity: 1;
 }
 @media screen and (min-width:20em) {
 	#notifications-block {
@@ -60,4 +65,7 @@
 }
 .notif-info {
 	background-color: var(--color-nt-inform);
+}
+.invisible {
+	opacity: 0 !important;
 }
