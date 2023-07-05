@@ -53,7 +53,7 @@ class ReportWidget {
 		}
 	}
 
-	show_report(domain, report_time, org, report_id) {
+	show_report(domain, report_time, org, report_id, filter) {
 		this.element();
 		let that = this;
 		return new Promise(function(resolve, reject) {
@@ -74,7 +74,7 @@ class ReportWidget {
 			that._rep_id = report_id + report_time;
 			that._element.classList.remove("report-hidden");
 			that._close_btn.classList.add("active");
-			let rep = new Report(domain, report_time, org, report_id);
+			let rep = new Report(domain, report_time, org, report_id, filter);
 			rep.fetch().then(function() {
 				if (that._rep_id === report_id + report_time) {
 					remove_all_children(that._cn_element);
@@ -194,7 +194,6 @@ class Report {
 	constructor(domain, report_time, org, report_id, filter) {
 		this._data = null;
 		this._error = false;
-		this._filter = filter;
 		this._filter_btn = null;
 		this._records_el = null;
 		this._error_message = null;
@@ -202,13 +201,11 @@ class Report {
 		this._domain = domain;
 		this._report_id = report_id;
 		this._report_time = report_time;
-		if (!this._filter) {
-			this._filter = {};
-			if (window.sessionStorage) {
-				this._filter.dkim = window.sessionStorage.getItem("ReportView.filter.dkim");
-				this._filter.spf  = window.sessionStorage.getItem("ReportView.filter.spf");
-			}
-		}
+		if (Common.rv_filter === "from-list")
+			this._filter = filter;
+		else
+			this._filter = this._filter_storage();
+		this._filter ||= {};
 	}
 
 	id() {
@@ -470,10 +467,7 @@ class Report {
 					this._filter = res;
 					this._apply_filter();
 					this._update_filter_button();
-					if (window.sessionStorage) {
-						window.sessionStorage.setItem("ReportView.filter.dkim", res.dkim);
-						window.sessionStorage.setItem("ReportView.filter.spf", res.spf);
-					}
+					this._filter_storage(res);
 				}
 			}.bind(this)).finally(function() {
 				dlg.element().remove();
@@ -539,6 +533,31 @@ class Report {
 		}
 		else
 			bt.textContent = "none";
+	}
+
+	_filter_storage(data) {
+		let storage = null;
+		switch (Common.rv_filter) {
+			case "last-value":
+				storage = "localStorage";
+				break;
+			case "last-value-tab":
+				storage = "sessionStorage";
+				break;
+			default:
+				return;
+		}
+		let res = {};
+		if (window[storage]) {
+			let prefix = "ReportView.filter.";
+			[ "dkim", "spf" ].forEach(function(name) {
+				if (data)
+					window[storage].setItem(prefix + name, data[name] || "");
+				else
+					res[name] = window[storage].getItem(prefix + name);
+			});
+		}
+		return res;
 	}
 }
 

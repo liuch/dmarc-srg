@@ -110,7 +110,9 @@ Router.start = function() {
 };
 
 Router.go = function(url) {
-	Status.instance().update({ settings: [ "ui.datetime.offset", "ui.ipv4.url", "ui.ipv6.url" ] }).then(function(d) {
+	Status.instance().update({
+		settings: [ "ui.datetime.offset", "ui.ipv4.url", "ui.ipv6.url", "report-view.filter.initial-value" ]
+	}).then(function(d) {
 		if (d) {
 			Router._update_menu(d.authenticated);
 			if (d.settings) {
@@ -119,6 +121,7 @@ Router.go = function(url) {
 				}
 				Common.ipv4_url = d.settings["ui.ipv4.url"] || '';
 				Common.ipv6_url = d.settings["ui.ipv6.url"] || '';
+				Common.rv_filter = d.settings["report-view.filter.initial-value"] || null;
 			}
 			if (d.error_code !== -2) {
 				try {

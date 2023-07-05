@@ -185,6 +185,12 @@ class SettingsList
             'options' => [ 'ip,ascent', 'ip,descent', 'message-count,ascent', 'message-count,descent' ],
             'default' => 'message-count,descent'
         ],
+        'report-view.filter.initial-value' => [
+            'type'    => 'select',
+            'public'  => true,
+            'options' => [ 'none', 'from-list', 'last-value', 'last-value-tab' ],
+            'default' => 'last-value-tab'
+        ],
         'log-view.sort-list-by' => [
             'type'    => 'select',
             'public'  => true,

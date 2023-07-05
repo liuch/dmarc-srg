@@ -234,7 +234,11 @@ class ReportList {
 			url.searchParams.set("report_id", data.report_id);
 			window.history.pushState({ from: "list" }, "", url);
 			let that = this;
-			ReportWidget.instance().show_report(data.domain, data.time, data.org, data.report_id).then(function() {
+			let filter = null;
+			if (this._filter) {
+				filter = { dkim: this._filter.dkim || "", spf: this._filter.spf || "" };
+			}
+			ReportWidget.instance().show_report(data.domain, data.time, data.org, data.report_id, filter).then(function() {
 				if (!that._table.seen(id)) {
 					that._table.seen(id, true);
 				}
