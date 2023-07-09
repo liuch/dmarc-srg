@@ -180,25 +180,28 @@ abstract class Setting
         if (is_null($this->value)) {
             $this->fetchData();
         }
+        $sdef = SettingsList::$schema[$this->name]['default'];
         switch ($this->type()) {
             case self::TYPE_STRING:
                 $type = 'string';
                 break;
             case self::TYPE_INTEGER:
                 $type = 'integer';
+                $sdef = intval($sdef);
                 break;
             case self::TYPE_STRING_SELECT:
                 $type = 'select';
                 break;
             default:
                 $type = '';
+                $sdef = '';
                 break;
         }
         return [
             'type'    => $type,
             'name'    => $this->name,
             'value'   => $this->value,
-            'default' => SettingsList::$schema[$this->name]['default']
+            'default' => $sdef
         ];
     }
 
@@ -240,6 +243,6 @@ abstract class Setting
      */
     private function resetToDefault(): void
     {
-        $this->value = SettingsList::$schema[$this->name]['default'];
+        $this->stringToValue(SettingsList::$schema[$this->name]['default']);
     }
 }

@@ -21,6 +21,7 @@
 class Status {
 	constructor() {
 		this._data = {};
+		this._use_filter = null;
 	}
 
 	update(params) {
@@ -43,46 +44,74 @@ class Status {
 
 	_fetch(params) {
 		let url = new URL("status.php", document.location);
-		if (params.settings && params.settings.length) {
-			url.searchParams.set("settings", params.settings.join(","));
+		url.searchParams.set("state", "");
+		if (this._use_filter === null || (params.settings && params.settings.length)) {
+			let settings = params.settings || [];
+			settings.push("status.emails-filter-when-list-filtered");
+			url.searchParams.set("settings", settings.join(","));
 		}
-		(new URL(document.location)).searchParams.getAll("filter[]").forEach(function(fval) {
-			url.searchParams.append("filter[]", fval);
-		});
 
-		let that = this;
 		return window.fetch(url, {
 			method: "GET",
 			cache: "no-store",
 			headers: HTTP_HEADERS,
 			credentials: "same-origin"
 		}).then(function(resp) {
-			if (!resp.ok)
-				throw new Error("Failed to fetch the status");
+			if (!resp.ok) throw new Error("Failed to fetch the status");
 			return resp.json();
 		}).then(function(data) {
-			that._data = {
+			this._data = {
 				state:      data.state,
 				error_code: data.error_code,
 				message:    data.message,
-				emails:     data.emails
+				emails:     null
 			};
-			if (data.exeption)
-				that._data.exeption = data.exeption;
-			that._update_block();
-			if (data.error_code === -2) {
-				LoginDialog.start({ nousername: true });
+			this._update_block();
+			if (data.error_code === -2) LoginDialog.start({ nousername: true });
+			if (!this.error()) {
+				if (data.settings) {
+					let uf = data.settings["status.emails-filter-when-list-filtered"] || null;
+					this._use_filter = (uf === "yes");
+				}
+				this._fetch_statistics();
 			}
 			return data;
-		}).catch(function(err) {
-			that._data = {
+		}.bind(this)).catch(function(err) {
+			this._data = {
 				state:      "Err",
 				error_code: -100,
 				message:    err.message
 			};
-			that._update_block();
+			this._update_block();
 			throw err;
-		});
+		}.bind(this));
+	}
+
+	_fetch_statistics() {
+		let url = new URL("status.php", document.location);
+		url.searchParams.set("emails", "");
+		if (this._use_filter) {
+			(new URL(document.location)).searchParams.getAll("filter[]").forEach(function(fval) {
+				url.searchParams.append("filter[]", fval);
+			});
+		}
+		window.fetch(url, {
+			method: "GET",
+			cache: "no-store",
+			headers: HTTP_HEADERS,
+			credentials: "same-origin"
+		}).then(function(resp) {
+			if (!resp.ok) throw new Error("Failed to fetch statistics");
+			return resp.json();
+		}).then(function(data) {
+			Common.checkResult(data);
+			this._data.emails = data.emails;
+			this._update_block();
+		}.bind(this)).catch(function(err) {
+			Common.displayError(err);
+			this._update_block();
+			Notification.add({ text: err.message || "Error!", type: "error" });
+		}.bind(this));
 	}
 
 	_update_block() {

@@ -33,7 +33,12 @@ if (Core::isJson()) {
         try {
             Core::instance()->auth()->isAllowed();
 
-            $result = Core::instance()->status()->get();
+            if (isset($_GET['state'])) {
+                $result = Core::instance()->status()->get();
+            } else {
+                $result = [];
+            }
+
             if (!($result['error_code'] ?? 0)) {
                 $settings_query = $_GET['settings'] ?? '';
                 if (!empty($settings_query)) {
@@ -44,29 +49,29 @@ if (Core::isJson()) {
                     }
                     $result['settings'] = $settings;
                 }
-            }
 
-            if (!isset($result['error_code']) || $result['error_code'] === 0) {
-                $filter = Common::getFilter();
-                if (isset($filter['domain'])) {
-                    $domain = new Domain($filter['domain']);
-                } else {
-                    $domain = null;
+                if (isset($_GET['emails'])) {
+                    $filter = Common::getFilter();
+                    if (isset($filter['domain'])) {
+                        $domain = new Domain($filter['domain']);
+                    } else {
+                        $domain = null;
+                    }
+                    if (isset($filter['month'])) {
+                        $range = Common::monthToRange($filter['month']);
+                        $stat = Statistics::fromTo($domain, $range[0], $range[1]);
+                        $days = $range[0]->format('F Y') . ' (filtered)';
+                    } else {
+                        $days = SettingsList::getSettingByName('status.emails-for-last-n-days')->value();
+                        $stat = Statistics::lastNDays($domain, $days);
+                        $days = "the last {$days} days";
+                    }
+                    if ($filter) {
+                        $stat->setFilter($filter);
+                    }
+                    $result['emails'] = $stat->summary()['emails'];
+                    $result['emails']['days'] = $days;
                 }
-                if (isset($filter['month'])) {
-                    $range = Common::monthToRange($filter['month']);
-                    $stat = Statistics::fromTo($domain, $range[0], $range[1]);
-                    $days = $range[0]->format('F Y') . ' (filtered)';
-                } else {
-                    $days = SettingsList::getSettingByName('status.emails-for-last-n-days')->value();
-                    $stat = Statistics::lastNDays($domain, $days);
-                    $days = "the last {$days} days";
-                }
-                if ($filter) {
-                    $stat->setFilter($filter);
-                }
-                $result['emails'] = $stat->summary()['emails'];
-                $result['emails']['days'] = $days;
             }
 
             Core::sendJson($result);

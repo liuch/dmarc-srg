@@ -177,7 +177,13 @@ class SettingsList
             'public'  => true,
             'minimum' => 1,
             'maximum' => 365,
-            'default' => 30
+            'default' => '30'
+        ],
+        'status.emails-filter-when-list-filtered' => [
+            'type'    => 'select',
+            'public'  => true,
+            'options' => [ 'yes', 'no' ],
+            'default' => 'yes'
         ],
         'report-view.sort-records-by' => [
             'type'    => 'select',

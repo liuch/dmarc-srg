@@ -141,6 +141,7 @@ class Settings {
 
 	static _descriptions = {
 		"status.emails-for-last-n-days": "The period in days for which statistics are displayed in the status block.",
+		"status.emails-filter-when-list-filtered": "Applying the filter to the status block when filtering the report list.",
 		"report-view.sort-records-by": "How records are sorted in the report view dialog.",
 		"report-view.filter.initial-value": "The initial value of the record filter in the report view dialog. from-list - use current filter value of the report list. last-value - use the previous filter value. last-value-tab - use the previous filter value of the active tab.",
 		"log-view.sort-list-by": "How report log items are sorted by default in the log view dialog.",
