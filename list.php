@@ -22,7 +22,7 @@
 
 namespace Liuch\DmarcSrg;
 
-use Liuch\DmarcSrg\ErrorHandler;
+use Liuch\DmarcSrg\Users\User;
 use Liuch\DmarcSrg\Report\ReportList;
 use Liuch\DmarcSrg\Exception\RuntimeException;
 
@@ -31,7 +31,8 @@ require 'init.php';
 if (Core::method() == 'GET') {
     if (Core::isJson() && isset($_GET['list'])) {
         try {
-            Core::instance()->auth()->isAllowed();
+            Core::instance()->auth()->isAllowed(User::LEVEL_USER);
+
             $lst = explode(',', $_GET['list']);
             $res = [];
             if (array_search('reports', $lst) !== false) {

@@ -22,8 +22,7 @@
 
 namespace Liuch\DmarcSrg;
 
-use Liuch\DmarcSrg\DateTime;
-use Liuch\DmarcSrg\ErrorHandler;
+use Liuch\DmarcSrg\Users\User;
 use Liuch\DmarcSrg\Report\Report;
 use Liuch\DmarcSrg\Exception\RuntimeException;
 
@@ -32,7 +31,7 @@ require 'init.php';
 if (!empty($_GET['org']) && !empty($_GET['time']) && !empty($_GET['domain']) && !empty($_GET['report_id'])) {
     if (Core::isJson()) {
         try {
-            Core::instance()->auth()->isAllowed();
+            Core::instance()->auth()->isAllowed(User::LEVEL_USER);
             if (Core::method() == 'GET') {
                 $rep = new Report(
                     [

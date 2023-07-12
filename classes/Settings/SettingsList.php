@@ -43,17 +43,17 @@ class SettingsList
     public const ORDER_ASCENT  = 0;
     public const ORDER_DESCENT = 1;
 
-    private $db    = null;
+    private $core  = null;
     private $order = self::ORDER_ASCENT;
 
     /**
      * The constructor
      *
-     * @param \Liuch\DmarcSrg\Database\DatabaseController $db Connector to the current database
+     * @param Core|null $core Instance of the Core class
      */
-    public function __construct($db = null)
+    public function __construct($core = null)
     {
-        $this->db = $db ?? Core::instance()->database();
+        $this->core = $core ?? Core::instance();
     }
 
     /**
@@ -66,8 +66,9 @@ class SettingsList
      */
     public function getList(): array
     {
-        $list = [];
-        $db_map = $this->db->getMapper('setting')->list();
+        $list   = [];
+        $user   = $this->core->user();
+        $db_map = $this->core->database()->getMapper('setting')->list($user->id());
         foreach (static::$schema as $name => &$sch_data) {
             if ($sch_data['public'] ?? false) {
                 $value = $db_map[$name] ?? $sch_data['default'];
@@ -75,20 +76,23 @@ class SettingsList
                     case 'select':
                         $list[] = new SettingStringSelect([
                             'name'  => $name,
+                            'user'  => $user,
                             'value' => $value
-                        ], true, $this->db);
+                        ], true, $this->core);
                         break;
                     case 'integer':
                         $list[] = new SettingInteger([
                             'name'  => $name,
+                            'user'  => $user,
                             'value' => intval($value)
-                        ], true, $this->db);
+                        ], true, $this->core);
                         break;
                     case 'string':
                         $list[] = new SettingString([
                             'name'  => $name,
+                            'user'  => $user,
                             'value' => $value
-                        ], true, $this->db);
+                        ], true, $this->core);
                         break;
                 }
             }
@@ -141,24 +145,30 @@ class SettingsList
      *
      * It returns an instance of the Setting class but only if it is marked public.
      *
-     * @param string $name Setting name
+     * @param string   $name Setting name
+     * @param int|null $user User or null for the current user
      *
      * @return Setting
      */
-    public static function getSettingByName(string $name)
+    public static function getSettingByName(string $name, $user = null)
     {
         self::checkName($name);
         if (!(self::$schema[$name]['public'] ?? false)) {
             throw new SoftException('Attempt to access an internal variable');
         }
 
+        $data = [
+            'name' => $name,
+            'user' => is_null($user) ? Core::instance()->user() : $user
+        ];
+
         switch (self::$schema[$name]['type']) {
             case 'string':
-                return new SettingString($name);
+                return new SettingString($data);
             case 'select':
-                return new SettingStringSelect($name);
+                return new SettingStringSelect($data);
             case 'integer':
-                return new SettingInteger($name);
+                return new SettingInteger($data);
             default:
                 throw new RuntimeException('Unknown setting type');
         }

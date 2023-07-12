@@ -101,6 +101,7 @@ class Connector extends DatabaseConnector
             $exist_cnt  = 0;
             $absent_cnt = 0;
             $tables_res = [];
+            $system_exs = false;
             foreach ($tables as $tname => $tval) {
                 $t = null;
                 if ($tval) {
@@ -111,6 +112,9 @@ class Connector extends DatabaseConnector
                         $t['message'] = 'Ok';
                     } else {
                         $t['message'] = 'Unknown table';
+                    }
+                    if ($tname === 'system') {
+                        $system_exs = true;
                     }
                 } else {
                     ++$absent_cnt;
@@ -126,16 +130,19 @@ class Connector extends DatabaseConnector
             if ($absent_cnt === 0) {
                 $res['correct'] = true;
                 $res['message'] = 'Ok';
-                try {
-                    $res['version'] = $this->getMapper('setting')->value('version');
-                } catch (DatabaseNotFoundException $e) {
-                }
             } else {
-                $res['error_code'] = -1;
                 if ($exist_cnt == 0) {
+                    $res['error_code'] = -1;
                     $res['message'] = 'The database schema is not initiated';
                 } else {
+                    $res['error_code'] = -4;
                     $res['message'] = 'Incomplete set of the tables';
+                }
+            }
+            if ($system_exs) {
+                try {
+                    $res['version'] = $this->getMapper('setting')->value('version', 0);
+                } catch (DatabaseNotFoundException $e) {
                 }
             }
         } catch (\PDOException $e) {
@@ -179,7 +186,8 @@ class Connector extends DatabaseConnector
                 $st->closeCursor();
             }
             $st = $this->dbh->prepare(
-                'INSERT INTO `' . $this->tablePrefix('system') . '` (`key`, `value`) VALUES ("version", ?)'
+                'INSERT INTO `' . $this->tablePrefix('system')
+                . '` (`key`, `user_id`, `value`) VALUES ("version", 0, ?)'
             );
             $st->bindValue(1, $version, \PDO::PARAM_STR);
             $st->execute();
@@ -283,11 +291,15 @@ class Connector extends DatabaseConnector
                     'definition' => 'varchar(64) NOT NULL'
                 ],
                 [
+                    'name' => 'user_id',
+                    'definition' => 'int(10) unsigned NOT NULL DEFAULT 0'
+                ],
+                [
                     'name' => 'value',
                     'definition' => 'varchar(255) DEFAULT NULL'
                 ]
             ],
-            'additional' => 'PRIMARY KEY (`key`)',
+            'additional' => 'PRIMARY KEY (`user_id`, `key`)',
             'table_options' => 'ENGINE=InnoDB DEFAULT CHARSET=utf8'
         ],
         'domains' => [
@@ -318,6 +330,66 @@ class Connector extends DatabaseConnector
                 ]
             ],
             'additional' => 'PRIMARY KEY (`id`), UNIQUE KEY `fqdn` (`fqdn`)',
+            'table_options' => 'ENGINE=InnoDB DEFAULT CHARSET=utf8'
+        ],
+        'users' => [
+            'columns' => [
+                [
+                    'name' => 'id',
+                    'definition' => 'int(10) unsigned NOT NULL AUTO_INCREMENT'
+                ],
+                [
+                    'name' => 'name',
+                    'definition' => 'varchar(32) NOT NULL'
+                ],
+                [
+                    'name' => 'level',
+                    'definition' => 'smallint unsigned NOT NULL'
+                ],
+                [
+                    'name' => 'enabled',
+                    'definition' => 'boolean NOT NULL'
+                ],
+                [
+                    'name' => 'password',
+                    'definition' => 'varchar(255) NULL'
+                ],
+                [
+                    'name' => 'email',
+                    'definition' => 'varchar(64) NULL'
+                ],
+                [
+                    'name' => 'key',
+                    'definition' => 'varchar(64) NULL'
+                ],
+                [
+                    'name' => 'session',
+                    'definition' => 'int(10) unsigned NOT NULL'
+                ],
+                [
+                    'name' => 'created_time',
+                    'definition' => 'datetime NOT NULL'
+                ],
+                [
+                    'name' => 'updated_time',
+                    'definition' => 'datetime NOT NULL'
+                ]
+            ],
+            'additional' => 'PRIMARY KEY (`id`), UNIQUE KEY `name` (`name`)',
+            'table_options' => 'ENGINE=InnoDB DEFAULT CHARSET=utf8'
+        ],
+        'userdomains' => [
+            'columns' => [
+                [
+                    'name' => 'domain_id',
+                    'definition' => 'int(10) unsigned NOT NULL'
+                ],
+                [
+                    'name' => 'user_id',
+                    'definition' => 'int(10) unsigned NOT NULL'
+                ]
+            ],
+            'additional' => 'PRIMARY KEY (`domain_id`, `user_id`)',
             'table_options' => 'ENGINE=InnoDB DEFAULT CHARSET=utf8'
         ],
         'reports' => [
@@ -466,6 +538,10 @@ class Connector extends DatabaseConnector
                     'definition' => 'int(10) unsigned NOT NULL AUTO_INCREMENT'
                 ],
                 [
+                    'name' => 'user_id',
+                    'definition' => 'int(10) unsigned NOT NULL DEFAULT 0'
+                ],
+                [
                     'name' => 'domain',
                     'definition' => 'varchar(255) NULL'
                 ],
@@ -494,7 +570,7 @@ class Connector extends DatabaseConnector
                     'definition' => 'text NULL'
                 ]
             ],
-            'additional' => 'PRIMARY KEY (`id`), KEY(`event_time`)',
+            'additional' => 'PRIMARY KEY (`id`), KEY(`event_time`), KEY `user_id` (`user_id`, `event_time`)',
             'table_options' => 'ENGINE=InnoDB DEFAULT CHARSET=utf8'
         ]
     ];

@@ -64,7 +64,7 @@ class UpgraderMapper implements UpgraderMapperInterface
     public function go(string $target): void
     {
         try {
-            $cur_ver = $this->connector->getMapper('setting')->value('version');
+            $cur_ver = $this->connector->getMapper('setting')->value('version', 0);
         } catch (DatabaseNotFoundException $e) {
             $cur_ver = 'null';
         }
@@ -263,6 +263,64 @@ class UpgraderMapper implements UpgraderMapperInterface
     }
 
     /**
+     * Upgrades the database structure from v3.2 to v4.0
+     *
+     * @return string New version of the database structure
+     */
+    private function up32(): string
+    {
+        $db = $this->connector->dbh();
+        try {
+            $usr_tn = $this->connector->tablePrefix('users');
+            $db->query(
+                'CREATE TABLE IF NOT EXISTS `' . $usr_tn . '` (`id` int(10) unsigned NOT NULL AUTO_INCREMENT,'
+                . ' `name` varchar(32) NOT NULL, `level` smallint unsigned NOT NULL, `enabled` boolean NOT NULL,'
+                . ' `password` varchar(255) NULL, `email` varchar(64) NULL, `key` varchar(64) NULL,'
+                . ' `session` int(10) NOT NULL, `created_time` datetime NOT NULL, `updated_time` datetime NOT NULL,'
+                . ' PRIMARY KEY (`id`), UNIQUE KEY `name` (`name`)) ENGINE=InnoDB DEFAULT CHARSET=utf8'
+            );
+
+            $ud_tn = $this->connector->tablePrefix('userdomains');
+            $db->query(
+                'CREATE TABLE IF NOT EXISTS `' . $ud_tn . '` (`domain_id` int(10) unsigned NOT NULL,'
+                . ' `user_id` int(10) unsigned NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8'
+            );
+            if (!$this->indexExists($db, $ud_tn, 'PRIMARY')) {
+                $db->query('ALTER TABLE `' . $ud_tn . '` ADD PRIMARY KEY (`domain_id`, `user_id`)');
+            }
+
+            $sys_tn = $this->connector->tablePrefix('system');
+            if (!$this->columnExists($db, $sys_tn, 'user_id')) {
+                $db->query(
+                    'ALTER TABLE `' . $sys_tn . '` ADD COLUMN `user_id` int(10) NOT NULL DEFAULT 0 AFTER `key`'
+                );
+            }
+            $db->query('UPDATE `' . $sys_tn . '` SET `user_id` = 0');
+            if ($this->indexExists($db, $sys_tn, 'PRIMARY')) {
+                $db->query('ALTER TABLE `' . $sys_tn . '` DROP PRIMARY KEY');
+            }
+            $db->query('ALTER TABLE `' . $sys_tn . '` ADD PRIMARY KEY (`user_id`, `key`)');
+
+            $log_tn = $this->connector->tablePrefix('reportlog');
+            if (!$this->columnExists($db, $log_tn, 'user_id')) {
+                $db->query(
+                    'ALTER TABLE `' . $log_tn . '` ADD COLUMN `user_id` int(10) NOT NULL DEFAULT 0 AFTER `id`'
+                );
+            }
+            if (!$this->indexExists($db, $log_tn, 'user_id')) {
+                $db->query('ALTER TABLE `' . $log_tn . '` ADD KEY `user_id` (`user_id`, `event_time`)');
+            }
+
+            $db->query(
+                'UPDATE `' . $sys_tn . '` SET `value` = "4.0" WHERE `user_id` = 0 AND `key` = "version"'
+            );
+        } catch (\PDOException $e) {
+            throw $this->dbFatalException($e);
+        }
+        return '4.0';
+    }
+
+    /**
      * Checks if the specified column exists in the specified table of the database
      *
      * @param object $db     Connection handle of the database
@@ -326,6 +384,7 @@ class UpgraderMapper implements UpgraderMapperInterface
         'ver_1.0'  => 'up10',
         'ver_2.0'  => 'up20',
         'ver_3.0'  => 'up30',
-        'ver_3.1'  => 'up31'
+        'ver_3.1'  => 'up31',
+        'ver_3.2'  => 'up32'
     ];
 }

@@ -2,6 +2,7 @@
 
 namespace Liuch\DmarcSrg;
 
+use Liuch\DmarcSrg\Users\AdminUser;
 use Liuch\DmarcSrg\Settings\SettingInteger;
 use Liuch\DmarcSrg\Settings\SettingString;
 use Liuch\DmarcSrg\Settings\SettingStringSelect;
@@ -32,11 +33,15 @@ class SettingDefaultValueTest extends \PHPUnit\Framework\TestCase
                     break;
             }
 
-            $cc = new $ss([ 'name' => $name, 'value' => $val ], true, $this->getDbMapperNever());
+            $user = new AdminUser($this->getCore());
+            $cc = new $ss([
+                'name'  => $name,
+                'value' => $val
+            ], true, $this->getCoreWithDatabaseNever($user));
             $this->assertSame($props['default'], strval($cc->value()), "Name: {$name}; Constructor Value");
 
             if ($t2) {
-                $cc = new $ss($name, true, $this->getDbMapperOnce($name, $val));
+                $cc = new $ss($name, true, $this->getCoreWithDatabaseMapperOnce($name, $user, $val));
                 $this->assertSame($props['default'], strval($cc->value()), "Name: {$name}; Database Value");
             }
 
@@ -48,15 +53,16 @@ class SettingDefaultValueTest extends \PHPUnit\Framework\TestCase
     public function testSettingNotFoundDefaultValue(): void
     {
         foreach (SettingsList::$schema as $name => &$props) {
+            $user = new AdminUser($this->getCore());
             switch ($props['type']) {
                 case 'string':
-                    $cc = new SettingString($name, true, $this->getDbMapperNotFound($name));
+                    $cc = new SettingString($name, true, $this->getCoreWithDatabaseMapperNotFound($name, $user));
                     break;
                 case 'integer':
-                    $cc = new SettingInteger($name, true, $this->getDbMapperNotFound($name));
+                    $cc = new SettingInteger($name, true, $this->getCoreWithDatabaseMapperNotFound($name, $user));
                     break;
                 case 'select':
-                    $cc = new SettingStringSelect($name, true, $this->getDbMapperNotFound($name));
+                    $cc = new SettingStringSelect($name, true, $this->getCoreWithDatabaseMapperNotFound($name, $user));
                     break;
             }
             $cc->value();
@@ -65,17 +71,23 @@ class SettingDefaultValueTest extends \PHPUnit\Framework\TestCase
         unset($props);
     }
 
-    private function getDbMapperNever(): object
+    private function getCore(): object
     {
-        $db = $this->getMockBuilder(DatabaseController::class)
-                   ->disableOriginalConstructor()
-                   ->setMethods([ 'getMapper' ])
-                   ->getMock();
-        $db->expects($this->never())->method('getMapper');
-        return $db;
+        return $this->getMockBuilder(Core::class)
+                    ->disableOriginalConstructor()
+                    ->setMethods([ 'user', 'database' ])
+                    ->getMock();
     }
 
-    private function getDbMapperOnce($parameter, $value): object
+    private function getCoreWithDatabaseNever($user): object
+    {
+        $core = $this->getCore();
+        $core->expects($this->never())->method('user')->willReturn($user);
+        $core->expects($this->never())->method('database');
+        return $core;
+    }
+
+    private function getCoreWithDatabaseMapperOnce($key, $user, $value): object
     {
         $mapper = $this->getMockBuilder(StdClass::class)
                        ->disableOriginalConstructor()
@@ -83,7 +95,7 @@ class SettingDefaultValueTest extends \PHPUnit\Framework\TestCase
                        ->getMock();
         $mapper->expects($this->once())
                ->method('value')
-               ->with($this->equalTo($parameter))
+               ->with($key, $user->id())
                ->willReturn($value);
 
         $db = $this->getMockBuilder(DatabaseController::class)
@@ -94,10 +106,13 @@ class SettingDefaultValueTest extends \PHPUnit\Framework\TestCase
            ->method('getMapper')
            ->willReturn($mapper);
 
-        return $db;
+        $core = $this->getCore();
+        $core->expects($this->once())->method('user')->willReturn($user);
+        $core->expects($this->once())->method('database')->willReturn($db);
+        return $core;
     }
 
-    private function getDbMapperNotFound($parameter): object
+    private function getCoreWithDatabaseMapperNotFound($parameter, $user): object
     {
         $mapper = $this->getMockBuilder(StdClass::class)
                        ->disableOriginalConstructor()
@@ -116,6 +131,9 @@ class SettingDefaultValueTest extends \PHPUnit\Framework\TestCase
            ->method('getMapper')
            ->willReturn($mapper);
 
-        return $db;
+        $core = $this->getCore();
+        $core->expects($this->once())->method('user')->willReturn($user);
+        $core->expects($this->once())->method('database')->willReturn($db);
+        return $core;
     }
 }

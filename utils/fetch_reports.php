@@ -105,6 +105,9 @@ const MAILBOX_LIST   = 1;
 const DIRECTORY_LIST = 2;
 const FETCHER        = 3;
 
+$core = Core::instance();
+$core->user('admin');
+
 $state = MAILBOX_LIST;
 if (!$source || $source === 'email') {
     $errors  = [ 'messages' => [], 'debug_info' => null ];

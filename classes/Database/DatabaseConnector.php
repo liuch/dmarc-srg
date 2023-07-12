@@ -41,7 +41,8 @@ abstract class DatabaseConnector
         'report-log' => 'ReportLogMapper',
         'setting'    => 'SettingMapper',
         'statistics' => 'StatisticsMapper',
-        'upgrader'   => 'UpgraderMapper'
+        'upgrader'   => 'UpgraderMapper',
+        'user'       => 'UserMapper'
     ];
 
     protected $host     = null;

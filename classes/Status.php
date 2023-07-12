@@ -90,11 +90,11 @@ class Status
 
         $auth = null;
         if ($this->core->auth()->isEnabled()) {
-            $auth = $this->core->userId() !== false ? 'yes' : 'no';
+            $res['authenticated'] = $this->core->user() ? 'yes' : 'no';
         } else {
-            $auth = 'disabled';
+            $res['authenticated'] = 'disabled';
         }
-        $res['authenticated'] = $auth;
+        $res['auth_type'] = $this->core->auth()->authenticationType();
         $res['version'] = Core::APP_VERSION;
         $res['php_version'] = phpversion();
 

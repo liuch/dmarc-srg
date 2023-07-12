@@ -22,12 +22,14 @@
 
 namespace Liuch\DmarcSrg;
 
-use Liuch\DmarcSrg\ErrorHandler;
+use Liuch\DmarcSrg\Users\User;
 use Liuch\DmarcSrg\Report\ReportFetcher;
 use Liuch\DmarcSrg\Sources\DirectorySource;
 use Liuch\DmarcSrg\Sources\UploadedFilesSource;
 use Liuch\DmarcSrg\Directories\DirectoryList;
+use Liuch\DmarcSrg\Exception\AuthException;
 use Liuch\DmarcSrg\Exception\RuntimeException;
+use Liuch\DmarcSrg\Exception\ForbiddenException;
 
 require 'init.php';
 
@@ -38,8 +40,9 @@ if (Core::method() == 'GET') {
     }
 
     try {
-        Core::instance()->auth()->isAllowed();
+        $auth = Core::instance()->auth();
 
+        $auth->isAllowed(User::LEVEL_MANAGER);
         $res = [];
         $up_max = ini_get('max_file_uploads');
         if ($up_max) {
@@ -62,18 +65,24 @@ if (Core::method() == 'GET') {
             }
             $res['upload_max_file_size'] = $up_size;
         }
-        $dirs = [];
-        foreach ((new DirectoryList())->list() as $dir) {
-            $da = $dir->toArray();
-            try {
-                $files = $dir->count();
-            } catch (RuntimeException $e) {
-                $files = -1;
+
+        try {
+            $auth->isAllowed(User::LEVEL_ADMIN);
+            $dirs = [];
+            foreach ((new DirectoryList())->list() as $dir) {
+                $da = $dir->toArray();
+                try {
+                    $files = $dir->count();
+                } catch (RuntimeException $e) {
+                    $files = -1;
+                }
+                $da['files'] = $files;
+                $dirs[] = $da;
             }
-            $da['files'] = $files;
-            $dirs[] = $da;
+            $res['directories'] = $dirs;
+        } catch (ForbiddenException $e) {
         }
-        $res['directories'] = $dirs;
+
         Core::sendJson($res);
     } catch (RuntimeException $e) {
         Core::sendJson(ErrorHandler::exceptionResult($e));
@@ -83,7 +92,7 @@ if (Core::method() == 'GET') {
 
 if (Core::method() == 'POST') {
     try {
-        Core::instance()->auth()->isAllowed();
+        Core::instance()->auth()->isAllowed(User::LEVEL_MANAGER);
 
         $data = Core::getJsonData();
         if ($data) {

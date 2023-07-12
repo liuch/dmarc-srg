@@ -26,10 +26,13 @@ Router.start = function() {
 
 	document.getElementsByTagName("body")[0].addEventListener("keydown", function(event) {
 		if (event.code == "Escape" && !event.shiftKey && !event.ctrlKey && !event.altKey) {
-			let cbtn = document.querySelector(".close-btn.active");
-			if (cbtn) {
-				cbtn.click();
-				event.preventDefault();
+			let cbs = document.querySelectorAll(".close-btn.active");
+			for (let i = cbs.length - 1; i >= 0; --i) {
+				if (window.getComputedStyle(cbs[i]).display !== "none") {
+					cbs[i].click();
+					event.preventDefault();
+					break;
+				}
 			}
 			document.querySelectorAll("div.popup-menu:not(.hidden)").forEach(function(m) {
 				m.classList.add("hidden");
@@ -115,6 +118,7 @@ Router.go = function(url) {
 	}).then(function(d) {
 		if (d) {
 			Router._update_menu(d.authenticated);
+			Router._update_user();
 			if (d.settings) {
 				if (d.settings["ui.datetime.offset"]) {
 					Common.tuneDateTimeOutput(d.settings["ui.datetime.offset"]);
@@ -221,6 +225,9 @@ Router._update_menu = function(authenticated) {
 			}
 		}
 	}
+	if (User && User.auth_type !== "base") {
+		m_el.querySelector(".users").classList.add("hidden");
+	}
 	if (authenticated !== "disabled") {
 		l_el = document.createElement("li");
 		l_el.setAttribute("id", "auth-action");
@@ -245,9 +252,12 @@ Router._update_menu = function(authenticated) {
 						return resp.json();
 					}).then(function(data) {
 						Common.checkResult(data);
+						User.name = null;
+						User.level = null;
 						Status.instance().reset();
 						Router._clear_data();
 						Router._update_menu("no");
+						Router._update_user();
 						Router.update_title("");
 					}).catch(function(err) {
 						Common.displayError(err);
@@ -261,13 +271,29 @@ Router._update_menu = function(authenticated) {
 			a_el.appendChild(document.createTextNode("Log in"));
 			a_el.addEventListener("click", function(event) {
 				event.preventDefault();
-				LoginDialog.start({ nousername: true });
+				LoginDialog.start();
 			});
 		}
 		l_el.appendChild(a_el);
 		m_el.appendChild(l_el);
 	}
 };
+
+Router._update_user = function() {
+	const levels = new Map([ [ "admin", false ], [ "manager", false ] ]);
+	switch (User.level) {
+		case null:
+		case "admin":
+			levels.set("admin", true);
+			//no break;
+		case "manager":
+			levels.set("manager", true);
+			break;
+	}
+	levels.forEach(function(value, key) {
+		document.body.classList[value ? "add" : "remove"]("level-" + key);
+	});
+}
 
 Router._clear_data = function() {
 	remove_all_children(document.getElementById("main-block"));
@@ -293,6 +319,11 @@ Router._modules = {
 	files: {
 		start: function(m) {
 			m.pointer = new Files();
+		}
+	},
+	users: {
+		start: function(m) {
+			m.pointer = new UserList();
 		}
 	},
 	domains: {
@@ -327,6 +358,7 @@ Router._routes = {
 	"list.php": "list",
 	"logs.php": "logs",
 	"admin.php": "admin",
+	"users.php": "users",
 	"files.php": "files",
 	"report.php": "report",
 	"domains.php": "domains",

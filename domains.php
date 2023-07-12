@@ -50,7 +50,7 @@
 
 namespace Liuch\DmarcSrg;
 
-use Liuch\DmarcSrg\ErrorHandler;
+use Liuch\DmarcSrg\Users\User;
 use Liuch\DmarcSrg\Domains\Domain;
 use Liuch\DmarcSrg\Domains\DomainList;
 use Liuch\DmarcSrg\Exception\SoftException;
@@ -60,9 +60,9 @@ require 'init.php';
 
 if (Core::isJson()) {
     try {
-        Core::instance()->auth()->isAllowed();
-
         if (Core::method() == 'GET') {
+            Core::instance()->auth()->isAllowed(User::LEVEL_USER);
+
             if (isset($_GET['domain'])) {
                 Core::sendJson((new Domain($_GET['domain']))->toArray());
                 return;
@@ -79,6 +79,8 @@ if (Core::isJson()) {
             ]);
             return;
         } elseif (Core::method() == 'POST') {
+            Core::instance()->auth()->isAllowed(User::LEVEL_MANAGER);
+
             $data = Core::getJsonData();
             if ($data) {
                 $domain = new Domain([

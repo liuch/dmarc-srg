@@ -873,6 +873,28 @@ class ModalDialog {
 	}
 }
 
+class VerticalDialog extends ModalDialog {
+	constructor(params) {
+		super(params);
+		this._inputs = null;
+	}
+
+	_insert_input_row(text, v_el) {
+		if (!this._inputs) {
+			this._inputs = document.createElement("div");
+			this._inputs.classList.add("titled-input");
+			this._content.appendChild(this._inputs);
+			this._content.classList.add("vertical-content");
+		}
+		const l_el = document.createElement("label");
+		const t_el = document.createElement("span");
+		t_el.textContent = text + ": ";
+		l_el.appendChild(t_el);
+		l_el.appendChild(v_el);
+		this._inputs.appendChild(l_el);
+	}
+}
+
 class AboutDialog extends ModalDialog {
 	constructor(params) {
 		super({

@@ -44,12 +44,14 @@ class Status {
 
 	_fetch(params) {
 		let url = new URL("status.php", document.location);
-		url.searchParams.set("state", "");
+		let fields = [ "state", "user" ];
+		let s_list = params.settings || [];;
 		if (this._use_filter === null || (params.settings && params.settings.length)) {
-			let settings = params.settings || [];
-			settings.push("status.emails-filter-when-list-filtered");
-			url.searchParams.set("settings", settings.join(","));
+			fields.push("settings");
+			s_list.push("status.emails-filter-when-list-filtered");
 		}
+		url.searchParams.set("fields", fields.join(","));
+		url.searchParams.set("settings", s_list.join(","));
 
 		return window.fetch(url, {
 			method: "GET",
@@ -60,6 +62,9 @@ class Status {
 			if (!resp.ok) throw new Error("Failed to fetch the status");
 			return resp.json();
 		}).then(function(data) {
+			User.name  = data.user && data.user.name || null;
+			User.level = data.user && data.user.level || null;
+			User.auth_type = data.auth_type;
 			this._data = {
 				state:      data.state,
 				error_code: data.error_code,
@@ -67,7 +72,7 @@ class Status {
 				emails:     null
 			};
 			this._update_block();
-			if (data.error_code === -2) LoginDialog.start({ nousername: true });
+			if (data.error_code === -2) LoginDialog.start();
 			if (!this.error()) {
 				if (data.settings) {
 					let uf = data.settings["status.emails-filter-when-list-filtered"] || null;
@@ -89,7 +94,7 @@ class Status {
 
 	_fetch_statistics() {
 		let url = new URL("status.php", document.location);
-		url.searchParams.set("emails", "");
+		url.searchParams.set("fields", "emails");
 		if (this._use_filter) {
 			(new URL(document.location)).searchParams.getAll("filter[]").forEach(function(fval) {
 				url.searchParams.append("filter[]", fval);

@@ -34,7 +34,6 @@
 
 namespace Liuch\DmarcSrg;
 
-use Liuch\DmarcSrg\Core;
 use Liuch\DmarcSrg\Mail\MailBoxes;
 use Liuch\DmarcSrg\Directories\DirectoryList;
 use Liuch\DmarcSrg\Exception\SoftException;
@@ -91,6 +90,7 @@ $endChecking = function (string $message = '', int $result = 0) use (&$e_cnt, &$
 };
 
 $core = Core::instance();
+$core->user('admin');
 
 ob_start(null, 0, PHP_OUTPUT_HANDLER_FLUSHABLE | PHP_OUTPUT_HANDLER_REMOVABLE);
 $core->config('debug'); // Just in order to load the config file

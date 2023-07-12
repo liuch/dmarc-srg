@@ -48,6 +48,7 @@ if (php_sapi_name() !== 'cli') {
 }
 
 $core = Core::instance();
+$core->user('admin');
 
 $days = $core->config('cleaner/mailboxes/days_old', -1);
 if (gettype($days) !== 'integer' || $days < 0) {

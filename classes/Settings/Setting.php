@@ -32,6 +32,7 @@
 namespace Liuch\DmarcSrg\Settings;
 
 use Liuch\DmarcSrg\Core;
+use Liuch\DmarcSrg\Users\User;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
 
@@ -47,8 +48,9 @@ abstract class Setting
     public const TYPE_INTEGER       = 2;
     public const TYPE_STRING_SELECT = 3;
 
-    protected $db      = null;
+    protected $core    = null;
     protected $name    = null;
+    protected $user    = null;
     protected $value   = null;
     protected $wignore = false;
 
@@ -90,20 +92,20 @@ abstract class Setting
      * (new Setting([ 'name' => 'some.setting', 'value' => 'some string value' ])->save(); - will add
      * this setting to the database if it does not exist in it or update the value of the setting.
      *
-     * @param string|array                                $data    Some setting data to identify it
-     *                                                             string value is treated as a name
-     *                                                             array has these fields: `name`, `value`
-     *                                                             and usually uses for creating a new setting item.
-     * @param boolean                                     $wignore If true the wrong value is reset to the default
-     *                                                             or it throws an exception otherwise.
-     * @param \Liuch\DmarcSrg\Database\DatabaseController $db      The database controller
+     * @param string|array $data    Some setting data to identify it
+     *                              string value is treated as a name
+     *                              array has these fields: `name`, `value`, `user`
+     *                              and usually uses for creating a new setting item.
+     * @param boolean      $wignore If true the wrong value is reset to the default
+     *                              or it throws an exception otherwise.
+     * @param Core|null    $core    Instance of the Core class
      *
      * @return void
      */
-    public function __construct($data, bool $wignore = false, $db = null)
+    public function __construct($data, bool $wignore = false, $core = null)
     {
         $this->wignore = $wignore;
-        $this->db      = $db ?? Core::instance()->database();
+        $this->core    = $core ?? Core::instance();
         switch (gettype($data)) {
             case 'string':
                 $this->name = $data;
@@ -123,6 +125,12 @@ abstract class Setting
                         }
                         $this->resetToDefault();
                     }
+                }
+                if (isset($data['user'])) {
+                    if (!($data['user'] instanceof User)) {
+                        break;
+                    }
+                    $this->user = $data['user'];
                 }
                 return;
         }
@@ -214,7 +222,11 @@ abstract class Setting
      */
     public function save(): void
     {
-        $this->db->getMapper('setting')->save($this->name, $this->valueToString());
+        $this->core->database()->getMapper('setting')->save(
+            $this->name,
+            $this->valueToString(),
+            ($this->user ?? $this->core->user())->id()
+        );
     }
 
     /**
@@ -225,7 +237,10 @@ abstract class Setting
     private function fetchData(): void
     {
         try {
-            $res = $this->db->getMapper('setting')->value($this->name);
+            $res = $this->core->database()->getMapper('setting')->value(
+                $this->name,
+                ($this->user ?? $this->core->user())->id()
+            );
         } catch (DatabaseNotFoundException $e) {
             $this->resetToDefault();
             return;

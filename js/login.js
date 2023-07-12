@@ -125,6 +125,10 @@ class LoginDialog extends ModalDialog {
 }
 
 LoginDialog.start = function (params) {
+	if (User.auth_type !== "base") {
+		params ||= {};
+		if (params.nousername === undefined) params.nousername = true;
+	}
 	let login = new LoginDialog(params);
 	document.getElementById("main-block").appendChild(login.element());
 	login.show().then(function(d) {

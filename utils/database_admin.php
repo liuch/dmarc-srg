@@ -49,12 +49,14 @@ if (php_sapi_name() !== 'cli') {
     exit(1);
 }
 
-$action = $argv[1] ?? '';
-$res = null;
+$res  = null;
+$core = Core::instance();
 try {
+    $core->user('admin');
+    $action = $argv[1] ?? '';
     switch ($action) {
         case 'status':
-            $res = Core::instance()->database()->state();
+            $res = $core->database()->state();
             $tcn = 0;
             if (isset($res['tables'])) {
                 foreach ($res['tables'] as &$t) {
@@ -68,14 +70,11 @@ try {
             echo 'Tables:  ', $tcn, PHP_EOL;
             break;
         case 'init':
-            $res = Core::instance()->database()->initDb();
+            $res = $core->database()->initDb();
             break;
         case 'upgrade':
-            $cur_ver = (new SettingString('version'))->value();
-            if ($cur_ver === '') {
-                $cur_ver = 'n/a';
-            }
-            $db = Core::instance()->database();
+            $db = $core->database();
+            $cur_ver = $db->state()['version'] ?? 'n/a';
             echo "Current version:  {$cur_ver}", PHP_EOL;
             echo 'Required version: ', $db::REQUIRED_VERSION, PHP_EOL;
             if ($cur_ver !== $db::REQUIRED_VERSION) {
@@ -92,7 +91,7 @@ try {
             }
             break;
         case 'drop':
-            $res = Core::instance()->database()->cleanDb();
+            $res = $core->database()->cleanDb();
             break;
         default:
             echo "Usage: {$argv[0]} status|init|upgrade|drop", PHP_EOL;

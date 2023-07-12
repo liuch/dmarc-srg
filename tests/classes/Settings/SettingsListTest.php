@@ -2,6 +2,7 @@
 
 namespace Liuch\DmarcSrg;
 
+use Liuch\DmarcSrg\Users\AdminUser;
 use Liuch\DmarcSrg\Settings\SettingsList;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Database\DatabaseController;
@@ -10,8 +11,10 @@ class SettingsListTest extends \PHPUnit\Framework\TestCase
 {
     public function testSettingList(): void
     {
+        $core = $this->getCore();
         $real_list = $this->realSettingsList(SettingsList::ORDER_ASCENT);
-        $mapp_list = (new SettingsList($this->getDbMapperListOnce()))->setOrder(SettingsList::ORDER_ASCENT)->getList();
+        $mapp_list = (new SettingsList($this->getCoreWithDatabaseMapperListOnce(new AdminUser($core))))
+            ->setOrder(SettingsList::ORDER_ASCENT)->getList();
         $this->assertIsArray($mapp_list);
         $this->assertFalse($mapp_list['more']);
         $this->assertCount(count($real_list), $mapp_list['list']);
@@ -20,7 +23,8 @@ class SettingsListTest extends \PHPUnit\Framework\TestCase
         $this->assertSame($real_list[$cnt - 1], $mapp_list['list'][$cnt - 1]->name());
 
         $real_list = $this->realSettingsList(SettingsList::ORDER_DESCENT);
-        $mapp_list = (new SettingsList($this->getDbMapperListOnce()))->setOrder(SettingsList::ORDER_DESCENT)->getList();
+        $mapp_list = (new SettingsList($this->getCoreWithDatabaseMapperListOnce(new AdminUser($core))))
+            ->setOrder(SettingsList::ORDER_DESCENT)->getList();
         $this->assertSame($real_list[0], $mapp_list['list'][0]->name());
         $cnt = count($real_list);
         $this->assertSame($real_list[$cnt - 1], $mapp_list['list'][$cnt - 1]->name());
@@ -52,7 +56,15 @@ class SettingsListTest extends \PHPUnit\Framework\TestCase
         SettingsList::getSettingByName('version');
     }
 
-    private function getDbMapperListOnce(): object
+    private function getCore(): object
+    {
+        return $this->getMockBuilder(Core::class)
+                    ->disableOriginalConstructor()
+                    ->setMethods([ 'user', 'database' ])
+                    ->getMock();
+    }
+
+    private function getCoreWithDatabaseMapperListOnce($user): object
     {
         $mapper = $this->getMockBuilder(StdClass::class)
                        ->disableOriginalConstructor()
@@ -68,7 +80,11 @@ class SettingsListTest extends \PHPUnit\Framework\TestCase
         $db->expects($this->once())
            ->method('getMapper')
            ->willReturn($mapper);
-        return $db;
+
+        $core = $this->getCore();
+        $core->expects($this->once())->method('user')->willReturn($user);
+        $core->expects($this->once())->method('database')->willReturn($db);
+        return $core;
     }
 
     private function realSettingsList(int $order): array

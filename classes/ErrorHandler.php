@@ -33,6 +33,7 @@ namespace Liuch\DmarcSrg;
 
 use Liuch\DmarcSrg\Log\LoggerInterface;
 use Liuch\DmarcSrg\Log\LoggerAwareInterface;
+use Liuch\DmarcSrg\Exception\AuthException;
 use Liuch\DmarcSrg\Exception\SoftException;
 
 /**
@@ -132,8 +133,12 @@ class ErrorHandler implements LoggerAwareInterface
             'error_code' => $code,
             'message'    => $e->getMessage()
         ];
+        if ($code === -2 && $e instanceof AuthException) {
+            $res['authenticated'] = 'no';
+            $res['auth_type'] = $e->getAuthType();
+        }
         if ($debug &&
-            (Core::instance()->userId() !== false || php_sapi_name() === 'cli') &&
+            (Core::instance()->user() || php_sapi_name() === 'cli') &&
             !($e instanceof SoftException)
         ) {
             $prev = $e->getPrevious();

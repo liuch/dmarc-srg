@@ -37,16 +37,18 @@ class Files {
 	display() {
 		this._create_container();
 		this._create_local_file_uploading_element();
-		this._create_directory_loading_element();
 		this._container.appendChild(this._fieldset1);
-		this._container.appendChild(this._fieldset2);
+		if (User.level === "admin") {
+			this._create_directory_loading_element();
+			this._container.appendChild(this._fieldset2);
+		}
 		this._element.appendChild(this._container);
 		this._fieldset1.focus();
 	}
 
 	update() {
 		if (!Status.instance().error()) {
-			this._fetch_data(true, true);
+			this._fetch_data(true, User.level === "admin");
 		}
 	}
 

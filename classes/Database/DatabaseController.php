@@ -39,7 +39,7 @@ use Liuch\DmarcSrg\Exception\DatabaseFatalException;
  */
 class DatabaseController
 {
-    public const REQUIRED_VERSION = '3.2';
+    public const REQUIRED_VERSION = '4.0';
 
     private $conf_data = null;
     /** @var DatabaseConnector */
@@ -109,10 +109,13 @@ class DatabaseController
         $res['type']     = $this->type();
         $res['name']     = $this->name();
         $res['location'] = $this->location();
-        if (($res['correct'] ?? false) && ($res['version'] ?? 'null') !== self::REQUIRED_VERSION) {
+        if ((($res['correct'] ?? false) || ($res['error_code'] ?? 0) === -4)
+            && ($res['version'] ?? 'null') !== self::REQUIRED_VERSION
+        ) {
             $res['correct'] = false;
             $res['message'] = 'The database structure needs upgrading';
             $res['needs_upgrade'] = true;
+            unset($res['error_code']);
         }
         return $res;
     }

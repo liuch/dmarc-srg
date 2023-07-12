@@ -2,7 +2,7 @@
 
 /**
  * dmarc-srg - A php parser, viewer and summary report generator for incoming DMARC reports.
- * Copyright (C) 2022 Aleksey Andreev (liuch)
+ * Copyright (C) 2023 Aleksey Andreev (liuch)
  *
  * Available at:
  * https://github.com/liuch/dmarc-srg
@@ -21,7 +21,7 @@
  *
  * =========================
  *
- * This file contains AuthException class
+ * This file contains ForbiddenException class
  *
  * @category Common
  * @package  DmarcSrg
@@ -32,20 +32,8 @@
 namespace Liuch\DmarcSrg\Exception;
 
 /**
- * Represents an authentication error
+ * Represents an authorization error
  */
-class AuthException extends SoftException
+class ForbiddenException extends SoftException
 {
-    private $auth_type = '';
-
-    public function __construct(string $message = '', int $code = -1, string $auth_type = '')
-    {
-        parent::__construct($message, $code);
-        $this->auth_type = $auth_type;
-    }
-
-    public function getAuthType(): string
-    {
-        return $this->auth_type;
-    }
 }

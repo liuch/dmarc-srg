@@ -2,6 +2,7 @@
 
 namespace Liuch\DmarcSrg;
 
+use Liuch\DmarcSrg\Users\AdminUser;
 use Liuch\DmarcSrg\Settings\SettingsList;
 use Liuch\DmarcSrg\Settings\SettingString;
 use Liuch\DmarcSrg\Settings\SettingInteger;
@@ -12,40 +13,47 @@ class SettingTest extends \PHPUnit\Framework\TestCase
 {
     public function testCreatingWithCorrectName(): void
     {
-        $this->assertInstanceOf(SettingString::class, new SettingString('version', false, $this->getDbMapperNever()));
+        $this->assertInstanceOf(
+            SettingString::class,
+            new SettingString('version', false, $this->getCoreWithDatabaseNever())
+        );
     }
 
     public function testCreatingWithIncorrectName(): void
     {
         $this->expectException(SoftException::class);
         $this->expectExceptionMessage('Unknown setting name: some-setting');
-        new SettingString('some-setting', false, $this->getDbMapperNever());
+        new SettingString('some-setting', false, $this->getCoreWithDatabaseNever());
     }
 
     public function testCreatingWithIncorrectDataType(): void
     {
         $this->expectException(SoftException::class);
         $this->expectExceptionMessage('Wrong setting data');
-        new SettingString(1, false, $this->getDbMapperNever());
+        new SettingString(1, false, $this->getCoreWithDatabaseNever());
     }
 
     public function testCreatingWithIncorrectNameType(): void
     {
         $this->expectException(SoftException::class);
         $this->expectExceptionMessage('Wrong setting data');
-        new SettingString([ 'name' => 1], false, $this->getDbMapperNever());
+        new SettingString([ 'name' => 1], false, $this->getCoreWithDatabaseNever());
     }
 
     public function testSetValue(): void
     {
-        $ss = new SettingString('version', false, $this->getDbMapperNever());
+        $ss = new SettingString('version', false, $this->getCoreWithDatabaseNever());
         $ss->setValue('someString');
         $this->assertSame('someString', $ss->value());
     }
 
     public function testToArray(): void
     {
-        $ss = new SettingString([ 'name' => 'version', 'value' => 'someString' ], false, $this->getDbMapperNever());
+        $ss = new SettingString(
+            [ 'name' => 'version', 'value' => 'someString' ],
+            false,
+            $this->getCoreWithDatabaseNever()
+        );
         $this->assertEquals([
             'type'    => 'string',
             'name'    => 'version',
@@ -56,33 +64,31 @@ class SettingTest extends \PHPUnit\Framework\TestCase
 
     public function testSave(): void
     {
-        $db = $this->getMockBuilder(DatabaseController::class)
-                   ->disableOriginalConstructor()
-                   ->setMethods([ 'getMapper' ])
-                   ->getMock();
-        $db->expects($this->once())
-           ->method('getMapper')
-           ->with($this->equalTo('setting'))
-           ->willReturn($this->getDbMapperOnce('save', 'status.emails-for-last-n-days', '231'));
+        $user = new AdminUser($this->getCore());
         $ss = new SettingInteger(
-            [ 'name' => 'status.emails-for-last-n-days', 'value' => 231 ],
+            [ 'name' => 'status.emails-for-last-n-days', 'value' => 231, 'user' => $user ],
             false,
-            $db
+            $this->getCoreWithDatabaseMapperOnce('save', 'status.emails-for-last-n-days', '231', 0)
         );
         $ss->save();
     }
 
-    private function getDbMapperNever(): object
+    private function getCore(): object
     {
-        $db = $this->getMockBuilder(DatabaseController::class)
-                   ->disableOriginalConstructor()
-                   ->setMethods([ 'getMapper' ])
-                   ->getMock();
-        $db->expects($this->never())->method('getMapper');
-        return $db;
+        return $this->getMockBuilder(Core::class)
+                    ->disableOriginalConstructor()
+                    ->setMethods([ 'database' ])
+                    ->getMock();
     }
 
-    private function getDbMapperOnce(string $method, string $param1, string $param2): object
+    private function getCoreWithDatabaseNever(): object
+    {
+        $core = $this->getCore();
+        $core->expects($this->never())->method('database');
+        return $core;
+    }
+
+    private function getCoreWithDatabaseMapperOnce(string $method, string $param1, string $param2, int $param3): object
     {
         $mapper = $this->getMockBuilder(StdClass::class)
                        ->disableOriginalConstructor()
@@ -90,7 +96,17 @@ class SettingTest extends \PHPUnit\Framework\TestCase
                        ->getMock();
         $mapper->expects($this->once())
                ->method($method)
-               ->with($this->equalTo($param1), $this->equalTo($param2));
-        return $mapper;
+               ->with($this->equalTo($param1), $this->equalTo($param2), $this->equalTo($param3));
+        $db = $this->getMockBuilder(DatabaseController::class)
+                   ->disableOriginalConstructor()
+                   ->setMethods([ 'getMapper' ])
+                   ->getMock();
+        $db->expects($this->once())
+           ->method('getMapper')
+           ->willReturn($mapper);
+
+        $core = $this->getCore();
+        $core->expects($this->once())->method('database')->willReturn($db);
+        return $core;
     }
 }

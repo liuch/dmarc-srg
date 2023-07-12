@@ -2,6 +2,7 @@
 
 namespace Liuch\DmarcSrg;
 
+use Liuch\DmarcSrg\Users\AdminUser;
 use Liuch\DmarcSrg\Settings\SettingsList;
 use Liuch\DmarcSrg\Settings\SettingInteger;
 use Liuch\DmarcSrg\Exception\SoftException;
@@ -16,7 +17,7 @@ class SettingIntegerTest extends \PHPUnit\Framework\TestCase
             (new SettingInteger([
                 'name'  => 'status.emails-for-last-n-days',
                 'value' => 222
-            ], false, $this->getDbMapperNever()))->value()
+            ], false, $this->getCoreWithDatabaseNever()))->value()
         );
     }
 
@@ -27,7 +28,7 @@ class SettingIntegerTest extends \PHPUnit\Framework\TestCase
         (new SettingInteger([
             'name'  => 'status.emails-for-last-n-days',
             'value' => 'someStringValue'
-        ], false, $this->getDbMapperNever()))->value();
+        ], false, $this->getCoreWithDatabaseNever()))->value();
     }
 
     public function testCreatingWithIncorrectValueWithIgnoring(): void
@@ -38,38 +39,37 @@ class SettingIntegerTest extends \PHPUnit\Framework\TestCase
                 (new SettingInteger([
                     'name'  => 'status.emails-for-last-n-days',
                     'value' => 'incorrectIntegerValue'
-                ], true, $this->getDbMapperNever()))->value()
+                ], true, $this->getCoreWithDatabaseNever()))->value()
             )
         );
     }
 
     public function testGettingValueByName(): void
     {
-        $db = $this->getMockBuilder(DatabaseController::class)
-                   ->disableOriginalConstructor()
-                   ->setMethods([ 'getMapper' ])
-                   ->getMock();
-        $db->expects($this->once())
-           ->method('getMapper')
-           ->with($this->equalTo('setting'))
-           ->willReturn($this->getDbMapperOnce('value', 'status.emails-for-last-n-days', 333));
-        $this->assertSame(
-            333,
-            (new SettingInteger('status.emails-for-last-n-days', false, $db))->value()
-        );
+        $user = new AdminUser($this->getCore());
+        $this->assertSame(333, (new SettingInteger(
+            'status.emails-for-last-n-days',
+            false,
+            $this->getCoreWithDatabaseOnce('value', 'status.emails-for-last-n-days', 333, $user)
+        ))->value());
     }
 
-    private function getDbMapperNever(): object
+    private function getCore(): object
     {
-        $db = $this->getMockBuilder(DatabaseController::class)
-                   ->disableOriginalConstructor()
-                   ->setMethods([ 'getMapper' ])
-                   ->getMock();
-        $db->expects($this->never())->method('getMapper');
-        return $db;
+        return $this->getMockBuilder(Core::class)
+                    ->disableOriginalConstructor()
+                    ->setMethods([ 'user', 'database' ])
+                    ->getMock();
     }
 
-    private function getDbMapperOnce(string $method, $parameter, $value): object
+    private function getCoreWithDatabaseNever(): object
+    {
+        $core = $this->getCore();
+        $core->expects($this->never())->method('database');
+        return $core;
+    }
+
+    private function getCoreWithDatabaseOnce(string $method, $parameter, $value, $user): object
     {
         $mapper = $this->getMockBuilder(StdClass::class)
                        ->disableOriginalConstructor()
@@ -79,6 +79,18 @@ class SettingIntegerTest extends \PHPUnit\Framework\TestCase
                ->method($method)
                ->with($this->equalTo($parameter))
                ->willReturn($value);
-        return $mapper;
+        $db = $this->getMockBuilder(DatabaseController::class)
+                   ->disableOriginalConstructor()
+                   ->setMethods([ 'getMapper' ])
+                   ->getMock();
+        $db->expects($this->once())
+           ->method('getMapper')
+           ->with($this->equalTo('setting'))
+           ->willReturn($mapper);
+
+        $core = $this->getCore();
+        $core->expects($this->once())->method('user')->willReturn($user);
+        $core->expects($this->once())->method('database')->willReturn($db);
+        return $core;
     }
 }

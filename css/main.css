@@ -345,7 +345,7 @@ textarea.description {
 .dialog .error-message {
 	text-align: center;
 }
-.hidden {
+.hidden, body:not(.level-admin) .level-admin, body:not(.level-manager) .level-manager {
 	display: none !important;
 }
 #main-block {

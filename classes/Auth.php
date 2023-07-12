@@ -31,7 +31,10 @@
 
 namespace Liuch\DmarcSrg;
 
+use Liuch\DmarcSrg\Users\UserList;
+use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\AuthException;
+use Liuch\DmarcSrg\Exception\ForbiddenException;
 
 /**
  * Class for working with authentication data.
@@ -71,21 +74,36 @@ class Auth
      * This method throws an exception if the passed password is wrong.
      * The password with an empty string is always wrong!
      *
-     * @param string $username - Must be an empty string, it is currently not used.
-     * @param string $password - Must not be an empty string.
+     * @param string $username - User name.
+     * @param string $password - Password. Must not be an empty string.
      *
      * @return array Array with `error_code` and `message` fields.
      */
     public function login(string $username, string $password): array
     {
-        if ($username !== '' || $this->core->config('admin/password') === '' || !$this->isAdminPassword($password)) {
-            throw new AuthException('Authentication failed. Try again');
+        $atype = $this->authenticationType();
+        if ($atype === 'password-only') {
+            $username = empty($username) ? 'admin' : '';
         }
-        $this->core->userId(0);
-        return [
-            'error_code' => 0,
-            'message'    => 'Authentication succeeded'
-        ];
+        if (!empty($username)) {
+            try {
+                $user = UserList::getUserByName($username, $this->core);
+                if ($user->verifyPassword($password)) {
+                    if (!$user->isEnabled()) {
+                        throw new AuthException('The user is disabled. Contact the administrator');
+                    }
+                    $this->core->user($user);
+                    return [
+                        'error_code' => 0,
+                        'message'    => 'Authentication succeeded'
+                    ];
+                }
+            } catch (AuthException $e) {
+                throw $e;
+            } catch (SoftException $e) {
+            }
+        }
+        throw new AuthException('Authentication failed. Try later');
     }
 
     /**
@@ -105,44 +123,37 @@ class Auth
     /**
      * Checks if the user session exists.
      *
-     * This method throws an exception if authentication needed.
+     * This method throws an exception if the authentication or authorization check fails.
+     *
+     * @param int $level Minimum access level required
      *
      * @return void
      */
-    public function isAllowed(): void
+    public function isAllowed(int $level): void
     {
         if ($this->isEnabled()) {
-            if ($this->core->userId() === false) {
-                throw new AuthException('Authentication needed', -2);
+            $user = $this->core->user();
+            if (!$user) {
+                throw new AuthException('Authentication needed', -2, $this->authenticationType());
+            }
+            if ($user->level() < $level) {
+                throw new ForbiddenException('Forbidden');
             }
         }
     }
 
     /**
-     * Checks if the passed password is the admin password.
+     * Returns the type of authentication
      *
-     * Throws an exception if the passed password is not the admin password.
-     *
-     * @param string $password Password to check
-     *
-     * @return void
+     * @return string `base`          - User name and password
+     *                `password-only` - Password only
+     *                `none`          - Authentication is disabled
      */
-    public function checkAdminPassword(string $password): void
+    public function authenticationType(): string
     {
-        if (!$this->isAdminPassword($password)) {
-            throw new AuthException('Incorrect password');
+        if ($this->isEnabled()) {
+            return $this->core->config('admin/user_management', false) ? 'base' : 'password-only';
         }
-    }
-
-    /**
-     * Checks if $password equals the admin password.
-     *
-     * @param string $password Password to check
-     *
-     * @return bool
-     */
-    private function isAdminPassword(string $password): bool
-    {
-        return $password === $this->core->config('admin/password');
+        return 'none';
     }
 }

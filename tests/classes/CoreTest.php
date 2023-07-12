@@ -2,6 +2,8 @@
 
 namespace Liuch\DmarcSrg;
 
+use Liuch\DmarcSrg\Users\AdminUser;
+
 class CoreTest extends \PHPUnit\Framework\TestCase
 {
     /** @var Core */
@@ -21,6 +23,16 @@ class CoreTest extends \PHPUnit\Framework\TestCase
     {
         $_SERVER['REQUEST_METHOD'] = 'some_method';
         $this->assertSame('some_method', $this->core->method());
+    }
+
+    public function testUser(): void
+    {
+        $this->core->user('admin');
+        $this->assertInstanceOf(AdminUser::class, $this->core->user());
+
+        $user = new AdminUser($this->core);
+        $this->core->user($user);
+        $this->assertSame($user, $this->core->user());
     }
 
     /**

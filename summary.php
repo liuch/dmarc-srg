@@ -42,7 +42,7 @@
 
 namespace Liuch\DmarcSrg;
 
-use Liuch\DmarcSrg\ErrorHandler;
+use Liuch\DmarcSrg\Users\User;
 use Liuch\DmarcSrg\Domains\Domain;
 use Liuch\DmarcSrg\Domains\DomainList;
 use Liuch\DmarcSrg\Report\SummaryReport;
@@ -53,7 +53,7 @@ require 'init.php';
 
 if (Core::isJson() && isset($_GET['mode'])) {
     try {
-        Core::instance()->auth()->isAllowed();
+        Core::instance()->auth()->isAllowed(User::LEVEL_USER);
 
         $mode = $_GET['mode'];
         if ($mode === 'options') {

@@ -62,7 +62,9 @@ class DomainList {
 			d.rows = data.domains.map(function(it) {
 				return that._make_row_data(it);
 			});
-			d.rows.push(new NewDomainRow(4));
+			if (User.level === "admin" || User.level === "manager") {
+				d.rows.push(new NewDomainRow(4));
+			}
 			let fr = new DomainFrame(d, that._table.last_row_index() + 1);
 			that._table.clear();
 			that._table.add_frame(fr);
@@ -125,7 +127,15 @@ class DomainList {
 	}
 
 	_display_edit_dialog(fqdn) {
-		let dlg = new DomainEditDialog(fqdn === "*new" && { "new": true } || { fqdn: fqdn });
+		let dlg_par = {};
+		if (fqdn === "*new") {
+			dlg_par["new"] = true;
+		}
+		else {
+			dlg_par.fqdn    = fqdn;
+			dlg_par.minimal = (User.level !== "admin" && User.level !== "manager");
+		}
+		let dlg = new DomainEditDialog(dlg_par);
 		this._element.appendChild(dlg.element());
 		let that = this;
 		dlg.show().then(function(d) {
@@ -214,21 +224,22 @@ class DomainFrame extends ITableFrame {
 	}
 }
 
-class DomainEditDialog extends ModalDialog {
+class DomainEditDialog extends VerticalDialog {
 	constructor(params) {
 		let tl = null;
-		let ba = [ "save", "close" ];
+		let ba = [];
+		if (!params.minimal) ba.push("save");
 		if (!params["new"]) {
 			tl = "Domain settings";
-			ba.splice(1, 0, "delete");
+			if (!params.minimal) ba.push("delete");
 		}
 		else {
 			tl = "New domain";
 		}
+		ba.push("close");
 		super({ title: tl, buttons: ba });
 		this._data    = params || {};
 		this._content = null;
-		this._inputs  = null;
 		this._fqdn_el = null;
 		this._actv_el = null;
 		this._desc_el = null;
@@ -238,10 +249,7 @@ class DomainEditDialog extends ModalDialog {
 	}
 
 	_gen_content() {
-		this._inputs = document.createElement("div");
-		this._inputs.setAttribute("class", "titled-input");
-		this._content.appendChild(this._inputs);
-		this._content.classList.add("vertical-content");
+		let min = this._data.minimal;
 
 		let fq = document.createElement("input");
 		fq.setAttribute("type", "text");
@@ -250,7 +258,7 @@ class DomainEditDialog extends ModalDialog {
 			fq.disabled = true;
 		}
 		fq.required = true;
-		this._insert_row("FQDN", fq);
+		this._insert_input_row("FQDN", fq);
 		this._fqdn_el = fq;
 
 		{
@@ -264,26 +272,29 @@ class DomainEditDialog extends ModalDialog {
 			op2.appendChild(document.createTextNode("No"));
 			en.appendChild(op2);
 			en.required = true;
-			this._insert_row("Active", en);
+			if (min) en.disabled = true;
+			this._insert_input_row("Active", en);
 			this._actv_el = en;
 		}
 
 		let tx = document.createElement("textarea");
-		this._insert_row("Description", tx).classList.add("description");
+		tx.classList.add("description")
+		if (min) tx.disabled = true;
+		this._insert_input_row("Description", tx);
 		this._desc_el = tx;
 
 		let ct = document.createElement("input");
 		ct.setAttribute("type", "text");
 		ct.disabled = true;
 		ct.setAttribute("value","n/a");
-		this._insert_row("Created", ct);
+		this._insert_input_row("Created", ct);
 		this._c_tm_el = ct;
 
 		let ut = document.createElement("input");
 		ut.setAttribute("type", "text");
 		ut.setAttribute("value","n/a");
 		ut.disabled = true;
-		this._insert_row("Updated", ut);
+		this._insert_input_row("Updated", ut);
 		this._u_tm_el = ut;
 
 		this._inputs.addEventListener("input", function(event) {
@@ -300,16 +311,6 @@ class DomainEditDialog extends ModalDialog {
 		if (!this._data["new"] && !this._fetched) {
 			this._fetch_data();
 		}
-	}
-
-	_insert_row(text, v_el) {
-		let l_el = document.createElement("label");
-		let t_el = document.createElement("span");
-		t_el.appendChild(document.createTextNode(text + ": "));
-		l_el.appendChild(t_el);
-		l_el.appendChild(v_el);
-		this._inputs.appendChild(l_el);
-		return v_el;
 	}
 
 	_fetch_data() {
@@ -386,9 +387,10 @@ class DomainEditDialog extends ModalDialog {
 	}
 
 	_enable_ui(en) {
+		let min = this._data.minimal;
 		this._fqdn_el.disabled = !en || !this._data["new"];
-		this._actv_el.disabled = !en;
-		this._desc_el.disabled = !en;
+		this._actv_el.disabled = !en || min;
+		this._desc_el.disabled = !en || min;
 		for (let i = 2; i < this._buttons.length - 1; ++i) {
 			this._buttons[i].disabled = !en;
 		}

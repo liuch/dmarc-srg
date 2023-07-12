@@ -22,7 +22,9 @@
 
 namespace Liuch\DmarcSrg;
 
-use Liuch\DmarcSrg\ErrorHandler;
+use Liuch\DmarcSrg\Users\User;
+use Liuch\DmarcSrg\Users\AdminUser;
+use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\RuntimeException;
 
 require 'init.php';
@@ -30,7 +32,8 @@ require 'init.php';
 $core = Core::instance();
 if (Core::isJson()) {
     try {
-        $core->auth()->isAllowed();
+        $core->auth()->isAllowed(User::LEVEL_ADMIN);
+
         if (Core::method() == 'GET') {
             Core::sendJson($core->admin()->state());
             return;
@@ -40,8 +43,10 @@ if (Core::isJson()) {
                 $cmd = $data['cmd'];
                 if (in_array($cmd, [ 'initdb', 'cleandb', 'upgradedb' ])) {
                     if ($core->auth()->isEnabled()) {
-                        $pwd = isset($data['password']) ? $data['password'] : null;
-                        $core->auth()->checkAdminPassword($pwd);
+                        $pwd = isset($data['password']) ? $data['password'] : '';
+                        if (!(new AdminUser($core))->verifyPassword($pwd)) {
+                            throw new SoftException('Incorrect password');
+                        }
                     }
                 }
                 if ($cmd === 'initdb') {

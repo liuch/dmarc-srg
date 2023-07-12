@@ -70,6 +70,9 @@ $admin = [
     // Set this value to null or remove this parameter to disable authentication
     // Note: The authentication always fails with an empty string password. Change it if you want to use the web ui.
     'password' => '',
+    // Enables the use of multiple users in the web interface. The authentication dialog will ask for a username and
+    // password. Use `admin` as the username for the above password. To add new users, use Administration -> Users.
+    'user_management' => false
 ];
 
 //

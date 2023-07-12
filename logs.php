@@ -44,7 +44,7 @@
 
 namespace Liuch\DmarcSrg;
 
-use Liuch\DmarcSrg\ErrorHandler;
+use Liuch\DmarcSrg\Users\User;
 use Liuch\DmarcSrg\ReportLog\ReportLog;
 use Liuch\DmarcSrg\ReportLog\ReportLogItem;
 use Liuch\DmarcSrg\Settings\SettingsList;
@@ -55,7 +55,7 @@ require 'init.php';
 if (Core::method() == "GET") {
     if (Core::isJson()) {
         try {
-            Core::instance()->auth()->isAllowed();
+            Core::instance()->auth()->isAllowed(User::LEVEL_ADMIN);
 
             if (isset($_GET['id'])) {
                 Core::sendJson(ReportLogItem::byId(intval($_GET['id']))->toArray());

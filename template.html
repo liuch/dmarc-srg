@@ -17,6 +17,7 @@
 	<script src="js/logs.js"></script>
 	<script src="js/login.js"></script>
 	<script src="js/admin.js"></script>
+	<script src="js/users.js"></script>
 	<script src="js/files.js"></script>
 	<script src="js/status.js"></script>
 	<script src="js/report.js"></script>
@@ -35,14 +36,15 @@
 				<span>Reports</span>
 				<ul class="submenu">
 					<li><a href="./">Incoming reports</a></li>
-					<li><a href="files.php">Files</a></li>
+					<li class="level-manager"><a href="files.php">Files</a></li>
 					<li><a href="summary.php">Summary reports</a></li>
 				</ul>
 			</li>
-			<li class="closed">
+			<li class="closed level-admin">
 				<span>Administration</span>
 				<ul class="submenu">
 					<li><a href="admin.php">Admin panel</a></li>
+					<li class="users"><a href="users.php">Users</a></li>
 					<li><a href="logs.php">Logs</a></li>
 				</ul>
 			</li>

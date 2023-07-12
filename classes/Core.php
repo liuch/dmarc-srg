@@ -31,8 +31,13 @@
 
 namespace Liuch\DmarcSrg;
 
+use Liuch\DmarcSrg\Users\User;
+use Liuch\DmarcSrg\Users\DbUser;
+use Liuch\DmarcSrg\Users\UserList;
+use Liuch\DmarcSrg\Users\AdminUser;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\LogicException;
+use Liuch\DmarcSrg\Exception\ForbiddenException;
 
 /**
  * It's class for accessing to most methods for working with http, json data,
@@ -41,10 +46,13 @@ use Liuch\DmarcSrg\Exception\LogicException;
 class Core
 {
     public const APP_VERSION = '1.7';
+
     private const SESSION_NAME = 'session';
     private const HTML_FILE_NAME = 'template.html';
 
+    private $user    = null;
     private $modules = [];
+
     /** @var self|null */
     private static $instance = null;
 
@@ -84,60 +92,88 @@ class Core
     }
 
     /**
-     * Sets or gets the current user's id
+     * Sets or gets the current user instance
      *
-     * In case $id is null, the method returns the current user's id.
-     * In case $id is integer value, the method sets this value as the current user's id.
-     * It returns false if there is an error.
+     * In case $user is null, the method returns the current user instance or null.
+     * In case $user is User, the method sets this instance as the current user.
+     * In case $user is string, the method treats it as a username to set as the current user.
      *
-     * @param int|void $id User id to set it.
+     * @param User|string|null $user Instance of User to set
      *
-     * @return int|bool User id or false in case of error.
+     * @return User|null
      */
-    public function userId($id = null)
+    public function user($user = null)
     {
         $start_f = false;
-        if ((self::cookie(self::SESSION_NAME) !== '' || $id !== null) && session_status() !== PHP_SESSION_ACTIVE) {
-            $start_f = true;
-            self::sessionStart();
+        if (php_sapi_name() !== 'cli') {
+            if ((self::cookie(self::SESSION_NAME) !== '' || !is_null($user)) &&
+                session_status() !== PHP_SESSION_ACTIVE
+            ) {
+                $start_f = true;
+                self::sessionStart();
+            }
         }
-        $res = null;
-        if (gettype($id) === 'integer') {
-            $_SESSION['user_id'] = $id;
+        if (is_null($user)) {
+            if (!$this->auth()->isEnabled()) {
+                return $this->user(new AdminUser($this));
+            }
+            if (!$this->user && isset($_SESSION['user']) && gettype($_SESSION['user']) === 'array') {
+                $nm = $_SESSION['user']['name'] ?? '';
+                if ($nm === 'admin') {
+                    if (($_SESSION['user']['level'] ?? -1) !== User::LEVEL_ADMIN) {
+                        throw new ForbiddenException('The user session has been broken!');
+                    }
+                    $this->user = new AdminUser($this);
+                } else {
+                    $this->user = new DbUser($_SESSION['user']);
+                }
+            }
+        } else {
+            if (gettype($user) === 'string') {
+                $user = UserList::getUserByName($user, $this);
+            }
+            $this->user = $user;
+            $_SESSION['user'] = [
+                'id'    => $user->id(),
+                'name'  => $user->name(),
+                'level' => $user->level()
+            ];
         }
-        $res = isset($_SESSION['user_id']) ? intval($_SESSION['user_id']) : false;
         if ($start_f) {
             session_write_close();
         }
-        return $res;
+        return $this->user;
     }
 
     /**
-     * Deletes the session of the current user and the corresponding cookie.
+     * Deletes the session of the current user, corresponding cookie and instance.
      *
      * @return void
      */
     public function destroySession(): void
     {
-        if (self::cookie(self::SESSION_NAME)) {
-            if (session_status() !== PHP_SESSION_ACTIVE) {
-                self::sessionStart();
-            }
-            $_SESSION = [];
-            if (ini_get('session.use_cookies')) {
-                $scp = session_get_cookie_params();
-                $cep = [
-                    'expires'  => time() - 42000,
-                    'path'     => $scp['path'],
-                    'domain'   => $scp['domain'],
-                    'secure'   => $scp['secure'],
-                    'httponly' => $scp['httponly'],
-                    'samesite' => $scp['samesite']
-                ];
-                setcookie(self::SESSION_NAME, '', $cep);
-                session_write_close();
+        if (php_sapi_name() !== 'cli') {
+            if (self::cookie(self::SESSION_NAME)) {
+                if (session_status() !== PHP_SESSION_ACTIVE) {
+                    self::sessionStart();
+                }
+                $_SESSION = [];
+                if (ini_get('session.use_cookies')) {
+                    $scp = session_get_cookie_params();
+                    $cep = [
+                        'expires'  => time() - 42000,
+                        'path'     => $scp['path'],
+                        'domain'   => $scp['domain'],
+                        'secure'   => $scp['secure'],
+                        'httponly' => $scp['httponly'],
+                        'samesite' => $scp['samesite']
+                    ];
+                    setcookie(self::SESSION_NAME, '', $cep);
+                    session_write_close();
+                }
             }
         }
+        $this->user = null;
     }
 
     /**

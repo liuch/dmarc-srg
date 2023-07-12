@@ -22,6 +22,7 @@
 
 namespace Liuch\DmarcSrg;
 
+use Liuch\DmarcSrg\Users\User;
 use Liuch\DmarcSrg\Domains\Domain;
 use Liuch\DmarcSrg\Settings\SettingsList;
 use Liuch\DmarcSrg\Exception\RuntimeException;
@@ -31,26 +32,37 @@ require 'init.php';
 if (Core::isJson()) {
     if (Core::method() == 'GET') {
         try {
-            Core::instance()->auth()->isAllowed();
+            $core = Core::instance();
+            $core->auth()->isAllowed(User::LEVEL_USER);
 
-            if (isset($_GET['state'])) {
-                $result = Core::instance()->status()->get();
+            $fields = explode(',', $_GET['fields'] ?? '');
+            if (in_array('state', $fields)) {
+                $result = $core->status()->get();
             } else {
                 $result = [];
             }
 
             if (!($result['error_code'] ?? 0)) {
-                $settings_query = $_GET['settings'] ?? '';
-                if (!empty($settings_query)) {
+                if (in_array('user', $fields)) {
+                    $user = $core->user();
+                    if ($user) {
+                        $result['user'] = [
+                            'name'  => $user->name(),
+                            'level' => User::levelToString($user->level())
+                        ];
+                    }
+                }
+
+                if (in_array('settings', $fields) && !empty($_GET['settings'])) {
                     $settings = [];
-                    foreach (explode(',', $settings_query) as $name) {
+                    foreach (explode(',', $_GET['settings']) as $name) {
                         $setting = SettingsList::getSettingByName($name);
                         $settings[$name] = $setting->value();
                     }
                     $result['settings'] = $settings;
                 }
 
-                if (isset($_GET['emails'])) {
+                if (in_array('emails', $fields)) {
                     $filter = Common::getFilter();
                     if (isset($filter['domain'])) {
                         $domain = new Domain($filter['domain']);
@@ -77,9 +89,6 @@ if (Core::isJson()) {
             Core::sendJson($result);
         } catch (RuntimeException $e) {
             $r = ErrorHandler::exceptionResult($e);
-            if ($e->getCode() == -2) {
-                $r['authenticated'] = 'no';
-            }
             Core::sendJson($r);
         }
         return;

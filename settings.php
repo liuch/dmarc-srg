@@ -52,7 +52,7 @@
 
 namespace Liuch\DmarcSrg;
 
-use Liuch\DmarcSrg\ErrorHandler;
+use Liuch\DmarcSrg\Users\User;
 use Liuch\DmarcSrg\Settings\SettingsList;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\RuntimeException;
@@ -61,7 +61,8 @@ require 'init.php';
 
 if (Core::isJson()) {
     try {
-        Core::instance()->auth()->isAllowed();
+        Core::instance()->auth()->isAllowed(User::LEVEL_USER);
+
         if (Core::method() == 'GET') {
             if (isset($_GET['name'])) {
                 Core::sendJson(SettingsList::getSettingByName($_GET['name'])->toArray());
@@ -81,6 +82,7 @@ if (Core::isJson()) {
             ]);
             return;
         }
+
         if (Core::method() == 'POST' && Core::isJson()) {
             $data = Core::getJsonData();
             if ($data) {

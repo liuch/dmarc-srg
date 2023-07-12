@@ -90,7 +90,9 @@ for ($i = 1; $i < count($argv); ++$i) {
     }
 }
 
+$core = Core::instance();
 try {
+    $core->user('admin');
     if (!$domain) {
         throw new SoftException('Parameter "domain" is not specified');
     }
@@ -101,7 +103,7 @@ try {
         throw new SoftException('Unknown email message format: ' . $format);
     }
     if (!$emailto) {
-        $emailto = Core::instance()->config('mailer/default');
+        $emailto = $core->config('mailer/default');
     }
 
     if ($domain === 'all') {
@@ -188,7 +190,7 @@ try {
     }
 
     $headers = [
-        'From'         => Core::instance()->config('mailer/from'),
+        'From'         => $core->config('mailer/from'),
         'MIME-Version' => '1.0',
         'Content-Type' => $mbody->contentType()
     ];

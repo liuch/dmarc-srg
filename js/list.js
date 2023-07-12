@@ -245,7 +245,7 @@ class ReportList {
 			}).catch(function(err) {
 				Common.displayError(err);
 				if (err.error_code && err.error_code === -2) {
-					LoginDialog.start({ nousername: true });
+					LoginDialog.start();
 				}
 			});
 			Router.update_title(ReportWidget.instance().title());
