@@ -34,10 +34,12 @@ class SettingIntegerTest extends \PHPUnit\Framework\TestCase
     {
         $this->assertSame(
             SettingsList::$schema['status.emails-for-last-n-days']['default'],
-            (new SettingInteger([
-                'name'  => 'status.emails-for-last-n-days',
-                'value' => 'incorrectIntegerValue'
-            ], true, $this->getDbMapperNever()))->value()
+            strval(
+                (new SettingInteger([
+                    'name'  => 'status.emails-for-last-n-days',
+                    'value' => 'incorrectIntegerValue'
+                ], true, $this->getDbMapperNever()))->value()
+            )
         );
     }
 

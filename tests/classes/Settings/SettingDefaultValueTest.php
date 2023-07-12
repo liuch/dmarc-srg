@@ -33,11 +33,11 @@ class SettingDefaultValueTest extends \PHPUnit\Framework\TestCase
             }
 
             $cc = new $ss([ 'name' => $name, 'value' => $val ], true, $this->getDbMapperNever());
-            $this->assertSame($props['default'], $cc->value(), "Name: {$name}; Constructor Value");
+            $this->assertSame($props['default'], strval($cc->value()), "Name: {$name}; Constructor Value");
 
             if ($t2) {
                 $cc = new $ss($name, true, $this->getDbMapperOnce($name, $val));
-                $this->assertSame($props['default'], $cc->value(), "Name: {$name}; Database Value");
+                $this->assertSame($props['default'], strval($cc->value()), "Name: {$name}; Database Value");
             }
 
             unset($ss);
