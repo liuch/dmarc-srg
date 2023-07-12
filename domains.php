@@ -27,7 +27,7 @@
  *   when the header 'Accept' is 'application/json':
  *     It returns a list of the domains or data for the domain specified in the parameter domain.
  *   otherwise:
- *     it returns the content of the index.html file
+ *     it returns the content of the template.html file
  * HTTP POST query:
  *   Inserts or updates data for specified domain. The data must be in json format with the following fields:
  *     `fqdn`        string  FQDN of the domain.
@@ -124,7 +124,7 @@ if (Core::isJson()) {
         return;
     }
 } elseif (Core::method() == 'GET') {
-    Core::sendHtml();
+    Core::instance()->sendHtml();
     return;
 }
 

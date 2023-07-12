@@ -32,7 +32,7 @@
  *                           The default value is `ascent`. The list will be sorted by Event time.
  *     The data will be returned in json format.
  *   Otherwise:
- *     It returns the content of the index.html file.
+ *     It returns the content of the template.html file.
  * Other HTTP methods:
  *   It returns an error.
  *
@@ -85,7 +85,7 @@ if (Core::method() == "GET") {
             return;
         }
     } else {
-        Core::sendHtml();
+        Core::instance()->sendHtml();
         return;
     }
 }

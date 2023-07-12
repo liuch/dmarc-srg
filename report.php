@@ -69,7 +69,7 @@ if (!empty($_GET['org']) && !empty($_GET['time']) && !empty($_GET['domain']) && 
             return;
         }
     } elseif (Core::method() == 'GET') {
-        Core::sendHtml();
+        Core::instance()->sendHtml();
         return;
     }
 }

@@ -42,7 +42,7 @@ class Core
 {
     public const APP_VERSION = '1.7';
     private const SESSION_NAME = 'session';
-    private const HTML_FILE_NAME = 'index.html';
+    private const HTML_FILE_NAME = 'template.html';
 
     private $modules = [];
     /** @var self|null */
@@ -152,14 +152,33 @@ class Core
     }
 
     /**
-     * Sends the html file to the client.
+     * Sends the html file to the client and inserts a link with a custom CSS file if necessary
      *
      * @return void
      */
-    public static function sendHtml(): void
+    public function sendHtml(): void
     {
-        if (file_exists(Core::HTML_FILE_NAME)) {
-            readfile(Core::HTML_FILE_NAME);
+        if (is_readable(Core::HTML_FILE_NAME)) {
+            $ccf = $this->config('custom_css', '');
+            if (str_ends_with($ccf, '.css')) {
+                $ccf = '<link rel="stylesheet" href="' . htmlspecialchars($ccf) . '" type="text/css" />';
+            } else {
+                $ccf = '';
+            }
+            $fd = fopen(Core::HTML_FILE_NAME, 'r');
+            if ($fd) {
+                while (($buffer = fgets($fd)) !== false) {
+                    if (str_ends_with($buffer, "<!-- Custom CSS -->\n")) {
+                        if (!empty($ccf)) {
+                            $buffer = str_replace('<!-- Custom CSS -->', $ccf, $buffer);
+                            echo $buffer;
+                        }
+                    } else {
+                        echo $buffer;
+                    }
+                }
+                fclose($fd);
+            }
         }
     }
 

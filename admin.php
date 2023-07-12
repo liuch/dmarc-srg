@@ -27,9 +27,9 @@ use Liuch\DmarcSrg\Exception\RuntimeException;
 
 require 'init.php';
 
+$core = Core::instance();
 if (Core::isJson()) {
     try {
-        $core = Core::instance();
         $core->auth()->isAllowed();
         if (Core::method() == 'GET') {
             Core::sendJson($core->admin()->state());
@@ -80,7 +80,7 @@ if (Core::isJson()) {
     }
     return;
 } elseif (Core::method() == 'GET') {
-    Core::sendHtml();
+    $core->sendHtml();
     return;
 }
 

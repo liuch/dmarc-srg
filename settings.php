@@ -31,7 +31,7 @@
  *                          The default value is `ascent`. The list will be sorted by Setting name.
  *     The data will be returned in json format.
  *   Otherwise:
- *     It returns the content of the index.html file.
+ *     It returns the content of the template.html file.
  *
  * HTTP POST query:
  *   Updates data for the specified setting. Data must be in json format with the following fields:
@@ -106,7 +106,7 @@ if (Core::isJson()) {
         return;
     }
 } elseif (Core::method() == 'GET') {
-    Core::sendHtml();
+    Core::instance()->sendHtml();
     return;
 }
 

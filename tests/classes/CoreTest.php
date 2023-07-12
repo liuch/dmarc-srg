@@ -23,14 +23,29 @@ class CoreTest extends \PHPUnit\Framework\TestCase
         $this->assertSame('some_method', $this->core->method());
     }
 
+    /**
+     * @runInSeparateProcess
+     */
     public function testSendHtml(): void
     {
-        ob_start();
-        $this->core->sendHtml();
-        $output = ob_get_contents();
-        ob_end_clean();
-        $this->assertIsString($output);
-        $this->assertStringEqualsFile('index.html', $output);
+        foreach ([
+            [ '', false, 'Empty custom CSS' ],
+            [ 'custom.css', true, 'Correct custom CSS' ],
+            [ 'custom.csss', false, 'Incorrect custom CSS' ]
+        ] as $it) {
+            $core = new Core([ 'config' => $this->getConfig('custom_css', '', $it[0]) ]);
+            ob_start();
+            $core->sendHtml();
+            $output = ob_get_contents();
+            ob_end_clean();
+            $this->assertIsString($output);
+            $this->assertStringNotContainsString('<!-- Custom CSS -->', $output, $it[2]);
+            if ($it[1]) {
+                $this->assertStringContainsString($it[0], $output, $it[2]);
+            } elseif (!empty($it[0])) {
+                $this->assertStringNotContainsString($it[0], $output, $it[2]);
+            }
+        }
     }
 
     /**
@@ -73,15 +88,7 @@ class CoreTest extends \PHPUnit\Framework\TestCase
 
     public function testConfigExistingParameters(): void
     {
-        $config = $this->getMockBuilder(Config::class)
-                       ->disableOriginalConstructor()
-                       ->setMethods([ 'get' ])
-                       ->getMock();
-        $config->expects($this->once())
-               ->method('get')
-               ->with($this->equalTo('some/param'), $this->equalTo('default'))
-               ->willReturn('some_value');
-        $core = new Core([ 'config' => $config ]);
+        $core = new Core([ 'config' => $this->getConfig('some/param', 'default', 'some_value') ]);
         $this->assertSame('some_value', $core->config('some/param', 'default'));
     }
 
@@ -91,5 +98,18 @@ class CoreTest extends \PHPUnit\Framework\TestCase
         $config = new Config('tests/conf_test_file.php');
         $this->assertNull($core->config('some_unknown_parameter'));
         $this->assertIsString($core->config('some_unknown_parameter', ''));
+    }
+
+    private function getConfig(string $param, $defval, $value)
+    {
+        $config = $this->getMockBuilder(Config::class)
+                       ->disableOriginalConstructor()
+                       ->setMethods([ 'get' ])
+                       ->getMock();
+        $config->expects($this->once())
+               ->method('get')
+               ->with($this->equalTo($param), $this->equalTo($defval))
+               ->willReturn($value);
+        return $config;
     }
 }

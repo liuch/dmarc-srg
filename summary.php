@@ -28,7 +28,7 @@
  *     if parameter `mode` is `options`, it returs data for the report options dialog;
  *     if parameter `mode` is `report`, it returns report data for the specified domain and period
  *   otherwise:
- *     it returns the content of the index.html file
+ *     it returns the content of the template.html file
  * Other HTTP methods:
  *   it returns an error
  *
@@ -86,7 +86,7 @@ if (Core::isJson() && isset($_GET['mode'])) {
         return;
     }
 } elseif (Core::method() == 'GET') {
-    Core::sendHtml();
+    Core::instance()->sendHtml();
     return;
 }
 

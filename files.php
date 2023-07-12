@@ -33,7 +33,7 @@ require 'init.php';
 
 if (Core::method() == 'GET') {
     if (!Core::isJson()) {
-        Core::sendHtml();
+        Core::instance()->sendHtml();
         return;
     }
 

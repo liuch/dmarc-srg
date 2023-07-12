@@ -59,7 +59,7 @@ if (Core::method() == 'GET') {
         }
         return;
     }
-    Core::sendHtml();
+    Core::instance()->sendHtml();
     return;
 }
 
