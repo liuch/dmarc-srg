@@ -168,7 +168,7 @@ class Core
             $fd = fopen(Core::HTML_FILE_NAME, 'r');
             if ($fd) {
                 while (($buffer = fgets($fd)) !== false) {
-                    if (str_ends_with($buffer, "<!-- Custom CSS -->\n")) {
+                    if (substr_compare($buffer, "<!-- Custom CSS -->\n", -20) === 0) {
                         if (!empty($ccf)) {
                             $buffer = str_replace('<!-- Custom CSS -->', $ccf, $buffer);
                             echo $buffer;
