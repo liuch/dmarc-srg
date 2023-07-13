@@ -160,7 +160,7 @@ class Core
     {
         if (is_readable(Core::HTML_FILE_NAME)) {
             $ccf = $this->config('custom_css', '');
-            if (str_ends_with($ccf, '.css')) {
+            if (substr_compare($ccf, '.css', -4) === 0) { // replacement for str_ends_with
                 $ccf = '<link rel="stylesheet" href="' . htmlspecialchars($ccf) . '" type="text/css" />';
             } else {
                 $ccf = '';
