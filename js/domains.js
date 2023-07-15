@@ -289,9 +289,10 @@ class DomainEditDialog extends ModalDialog {
 		this._inputs.addEventListener("input", function(event) {
 			if (this._fetched || this._data["new"]) {
 				this._buttons[1].disabled = (
+					this._fqdn_el.value.trim() === "" || (
 					this._actv_el.dataset.server === this._actv_el.value &&
 					this._desc_el.defaultValue === this._desc_el.value &&
-					this._fqdn_el.defaultValue === this._fqdn_el.value
+					this._fqdn_el.defaultValue === this._fqdn_el.value)
 				);
 			}
 		}.bind(this));
@@ -346,8 +347,7 @@ class DomainEditDialog extends ModalDialog {
 		let val = "";
 		for (let i = 0; i < this._actv_el.options.length; ++i) {
 			let op = this._actv_el.options[i];
-			let ee = op.value === "yes";
-			if ((data.active && ee) || (!data.active && !ee)) {
+			if (data.active === (op.value === "yes")) {
 				op.setAttribute("selected", "selected");
 				val = op.value;
 			}
@@ -402,10 +402,8 @@ class DomainEditDialog extends ModalDialog {
 	_save() {
 		this._enable_ui(false);
 		let em = this._content.querySelector(".error-message");
-		if (em) {
-			em.remove();
-		}
-		this._content.appendChild(set_wait_status());
+		em && em.remove();
+		this._content.appendChild(set_wait_status(null, "Sending data to the server..."));
 
 		let body = {};
 		body.fqdn        = this._data["new"] && this._fqdn_el.value || this._data.fqdn;
@@ -449,10 +447,8 @@ class DomainEditDialog extends ModalDialog {
 	_delete() {
 		this._enable_ui(false);
 		let em = this._content.querySelector(".error-message");
-		if (em) {
-			em.remove();
-		}
-		this._content.appendChild(set_wait_status());
+		em && em.remove();
+		this._content.appendChild(set_wait_status(null, "Sending a request to the server..."))
 
 		let body = {};
 		body.fqdn   = this._data.fqdn;
