@@ -39,7 +39,7 @@ use Liuch\DmarcSrg\Exception\DatabaseFatalException;
  */
 class DatabaseController
 {
-    public const REQUIRED_VERSION = '3.1';
+    public const REQUIRED_VERSION = '3.2';
 
     private $conf_data = null;
     /** @var DatabaseConnector */

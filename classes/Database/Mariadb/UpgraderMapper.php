@@ -223,6 +223,46 @@ class UpgraderMapper implements UpgraderMapperInterface
     }
 
     /**
+     * Upgrades the database structure from v3.1 to v3.2
+     *
+     * @return string New version of the database structure
+     */
+    private function up31(): string
+    {
+        $db = $this->connector->dbh();
+        try {
+            $rep_tn = $this->connector->tablePrefix('reports');
+            // Remove duplicates
+            $db->query(
+                'CREATE TEMPORARY TABLE `up31_ids` AS (SELECT MIN(`id`) AS `id` FROM `' . $rep_tn
+                . '` GROUP BY `domain_id`, `begin_time`, `org`, `external_id`)'
+            );
+            $db->query('DELETE FROM `' . $rep_tn . '` WHERE `id` NOT IN (SELECT `id` FROM `up31_ids`)');
+            // Create a new unique index
+            if (!$this->indexExists($db, $rep_tn, 'org_time_id_u')) {
+                $db->query(
+                    'CREATE UNIQUE INDEX `org_time_id_u` ON `' . $rep_tn
+                    . '` (`domain_id`, `begin_time`, `org`, `external_id`)'
+                );
+            }
+            // Remove the old index
+            if ($this->indexExists($db, $rep_tn, 'org_time_id')) {
+                $db->query(
+                    'DROP INDEX `org_time_id` ON `' . $rep_tn . '`'
+                );
+            }
+            // Update version
+            $sys_tn = $this->connector->tablePrefix('system');
+            $db->query(
+                'UPDATE `' . $sys_tn . '` SET `value` = "3.2" WHERE `key` = "version"'
+            );
+        } catch (\PDOException $e) {
+            throw $this->dbFatalException($e);
+        }
+        return '3.2';
+    }
+
+    /**
      * Checks if the specified column exists in the specified table of the database
      *
      * @param object $db     Connection handle of the database
@@ -285,6 +325,7 @@ class UpgraderMapper implements UpgraderMapperInterface
         'ver_0.1'  => 'up01',
         'ver_1.0'  => 'up10',
         'ver_2.0'  => 'up20',
-        'ver_3.0'  => 'up30'
+        'ver_3.0'  => 'up30',
+        'ver_3.1'  => 'up31'
     ];
 }
