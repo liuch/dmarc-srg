@@ -291,7 +291,7 @@ class ReportMapper implements ReportMapperInterface
         $limit_str = $this->sqlLimit($limit);
         try {
             $st = $db->prepare(
-                'SELECT `org`, `begin_time`, `end_time`, `fqdn`, external_id, `seen`, SUM(`rcount`) AS `rcount`,'
+                'SELECT `org`, `begin_time`, `end_time`, `fqdn`, `external_id`, `seen`, SUM(`rcount`) AS `rcount`,'
                 . ' MIN(`dkim_align`) AS `dkim_align`, MIN(`spf_align`) AS `spf_align`,'
                 . ' MIN(`disposition`) AS `disposition` FROM `' . $this->connector->tablePrefix('rptrecords')
                 . '` AS `rr` RIGHT JOIN (SELECT `rp`.`id`, `org`, `begin_time`, `end_time`, `external_id`,'
@@ -557,7 +557,7 @@ class ReportMapper implements ReportMapperInterface
     {
 
         $dir = $order['direction'] === 'ascent' ? 'ASC' : 'DESC';
-        return " ORDER BY `{$order['field']}` {$dir}";
+        return " ORDER BY `{$order['field']}` {$dir}, `rp`.`id` {$dir}";
     }
 
     /**
