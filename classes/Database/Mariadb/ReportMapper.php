@@ -285,7 +285,7 @@ class ReportMapper implements ReportMapperInterface
         $db = $this->connector->dbh();
         $list = [];
         $f_data = $this->prepareFilterData($filter);
-        $order_str = $this->sqlOrderList($order);
+        $order_str = $this->sqlOrderList($order, '`rp`.`id`');
         $cond_str0 = $this->sqlConditionList($f_data, ' AND ', 0);
         $cond_str1 = $this->sqlConditionList($f_data, ' HAVING ', 1);
         $limit_str = $this->sqlLimit($limit);
@@ -383,7 +383,7 @@ class ReportMapper implements ReportMapperInterface
     {
         $f_data = $this->prepareFilterData($filter);
         $cond_str = $this->sqlConditionList($f_data, ' WHERE ', 0);
-        $order_str = $this->sqlOrderList($order);
+        $order_str = $this->sqlOrderList($order, '`id`');
         $limit_str = $this->sqlLimit($limit);
         $db = $this->connector->dbh();
         $db->beginTransaction();
@@ -549,15 +549,20 @@ class ReportMapper implements ReportMapperInterface
     /**
      * Returns `ORDER BY ...` part of the SQL query
      *
-     * @param array $order Key-value array with ordering options
+     * @param array  $order      Key-value array with ordering options
+     * @param string $tail_field Table field for predictable sorting
      *
      * @return string
      */
-    private function sqlOrderList(array &$order): string
+    private function sqlOrderList(array &$order, string $tail_field): string
     {
 
         $dir = $order['direction'] === 'ascent' ? 'ASC' : 'DESC';
-        return " ORDER BY `{$order['field']}` {$dir}, `rp`.`id` {$dir}";
+        $res = " ORDER BY `{$order['field']}` {$dir}";
+        if (!empty($tail_field)) {
+            $res .= ", {$tail_field} {$dir}";
+        }
+        return $res;
     }
 
     /**
