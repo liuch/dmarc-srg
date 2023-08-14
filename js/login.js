@@ -18,7 +18,7 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-class LoginDialog extends ModalDialog {
+class LoginDialog extends VerticalDialog {
 	constructor(params) {
 		super();
 		this._params = params || {};
@@ -38,31 +38,20 @@ class LoginDialog extends ModalDialog {
 	}
 
 	_gen_content() {
-		let tdiv = document.createElement("div");
-		tdiv.setAttribute("class", "titled-input");
 		if (!this._params.nousername) {
-			this._user = this._insert_row(tdiv, "User name", "text", "Enter your user name");
+			this._user = this._insert_input_row("User name", "text", "Enter your user name");
 		}
-		this._pass = this._insert_row(tdiv, "Password", "password", "Enter your password");
+		this._pass = this._insert_input_row("Password", "password", "Enter your password");
 		this._msg_el = set_wait_status(null, "Enter your credentials");
-		this._content.setAttribute("class", "vertical-content");
-		this._content.appendChild(tdiv);
 		this._content.appendChild(this._msg_el);
 	}
 
-	_insert_row(c_el, text, type, placeholder) {
-		let l_el = document.createElement("label");
-		c_el.appendChild(l_el);
-		let t_el = document.createElement("span");
-		t_el.appendChild(document.createTextNode(text + ": "));
-		l_el.appendChild(t_el);
+	_insert_input_row(text, type, placeholder) {
 		let inp = document.createElement("input");
 		inp.required = true;
 		inp.setAttribute("type", type);
-		if (placeholder) {
-			inp.setAttribute("placeholder", placeholder);
-		}
-		l_el.appendChild(inp);
+		inp.setAttribute("placeholder", placeholder);
+		super._insert_input_row(text, inp);
 		return inp;
 	}
 

@@ -158,12 +158,11 @@ class Settings {
 	};
 }
 
-class SettingEditDialog extends ModalDialog {
+class SettingEditDialog extends VerticalDialog {
 	constructor(param) {
 		super({ title: "Setting dialog", buttons: [ "ok", "close" ] });
 		this._data    = param || {};
 		this._content = null;
-		this._table   = null;
 		this._val_el  = null;
 		this._val_tp  = null;
 		this._desc_el = null;
@@ -172,21 +171,16 @@ class SettingEditDialog extends ModalDialog {
 	}
 
 	_gen_content() {
-		this._table = document.createElement("div");
-		this._table.setAttribute("class", "titled-input");
-		this._content.appendChild(this._table);
-		this._content.classList.add("vertical-content");
-
 		let nm = document.createElement("input");
 		nm.setAttribute("type", "text");
 		nm.setAttribute("disabled", "disabled");
 		nm.setAttribute("value", this._data.name);
-		this._insert_row("Name", nm);
+		this._insert_input_row("Name", nm);
 
 		let val = document.createElement("input");
 		val.setAttribute("type", "text");
 		val.disabled = true;
-		this._insert_row("Value", val);
+		this._insert_input_row("Value", val);
 		this._val_el = val;
 		this._val_tp = "string";
 
@@ -196,13 +190,13 @@ class SettingEditDialog extends ModalDialog {
 			desc.appendChild(document.createTextNode(this._data.description));
 		}
 		desc.classList.add("description");
-		this._insert_row("Description", desc);
+		this._insert_input_row("Description", desc);
 		this._desc_el = desc;
 
 		this._save_bt = this._buttons[1];
 		this._save_bt.disabled = true;
 
-		this._table.addEventListener("input", function(event) {
+		this._inputs.addEventListener("input", function(event) {
 			if (this._fetched && event.target == this._val_el) {
 				let e_val = null;
 				switch (this._val_tp) {
@@ -225,15 +219,6 @@ class SettingEditDialog extends ModalDialog {
 			text = "Save";
 		}
 		super._add_button(container, text, type);
-	}
-
-	_insert_row(text, val_el) {
-		let lb = document.createElement("label");
-		let sp = document.createElement("span");
-		sp.appendChild(document.createTextNode(text + ": "));
-		lb.appendChild(sp);
-		lb.appendChild(val_el);
-		this._table.appendChild(lb);
 	}
 
 	_fetch_data() {

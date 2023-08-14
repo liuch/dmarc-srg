@@ -174,7 +174,7 @@ class Summary {
 	}
 }
 
-class OptionsDialog extends ModalDialog {
+class OptionsDialog extends VerticalDialog {
 	constructor(params) {
 		super({ title: "Report options", buttons: [ "apply", "reset" ] });
 		this._data    = params || {};
@@ -189,12 +189,8 @@ class OptionsDialog extends ModalDialog {
 	}
 
 	_gen_content() {
-		let container = document.createElement("div");
-		container.setAttribute("class", "titled-input");
-		this._content.appendChild(container);
-		this._content.classList.add("vertical-content");
 		this._ui_data.forEach(function(row) {
-			let i_el = this._add_option_row(row.name, row.title, container, row.type);
+			let i_el = this._insert_input_row(row.title, row.name, row.type);
 			if (row.name === "days") {
 				i_el.setAttribute("type", "number");
 				i_el.setAttribute("min", "1");
@@ -224,6 +220,13 @@ class OptionsDialog extends ModalDialog {
 		}
 	}
 
+	_insert_input_row(text, name, type) {
+		let el = document.createElement(type || "select");
+		el.setAttribute("name", name);
+		super._insert_input_row(text, el);
+		return el;
+	}
+
 	_submit() {
 		let res = {
 			domain: this._ui_data[0].element.value,
@@ -235,21 +238,6 @@ class OptionsDialog extends ModalDialog {
 		}
 		this._result = res;
 		this.hide();
-	}
-
-	_add_option_row(name, title, p_el, type) {
-		let l_el = document.createElement("label");
-		p_el.appendChild(l_el);
-
-		let t_el = document.createElement("span");
-		t_el.appendChild(document.createTextNode(title + ": "));
-		l_el.appendChild(t_el);
-
-		let n_el = document.createElement(type || "select");
-		n_el.setAttribute("name", name);
-		l_el.appendChild(n_el);
-
-		return n_el;
 	}
 
 	_update_domain_element() {
