@@ -205,6 +205,21 @@ class DbUser extends User
     }
 
     /**
+     * Returns the sequence number of the session
+     *
+     * It changes when the user credentials or state are changed.
+     *
+     * @return int
+     */
+    public function session(): int
+    {
+        if (is_null($this->data['session'])) {
+            $this->fetchData();
+        }
+        return $this->data['session'];
+    }
+
+    /**
      * Returns the user's data as an array
      *
      * @return array

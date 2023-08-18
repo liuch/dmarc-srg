@@ -93,7 +93,7 @@ class UserMapper implements UserMapperInterface
         try {
             $st = $this->connector->dbh()->prepare(
                 'SELECT `id`, `name`, `level`, `enabled`, IF(`password` IS NULL OR `password` = "", FALSE, TRUE),'
-                . ' `email`, `key`, `created_time`, `updated_time` FROM `'
+                . ' `email`, `key`, `session`, `created_time`, `updated_time` FROM `'
                 . $this->connector->tablePrefix('users') . '` WHERE ' . $this->sqlCondition($data)
             );
             $this->sqlBindValues($st, $data, 1);
@@ -110,8 +110,9 @@ class UserMapper implements UserMapperInterface
             $data['password']     = boolval($res[4]);
             $data['email']        = $res[5];
             $data['key']          = $res[6];
-            $data['created_time'] = new DateTime($res[7]);
-            $data['updated_time'] = new DateTime($res[8]);
+            $data['session']      = intval($res[7]);
+            $data['created_time'] = new DateTime($res[8]);
+            $data['updated_time'] = new DateTime($res[9]);
         } catch (\PDOException $e) {
             throw new DatabaseFatalException('Failed to fetch the user data', -1, $e);
         }
@@ -128,14 +129,31 @@ class UserMapper implements UserMapperInterface
     {
         $db = $this->connector->dbh();
         $data['updated_time'] = new DateTime();
+        $enabled = $data['enabled'] ?? false;
         if ($this->exists($data)) {
             try {
+                $id = $data['id'];
+                $db->beginTransaction();
+                $u_tn = $this->connector->tablePrefix('users');
+                $extra = '';
+                if (!$enabled) {
+                    $st = $db->prepare("SELECT `enabled` FROM `{$u_tn}` WHERE `id` = ?");
+                    $st->bindValue(1, $id, \PDO::PARAM_INT);
+                    $st->execute();
+                    $res = $st->fetch(\PDO::FETCH_NUM);
+                    $st->closeCursor();
+                    if ($res && boolval($res[0])) {
+                        // The user got deactivated. Reset its active sessions.
+                        $extra = ', `session` = `session` + 1';
+                    }
+                }
                 $st = $db->prepare(
-                    'UPDATE `' . $this->connector->tablePrefix('users')
-                    . '` SET `level` = ?, `enabled` = ?, `email` = ?, `key` = ?, `updated_time` = ? WHERE `id` = ?'
+                    'UPDATE `' . $u_tn
+                    . '` SET `level` = ?, `enabled` = ?, `email` = ?, `key` = ?, `updated_time` = ?'
+                    . $extra . ' WHERE `id` = ?'
                 );
                 $st->bindValue(1, $data['level'], \PDO::PARAM_INT);
-                $st->bindValue(2, $data['enabled'] ?? false, \PDO::PARAM_BOOL);
+                $st->bindValue(2, $enabled, \PDO::PARAM_BOOL);
                 if (empty($data['email'])) {
                     $st->bindValue(3, null, \PDO::PARAM_NULL);
                 } else {
@@ -147,15 +165,19 @@ class UserMapper implements UserMapperInterface
                     $st->bindValue(4, $data['key'], \PDO::PARAM_STR);
                 }
                 $st->bindValue(5, $data['updated_time']->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
-                $st->bindValue(6, $data['id'], \PDO::PARAM_INT);
+                $st->bindValue(6, $id, \PDO::PARAM_INT);
                 $st->execute();
                 $st->closeCursor();
+                $db->commit();
             } catch (\PDOException $e) {
+                $db->rollBack();
                 throw new DatabaseFatalException('Failed to update the user data', -1, $e);
+            } catch (\Exception $e) {
+                $db->rollBack();
+                throw $e;
             }
         } else {
             try {
-                $enabled = $data['enabled'] ?? false;
                 $data['created_time'] = $data['updated_time'];
                 if (!is_null($data['email'])) {
                     $ss1 = ', `email`';

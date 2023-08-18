@@ -82,6 +82,18 @@ abstract class User
     abstract public function isEnabled(): bool;
 
     /**
+     * Returns the sequence number of the session
+     *
+     * It changes when the user credentials or state are changed.
+     *
+     * @return int
+     */
+    public function session(): int
+    {
+        return 1;
+    }
+
+    /**
      * Returns the user's data as an array
      *
      * @return array

@@ -104,13 +104,14 @@ class Core
      */
     public function user($user = null)
     {
+        $cli = (php_sapi_name() === 'cli');
         $start_f = false;
-        if (php_sapi_name() !== 'cli') {
+        if (!$cli) {
             if ((self::cookie(self::SESSION_NAME) !== '' || !is_null($user)) &&
                 session_status() !== PHP_SESSION_ACTIVE
             ) {
                 $start_f = true;
-                self::sessionStart();
+                self::startSession();
             }
         }
         if (is_null($user)) {
@@ -126,6 +127,18 @@ class Core
                     $this->user = new AdminUser($this);
                 } else {
                     $this->user = new DbUser($_SESSION['user']);
+                    $cts = (new DateTime())->getTimestamp();
+                    if (!isset($_SESSION['s_time']) || $_SESSION['s_time'] + 5 <= $cts) {
+                        if (isset($_SESSION['s_id']) &&
+                            $this->user->session() === $_SESSION['s_id'] &&
+                            $this->user->isEnabled()
+                        ) {
+                            $_SESSION['s_time'] = $cts;
+                            $_SESSION['user']['level'] = $this->user->level();
+                        } else {
+                            $this->destroySession();
+                        }
+                    }
                 }
             }
         } else {
@@ -133,11 +146,15 @@ class Core
                 $user = UserList::getUserByName($user, $this);
             }
             $this->user = $user;
-            $_SESSION['user'] = [
-                'id'    => $user->id(),
-                'name'  => $user->name(),
-                'level' => $user->level()
-            ];
+            if (!$cli) {
+                $_SESSION['user'] = [
+                    'id'    => $user->id(),
+                    'name'  => $user->name(),
+                    'level' => $user->level()
+                ];
+                $_SESSION['s_id']   = $user->session();
+                $_SESSION['s_time'] = (new DateTime())->getTimestamp();
+            }
         }
         if ($start_f) {
             session_write_close();
@@ -155,7 +172,7 @@ class Core
         if (php_sapi_name() !== 'cli') {
             if (self::cookie(self::SESSION_NAME)) {
                 if (session_status() !== PHP_SESSION_ACTIVE) {
-                    self::sessionStart();
+                    self::startSession();
                 }
                 $_SESSION = [];
                 if (ini_get('session.use_cookies')) {
@@ -375,7 +392,7 @@ class Core
      *
      * @return void
      */
-    private static function sessionStart(): void
+    private static function startSession(): void
     {
         if (!session_start(
             [
