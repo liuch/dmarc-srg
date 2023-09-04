@@ -46,12 +46,13 @@ class Status {
 		let url = new URL("status.php", document.location);
 		let fields = [ "state", "user" ];
 		let s_list = params.settings || [];;
+		if (params.page !== "list") this._use_filter = false;
 		if (this._use_filter === null || (params.settings && params.settings.length)) {
 			fields.push("settings");
-			s_list.push("status.emails-filter-when-list-filtered");
+			if (this._use_filter === null) s_list.push("status.emails-filter-when-list-filtered");
 		}
 		url.searchParams.set("fields", fields.join(","));
-		url.searchParams.set("settings", s_list.join(","));
+		if (s_list.length) url.searchParams.set("settings", s_list.join(","));
 
 		return window.fetch(url, {
 			method: "GET",

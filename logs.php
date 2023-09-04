@@ -74,7 +74,22 @@ if (Core::method() == "GET") {
                 $dir = 'descent';
             }
 
-            $log = new ReportLog(null, null);
+            $log = new ReportLog();
+            if (($filter = Common::getFilter())) {
+                if (isset($filter['success'])) {
+                    $filter['success'] = $filter['success'] === 'true' ? true : false;
+                }
+                foreach ([ 'from_time', 'till_time' ] as $k) {
+                    if (isset($filter[$k])) {
+                        if (($d = DateTime::createFromFormat('!Y-m-d', $filter[$k]))) {
+                            $filter[$k] = $d;
+                        } else {
+                            unset($filter[$k]);
+                        }
+                    }
+                }
+                $log->setFilter($filter);
+            }
             $log->setOrder($dir === 'ascent' ? ReportLog::ORDER_ASCENT : ReportLog::ORDER_DESCENT);
             $res = $log->getList($pos);
             $res['sorted_by'] = [ 'column' => 'event_time', 'direction' => $dir ];

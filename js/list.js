@@ -65,7 +65,7 @@ class ReportList {
 			}
 			if (this._handle_url_params()) {
 				Status.instance().reset();
-				Status.instance().update();
+				Status.instance().update({ page: "list" });
 				this._update_table();
 			}
 		}
@@ -334,7 +334,7 @@ class ReportList {
 				window.history.replaceState(null, "", url.toString());
 				if (this._handle_url_params()) {
 					Status.instance().reset();
-					Status.instance().update();
+					Status.instance().update({ page: "list" });
 					this._update_table();
 				}
 			}

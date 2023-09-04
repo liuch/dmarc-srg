@@ -30,40 +30,57 @@ class ReportLog
     public const ORDER_DESCENT = 2;
 
     private $db        = null;
-    private $filter    = [
-            'from_time' => null,
-            'till_time' => null
-    ];
+    private $filter    = [];
     private $order     = [
             'direction' => 'ascent'
     ];
     private $rec_limit = 0;
     private $position  = 0;
 
-    public function __construct($from_time, $till_time, $db = null)
+    public function __construct($db = null)
     {
-        $this->filter['from_time'] = $from_time;
-        $this->filter['till_time'] = $till_time;
         $this->db = $db ?? Core::instance()->database();
     }
 
     public function setOrder(int $dir)
     {
         $this->order['direction'] = ($dir === self::ORDER_DESCENT ? 'descent' : 'ascent');
+        return $this;
     }
 
     public function setMaxCount(int $n)
     {
         $this->rec_limit = $n;
+        return $this;
     }
 
-    public function count()
+    /**
+     * Sets filter value for the list and for deleting report log items
+     *
+     * @param array $filter Key-value array:
+     *                      'from_time' => DateTime, start from the passed event timestamp
+     *                      'till_time' => DateTime, until the passed event timestamp not including it
+     *                      'success'   => bool, whether the report upload was successful
+     *                      'source'    => string, Report source type
+     *
+     * @return $this
+     */
+    public function setFilter(array $filter)
+    {
+        $this->filter = $filter;
+        if (isset($filter['source'])) {
+            $this->filter['source'] = ReportLogItem::stringToSource($filter['source']);
+        }
+        return $this;
+    }
+
+    public function count(): int
     {
         $limit = [ 'offset' => 0, 'count' => $this->rec_limit ];
         return $this->db->getMapper('report-log')->count($this->filter, $limit);
     }
 
-    public function getList(int $pos)
+    public function getList(int $pos): array
     {
         $this->position = $pos;
         $max_rec = $this->rec_limit > 0 ? $this->rec_limit : 25;

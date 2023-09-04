@@ -2,6 +2,7 @@
 
 namespace Liuch\DmarcSrg;
 
+use Liuch\DmarcSrg\Sources\Source;
 use Liuch\DmarcSrg\ReportLog\ReportLog;
 use Liuch\DmarcSrg\Database\ReportLogMapperInterface;
 
@@ -22,15 +23,59 @@ class ReportLogTest extends \PHPUnit\Framework\TestCase
         self::$till = null;
     }
 
-    public function testRange(): void
+    public function testRangeFilter(): void
     {
         $callback = function ($filter, $order, $limit) {
             $this->assertSame([ 'from_time' => self::$from, 'till_time' => self::$till ], $filter);
             $this->assertSame(11, $limit['offset']);
             return [];
         };
-        $rl = new ReportLog(self::$from, self::$till, $this->getDbMapperOnce('list', $callback));
-        $rl->getList(11);
+        (new ReportLog($this->getDbMapperOnce('list', $callback)))
+            ->setFilter([ 'from_time' => self::$from, 'till_time' => self::$till ])
+            ->getList(11);
+    }
+
+    public function testFilterWithSuccessValue(): void
+    {
+        $callback1 = function ($filter, $order, $limit) {
+            $this->assertSame([ 'success' => true ], $filter);
+            return [];
+        };
+        $callback2 = function ($filter, $order, $limit) {
+            $this->assertSame([ 'success' => false ], $filter);
+            return [];
+        };
+        (new ReportLog($this->getDbMapperOnce('list', $callback1)))
+            ->setFilter([ 'success' => true ])
+            ->getList(0);
+        (new ReportLog($this->getDbMapperOnce('list', $callback2)))
+            ->setFilter([ 'success' => false ])
+            ->getList(0);
+    }
+
+    public function testFilterWithSourceValue(): void
+    {
+        $callback1 = function ($filter, $order, $limit) {
+            $this->assertSame([ 'source' => Source::SOURCE_UPLOADED_FILE ], $filter);
+            return [];
+        };
+        $callback2 = function ($filter, $order, $limit) {
+            $this->assertSame([ 'source' => Source::SOURCE_MAILBOX ], $filter);
+            return [];
+        };
+        $callback3 = function ($filter, $order, $limit) {
+            $this->assertSame([ 'source' => Source::SOURCE_DIRECTORY ], $filter);
+            return [];
+        };
+        (new ReportLog($this->getDbMapperOnce('list', $callback1)))
+            ->setFilter([ 'source' => 'uploaded_file' ])
+            ->getList(0);
+        (new ReportLog($this->getDbMapperOnce('list', $callback2)))
+            ->setFilter([ 'source' => 'email' ])
+            ->getList(0);
+        (new ReportLog($this->getDbMapperOnce('list', $callback3)))
+            ->setFilter([ 'source' => 'directory' ])
+            ->getList(0);
     }
 
     public function testSettingOrder(): void
@@ -43,17 +88,15 @@ class ReportLogTest extends \PHPUnit\Framework\TestCase
             $this->assertSame([ 'direction' => 'descent' ], $order);
             return [];
         };
+        (new ReportLog($this->getDbMapperOnce('list', $callback_ascent)))
+            ->getList(0);
 
-        $rl = new ReportLog(self::$from, self::$till, $this->getDbMapperOnce('list', $callback_ascent));
-        $rl->getList(0);
-
-        $rl = new ReportLog(self::$from, self::$till, $this->getDbMapperOnce('list', $callback_ascent));
-        $rl->setOrder(ReportLog::ORDER_ASCENT);
-        $rl->getList(0);
-
-        $rl = new ReportLog(self::$from, self::$till, $this->getDbMapperOnce('list', $callback_descent));
-        $rl->setOrder(ReportLog::ORDER_DESCENT);
-        $rl->getList(0);
+        (new ReportLog($this->getDbMapperOnce('list', $callback_ascent)))
+            ->setOrder(ReportLog::ORDER_ASCENT)
+            ->getList(0);
+        (new ReportLog($this->getDbMapperOnce('list', $callback_descent)))
+            ->setOrder(ReportLog::ORDER_DESCENT)
+            ->getList(0);
     }
 
     public function testSettingMaxCount(): void
@@ -66,13 +109,11 @@ class ReportLogTest extends \PHPUnit\Framework\TestCase
             $this->assertSame(51, $limit['count']);
             return [];
         };
-
-        $rl = new ReportLog(self::$from, self::$till, $this->getDbMapperOnce('list', $callback26));
-        $rl->getList(0);
-
-        $rl = new ReportLog(self::$from, self::$till, $this->getDbMapperOnce('list', $callback51));
-        $rl->setMaxCount(50);
-        $rl->getList(0);
+        (new ReportLog($this->getDbMapperOnce('list', $callback26)))
+            ->getList(0);
+        (new ReportLog($this->getDbMapperOnce('list', $callback51)))
+            ->setMaxCount(50)
+            ->getList(0);
     }
 
     public function testGettingCount(): void
@@ -82,8 +123,9 @@ class ReportLogTest extends \PHPUnit\Framework\TestCase
             $this->assertSame([ 'offset' => 0, 'count' => 44 ], $limit);
             return 55;
         };
-        $rl = new ReportLog(self::$from, self::$till, $this->getDbMapperOnce('count', $callback));
-        $rl->setMaxCount(44);
+        $rl = (new ReportLog($this->getDbMapperOnce('count', $callback)))
+            ->setFilter([ 'from_time' => self::$from, 'till_time' => self::$till ])
+            ->setMaxCount(44);
         $this->assertSame(55, $rl->count());
     }
 
@@ -115,15 +157,15 @@ class ReportLogTest extends \PHPUnit\Framework\TestCase
             ];
         };
 
-        $rl = new ReportLog(self::$from, self::$till, $this->getDbMapperOnce('list', $callback));
-        $rl->setMaxCount(1);
-        $res = $rl->getList(0);
+        $res = (new ReportLog($this->getDbMapperOnce('list', $callback)))
+            ->setMaxCount(1)
+            ->getList(0);
         $this->assertTrue($res['more']);
         $this->assertCount(1, $res['items']);
 
-        $rl = new ReportLog(self::$from, self::$till, $this->getDbMapperOnce('list', $callback));
-        $rl->setMaxCount(2);
-        $res = $rl->getList(0);
+        $res = (new ReportLog($this->getDbMapperOnce('list', $callback)))
+            ->setMaxCount(2)
+            ->getList(0);
         $this->assertFalse($res['more']);
         $this->assertCount(2, $res['items']);
     }
@@ -135,10 +177,11 @@ class ReportLogTest extends \PHPUnit\Framework\TestCase
             $this->assertSame([ 'direction' => 'ascent' ], $order);
             $this->assertSame([ 'offset' => 0, 'count' => 33 ], $limit);
         };
-        $rl = new ReportLog(self::$from, self::$till, $this->getDbMapperOnce('delete', $callback));
-        $rl->setOrder(ReportLog::ORDER_ASCENT);
-        $rl->setMaxCount(33);
-        $rl->delete();
+        (new ReportLog($this->getDbMapperOnce('delete', $callback)))
+            ->setFilter([ 'from_time' => self::$from, 'till_time' => self::$till ])
+            ->setOrder(ReportLog::ORDER_ASCENT)
+            ->setMaxCount(33)
+            ->delete();
     }
 
     private function getDbMapperOnce(string $method, $callback): object

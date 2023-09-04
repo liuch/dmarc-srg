@@ -22,41 +22,27 @@ class Logs {
 	constructor() {
 		this._table = null;
 		this._scroll = null;
+		this._filter = null;
 		this._element = document.getElementById("main-block");
+		this._set_btn = null;
+		this._set_dlg = null;
 		this._fetching = false;
 		this._sort = { column: "", direction: "" };
 	}
 
 	display() {
+		this._gen_settings_button();
 		this._make_scroll_container();
 		this._make_table();
 		this._scroll.appendChild(this._table.element());
 		this._element.appendChild(this._scroll);
+		this._ensure_settins_button();
 		this._table.focus();
 	}
 
 	update() {
-		this._table.clear();
-		let that = this;
-		let fr_cnt = -1;
-		let again = function() {
-			let fc = that._table.frames_count()
-			if (fr_cnt < fc && that._scroll.scrollHeight <= that._scroll.clientHeight * 1.5) {
-				fr_cnt = fc;
-				that._fetch_list().then(function(frame) {
-					if (frame && frame.more()) {
-						again();
-					}
-					else {
-						that._table.focus();
-					}
-				});
-			}
-			else {
-				that._table.focus();
-			}
-		};
-		again();
+		this._filter = Common.getFilterFromURL(new URL(document.location));
+		this._update_table();
 	}
 
 	title() {
@@ -74,6 +60,11 @@ class Logs {
 		if (this._sort.column && this._sort.direction) {
 			uparams.set("order", this._sort.column);
 			uparams.set("direction", this._sort.direction);
+		}
+		if (this._filter) {
+			[ "success", "source" ].forEach(function(nm) {
+				if (this._filter[nm]) uparams.append("filter[]", `${nm}:${this._filter[nm]}`);
+			}, this);
 		}
 
 		let that = this;
@@ -113,6 +104,30 @@ class Logs {
 		});
 	}
 
+	_update_table() {
+		this._table.clear();
+		let that = this;
+		let fr_cnt = -1;
+		let again = function() {
+			let fc = that._table.frames_count()
+			if (fr_cnt < fc && that._scroll.scrollHeight <= that._scroll.clientHeight * 1.5) {
+				fr_cnt = fc;
+				that._fetch_list().then(function(frame) {
+					if (frame && frame.more()) {
+						again();
+					}
+					else {
+						that._table.focus();
+					}
+				});
+			}
+			else {
+				that._table.focus();
+			}
+		};
+		again();
+	}
+
 	_make_scroll_container() {
 		let that = this;
 		let el = document.createElement("div");
@@ -125,6 +140,32 @@ class Logs {
 			}
 		});
 		this._scroll = el;
+	}
+
+	_gen_settings_button() {
+		if (!this._set_btn) {
+			let btn = document.createElement("span");
+			btn.setAttribute("class", "options-button");
+			btn.appendChild(document.createTextNode("\u{2699}"));
+			btn.addEventListener("click", function(event) {
+				event.preventDefault();
+				this._display_settings_dialog();
+			}.bind(this));
+			this._set_btn = btn;
+		}
+	}
+
+	_ensure_settins_button() {
+		let title_el = document.querySelector("h1");
+		if (!title_el.contains(this._set_btn)) {
+			title_el.appendChild(this._set_btn);
+		}
+	}
+
+	_update_settings_button() {
+		if (this._set_btn) {
+			this._set_btn.classList[ this._filter ? "add" : "remove" ]("active");
+		}
 	}
 
 	_make_table() {
@@ -141,7 +182,7 @@ class Logs {
 				this._table.set_sorted(col.name(), dir);
 				this._sort.column = col.name();
 				this._sort.direction = col.sorted();
-				this.update();
+				this._update_table();
 			}.bind(this),
 			onfocus: function(el) {
 				scroll_to_element(el, this._scroll);
@@ -179,6 +220,32 @@ class Logs {
 			dlg.element().remove();
 			that._table.focus();
 		});
+	}
+
+	_display_settings_dialog() {
+		let dlg = this._set_dlg;
+		if (!this._set_dlg) {
+			dlg = new ReportLogFilterDialog({ filter: this._filter });
+			this._set_dlg = dlg;
+		}
+		this._element.appendChild(dlg.element());
+		dlg.show().then(function(d) {
+			if (d) {
+				const url = new URL(document.location);
+				url.searchParams.delete("filter[]");
+				for (let k in d) {
+					if (d[k]) url.searchParams.append("filter[]", `${k}:${d[k]}`);
+				}
+				window.history.replaceState(null, "", url);
+				const f = Common.getFilterFromURL(url, this._filter);
+				if (f !== undefined) {
+					this._filter = f;
+					this._update_table();
+				}
+			}
+		}.bind(this)).finally(function() {
+			this._table.focus();
+		}.bind(this));
 	}
 }
 
@@ -299,5 +366,70 @@ class LogItemDialog extends ModalDialog {
 		this._file_el.textContent = this._data.filename || "n/a";
 		this._sou_el.textContent  = this._data.source;
 		this._msg_el.textContent  = this._data.message || "n/a";
+	}
+}
+
+class ReportLogFilterDialog extends VerticalDialog {
+	constructor(params) {
+		params ||= {};
+		super({ title: "Filter settings", buttons: [ "apply", "reset" ] });
+		this._data = params;
+		this._ui_data = [
+			{ name: "success", title: "Result" },
+			{ name: "source", title: "Source" }
+		];
+	}
+
+	show() {
+		this._update_ui();
+		return super.show();
+	}
+
+	_gen_content() {
+		this._inputs = document.createElement("fieldset");
+		this._inputs.name = "filter";
+		this._inputs.classList.add("round-border", "titled-input");
+		let lg = document.createElement("legend");
+		lg.append("Filter by");
+		this._inputs.appendChild(lg);
+		this._content.appendChild(this._inputs);
+		this._ui_data.forEach(function(ud) {
+			const el = document.createElement("select");
+			el.name = ud.name;
+			ud.element = el;
+			this._insert_input_row(ud.title, el);
+		}, this);
+		const frm = this._content.parentElement;
+		[ [ "", "Any" ], [ "true", "Success" ], [ "false", "Failure" ] ].forEach(function(it) {
+			const op = document.createElement("option");
+			op.setAttribute("value", it[0]);
+			op.append(it[1]);
+			frm.success.appendChild(op);
+		});
+		[ [ "", "Any" ], [ "uploaded_file", "Uploaded file" ], [ "email", "Mailbox" ], [ "directory", "Directory" ] ].forEach(function(it) {
+			const op = document.createElement("option");
+			op.setAttribute("value", it[0]);
+			op.append(it[1]);
+			frm.source.appendChild(op);
+		});
+	}
+
+	_update_ui() {
+		let f = this._data.filter;
+		this._ui_data.forEach(function(ud) {
+			ud.element.value = f && f[ud.name] || "";
+		});
+	}
+
+	_submit() {
+		this._result = {};
+		this._data.filter = {};
+		this._ui_data.forEach(function(ud) {
+			const el = ud.element;
+			const val = el.options[el.selectedIndex].value;
+			this._result[ud.name] = val;
+			this._data.filter[ud.name] = val;
+		}, this);
+		this.hide();
 	}
 }

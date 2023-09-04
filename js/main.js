@@ -114,6 +114,7 @@ Router.start = function() {
 
 Router.go = function(url) {
 	Status.instance().update({
+		page: this._page_name(url),
 		settings: [ "ui.datetime.offset", "ui.ipv4.url", "ui.ipv6.url", "report-view.filter.initial-value" ]
 	}).then(function(d) {
 		if (d) {
@@ -348,9 +349,14 @@ Router._modules = {
 	}
 };
 
+Router._page_name = function(url) {
+	const r = /([^\/]*)$/.exec(url || document.location.pathname);
+	return r && this._routes[r[1]] || null;
+}
+
 Router._url2module = function(url) {
-	let rr = /([^\/]*)$/.exec(url || document.location.pathname);
-	return rr && Router._modules[Router._routes[rr[1]]] || null;
+	const pname = this._page_name(url);
+	return pname && this._modules[pname] || null;
 };
 
 Router._routes = {

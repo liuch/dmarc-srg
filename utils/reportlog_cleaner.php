@@ -64,10 +64,10 @@ if (gettype($leave) !== 'integer' || $leave < 0) {
 }
 
 try {
-    $log = new ReportLog(null, null);
+    $log = new ReportLog();
     $cnt = $log->count() - $leave;
     if ($cnt > 0) {
-        $log = new ReportLog(null, $days_date);
+        $log->setFilter([ 'till_time' => $days_date ]);
         if ($leave * $maximum !== 0) {
             if ($maximum > 0 && $cnt > $maximum) {
                 $cnt = $maximum;

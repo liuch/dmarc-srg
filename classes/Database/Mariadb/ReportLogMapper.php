@@ -236,21 +236,20 @@ class ReportLogMapper implements ReportLogMapperInterface
      */
     private function sqlCondition(array &$filter): string
     {
-        $res = '';
-        if (!is_null($filter['from_time']) || !is_null($filter['till_time'])) {
-            $res = ' WHERE';
-            $till_time = $filter['till_time'];
-            if (!is_null($filter['from_time'])) {
-                $res .= ' `event_time` >= ?';
-                if (!is_null($till_time)) {
-                    $res .= ' AND';
-                }
-            }
-            if (!is_null($till_time)) {
-                $res .= ' `event_time` < ?';
-            }
+        $res = [];
+        if (isset($filter['from_time'])) {
+            $res[] = '`event_time` >= ?';
         }
-        return $res;
+        if (isset($filter['till_time'])) {
+            $res[] = '`event_time` < ?';
+        }
+        if (isset($filter['success'])) {
+            $res[] = '`success` = ?';
+        }
+        if (isset($filter['source'])) {
+            $res[] = '`source` = ?';
+        }
+        return count($res) > 0 ? (' WHERE ' . implode(' AND ', $res)) : '';
     }
 
     /**
@@ -296,11 +295,17 @@ class ReportLogMapper implements ReportLogMapperInterface
     private function sqlBindValues($st, array &$filter, array &$limit): void
     {
         $pos = 0;
-        if (!is_null($filter['from_time'])) {
+        if (isset($filter['from_time'])) {
             $st->bindValue(++$pos, $filter['from_time']->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
         }
-        if (!is_null($filter['till_time'])) {
+        if (isset($filter['till_time'])) {
             $st->bindValue(++$pos, $filter['till_time']->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
+        }
+        if (isset($filter['success'])) {
+            $st->bindValue(++$pos, $filter['success'], \PDO::PARAM_BOOL);
+        }
+        if (isset($filter['source'])) {
+            $st->bindValue(++$pos, $filter['source'], \PDO::PARAM_INT);
         }
         if ($limit['count'] > 0) {
             if ($limit['offset'] > 0) {

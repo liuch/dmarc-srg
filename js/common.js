@@ -155,6 +155,42 @@ class Common {
 			console.warn('Error content: ' + obj.debug_info.content);
 		}
 	}
+
+	/**
+	 * Gets the filter value as an object from the passed url, compares it to the passed cfilter,
+	 * returns the new value, or undefined if the filter has not changed.
+	 */
+	static getFilterFromURL(url, cfilter) {
+		let cnt = 0;
+		const nfilter = {};
+		url.searchParams.getAll("filter[]").forEach(function(it) {
+			let k = null;
+			let v = null;
+			const i = it.indexOf(":");
+			if (i !== 0) {
+				if (i > 0) {
+					k = it.substr(0, i);
+					v = it.substr(i + 1);
+				} else {
+					k = it;
+					v = "";
+				}
+				nfilter[k] = v;
+				++cnt;
+			}
+		});
+		if (cfilter === undefined) return nfilter;
+
+		let changed = !cfilter && cnt > 0;
+		if (!changed && cfilter) {
+			let cnt2 = 0;
+			changed = Object.keys(cfilter).some(function(k) {
+				++cnt2;
+				return cnt < cnt2 || cfilter[k] !== nfilter[k];
+			}) || cnt !== cnt2;
+		}
+		return changed ? (cnt ? nfilter : null) : undefined;
+	}
 }
 
 Common.tuneDateTimeOutput("auto");

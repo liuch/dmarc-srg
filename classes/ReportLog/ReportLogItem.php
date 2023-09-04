@@ -102,6 +102,26 @@ class ReportLogItem
     }
 
     /**
+     * Converts a string source value to integer
+     *
+     * @param string $source_str - string value to convert
+     *
+     * @return int
+     */
+    public static function stringToSource(string $source_str): int
+    {
+        switch ($source_str) {
+            case 'uploaded_file':
+                return Source::SOURCE_UPLOADED_FILE;
+            case 'email':
+                return Source::SOURCE_MAILBOX;
+            case 'directory':
+                return Source::SOURCE_DIRECTORY;
+        }
+        return 0;
+    }
+
+    /**
      * Converts an integer source value to a string representation
      *
      * Returns a string with the source name or an empty string if the integer value is incorrect.
