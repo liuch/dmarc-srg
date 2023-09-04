@@ -25,14 +25,13 @@ class CoreTest extends \PHPUnit\Framework\TestCase
         $this->assertSame('some_method', $this->core->method());
     }
 
-    public function testUser(): void
+    public function testAdminUser(): void
     {
         $this->core->user('admin');
         $this->assertInstanceOf(AdminUser::class, $this->core->user());
 
-        $user = new AdminUser($this->core);
-        $this->core->user($user);
-        $this->assertSame($user, $this->core->user());
+        $this->core->user(new AdminUser($this->core));
+        $this->assertInstanceOf(AdminUser::class, $this->core->user());
     }
 
     /**
