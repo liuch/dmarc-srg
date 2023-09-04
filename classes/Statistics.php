@@ -173,7 +173,7 @@ class Statistics
     }
 
     /**
-     * Sets fiter values for the returning information
+     * Sets filter values for the returning information
      *
      * @param array $filter Key-value array with filtering parameters:
      *                      'dkim'         => string, 'fail' or 'pass'
