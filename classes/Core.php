@@ -45,7 +45,7 @@ use Liuch\DmarcSrg\Exception\ForbiddenException;
  */
 class Core
 {
-    public const APP_VERSION = '1.7';
+    public const APP_VERSION = '1.8';
 
     private const SESSION_NAME = 'session';
     private const HTML_FILE_NAME = 'template.html';
