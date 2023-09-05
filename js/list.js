@@ -45,8 +45,9 @@ class ReportList {
 	}
 
 	update() {
-		this._handle_url_params();
+		this._filter = Common.getFilterFromURL(new URL(document.location));
 		this._update_table();
+		this._update_settings_button();
 	}
 
 	title() {
@@ -63,10 +64,13 @@ class ReportList {
 				remove_all_children(this._element);
 				this._element.appendChild(this._scroll);
 			}
-			if (this._handle_url_params()) {
+			const f = Common.getFilterFromURL(new URL(document.location), this._filter);
+			if (f !== undefined) {
+				this._filter = f;
 				Status.instance().reset();
 				Status.instance().update({ page: "list" });
 				this._update_table();
+				this._update_settings_button();
 			}
 		}
 		this._ensure_settins_button();
@@ -90,47 +94,6 @@ class ReportList {
 		if (!this._element2.contains(el)) {
 			this._element2.appendChild(el);
 		}
-	}
-
-	/**
-	 * Sets the _filter object from the document's location
-	 * and updates the setting button if the filter changes
-	 *
-	 * @return bool True if the filter was changed, false otherwise
-	 */
-	_handle_url_params() {
-		let cnt = 0;
-		let filter = {};
-		(new URL(document.location.href)).searchParams.getAll("filter[]").forEach(function(it) {
-			let k = null;
-			let v = null;
-			let i = it.indexOf(":");
-			if (i != 0) {
-				if (i > 0) {
-					k = it.substr(0, i);
-					v = it.substr(i + 1);
-				}
-				else {
-					k = it;
-					v = "";
-				}
-				filter[k] = v;
-				++cnt;
-			}
-		});
-		let changed = !this._filter && cnt > 0;
-		if (this._filter) {
-			let cnt2 = 0;
-			changed = Object.keys(this._filter).some(function(k) {
-				++cnt2;
-				return cnt < cnt2 || this._filter[k] !== filter[k];
-			}, this) || cnt !== cnt2;
-		}
-		if (changed) {
-			this._filter = cnt && filter || null;
-			this._update_settings_button();
-		}
-		return changed;
 	}
 
 	_gen_settings_button() {
@@ -331,11 +294,14 @@ class ReportList {
 						url.searchParams.append("filter[]", k + ":" + d[k]);
 					}
 				}
-				window.history.replaceState(null, "", url.toString());
-				if (this._handle_url_params()) {
+				window.history.replaceState(null, "", url);
+				const f = Common.getFilterFromURL(url, this._filter);
+				if (f !== undefined) {
+					this._filter = f;
 					Status.instance().reset();
 					Status.instance().update({ page: "list" });
 					this._update_table();
+					this._update_settings_button();
 				}
 			}
 		}.bind(this)).finally(function() {

@@ -179,7 +179,7 @@ class Common {
 				++cnt;
 			}
 		});
-		if (cfilter === undefined) return nfilter;
+		if (cfilter === undefined) return cnt ? nfilter : null;
 
 		let changed = !cfilter && cnt > 0;
 		if (!changed && cfilter) {
