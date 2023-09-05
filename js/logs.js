@@ -43,6 +43,7 @@ class Logs {
 	update() {
 		this._filter = Common.getFilterFromURL(new URL(document.location));
 		this._update_table();
+		this._update_settings_button();
 	}
 
 	title() {
@@ -241,6 +242,7 @@ class Logs {
 				if (f !== undefined) {
 					this._filter = f;
 					this._update_table();
+					this._update_settings_button();
 				}
 			}
 		}.bind(this)).finally(function() {
