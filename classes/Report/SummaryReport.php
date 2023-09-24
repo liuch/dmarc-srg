@@ -149,30 +149,40 @@ class SummaryReport
         $res[] = sprintf(' Total: %d', $total);
         $res[] = sprintf(' DKIM or SPF aligned: %s', self::num2percent($rdata['summary']['aligned'], $total));
         $res[] = sprintf(' Not aligned: %s', self::num2percent($rdata['summary']['n_aligned'], $total));
+        $res[] = sprintf(' Quarantined: %s', self::num2percent($rdata['summary']['quarantined'], $total));
+        $res[] = sprintf(' Rejected: %s', self::num2percent($rdata['summary']['rejected'], $total));
         $res[] = sprintf(' Organizations: %d', $rdata['summary']['organizations']);
         $res[] = '';
 
         if (count($rdata['sources']) > 0) {
             $res[] = '## Sources';
             $res[] = sprintf(
-                ' %-25s %13s %13s %13s',
+                ' %-25s %13s %13s %13s %13s %13s',
                 '',
                 'Total',
                 'SPF aligned',
-                'DKIM aligned'
+                'DKIM aligned',
+                'Quarantined',
+                'Rejected'
             );
             foreach ($rdata['sources'] as &$it) {
                 $total    = $it['emails'];
                 $spf_a    = $it['spf_aligned'];
                 $dkim_a   = $it['dkim_aligned'];
+                $qua_a    = $it['quarantined'];
+                $rej_a    = $it['rejected'];
                 $spf_str  = self::num2percent($spf_a, $total);
                 $dkim_str = self::num2percent($dkim_a, $total);
+                $qua_str  = self::num2percent($qua_a, $total);
+                $rej_str  = self::num2percent($rej_a, $total);
                 $res[] = sprintf(
-                    ' %-25s %13d %13s %13s',
+                    ' %-25s %13d %13s %13s %13s %13s',
                     $it['ip'],
                     $total,
                     $spf_str,
-                    $dkim_str
+                    $dkim_str,
+                    $qua_str,
+                    $rej_str
                 );
             }
             unset($it);
@@ -225,6 +235,9 @@ class SummaryReport
         $add_red = function (int $num) {
             return $num > 0 ? 'color:#f00;' : '';
         };
+        $add_orange = function (int $num) {
+            return $num > 0 ? 'color:#f80;' : '';
+        };
         $add_green = function (int $num) {
             return $num > 0 ? 'color:#080;' : '';
         };
@@ -239,11 +252,17 @@ class SummaryReport
         $total = $rdata['summary']['total'];
         $a_cnt = $rdata['summary']['aligned'];
         $n_cnt = $rdata['summary']['n_aligned'];
+        $q_cnt = $rdata['summary']['quarantined'];
+        $r_cnt = $rdata['summary']['rejected'];
         $res[] = " <tr><td>Total: </td><td style=\"{$d1s}\">" . $total . '</td></tr>';
         $color = $add_green($a_cnt);
         $res[] = " <tr><td>DKIM or SPF aligned: </td><td style=\"{$d1s}{$color}\">{$a_cnt}</td></tr>";
-        $color = $add_red($n_cnt);
+        $color = $add_orange($n_cnt);
         $res[] = " <tr><td>Not aligned: </td><td style=\"{$d1s}{$color}\">{$n_cnt}</td></tr>";
+        $color = $add_orange($q_cnt);
+        $res[] = " <tr><td>Quarantined: </td><td style=\"{$d1s}{$color}\">{$q_cnt}</td></tr>";
+        $color = $add_red($r_cnt);
+        $res[] = " <tr><td>Rejected: </td><td style=\"{$d1s}{$color}\">{$r_cnt}</td></tr>";
         $res[] = " <tr><td>Organizations: </td><td style=\"{$d1s}\">" .
                  $rdata['summary']['organizations'] .
                  '</td></tr>';
@@ -259,10 +278,13 @@ class SummaryReport
             $res[] = ' <thead>';
             $style = "style=\"{$d3s}{$d5s}\"";
             $res[] = "  <tr><th {$rs2} {$style}>IP address</th><th {$rs2} {$style}>Email volume</th>" .
-                     "<th {$cs3} {$style}>SPF</th><th {$cs3} {$style}>DKIM</th></tr>";
+                     "<th {$cs3} {$style}>SPF</th><th {$cs3} {$style}>DKIM</th>".
+                     "<th {$cs3} {$style}>Quarantined</th><th {$cs3} {$style}>Rejected</th></tr>";
             $style = "style=\"{$d2s}{$d3s}{$d5s}\"";
             $res[] = "  <tr><th {$style}>pass</th><th {$style}>fail</th><th {$style}>rate</th>" .
-                     "<th {$style}>pass</th><th {$style}>fail</th><th {$style}>rate</th></tr>";
+                     "<th {$style}>pass</th><th {$style}>fail</th><th {$style}>rate</th>".
+                     "<th {$style}>qurantined</th><th {$style}>rate</th>".
+                     "<th {$style}>rejected</th><th {$style}>rate</th></tr>";
             $res[] = ' </thead>';
             $res[] = ' <tbody>';
             foreach ($rdata['sources'] as &$row) {
@@ -274,15 +296,23 @@ class SummaryReport
                 $dkim_a = $row['dkim_aligned'];
                 $dkim_n = $total - $dkim_a;
                 $dkim_p = sprintf('%.0f%%', $dkim_a / $total * 100);
+                $qua_a  = $row['quarantined'];
+                $qua_p  = sprintf('%.0f%%', $qua_a / $total * 100);
+                $rej_a  = $row['rejected'];
+                $rej_p  = sprintf('%.0f%%', $rej_a / $total * 100);
                 $style  = "style=\"{$d3s}{$d5s}";
 
                 $row_str  = "  <tr><td {$style}\">{$ip}</td><td {$style}{$d4s}\">{$total}</td>";
                 $row_str .= "<td {$style}{$d4s}{$add_green($spf_a)}\">{$spf_a}</td>";
-                $row_str .= "<td {$style}{$d4s}{$add_red($spf_n)}\">{$spf_n}</td>";
+                $row_str .= "<td {$style}{$d4s}{$add_orange($spf_n)}\">{$spf_n}</td>";
                 $row_str .= "<td {$style}{$d4s}\">{$spf_p}</td>";
                 $row_str .= "<td {$style}{$d4s}{$add_green($dkim_a)}\">{$dkim_a}</td>";
-                $row_str .= "<td {$style}{$d4s}{$add_red($dkim_n)}\">{$dkim_n}</td>";
+                $row_str .= "<td {$style}{$d4s}{$add_orange($dkim_n)}\">{$dkim_n}</td>";
                 $row_str .= "<td {$style}{$d4s}\">{$dkim_p}</td>";
+                $row_str .= "<td {$style}{$d4s}{$add_orange($qua_a)}\">{$qua_a}</td>";
+                $row_str .= "<td {$style}{$d4s}\">{$qua_p}</td>";
+                $row_str .= "<td {$style}{$d4s}{$add_red($rej_a)}\">{$rej_a}</td>";
+                $row_str .= "<td {$style}{$d4s}\">{$rej_p}</td>";
                 $res[] = $row_str . '</tr>';
             }
             unset($row);
@@ -379,15 +409,21 @@ class SummaryReport
                      $summ['emails']['dkim_aligned'] +
                      $summ['emails']['spf_aligned'];
         $n_aligned = $total - $aligned;
+        $rejected  = $summ['emails']['rejected'];
+        $quarantined = $summ['emails']['quarantined'];
+
         $rdata['summary'] = [
             'total'         => $total,
             'organizations' => $summ['organizations']
         ];
+
+        $rdata['summary']['aligned']     = $aligned;
+        $rdata['summary']['quarantined'] = $quarantined;
+        $rdata['summary']['rejected']    = $rejected;
+
         if ($total > 0) {
-            $rdata['summary']['aligned']   = $aligned;
             $rdata['summary']['n_aligned'] = $n_aligned;
         } else {
-            $rdata['summary']['aligned']   = $aligned;
             $rdata['summary']['n_aligned'] = $aligned;
         }
 
