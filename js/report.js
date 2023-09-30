@@ -460,10 +460,12 @@ class Report {
 		btn.appendChild(document.createElement("span"));
 		btn.addEventListener("click", function(event) {
 			btn.disabled = true;
-			let dlg = new FilterDialog({ filter: this._filter });
+			let dlg = new ReportViewFilterDialog({ filter: this._filter });
 			document.getElementById("main-block").prepend(dlg.element());
 			dlg.show().then(function(res) {
-				if (res && (res.dkim !== this._filter.dkim || res.spf !== this._filter.spf)) {
+				if (res && (res.dkim !== this._filter.dkim || res.spf !== this._filter.spf ||
+					res.disposition !== this._filter.disposition)
+				) {
 					this._filter = res;
 					this._apply_filter();
 					this._update_filter_button();
@@ -491,7 +493,9 @@ class Report {
 		let e_list = this._records_el.querySelectorAll(".report-record");
 		for (let i = 0; i < total; ++i) {
 			let rec = this._data.records[i];
-			if ((!filter.dkim || filter.dkim === rec.dkim_align) && (!filter.spf || filter.spf === rec.spf_align)) {
+			if ((!filter.dkim || filter.dkim === rec.dkim_align) && (!filter.spf || filter.spf === rec.spf_align) &&
+				(!filter.disposition || filter.disposition === rec.disposition)
+			) {
 				e_list[i].classList.remove("hidden");
 				++displ;
 			}
@@ -522,17 +526,21 @@ class Report {
 			}
 			return res;
 		}, []);
+		if (this._filter.disposition) {
+			let el = document.createElement("span");
+			el.textContent = "disp=" + this._filter.disposition.substring(0, 1);
+			ea.push(el);
+		}
 		let bt = this._filter_btn.childNodes[1];
 		remove_all_children(bt);
 		if (ea.length > 0) {
-			bt.appendChild(ea[0]);
-			if (ea[1]) {
-				bt.appendChild(document.createTextNode(", "));
-				bt.appendChild(ea[1]);
+			for (let i = 0; i < ea.length; ++i) {
+				if (i) bt.append(", ");
+				bt.append(ea[i]);
 			}
-		}
-		else
+		} else {
 			bt.textContent = "none";
+		}
 	}
 
 	_filter_storage(data) {
@@ -550,7 +558,7 @@ class Report {
 		let res = {};
 		if (window[storage]) {
 			let prefix = "ReportView.filter.";
-			[ "dkim", "spf" ].forEach(function(name) {
+			[ "dkim", "spf", "disposition" ].forEach(function(name) {
 				if (data)
 					window[storage].setItem(prefix + name, data[name] || "");
 				else
@@ -561,12 +569,12 @@ class Report {
 	}
 }
 
-class FilterDialog extends ReportFilterDialog {
+class ReportViewFilterDialog extends ReportFilterDialog {
 	constructor(params) {
 		params.title = "Records filtering";
-		params.item_list = [ "dkim", "spf" ];
+		params.item_list = [ "dkim", "spf", "disposition" ];
 		let pfa = [ "pass", "fail" ];
-		params.loaded_filters = { "dkim": pfa, "spf":  pfa };
+		params.loaded_filters = { dkim: pfa, spf:  pfa, disposition: [ "none", "reject", "quarantine" ] };
 		super(params);
 	}
 }

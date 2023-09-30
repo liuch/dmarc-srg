@@ -994,6 +994,7 @@ class ReportFilterDialog extends ModalDialog {
 			{ name: "organization", title: "Organization" },
 			{ name: "dkim", title: "DKIM result" },
 			{ name: "spf", title: "SPF result" },
+			{ name: "disposition", title: "Disposition" },
 			{ name: "status", title: "Status" }
 		].reduce(function(res, item) {
 			if (item_list.includes(item.name))
