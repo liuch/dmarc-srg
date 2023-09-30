@@ -110,21 +110,28 @@ $core->user('admin');
 
 $state = MAILBOX_LIST;
 if (!$source || $source === 'email') {
-    $errors  = [ 'messages' => [], 'debug_info' => null ];
     $mb_list = new MailBoxes();
-    for ($mb_num = 1; $mb_num <= $mb_list->count(); ++$mb_num) {
-        try {
-            $sou_list[] = new MailboxSource($mb_list->mailbox($mb_num));
-        } catch (RuntimeException $e) {
-            $addError($e, $errors);
+    $mb_cnt = $mb_list->count();
+    if ($mb_cnt > 0) {
+        $errors  = [ 'messages' => [], 'debug_info' => null ];
+        if (extension_loaded('imap')) {
+            for ($mb_num = 1; $mb_num <= $mb_cnt; ++$mb_num) {
+                try {
+                    $sou_list[] = new MailboxSource($mb_list->mailbox($mb_num));
+                } catch (RuntimeException $e) {
+                    $addError($e, $errors);
+                }
+            }
+        } else {
+            $errors['messages'][] = 'The IMAP extension has not beeen loaded';
         }
-    }
-    if (count($errors['messages']) > 0) {
-        $problems[] = [
-            'state'      => $state,
-            'messages'   => $errors['messages'],
-            'debug_info' => $errors['debug_info']
-        ];
+        if (count($errors['messages']) > 0) {
+            $problems[] = [
+                'state'      => $state,
+                'messages'   => $errors['messages'],
+                'debug_info' => $errors['debug_info']
+            ];
+        }
     }
 }
 
