@@ -197,10 +197,11 @@ class ReportList {
 			url.searchParams.set("report_id", data.report_id);
 			window.history.pushState({ from: "list" }, "", url);
 			let that = this;
-			let filter = null;
-			if (this._filter) {
-				filter = { dkim: this._filter.dkim || "", spf: this._filter.spf || "" };
-			}
+			let filter = this._filter && {
+				dkim: this._filter.dkim || "",
+				spf: this._filter.spf || "",
+				disposition: this._filter.disposition || ""
+			} || null;
 			ReportWidget.instance().show_report(data.domain, data.time, data.org, data.report_id, filter).then(function() {
 				if (!that._table.seen(id)) {
 					that._table.seen(id, true);
@@ -379,7 +380,7 @@ class StatusColumn extends ITableCell {
 class ReportListSettingsDialog extends ReportFilterDialog {
 	constructor(params) {
 		params.title = "List display settings";
-		params.item_list = [ "domain", "month", "organization", "dkim", "spf", "status" ];
+		params.item_list = [ "domain", "month", "organization", "dkim", "spf", "disposition", "status" ];
 		super(params);
 	}
 

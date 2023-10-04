@@ -148,7 +148,7 @@ class ReportList
      *                      'organization' => string
      *                      'spf'          => string, 'fail' or 'pass'
      *                      'status'       => string, 'read' or 'unread'
-     *                      Note! 'dkim' and 'spf' do not affect the delete and count methods
+     *                      Note! 'dkim', 'spf' and 'disposition' do not affect the delete and count methods
      *
      * @return void
      */
@@ -161,7 +161,7 @@ class ReportList
      * Returns the number of reports in the database
      *
      * It returns the number of reports in the database.
-     * The limit and some filter items (`dkim`, `spf`) do not affect this.
+     * The limit and some filter items `dkim`, `spf` and `disposition` do not affect this.
      *
      * @return int The number of reports in the database
      */
@@ -174,7 +174,7 @@ class ReportList
     /**
      * Deletes reports from the database
      *
-     * It deletes repors form the database. The filter items `dkim` and `spf` do not affect this.
+     * It deletes repors form the database. The filter items `dkim`, `spf` and `disposition` do not affect this.
      *
      * @return void
      */
@@ -200,6 +200,7 @@ class ReportList
             'organization' => $reportMapper->organizations(),
             'dkim'         => [ 'pass', 'fail' ],
             'spf'          => [ 'pass', 'fail' ],
+            'disposition'  => [ 'none', 'reject', 'quarantine' ],
             'status'       => [ 'read', 'unread' ]
         ];
     }

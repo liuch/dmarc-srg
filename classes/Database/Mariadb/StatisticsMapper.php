@@ -102,7 +102,7 @@ class StatisticsMapper implements StatisticsMapperInterface
             ];
             $st->closeCursor();
 
-            if (!isset($filter['dkim']) && !isset($filter['spf'])) {
+            if (!isset($filter['dkim']) && !isset($filter['spf']) && !isset($filter['disposition'])) {
                 $st = $db->prepare(
                     'SELECT COUNT(*) FROM (SELECT `org` FROM `' . $this->connector->tablePrefix('reports') . '`'
                     . $this->sqlCondition($f_data, ' WHERE ', 0) . ' GROUP BY `org`) AS `orgs`'
@@ -110,7 +110,8 @@ class StatisticsMapper implements StatisticsMapperInterface
             } else {
                 $st = $db->prepare(
                     'SELECT COUNT(*) FROM (SELECT `org` FROM ('
-                    . 'SELECT `org`, MIN(`dkim_align`) as `dkim_align`, MIN(`spf_align`) AS `spf_align`'
+                    . 'SELECT `org`, MIN(`dkim_align`) as `dkim_align`, MIN(`spf_align`) AS `spf_align`,'
+                    . ' MIN(`disposition`) AS `disposition`'
                     . ' FROM `' . $this->connector->tablePrefix('reports') . '` AS `rp`'
                     . ' INNER JOIN `' . $this->connector->tablePrefix('rptrecords') . '` AS `rr`'
                     . ' ON `rp`.`id` = `rr`.`report_id`' . $this->sqlCondition($f_data, ' WHERE ', 0)
@@ -223,7 +224,7 @@ class StatisticsMapper implements StatisticsMapperInterface
      * Valid filter item names
      */
     private static $filters_available = [
-        'organization', 'dkim', 'spf', 'status'
+        'organization', 'dkim', 'spf', 'disposition', 'status'
     ];
 
     /**
@@ -284,6 +285,14 @@ class StatisticsMapper implements StatisticsMapperInterface
                         }
                     }
                     $sql_cond2[] = '`spf_align` = ?';
+                    $bindings2[] = [ $val, \PDO::PARAM_INT ];
+                    break;
+                case 'disposition':
+                    $val = array_search($fvalue, Common::$disposition);
+                    if ($val === false) {
+                        throw new SoftException('Filter: Incorrect value of disposition');
+                    }
+                    $sql_cond2[] = '`disposition` = ?';
                     $bindings2[] = [ $val, \PDO::PARAM_INT ];
                     break;
                 case 'status':

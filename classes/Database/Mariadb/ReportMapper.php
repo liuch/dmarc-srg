@@ -369,7 +369,7 @@ class ReportMapper implements ReportMapperInterface
     /**
      * Deletes reports from the database
      *
-     * It deletes repors form the database. The filter options `dkim` and `spf` do not affect this.
+     * It deletes repors form the database. The filter options `dkim`, `spf` and `disposition` do not affect this.
      *
      * @param array $filter Key-value array with filtering parameters
      * @param array $order  Key-value array:
@@ -569,7 +569,7 @@ class ReportMapper implements ReportMapperInterface
      * The valid filter item names
      */
     private static $filters_available = [
-        'domain', 'month', 'before_time', 'organization', 'dkim', 'spf', 'status'
+        'domain', 'month', 'before_time', 'organization', 'dkim', 'spf', 'disposition', 'status'
     ];
 
     /**
@@ -640,6 +640,13 @@ class ReportMapper implements ReportMapperInterface
                                     }
                                 }
                                 $filters[1]['a_str'][] = '`spf_align` = ?';
+                                $filters[1]['bindings'][] = [ $val, \PDO::PARAM_INT ];
+                            } elseif ($fn == 'disposition') {
+                                $val = array_search($fv, Common::$disposition);
+                                if ($val === false) {
+                                    throw new SoftException('Report list filter: Incorrect value of disposition');
+                                }
+                                $filters[1]['a_str'][] = '`disposition` = ?';
                                 $filters[1]['bindings'][] = [ $val, \PDO::PARAM_INT ];
                             } elseif ($fn == 'status') {
                                 if ($fv === 'read') {
