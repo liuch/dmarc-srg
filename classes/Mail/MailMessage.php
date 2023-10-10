@@ -108,7 +108,7 @@ class MailMessage
                 // when it's an entire attached message: MESSAGE/RFC822
                 if (isset($part->parts) && count($part->parts) > 0) {
                     foreach ($part->parts as $subIndex => &$subPart) {
-                        $allParts[$msgIndex . '.' . $subIndex + 1] = $subPart;
+                        $allParts[$msgIndex . '.' . ($subIndex + 1)] = $subPart;
                     }
                     unset($subPart);// Remove the last dangling reference
                     continue;
