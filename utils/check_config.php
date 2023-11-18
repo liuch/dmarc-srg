@@ -24,7 +24,6 @@
  * This script is for checking configuration.
  *
  * The script can be useful for checking your configuration.
- * Note: the current directory must be the one containing the classes directory.
  *
  * @category Utilities
  * @package  DmarcSrg
@@ -39,7 +38,7 @@ use Liuch\DmarcSrg\Directories\DirectoryList;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\RuntimeException;
 
-require 'init.php';
+require realpath(__DIR__ . '/..') . '/init.php';
 
 if (php_sapi_name() !== 'cli') {
     echo 'Forbidden';
@@ -116,25 +115,26 @@ try {
 
     echo PHP_EOL, '=== CONFIG FILE ===', PHP_EOL;
     $startChecking('Checking if the file exists');
-    if (is_file(CONFIG_FILE)) {
+    $config_file_path = realpath(__DIR__ . '/..') . '/' . CONFIG_FILE;
+    if (is_file($config_file_path)) {
         $endChecking();
     } else {
         $endChecking('The configuration file `config/conf.php` not found', RESULT_FATAL);
     }
     $startChecking('Checking read permission');
-    if (is_readable(CONFIG_FILE)) {
+    if (is_readable($config_file_path)) {
         $endChecking();
     } else {
         $endChecking('The configuration file is not readable', RESULT_FATAL);
     }
     $startChecking('Checking write permission');
-    if (!is_writable(CONFIG_FILE)) {
+    if (!is_writable($config_file_path)) {
         $endChecking();
     } else {
         $endChecking('The configuration file is writable', RESULT_WARNING);
     }
     $startChecking('Checking access by other users');
-    $r = fileperms(CONFIG_FILE);
+    $r = fileperms($config_file_path);
     if ($r !== false) {
         if (($r & 0x6) !== 0) {
             $endChecking('The configuration file is accessible to other users', RESULT_WARNING);

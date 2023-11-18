@@ -42,7 +42,6 @@
  * will send a summary report by email for last 10 days for the domain example.com
  *
  * The best place to use it is cron.
- * Note: the current directory must be the one containing the classes directory.
  *
  * @category Utilities
  * @package  DmarcSrg
@@ -59,7 +58,7 @@ use Liuch\DmarcSrg\Report\SummaryReport;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\RuntimeException;
 
-require 'init.php';
+require realpath(__DIR__ . '/..') . '/init.php';
 
 if (php_sapi_name() !== 'cli') {
     echo 'Forbidden' . PHP_EOL;

@@ -68,8 +68,6 @@ There are two ways to do that: by using the web interface or by running the foll
 
 `$ php utils/database_admin.php init`
 
-**Note:** This command must be run from the directory which contains the directories classes and config.
-
 ## Usage
 In general, DmarcSrg is designed to automatically receive incoming DMARC reports, process them and send summary reports to the specified e-mail address, so a web interface as well as a web-server is optional. Most of the work is done by periodically running php scripts, which are located in the utils directory.
 
@@ -83,8 +81,6 @@ In general, DmarcSrg is designed to automatically receive incoming DMARC reports
 - `utils/summary_report.php` - creates a summary report and sends it by email.
 
 You can find more detailed information about each script in the comments to it.
-
-**Note:** These scripts must be run from the directory which contains the directories classes and config.
 
 **Note:** Despite the fact that these scripts can only be run from the console, it is recommended to close access to the utils directory from the web server.
 

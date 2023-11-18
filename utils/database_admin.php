@@ -42,7 +42,7 @@ use Liuch\DmarcSrg\Database\DatabaseUpgrader;
 use Liuch\DmarcSrg\Settings\SettingString;
 use Liuch\DmarcSrg\Exception\RuntimeException;
 
-require 'init.php';
+require realpath(__DIR__ . '/..') . '/init.php';
 
 if (php_sapi_name() !== 'cli') {
     echo 'Forbidden';

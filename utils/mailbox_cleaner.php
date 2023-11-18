@@ -26,7 +26,6 @@
  * in the configuration file. The mailbox accessibility can be checked
  * on the administration page in the web interface.
  * The best place to use it is cron.
- * Note: the current directory must be the one containing the classes directory.
  *
  * @category Utilities
  * @package  DmarcSrg
@@ -40,7 +39,7 @@ use Liuch\DmarcSrg\Mail\MailBoxes;
 use Liuch\DmarcSrg\Sources\SourceAction;
 use Liuch\DmarcSrg\Exception\RuntimeException;
 
-require 'init.php';
+require realpath(__DIR__ . '/..') . '/init.php';
 
 if (php_sapi_name() !== 'cli') {
     echo 'Forbidden';

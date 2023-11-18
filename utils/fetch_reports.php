@@ -34,7 +34,6 @@
  * will only fetch reports from the mailboxes.
  *
  * The best place to use it is cron.
- * Note: the current directory must be the one containing the classes directory.
  *
  * @category Utilities
  * @package  DmarcSrg
@@ -52,7 +51,7 @@ use Liuch\DmarcSrg\Sources\DirectorySource;
 use Liuch\DmarcSrg\Directories\DirectoryList;
 use Liuch\DmarcSrg\Exception\RuntimeException;
 
-require 'init.php';
+require realpath(__DIR__ . '/..') . '/init.php';
 
 if (php_sapi_name() !== 'cli') {
     echo 'Forbidden';

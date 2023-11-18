@@ -24,7 +24,6 @@
  * This script deletes old log entries from the database.
  * The conditions for removal must be specified in the configuration file.
  * The best place to use it is cron.
- * Note: the current directory must be the one containing the classes directory.
  *
  * @category Utilities
  * @package  DmarcSrg
@@ -37,7 +36,7 @@ namespace Liuch\DmarcSrg;
 use Liuch\DmarcSrg\ReportLog\ReportLog;
 use Liuch\DmarcSrg\Exception\RuntimeException;
 
-require 'init.php';
+require realpath(__DIR__ . '/..') . '/init.php';
 
 if (php_sapi_name() !== 'cli') {
     echo 'Forbidden';
