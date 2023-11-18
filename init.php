@@ -40,9 +40,10 @@ $core = new Liuch\DmarcSrg\Core([
     'auth'     => [ 'Liuch\DmarcSrg\Auth' ],
     'admin'    => [ 'Liuch\DmarcSrg\Admin' ],
     'ehandler' => [ 'Liuch\DmarcSrg\ErrorHandler' ],
-    'config'   => [ 'Liuch\DmarcSrg\Config', [ 'config/conf.php' ] ],
+    'config'   => [ 'Liuch\DmarcSrg\Config', [ __DIR__ . '/config/conf.php' ] ],
     'status'   => [ 'Liuch\DmarcSrg\Status' ],
-    'database' => [ 'Liuch\DmarcSrg\Database\DatabaseController' ]
+    'database' => [ 'Liuch\DmarcSrg\Database\DatabaseController' ],
+    'template' => __DIR__ . '/template.html'
 ]);
 $core->errorHandler()->setLogger(new Liuch\DmarcSrg\Log\PhpSystemLogger());
 

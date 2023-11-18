@@ -2,7 +2,7 @@
 
 /**
  * dmarc-srg - A php parser, viewer and summary report generator for incoming DMARC reports.
- * Copyright (C) 2020 Aleksey Andreev (liuch)
+ * Copyright (C) 2023 Aleksey Andreev (liuch)
  *
  * Available at:
  * https://github.com/liuch/dmarc-srg
@@ -22,17 +22,10 @@
 
 namespace Liuch\DmarcSrg;
 
-use Liuch\DmarcSrg\ErrorHandler;
-use Liuch\DmarcSrg\Exception\RuntimeException;
+require realpath(__DIR__ . '/..') . '/init.php';
 
-require 'init.php';
-
-if (Core::method() == 'POST' && Core::isJson()) {
-    try {
-        Core::sendJson(Core::instance()->auth()->logout());
-    } catch (RuntimeException $e) {
-        Core::sendJson(ErrorHandler::exceptionResult($e));
-    }
+if (Core::method() == 'GET') {
+    Core::instance()->sendHtml();
     return;
 }
 

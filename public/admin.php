@@ -27,7 +27,7 @@ use Liuch\DmarcSrg\Users\AdminUser;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\RuntimeException;
 
-require 'init.php';
+require realpath(__DIR__ . '/..') . '/init.php';
 
 $core = Core::instance();
 if (Core::isJson()) {

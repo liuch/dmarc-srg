@@ -50,7 +50,7 @@ use Liuch\DmarcSrg\ReportLog\ReportLogItem;
 use Liuch\DmarcSrg\Settings\SettingsList;
 use Liuch\DmarcSrg\Exception\RuntimeException;
 
-require 'init.php';
+require realpath(__DIR__ . '/..') . '/init.php';
 
 if (Core::method() == "GET") {
     if (Core::isJson()) {

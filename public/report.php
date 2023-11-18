@@ -26,7 +26,7 @@ use Liuch\DmarcSrg\Users\User;
 use Liuch\DmarcSrg\Report\Report;
 use Liuch\DmarcSrg\Exception\RuntimeException;
 
-require 'init.php';
+require realpath(__DIR__ . '/..') . '/init.php';
 
 if (!empty($_GET['org']) && !empty($_GET['time']) && !empty($_GET['domain']) && !empty($_GET['report_id'])) {
     if (Core::isJson()) {

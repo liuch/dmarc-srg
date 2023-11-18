@@ -93,7 +93,7 @@ For example, if you want to get a summary report for the last week, you should r
 `$ cd /usr/local/share/dmarc-srg && php utils/summary_report.php domain=example.com period=lastweek`
 
 # Web interface
-Navigate in your browser to the location of the `index.php` file. You will see the basic Report List view, allowing you to navigate through the reports that have been parsed. Using the menu go to the Admin section and create tables in the database and check the accessibility of the mailboxes if necessary.
+Use the public/ directory to access the web interface. You will see the basic Report List view, allowing you to navigate through the reports that have been parsed. Using the menu go to the Admin section and create tables in the database and check the accessibility of the mailboxes if necessary.
 
 If Content Security Policy (CSP) is used on your web server, it is enough to add the following permissions:
 - style-src 'self';

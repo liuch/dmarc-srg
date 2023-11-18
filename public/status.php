@@ -27,7 +27,7 @@ use Liuch\DmarcSrg\Domains\Domain;
 use Liuch\DmarcSrg\Settings\SettingsList;
 use Liuch\DmarcSrg\Exception\RuntimeException;
 
-require 'init.php';
+require realpath(__DIR__ . '/..') . '/init.php';
 
 if (Core::isJson()) {
     if (Core::method() == 'GET') {

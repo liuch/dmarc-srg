@@ -31,7 +31,7 @@ use Liuch\DmarcSrg\Exception\AuthException;
 use Liuch\DmarcSrg\Exception\RuntimeException;
 use Liuch\DmarcSrg\Exception\ForbiddenException;
 
-require 'init.php';
+require realpath(__DIR__ . '/..') . '/init.php';
 
 if (Core::method() == 'GET') {
     if (!Core::isJson()) {

@@ -48,10 +48,10 @@ class Core
     public const APP_VERSION = '1.8';
 
     private const SESSION_NAME = 'session';
-    private const HTML_FILE_NAME = 'template.html';
 
-    private $user    = null;
-    private $modules = [];
+    private $user     = null;
+    private $modules  = [];
+    private $template = null;
 
     /** @var self|null */
     private static $instance = null;
@@ -68,6 +68,7 @@ class Core
                 $this->modules[$key] = $params[$key];
             }
         }
+        $this->template = $params['template'];
         self::$instance = $this;
     }
 
@@ -211,14 +212,14 @@ class Core
      */
     public function sendHtml(): void
     {
-        if (is_readable(Core::HTML_FILE_NAME)) {
+        if (is_readable($this->template)) {
             $ccf = $this->config('custom_css', '');
             if (substr_compare($ccf, '.css', -4) === 0) { // replacement for str_ends_with
                 $ccf = '<link rel="stylesheet" href="' . htmlspecialchars($ccf) . '" type="text/css" />';
             } else {
                 $ccf = '';
             }
-            $fd = fopen(Core::HTML_FILE_NAME, 'r');
+            $fd = fopen($this->template, 'r');
             if ($fd) {
                 while (($buffer = fgets($fd)) !== false) {
                     if (substr_compare($buffer, "<!-- Custom CSS -->\n", -20) === 0) {

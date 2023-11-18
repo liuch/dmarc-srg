@@ -49,7 +49,7 @@ use Liuch\DmarcSrg\Report\SummaryReport;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\RuntimeException;
 
-require 'init.php';
+require realpath(__DIR__ . '/..') . '/init.php';
 
 if (Core::isJson() && isset($_GET['mode'])) {
     try {

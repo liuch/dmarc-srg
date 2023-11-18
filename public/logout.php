@@ -25,20 +25,15 @@ namespace Liuch\DmarcSrg;
 use Liuch\DmarcSrg\ErrorHandler;
 use Liuch\DmarcSrg\Exception\RuntimeException;
 
-require 'init.php';
+require realpath(__DIR__ . '/..') . '/init.php';
 
 if (Core::method() == 'POST' && Core::isJson()) {
-    $jdata = Core::getJsonData();
-    if ($jdata && isset($jdata['password'])) {
-        try {
-            Core::sendJson(
-                Core::instance()->auth()->login(strval($jdata['username'] ?? ''), strval($jdata['password'] ?? ''))
-            );
-        } catch (RuntimeException $e) {
-            Core::sendJson(ErrorHandler::exceptionResult($e));
-        }
-        return;
+    try {
+        Core::sendJson(Core::instance()->auth()->logout());
+    } catch (RuntimeException $e) {
+        Core::sendJson(ErrorHandler::exceptionResult($e));
     }
+    return;
 }
 
 Core::sendBad();
