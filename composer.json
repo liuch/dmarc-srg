@@ -1,0 +1,22 @@
+{
+    "name": "liuch/dmarc-srg",
+    "type": "project",
+    "description": "A php parser, viewer and summary report generator for incoming DMARC reports.",
+    "keywords": [ "mailserver", "dmarc", "dmarc-reports", "dmarc-parser" ],
+    "license": "GPL-3.0-only",
+    "authors": [
+        {
+            "name": "liuch",
+            "email": "liuch@mail.ru",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=7.3",
+        "ext-json": "*",
+        "ext-pdo_mysql": "*",
+        "ext-xml": "*",
+        "ext-zip": "*"
+    },
+    "suggest": {}
+}
