@@ -44,7 +44,10 @@ class CoreTest extends \PHPUnit\Framework\TestCase
             [ 'custom.css', true, 'Correct custom CSS' ],
             [ 'custom.csss', false, 'Incorrect custom CSS' ]
         ] as $it) {
-            $core = new Core([ 'config' => $this->getConfig('custom_css', '', $it[0]) ]);
+            $core = new Core([
+                'config' => $this->getConfig('custom_css', '', $it[0]),
+                'template' => realpath(__DIR__ . '/../..') . '/template.html'
+            ]);
             ob_start();
             $core->sendHtml();
             $output = ob_get_contents();

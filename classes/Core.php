@@ -68,7 +68,9 @@ class Core
                 $this->modules[$key] = $params[$key];
             }
         }
-        $this->template = $params['template'];
+        if (isset($params['template'])) {
+            $this->template = $params['template'];
+        }
         self::$instance = $this;
     }
 
