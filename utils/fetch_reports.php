@@ -24,7 +24,8 @@
  * This script fetches DMARC reports from mailboxes and server local directories and saves them to the DB.
  * The parameters of mailboxes and directories must be specified in the configuration file.
  * The mailboxes and directories accessibility can be checked on the administration page in the web interface.
- * The script has one optional parameter: `source` - the type of the source. The valid types are `email`, `directory`.
+ * The script has one optional parameter: `source` - the type of the source.
+ * The valid types are `email`, `directory`, `remotefs`.
  *
  * Some examples:
  * $ utils/fetch_reports
@@ -48,8 +49,10 @@ use Liuch\DmarcSrg\Report\ReportFetcher;
 use Liuch\DmarcSrg\Sources\Source;
 use Liuch\DmarcSrg\Sources\MailboxSource;
 use Liuch\DmarcSrg\Sources\DirectorySource;
+use Liuch\DmarcSrg\Sources\RemoteFilesystemSource;
 use Liuch\DmarcSrg\Directories\DirectoryList;
 use Liuch\DmarcSrg\Exception\RuntimeException;
+use Liuch\DmarcSrg\RemoteFilesystems\RemoteFilesystemList;
 
 require realpath(__DIR__ . '/..') . '/init.php';
 
@@ -78,15 +81,15 @@ if (isset($argv)) {
                 break;
         }
     }
-    if ($source && $source !== 'email' && $source !== 'directory') {
-        echo 'Invalid source type "' . $source . '". "email" or "directory" expected.' . PHP_EOL;
+    if ($source && !in_array($source, [ 'email', 'directory', 'remotefs' ])) {
+        echo 'Invalid source type "' . $source . '". "email", "directory" or "remotefs" expected.' . PHP_EOL;
         exit(1);
     }
 }
 
 if ($usage) {
     echo PHP_EOL;
-    echo 'Usage: ' . basename(__FILE__) . ' [source=email|directory]' . PHP_EOL;
+    echo 'Usage: ' . basename(__FILE__) . ' [source=email|directory|remotefs]' . PHP_EOL;
     exit(1);
 }
 
@@ -99,10 +102,20 @@ $addError = function (\Throwable $e, array &$errors): void {
         $errors['debug_info'] = $err_r['debug_info']['content'];
     }
 };
+$updateProblems = function (array &$errors, array &$problems): void {
+    if (count($errors['messages']) > 0) {
+        $problems[] = [
+            'state'      => $state,
+            'messages'   => $errors['messages'],
+            'debug_info' => $errors['debug_info']
+        ];
+    }
+};
 
 const MAILBOX_LIST   = 1;
 const DIRECTORY_LIST = 2;
-const FETCHER        = 3;
+const REMOTEFS_LIST  = 3;
+const FETCHER        = 4;
 
 $core = Core::instance();
 $core->user('admin');
@@ -124,13 +137,7 @@ if (!$source || $source === 'email') {
         } else {
             $errors['messages'][] = 'The IMAP extension has not beeen loaded';
         }
-        if (count($errors['messages']) > 0) {
-            $problems[] = [
-                'state'      => $state,
-                'messages'   => $errors['messages'],
-                'debug_info' => $errors['debug_info']
-            ];
-        }
+        $updateProblems($errors, $problems);
     }
 }
 
@@ -144,14 +151,22 @@ if (!$source || $source === 'directory') {
             $addError($e, $errors);
         }
     }
-    if (count($errors['messages']) > 0) {
-        $problems[] = [
-            'state'      => $state,
-            'messages'   => $errors['messages'],
-            'debug_info' => $errors['debug_info']
-        ];
-    }
+    $updateProblems($errors, $problems);
 }
+
+$state = REMOTEFS_LIST;
+if (!$source || $source === 'remotefs') {
+    $errors = [ 'messages' => [], 'debug_info' => null ];
+    foreach ((new RemoteFilesystemList(true))->list() as $fs) {
+        try {
+            $sou_list[] = new RemoteFilesystemSource($fs);
+        } catch (RuntimeException $e) {
+            $addError($e, $errors);
+        }
+    }
+    $updateProblems($errors, $problems);
+}
+
 
 $state = FETCHER;
 try {
@@ -200,6 +215,9 @@ if (count($problems) > 0) {
                 break;
             case DIRECTORY_LIST:
                 echo 'Failed to get directory list:';
+                break;
+            case REMOTEFS_LIST:
+                echo 'Failed to get remote filesystem list';
                 break;
             case FETCHER:
                 echo 'Failed to get incoming report:';

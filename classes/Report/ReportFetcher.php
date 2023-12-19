@@ -84,6 +84,11 @@ class ReportFetcher
                 $f_act = $core->config('fetcher/directories/when_failed', '');
                 $limit = $core->config('fetcher/directories/files_maximum', 0);
                 break;
+            case Source::SOURCE_REMOTE_FILESYSTEM:
+                $s_act = $core->config('fetcher/remote_filesystems/when_done', '');
+                $f_act = $core->config('fetcher/remote_filesystems/when_failed', '');
+                $limit = $core->config('fetcher/remote_filesystems/files_maximum', 0);
+                break;
             case Source::SOURCE_UPLOADED_FILE:
                 $s_act = '';
                 $f_act = '';
@@ -93,7 +98,10 @@ class ReportFetcher
                 throw new RuntimeException('Unknown source type');
         }
         $limit = intval($limit);
-        if ($stype === Source::SOURCE_MAILBOX || $stype === Source::SOURCE_DIRECTORY) {
+        if ($stype === Source::SOURCE_MAILBOX ||
+            $stype === Source::SOURCE_DIRECTORY ||
+            $stype === Source::SOURCE_REMOTE_FILESYSTEM
+        ) {
             $this->source->setParams([
                 'when_done'   => $s_act,
                 'when_failed' => $f_act

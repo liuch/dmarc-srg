@@ -52,7 +52,7 @@ $mailboxes = [
 
 /**
  * It is only required if you want to get reports from a server directory.
- * In order to collect report from several directories, you should put each
+ * In order to collect reports from several directories, you should put each
  * directory settings in an array. Processing of the directories is not recursive.
  * It is recommended to use atomic methods for adding files to these directories.
  * Attention! All successfully processed files will be deleted from the directories
@@ -64,6 +64,47 @@ $mailboxes = [
 //    'name'     => 'Rua-Dir',
 //    // The directory location
 //    'location' => '/var/spool/dmarc-srg/rua'
+//];
+
+/**
+ * It is only required if you want to get reports from a remote filesystem.
+ * In order to collect reports from several filesystems, you should put each
+ * filesystem settings in an array. Processing of remote filesystems is not recursive.
+ * It uses the flysystem library to access remote file systems. Make sure this library is installed.
+ */
+//$remote_filesystems = [
+//    // Just for displaying in the web-admin and utilities. Not necessary.
+//    'name' => 'AWS-S3',
+//
+//    /**
+//     * Type of remote filesystem. Required. Only 's3' is supported at this time.
+//     * Before using the S3 filesystem, you will need to install the Flysystem S3 package
+//     * via the Composer package manager or your OS package manager.
+//     * For the Composer package manager run:
+//     * composer require league/flysystem-aws-s3-v3
+//     */
+//    'type' => 's3',
+//
+//    // Bucket name. Required.
+//    'bucket' => 'your-bucket-name',
+//
+//    // Path where the reports are located. Required.
+//    'path' => '/',
+//
+//    /**
+//     * They do not recommend to add AWS access keys directly to configuration files. Use credentials provider or
+//     * environment variables for that. However, you can list your credentials in the following options instead.
+//     */
+//    //'key'    => 'YEpoT...',
+//    //'secret' => 'uyASUDf...',
+//    //'token'  => '...',
+//
+//    // The full URI of the webservice. This is only required when connecting to a custom endpoint.
+//    //'endpoint' => 'http://localhost:9000',
+//
+//    // Region to connect to. Required.
+//    // See http://docs.aws.amazon.com/general/latest/gr/rande.html for a list of available regions.
+//    'region' => 'us-east-1'
 //];
 
 $admin = [
@@ -119,6 +160,16 @@ $fetcher = [
          * The default value is 'move_to:failed'.
          *
          */
+        'when_failed'      => 'move_to:failed'
+    ],
+    'remote_filesystems' => [
+        // See directories/files_maximum
+        'files_maximum' => 50,
+
+        // See directories/when_done
+        'when_done'        => 'delete',
+
+        // See directories/when_failed
         'when_failed'      => 'move_to:failed'
     ],
     /**

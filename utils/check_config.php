@@ -36,7 +36,9 @@ namespace Liuch\DmarcSrg;
 use Liuch\DmarcSrg\Mail\MailBoxes;
 use Liuch\DmarcSrg\Directories\DirectoryList;
 use Liuch\DmarcSrg\Exception\SoftException;
+use Liuch\DmarcSrg\Exception\LogicException;
 use Liuch\DmarcSrg\Exception\RuntimeException;
+use Liuch\DmarcSrg\RemoteFilesystems\RemoteFilesystemList;
 
 require realpath(__DIR__ . '/..') . '/init.php';
 
@@ -47,8 +49,9 @@ if (php_sapi_name() !== 'cli') {
 
 const RESULT_SUCCESS = 1;
 const RESULT_WARNING = 2;
-const RESULT_ERROR   = 3;
-const RESULT_FATAL   = 4;
+const RESULT_SKIPPED = 3;
+const RESULT_ERROR   = 4;
+const RESULT_FATAL   = 5;
 
 const CONFIG_FILE = 'config/conf.php';
 
@@ -74,6 +77,9 @@ $endChecking = function (string $message = '', int $result = 0) use (&$e_cnt, &$
         case RESULT_WARNING:
             ++$w_cnt;
             echo 'Warning', PHP_EOL;
+            break;
+        case RESULT_SKIPPED:
+            echo 'Skipped', PHP_EOL;
             break;
         case RESULT_ERROR:
             ++$e_cnt;
@@ -243,6 +249,58 @@ try {
         }
     } catch (SoftException $e) {
         $endChecking($e->getMessage());
+    }
+
+    echo PHP_EOL, '=== REMOTE FILESYSTEMS ===', PHP_EOL;
+    $startChecking('Getting configuration');
+    $fs_list = $core->config('remote_filesystems');
+    if (is_array($fs_list) && count($fs_list) > 0) {
+        $endChecking();
+        try {
+            $startChecking('Checking installed packages');
+            if (!class_exists('League\Flysystem\Filesystem')) {
+                throw new SoftException('Flysystem package is not installed');
+            }
+            $endChecking();
+            $startChecking('Analizing configuration data');
+            try {
+                $fs_list = (new RemoteFilesystemList(false))->list();
+                $endChecking();
+            } catch (LogicException $e) {
+                $endChecking($e->getMessage());
+                $fs_list = [];
+            }
+            $fs_lcnt = count($fs_list);
+            if ($fs_lcnt > 0) {
+                echo "  * Checking remote filesystems ({$fs_lcnt})", PHP_EOL;
+                foreach ($fs_list as $fs) {
+                    $fs_a = $fs->toArray();
+                    echo "    - {$fs_a['name']}", PHP_EOL;
+                    $startChecking('Accessibility', 2);
+                    $res = $fs->check();
+                    if (!$res['error_code']) {
+                        $endChecking();
+                        //$startChecking('Security', 2);
+                        //try {
+                        //    if ($fs->isPublic()) {
+                        //        throw new RuntimeException('Anyone can access the files on this filesystem');
+                        //    }
+                        //    $endChecking();
+                        //} catch (RuntimeException $e) {
+                        //    $endChecking($e->getMessage(), RESULT_WARNING);
+                        //} catch (\ErrorException $e) {
+                        //    $endChecking($e->getMessage());
+                        //}
+                    } else {
+                        $endChecking($res['message'] ?? null);
+                    }
+                }
+            }
+        } catch (SoftException $e) {
+            $endChecking($e->getMessage());
+        }
+    } else {
+        $endChecking('Configuration not found', RESULT_SKIPPED);
     }
 
     echo PHP_EOL, '===', PHP_EOL;

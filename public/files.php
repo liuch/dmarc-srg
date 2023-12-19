@@ -26,10 +26,12 @@ use Liuch\DmarcSrg\Users\User;
 use Liuch\DmarcSrg\Report\ReportFetcher;
 use Liuch\DmarcSrg\Sources\DirectorySource;
 use Liuch\DmarcSrg\Sources\UploadedFilesSource;
+use Liuch\DmarcSrg\Sources\RemoteFilesystemSource;
 use Liuch\DmarcSrg\Directories\DirectoryList;
 use Liuch\DmarcSrg\Exception\AuthException;
 use Liuch\DmarcSrg\Exception\RuntimeException;
 use Liuch\DmarcSrg\Exception\ForbiddenException;
+use Liuch\DmarcSrg\RemoteFilesystems\RemoteFilesystemList;
 
 require realpath(__DIR__ . '/..') . '/init.php';
 
@@ -68,18 +70,24 @@ if (Core::method() == 'GET') {
 
         try {
             $auth->isAllowed(User::LEVEL_ADMIN);
-            $dirs = [];
-            foreach ((new DirectoryList())->list() as $dir) {
-                $da = $dir->toArray();
-                try {
-                    $files = $dir->count();
-                } catch (RuntimeException $e) {
-                    $files = -1;
+            $dmap = [
+                [ 'directories', (new DirectoryList())->list() ],
+                [ 'remotefs', (new RemoteFilesystemList(true))->list() ]
+            ];
+            foreach ($dmap as $it) {
+                $dirs = [];
+                foreach ($it[1] as $dir) {
+                    $da = $dir->toArray();
+                    try {
+                        $files = $dir->count();
+                    } catch (RuntimeException $e) {
+                        $files = -1;
+                    }
+                    $da['files'] = $files;
+                    $dirs[] = $da;
                 }
-                $da['files'] = $files;
-                $dirs[] = $da;
+                $res[$it[0]] = $dirs;
             }
-            $res['directories'] = $dirs;
         } catch (ForbiddenException $e) {
         }
 
@@ -97,22 +105,27 @@ if (Core::method() == 'POST') {
         $data = Core::getJsonData();
         if ($data) {
             if (isset($data['cmd'])) {
-                if ($data['cmd'] === 'load-directory') {
+                $cmd_id = array_search($data['cmd'], [ 'load-directory', 'load-remotefs' ]);
+                if ($cmd_id !== false) {
                     if (isset($data['ids']) && gettype($data['ids']) === 'array' && count($data['ids']) > 0) {
                         $done = [];
-                        $dirs = [];
-                        $list = new DirectoryList();
+                        $slst = [];
+                        $list = $cmd_id === 0 ? new DirectoryList() : new RemoteFilesystemList(true);
                         foreach ($data['ids'] as $id) {
                             $dir_id = gettype($id) === 'integer' ? $id : -1;
                             if (!in_array($id, $done, true)) {
                                 $done[] = $id;
-                                $dirs[] = $list->directory($dir_id);
+                                if ($cmd_id === 0) {
+                                    $slst[] = new DirectorySource($list->directory($dir_id));
+                                } else {
+                                    $slst[] = new RemoteFilesystemSource($list->filesystem($dir_id));
+                                }
                             }
                         }
-                        if (count($dirs) > 0) {
+                        if (count($slst) > 0) {
                             $results = [];
-                            foreach ($dirs as $dir) {
-                                $sres = (new ReportFetcher(new DirectorySource($dir)))->fetch();
+                            foreach ($slst as $sou) {
+                                $sres = (new ReportFetcher($sou))->fetch();
                                 foreach ($sres as &$r) {
                                     $results[] = $r;
                                 }

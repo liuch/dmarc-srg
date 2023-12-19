@@ -16,7 +16,13 @@
         "ext-json": "*",
         "ext-pdo_mysql": "*",
         "ext-xml": "*",
-        "ext-zip": "*"
+        "ext-zip": "*",
+        "league/flysystem-aws-s3-v3": "^2.5"
     },
-    "suggest": {}
+    "suggest": {},
+    "config": {
+        "platform": {
+            "php": "7.3"
+        }
+    }
 }

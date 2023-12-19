@@ -22,8 +22,6 @@ class Files {
 	constructor() {
 		this._container   = null;
 		this._fieldset1   = null;
-		this._fieldset2   = null;
-		this._dir_table   = null;
 		this._element     = document.getElementById("main-block");
 		this._fcount_info = null;
 		this._fsize_info  = null;
@@ -31,7 +29,10 @@ class Files {
 			upload_max_file_count: 0,
 			upload_max_file_size:  0
 		};
-		this._directories = [];
+		this._directories = {
+			local:  { list: [], element: null, table: null },
+			remote: { list: [], element: null, table: null }
+		};
 	}
 
 	display() {
@@ -39,8 +40,20 @@ class Files {
 		this._create_local_file_uploading_element();
 		this._container.appendChild(this._fieldset1);
 		if (User.level === "admin") {
-			this._create_directory_loading_element();
-			this._container.appendChild(this._fieldset2);
+			this._create_directory_loading_element(
+				this._directories.local,
+				"local",
+				"Loading report files from the server directory",
+				"No directories are configured."
+			);
+			this._container.appendChild(this._directories.local.element);
+			this._create_directory_loading_element(
+				this._directories.remote,
+				"remote",
+				"Loading report files from the remote filesystem",
+				"No remote filesystems are configured."
+			);
+			this._container.appendChild(this._directories.remote.element);
 		}
 		this._element.appendChild(this._container);
 		this._fieldset1.focus();
@@ -48,7 +61,8 @@ class Files {
 
 	update() {
 		if (!Status.instance().error()) {
-			this._fetch_data(true, User.level === "admin");
+			let admin = User.level === "admin";
+			this._fetch_data(true, admin, admin);
 		}
 	}
 
@@ -113,17 +127,15 @@ class Files {
 		this._fieldset1.appendChild(fm);
 	}
 
-	_create_directory_loading_element() {
-		this._fieldset2 = document.createElement("fieldset");
-		this._fieldset2.setAttribute("class", "round-border");
-		this._fieldset2.disabled = true;
-		let lg = document.createElement("legend");
-		lg.appendChild(document.createTextNode("Loading report files from the server directory"));
-		this._fieldset2.appendChild(lg);
+	_create_directory_loading_element(dir, type, title, no_message) {
+		dir.element = document.createElement("fieldset");
+		dir.element.setAttribute("class", "round-border");
+		dir.element.disabled = true;
+		dir.element.appendChild(document.createElement("legend")).textContent = title;
 
 		let fm = document.createElement("form");
-		fm.setAttribute("method", "post");
-		this._dir_table = new ITable({
+		fm.method = "post";
+		dir.table = new ITable({
 			class:   "main-table subtable",
 			onclick: function(row) {
 				let userdata = row.userdata();
@@ -131,10 +143,10 @@ class Files {
 				if (checkbox && !userdata.error) {
 					userdata.checked = !userdata.checked;
 					checkbox.checked = userdata.checked;
-					this._update_directory_button();
+					this._update_directory_button(dir);
 				}
 			}.bind(this),
-			nodata_text: "No directories are configured."
+			nodata_text: no_message
 		});
 		[
 			{ content: "", class: "cell-status" },
@@ -142,9 +154,9 @@ class Files {
 			{ content: "Files" },
 			{ content: "Location" }
 		].forEach(function(col) {
-			this._dir_table.add_column(col);
+			dir.table.add_column(col);
 		}, this);
-		fm.appendChild(this._dir_table.element());
+		fm.appendChild(dir.table.element());
 		let bb = document.createElement("div");
 		bb.setAttribute("class", "buttons-block");
 		fm.appendChild(bb);
@@ -154,7 +166,7 @@ class Files {
 
 		fm.addEventListener("submit", function(event) {
 			sb.disabled = true;
-			let ids = this._directories.filter(function(it) {
+			let ids = dir.list.filter(function(it) {
 				return it.checked;
 			}).map(function(it) {
 				return it.id;
@@ -164,7 +176,7 @@ class Files {
 				method: "POST",
 				headers: Object.assign(HTTP_HEADERS, HTTP_HEADERS_POST),
 				credentials: "same-origin",
-				body: JSON.stringify({ cmd: "load-directory", ids: ids })
+				body: JSON.stringify({ cmd: type === "local" ? "load-directory" : "load-remotefs", ids: ids })
 			}).then(function(resp) {
 				if (!resp.ok)
 					throw new Error("Failed to load report files");
@@ -181,12 +193,13 @@ class Files {
 				Common.displayError(err);
 				Notification.add({ text: (err.message || "Error!"), type: "error" });
 			}).finally(function() {
-				that._fetch_data(false, true);
+				let local = type === "local";
+				that._fetch_data(false, local, !local);
 			});
 			event.preventDefault();
 		}.bind(this));
 
-		this._fieldset2.appendChild(fm);
+		dir.element.appendChild(fm);
 	}
 
 	_display_files_info() {
@@ -219,10 +232,10 @@ class Files {
 		this._fieldset1.appendChild(dv);
 	}
 
-	_update_directory_loading_element() {
-		this._dir_table.clear();
+	_update_directory_loading_element(dir) {
+		dir.table.clear();
 		let d = {};
-		d.rows = this._directories.map(function(it) {
+		d.rows = dir.list.map(function(it) {
 			let files  = it.files;
 			let chkbox = false;
 			it.checked = false;
@@ -239,11 +252,11 @@ class Files {
 			rd.cells.push({ content: it.location });
 			return rd;
 		});
-		this._dir_table.add_frame(new ITableFrame(d, this._dir_table.last_row_index() + 1));
+		dir.table.add_frame(new ITableFrame(d, dir.table.last_row_index() + 1));
 	}
 
-	_update_directory_button() {
-		this._fieldset2.querySelector("button[type=submit]").disabled = !this._directories.some(function(it) {
+	_update_directory_button(item) {
+		item.element.querySelector("button[type=submit]").disabled = !item.list.some(function(it) {
 			return it.checked;
 		});
 	}
@@ -326,14 +339,22 @@ class Files {
 		return el;
 	}
 
-	_fetch_data(files, dirs) {
+	_fetch_data(files, dirs, rfs) {
 		if (files) {
 			this._fieldset1.disabled = true;
 			this._fieldset1.insertBefore(set_wait_status(), this._fieldset1.children[0]);
 		}
+		let dmap = new Map();
 		if (dirs) {
-			this._fieldset2.disabled = true;
-			this._fieldset2.insertBefore(set_wait_status(), this._fieldset2.children[0]);
+			dmap.set("directories", this._directories.local);
+		}
+		if (rfs) {
+			dmap.set("remotefs", this._directories.remote);
+		}
+		for (let dir of dmap.values()) {
+			let el = dir.element;
+			el.disabled = true;
+			el.insertBefore(set_wait_status(), el.children[0]);
 		}
 		let that = this;
 		window.fetch("files.php", {
@@ -352,10 +373,11 @@ class Files {
 				that._display_files_info();
 				that._fieldset1.disabled = false;
 			}
-			if (dirs) {
-				that._directories = data.directories || [];
-				that._update_directory_loading_element();
-				that._fieldset2.disabled = false;
+			for (let key of dmap.keys()) {
+				let dir = dmap.get(key);
+				dir.list = data[key] || [];
+				that._update_directory_loading_element(dir);
+				dir.element.disabled = false;
 			}
 		}).catch(function(err) {
 			Common.displayError(err);
@@ -363,15 +385,15 @@ class Files {
 			if (files) {
 				that._fieldset1.insertBefore(set_error_status(null, err.message), that._fieldset1.children[0]);
 			}
-			if (dirs) {
-				that._fieldset2.insertBefore(set_error_status(null, err.message), that._fieldset2.children[0]);
+			for (let dir of dmap.values()) {
+				dir.element.insertBefore(set_error_status(null, err.message), dir.element.children[0]);
 			}
 		}).finally(function() {
 			if (files) {
 				that._fieldset1.querySelector(".wait-message").remove();
 			}
-			if (dirs) {
-				that._fieldset2.querySelector(".wait-message").remove();
+			for (let dir of dmap.values()) {
+				dir.element.querySelector(".wait-message").remove();
 			}
 		});
 	}

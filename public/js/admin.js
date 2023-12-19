@@ -130,7 +130,8 @@ class Admin {
 			this._sources.set_data({
 				groups: [
 					{ name: "Mailboxes", type: "mailbox", items: this._state.mailboxes || [] },
-					{ name: "Directories", type: "directory", items: this._state.directories || [] }
+					{ name: "Directories", type: "directory", items: this._state.directories || [] },
+					{ name: "Remote filesystems", type: "remotefs", items: this._state.remotefs || [] }
 				]
 			});
 		}
@@ -426,7 +427,7 @@ class SourceListBox extends DropdownListBox {
 					msg.push("Messages: " + data.status.messages);
 					msg.push("Unseen: " + data.status.unseen);
 				}
-				else if (type === "directory") {
+				else if (type === "directory" || type === "remotefs") {
 					msg.push("Files: " + data.status.files);
 				}
 			}

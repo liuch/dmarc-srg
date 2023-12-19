@@ -117,6 +117,8 @@ class ReportLogItem
                 return Source::SOURCE_MAILBOX;
             case 'directory':
                 return Source::SOURCE_DIRECTORY;
+            case 'remotefs':
+                return Source::SOURCE_REMOTE_FILESYSTEM;
         }
         return 0;
     }
@@ -139,6 +141,8 @@ class ReportLogItem
                 return 'email';
             case Source::SOURCE_DIRECTORY:
                 return 'directory';
+            case Source::SOURCE_REMOTE_FILESYSTEM:
+                return 'remotefs';
         }
         return '';
     }

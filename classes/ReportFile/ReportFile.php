@@ -49,6 +49,7 @@ class ReportFile
         $this->filepath = $filepath;
 
         switch ($this->type) {
+            case 'text/xml':
             case 'application/gzip':
             case 'application/x-gzip':
                 $this->fd = $fd;
@@ -59,7 +60,9 @@ class ReportFile
                     if ($tmpfname === false) {
                         throw new SoftException('Failed to create a temporary file');
                     }
-                    rewind($fd);
+                    if (stream_get_meta_data($fd)['seekable'] ?? false) {
+                        rewind($fd);
+                    }
                     if (file_put_contents($tmpfname, $fd) === false) {
                         throw new SoftException('Failed to copy data to a temporary file');
                     }
@@ -89,8 +92,10 @@ class ReportFile
     public static function getMimeType($filename, $fd = null, $filepath = null)
     {
         if (function_exists('mime_content_type')) {
-            if ($fd && ($res = mime_content_type($fd))) {
-                return $res;
+            if ($fd && (stream_get_meta_data($fd)['seekable'] ?? false)) {
+                if ($res = mime_content_type($fd)) {
+                    return $res;
+                }
             }
             if ($filepath && ($res = mime_content_type($filepath))) {
                 return $res;

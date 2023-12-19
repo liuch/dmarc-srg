@@ -34,6 +34,7 @@ namespace Liuch\DmarcSrg;
 use Liuch\DmarcSrg\Mail\MailBoxes;
 use Liuch\DmarcSrg\Directories\DirectoryList;
 use Liuch\DmarcSrg\Exception\LogicException;
+use Liuch\DmarcSrg\RemoteFilesystems\RemoteFilesystemList;
 
 /**
  * It's the main class for accessing administration functions.
@@ -66,6 +67,9 @@ class Admin
         $res['directories'] = array_map(function ($dir) {
             return $dir->toArray();
         }, (new DirectoryList())->list());
+        $res['remotefs']    = array_map(function ($fs) {
+            return $fs->toArray();
+        }, (new RemoteFilesystemList(true))->list());
 
         if ($res['database']['correct'] ?? false) {
             $res['state'] = 'Ok';
@@ -94,6 +98,8 @@ class Admin
                 return (new MailBoxes())->check($id);
             case 'directory':
                 return (new DirectoryList())->check($id);
+            case 'remotefs':
+                return (new RemoteFilesystemList(true))->check($id);
         }
         throw new LogicException('Unknown resource type');
     }

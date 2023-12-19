@@ -84,7 +84,9 @@ class MailAttachment
             $this->stream = fopen('php://temp', 'r+');
             fwrite($this->stream, $this->toString());
         }
-        rewind($this->stream);
+        if (stream_get_meta_data($this->stream)['seekable'] ?? false) {
+            rewind($this->stream);
+        }
         return $this->stream;
     }
 

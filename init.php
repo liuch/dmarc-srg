@@ -20,6 +20,11 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+$va = __DIR__ . '/vendor/autoload.php';
+if (is_readable($va)) {
+    require_once($va);
+}
+
 spl_autoload_register(function ($class) {
     $prefix     = 'Liuch\\DmarcSrg\\';
     $prefix_len = 15;
