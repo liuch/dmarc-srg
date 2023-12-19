@@ -83,7 +83,7 @@ class DirectorySource extends Source
     }
 
     /**
-     * Returns the index of the currect file.
+     * Returns the index of the current file.
      *
      * @return int
      */
