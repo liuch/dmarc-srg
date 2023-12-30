@@ -62,16 +62,3 @@ set_error_handler(function (int $severity, string $message, string $file, int $l
     }
     throw new \ErrorException($message, -1, $severity, $file, $line);
 });
-
-if (!function_exists('getallheaders')) {
-    function getallheaders(): array
-    {
-        $headers = [];
-        foreach ($_SERVER as $key => $value) {
-            if (substr($key, 0, 5) === 'HTTP_') {
-                $headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($key, 5)))))] = $value;
-            }
-        }
-        return $headers;
-    }
-}
