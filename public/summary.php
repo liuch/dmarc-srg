@@ -70,12 +70,19 @@ if (Core::isJson() && isset($_GET['mode'])) {
             if (empty($_GET['period'])) {
                 throw new SoftException('Parameter "period" is not specified');
             }
-            $report = (new SummaryReport($_GET['period']))->setDomain(new Domain($_GET['domain']));
-            if (($_GET['format'] ?? '') === 'raw') {
-                $res = [ 'data' => $report->toArray() ];
-            } else {
-                $res = [ 'text' => $report->text() ];
-            }
+
+            $format = $_GET['format'] ?? '';
+            $res['reports'] = array_map(function ($d) use ($format) {
+                $rep = (new SummaryReport($_GET['period']))->setDomain(new Domain($d));
+                $r = [ 'domain' => $d ];
+                if ($format === 'raw') {
+                    $r['data'] = $rep->toArray();
+                } else {
+                    $r['text'] = $rep->text();
+                }
+                return $r;
+            }, explode(',', $_GET['domain']));
+
             Core::sendJson($res);
             return;
         } else {

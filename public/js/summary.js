@@ -20,11 +20,11 @@
 
 class Summary {
 	constructor(id) {
-		this._report = null;
+		this._reports = null;
 		this._element = document.getElementById("main-block");
 		this._container = null;
 		this._options_data = null;
-		this._options_block = null;
+		this._options_block = { main: null, domains: null, period: null, button: null };
 		this._report_block = null;
 	}
 
@@ -33,7 +33,7 @@ class Summary {
 		this._element.appendChild(this._container);
 		this._create_options_block();
 		this._create_report_block();
-		this._container.appendChild(this._options_block);
+		this._container.appendChild(this._options_block.main);
 		this._container.appendChild(document.createElement("hr"));
 		this._container.appendChild(this._report_block);
 	}
@@ -54,7 +54,7 @@ class Summary {
 		let period = url_params.get("period");
 		let format = url_params.get("format");
 		if (domain && period) {
-			this._options_data = { domain: domain, period: period, format: format || "text" };
+			this._options_data = { domains: domain, period: period, format: format || "text" };
 		} else {
 			this._options_data = null;
 		}
@@ -66,28 +66,45 @@ class Summary {
 	}
 
 	_create_options_block() {
-		let opts = document.createElement("div");
-		opts.setAttribute("class", "options-block");
-		opts.appendChild(document.createTextNode("Report options: "));
-		opts.appendChild(document.createTextNode("none"));
+		const main = document.createElement("div");
+		main.classList.add("options-block");
 
-		let btn = document.createElement("button");
-		btn.setAttribute("class", "options-button");
-		btn.appendChild(document.createTextNode("Change"));
-		btn.addEventListener("click", function(event) {
-			this._display_dialog();
-		}.bind(this));
-		opts.appendChild(btn);
+		main.appendChild(document.createElement("h2")).textContent = "Report options:";
 
-		this._options_block = opts;
+		const list = main.appendChild(document.createElement("ul"));
+		[ "period", "format", "domains" ].forEach(name => {
+			const li = list.appendChild(document.createElement("li"));
+			li.appendChild(document.createElement("span")).textContent = `${name}: `;
+			li.appendChild(document.createElement("span")).textContent = "none";
+			this._options_block[name] = li.children[1];
+		});
+
+		const btn = main.appendChild(document.createElement("button"));
+		btn.classList.add("options-button");
+		btn.textContent = "Change";
+		btn.addEventListener("click", event => this._display_dialog());
+		this._options_block.button = btn;
+
+		this._options_block.main = main;
 	}
 
 	_update_options_block() {
-		let text = "none";
-		if (this._options_data) {
-			text = "domain=" + this._options_data.domain + " period=" + this._options_data.period;
+		[ "period", "format" ].forEach(id => {
+			this._options_block[id].textContent = this._options_data && this._options_data[id] || "none";
+		});
+		const de = this._options_block.domains;
+		const dl = this._options_data && this._options_data.domains && this._options_data.domains.split(",") || [ "none" ];
+		de.replaceChildren(dl.slice(0, 3).join(", "));
+		if (dl.length > 3) {
+			const dm = document.createElement("a");
+			dm.href = "#";
+			dm.textContent = `and ${dl.length - 3} more`;
+			dm.addEventListener("click", event => {
+				event.preventDefault();
+				de.replaceChildren(dl.join(", "));
+			});
+			de.append(" ", dm);
 		}
-		this._options_block.childNodes[1].textContent = text;
 	}
 
 	_create_report_block() {
@@ -116,7 +133,7 @@ class Summary {
 			this.update();
 		}.bind(this)).finally(function() {
 			dlg.element().remove();
-			this._options_block.lastChild.focus();
+			this._options_block.button.focus();
 		}.bind(this));
 	}
 
@@ -128,7 +145,7 @@ class Summary {
 		}
 		this._report_block.appendChild(set_wait_status());
 		let uparams = new URLSearchParams();
-		let domain = this._options_data.domain;
+		let domain = this._options_data.domains;
 		uparams.set("domain", domain);
 		uparams.set("period", this._options_data.period);
 		uparams.set("format", this._options_data.format === "html" ? "raw" : "text");
@@ -137,39 +154,50 @@ class Summary {
 			cache: "no-store",
 			headers: HTTP_HEADERS,
 			credentials: "same-origin"
-		}).then(function(resp) {
-			if (!resp.ok) {
-				throw new Error("Failed to fetch the report");
-			}
+		}).then(resp => {
+			if (!resp.ok) throw new Error("Failed to fetch the report");
 			return resp.json();
-		}).then(function(report) {
-			Common.checkResult(report);
-			report.domain = domain;
-			this._report = new SummaryReport(report);
+		}).then(data => {
+			Common.checkResult(data);
+			this._reports = data.reports.map(rep => new SummaryReport(rep));
 			this._display_report();
-		}.bind(this)).catch(function(err) {
+		}).catch(err => {
 			Common.displayError(err);
 			set_error_status(this._report_block, 'Error: ' + err.message);
-		}.bind(this)).finally(function() {
+		}).finally(() => {
 			let wm = this._report_block.querySelector(".wait-message");
-			if (wm) {
-				wm.remove();
-			}
-		}.bind(this));
+			if (wm) wm.remove();
+		});
 	}
 
 	_display_report() {
-		let el   = null;
-		let text = this._report.text();
-		if (text) {
-			el = document.createElement("pre");
-			el.appendChild(document.createTextNode(this._report.text()));
+		function noDataElement() {
+			const el = document.createElement("p");
+			el.append("No data");
+			return el;
+		}
+		function sepElement(html) {
+			if (html) return document.createElement("hr");
+			const el = document.createElement("pre");
+			el.textContent = "==========\n";
+			return el;
+		}
+
+		let el = null;
+		if (this._reports && this._reports.length) {
+			el = document.createDocumentFragment();
+			this._reports.forEach((report, index) => {
+				const text = report.text();
+				if (index) el.append(sepElement(!text));
+				if (text) {
+					const pre = document.createElement("pre");
+					el.appendChild(document.createElement("pre")).textContent = text;
+				} else {
+					el.append(report.html() || noDataElement());
+				}
+			});
 		} else {
-			el = this._report.html();
-			if (!el) {
-				el = document.createElement("p");
-				el.appendChild(document.createTextNode("No data"));
-			}
+			el = noDataElement();
 		}
 		this._report_block.appendChild(el);
 	}
@@ -182,7 +210,7 @@ class OptionsDialog extends VerticalDialog {
 		this._content = null;
 		this._domains = null;
 		this._ui_data = [
-			{ name: "domain", title: "Domain" },
+			{ name: "domains", title: "Domains", type: "multi-select" },
 			{ name: "period", title: "Period" },
 			{ name: "days", title: "Days", type: "input" },
 			{ name: "format", title: "Format" }
@@ -190,7 +218,7 @@ class OptionsDialog extends VerticalDialog {
 	}
 
 	_gen_content() {
-		this._ui_data.forEach(function(row) {
+		this._ui_data.forEach(row => {
 			let i_el = this._insert_input_row(row.title, row.name, row.type);
 			if (row.name === "days") {
 				i_el.setAttribute("type", "number");
@@ -199,8 +227,12 @@ class OptionsDialog extends VerticalDialog {
 				i_el.setAttribute("value", "");
 			}
 			row.element = i_el;
-		}, this);
-		this._ui_data[1].element.addEventListener("change", function(event) {
+		});
+		this._ui_data[0].element.setAttribute("placeholder", "Pick domains");
+		this._ui_data[0].element.addEventListener("change", event => {
+			this._buttons[1].disabled = this._ui_data[0].element.isEmpty();
+		});
+		this._ui_data[1].element.addEventListener("change", event => {
 			let days_el = this._ui_data[2].element;
 			if (event.target.value === "lastndays") {
 				days_el.disabled = false;
@@ -212,7 +244,7 @@ class OptionsDialog extends VerticalDialog {
 				days_el.dataset.disabled = true;
 				days_el.value = "";
 			}
-		}.bind(this));
+		});
 		this._update_period_element();
 		this._update_format_element();
 
@@ -230,7 +262,7 @@ class OptionsDialog extends VerticalDialog {
 
 	_submit() {
 		let res = {
-			domain: this._ui_data[0].element.value,
+			domain: this._ui_data[0].element.getValues().join(","),
 			period: this._ui_data[1].element.value,
 			format: this._ui_data[3].element.value
 		};
@@ -241,21 +273,18 @@ class OptionsDialog extends VerticalDialog {
 		this.hide();
 	}
 
+	_reset() {
+		this._ui_data[0].element.setValues(this._data.domains && this._data.domains.split(",") || []);
+		window.setTimeout(() => this._ui_data[1].element.dispatchEvent(new Event("change")), 0);
+	}
+
 	_update_domain_element() {
 		let el = this._ui_data[0].element;
-		remove_all_children(el);
-		let c_val = this._data.domain || "";
+		el.clear();
 		if (this._domains) {
-			this._domains.forEach(function(name) {
-				let opt = document.createElement("option");
-				opt.setAttribute("value", name);
-				if (name === c_val) {
-					opt.setAttribute("selected", "");
-				}
-				opt.appendChild(document.createTextNode(name));
-				el.appendChild(opt);
-			});
+			this._domains.forEach(name => el.appendItem(name));
 		}
+		if (this._data.domains) el.setValues(this._data.domains.split(","));
 	}
 
 	_update_period_element() {
@@ -265,14 +294,13 @@ class OptionsDialog extends VerticalDialog {
 			[ "lastweek", "Last week"],
 			[ "lastmonth", "Last month" ],
 			[ "lastndays", "Last N days" ]
-		].forEach(function(it) {
+		].forEach(it => {
 			let opt = document.createElement("option");
 			opt.setAttribute("value", it[0]);
 			if (it[0] === c_val[0]) {
 				opt.setAttribute("selected", "");
 			}
-			opt.appendChild(document.createTextNode(it[1]));
-			el.appendChild(opt);
+			el.appendChild(opt).textContent = it[1];
 		});
 		if (c_val[1]) {
 			let val  = parseInt(c_val[1]);
@@ -289,21 +317,20 @@ class OptionsDialog extends VerticalDialog {
 		[
 			[ "text", "Plain text" ],
 			[ "html", "HTML" ]
-		].forEach(function(it) {
+		].forEach(it => {
 			let opt = document.createElement("option");
 			opt.setAttribute("value", it[0]);
 			if (it[0] === cv) {
 				opt.setAttribute("selected", "");
 			}
-			opt.appendChild(document.createTextNode(it[1]));
-			el.appendChild(opt);
+			el.appendChild(opt).textContent = it[1];
 		});
 	}
 
 	_enable_ui(enable) {
-		let list = this._element.querySelector("form").elements;
-		for (let i = 0; i < list.length; ++i) {
-			let el = list[i];
+		const controls = Array.from(this._element.querySelector("form").elements);
+		controls.push(this._ui_data[0].element);
+		for (const el of controls) {
 			el.disabled = !enable || el.dataset.disabled;
 		}
 	}
@@ -316,28 +343,20 @@ class OptionsDialog extends VerticalDialog {
 			cache: "no-store",
 			headers: HTTP_HEADERS,
 			credentials: "same-origin"
-		}).then(function(resp) {
-			if (!resp.ok) {
-				throw new Error("Failed to fetch the report options list");
-			}
+		}).then(resp => {
+			if (!resp.ok) throw new Error("Failed to fetch the report options list");
 			return resp.json();
-		}).then(function(data) {
+		}).then(data => {
 			Common.checkResult(data);
 			this._domains = data.domains;
 			this._update_domain_element();
 			this._enable_ui(true);
-		}.bind(this)).catch(function(err) {
+		}).catch(err => {
 			Common.displayError(err);
 			this._content.appendChild(set_error_status());
-		}.bind(this)).finally(function() {
+		}).finally(() => {
 			this._content.querySelector(".wait-message").remove();
-		}.bind(this));
-	}
-
-	_reset() {
-		window.setTimeout(function() {
-			this._ui_data[1].element.dispatchEvent(new Event("change"));
-		}.bind(this), 0);
+		});
 	}
 }
 

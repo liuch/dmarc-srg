@@ -769,8 +769,8 @@ class ModalDialog {
 				that._submit();
 			});
 			frm.addEventListener("reset", function(event) {
-				this._reset();
-			}.bind(this));
+				that._reset();
+			});
 		}
 		return this._element;
 	}
@@ -1093,3 +1093,336 @@ class ReportFilterDialog extends ModalDialog {
 	_fetch_data() {
 	}
 }
+
+class Multiselect extends HTMLElement {
+	constructor() {
+		super();
+		this._items    = [];
+		this._aitems   = [];
+		this._values   = new Set();
+		this._input    = null;
+		this._tags     = null;
+		this._more     = null;
+		this._search   = null;
+		this._select   = null;
+		this._listEl   = null;
+		this._active   = false;
+		this._disabled = false;
+		this._focused  = { index: -1, item: null };
+	}
+
+	connectedCallback() {
+		this._makeInputElement();
+		this._makeSelectButton();
+		const iw = document.createElement("div");
+		iw.classList.add("multiselect-wrapper");
+		this.appendChild(iw).append(this._input, this._select);
+		this.addEventListener("focusin", event => {
+			const rt = event.relatedTarget;
+			if (event.target === this._search) {
+				this.activate();
+			}
+		});
+		this.addEventListener("focusout", event => {
+			if (!this.contains(event.relatedTarget)) {
+				this.deactivate();
+			}
+		});
+		this.tabIndex = -1;
+		this._disableChanged();
+		this._activateSearch();
+	}
+
+	static get observedAttributes() {
+		return [ "placeholder", "disabled" ];
+	}
+
+	attributeChangedCallback(name, oldValue, newValue) {
+		switch (name) {
+			case "placeholder":
+				if (this._search) this._search.placeholder = newValue;
+				break;
+			case "disabled":
+				if (this._disabled !== (newValue !== null)) {
+					this._disabled = !this._disabled;
+					this._disableChanged();
+				}
+				break;
+		}
+	}
+
+	activate() {
+		if (!this._active && !this._disabled) {
+			this.classList.add("active");
+			this._active = true;
+			this._search.classList.add("active");
+			this._displayList(true);
+		}
+	}
+
+	deactivate() {
+		if (this._active) {
+			this.classList.remove("active");
+			this._active = false;
+			if (this._values.size) this._search.classList.remove("active");
+			this._search.blur();
+			this._search.value = "";
+			this._displayList(false);
+		}
+	}
+
+	clear() {
+		this._items = [];
+		if (this._active) this._updateList();
+	}
+
+	appendItem(value, text) {
+		this._items.push({ value: value, text: text || ("" + value) });
+		if (this._active) this._updateList();
+	}
+
+	setValues(data) {
+		this._clearResults();
+		if (data.length) {
+			const items = data.reduce((res, val) => {
+				const item = this._items.find(it => it.value === val);
+				if (item && !this._values.has(item)) res.push(item);
+				return res;
+			}, []);
+			this._updateResult(items);
+		} else if (!this._active) {
+			this._activateSearch();
+		}
+	}
+
+	getValues() {
+		const res = [];
+		for (const item of this._values) {
+			res.push(item.value);
+		}
+		return res;
+	}
+
+	isEmpty() {
+		return !this._values.size;
+	}
+
+	get disabled() {
+		return this._disabled;
+	}
+
+	set disabled(val) {
+		if (val) {
+			this.setAttribute("disabled", "");
+		} else {
+			this.removeAttribute("disabled");
+		}
+	}
+
+	_makeInputElement() {
+		this._input = document.createElement("div");
+		this._input.classList.add("multiselect-input");
+		this._tags = document.createElement("div");
+		this._tags.classList.add("multiselect-tags");
+		this._makeSearchBar()
+		this._input.append(this._tags, this._search);
+	}
+
+	_makeSearchBar() {
+		this._search = document.createElement("input");
+		this._search.type = "text";
+		this._search.tabIndex = 0;
+		this._search.disabled = this._disabled;
+		this._search.classList.add("multiselect-search");
+		this._search.setAttribute("spellcheck", "false");
+		this._search.placeholder = this.getAttribute("placeholder") || ""
+		this._search.addEventListener("input", event => {
+			this._updateList();
+		});
+		this._search.addEventListener("keydown", event => {
+			let idx = this._focused.index;
+			switch (event.code) {
+				case "ArrowDown":
+					event.preventDefault();
+					if (++idx < this._aitems.length) this._focusItem(idx, true);
+					break;
+				case "ArrowUp":
+					event.preventDefault();
+					if (--idx >= 0) this._focusItem(idx, true);
+					break;
+				case "Enter":
+				case "NumpadEnter":
+					if (this._active) {
+						event.preventDefault();
+						if (this._focused.item) {
+							this._updateResult(this._focused.item);
+							this.deactivate();
+						}
+					}
+					break;
+				case "Escape":
+					if (this._active) {
+						event.preventDefault();
+						event.stopPropagation();
+						this.deactivate();
+					}
+					break;
+			}
+		});
+	}
+
+	_makeSelectButton() {
+		this._select = document.createElement("div");
+		this._select.tabIndex = -1;
+		this._select.classList.add("multiselect-select");
+		this._select.addEventListener("click", event => {
+			if (this._active) {
+				event.preventDefault();
+				this.deactivate();
+			}
+		});
+	}
+
+	_displayList(visible) {
+		if (!visible) {
+			this._listEl && this._listEl.classList.add("hidden");
+			return;
+		}
+
+		if (!this._listEl) {
+			this._listEl = document.createElement("ul");
+			this._listEl.tabIndex = -1;
+			this._listEl.classList.add("multiselect-options");
+			this.append(this._listEl);
+			this._listEl.addEventListener("click", event => {
+				if (event.target.tagName === "LI" && !event.target.classList.contains("nodata")) {
+					this._updateResult(this._aitems.find(item => event.target === item.element));
+					this.deactivate();
+					event.preventDefault();
+				}
+			});
+		} else {
+			this._listEl.classList.remove("hidden");
+			this._listEl.scrollTop = 0;
+		}
+		this._updateList();
+	}
+
+	_updateList() {
+		while (this._listEl.firstChild) this._listEl.lastChild.remove();
+		this._aitems = [];
+
+		let cnt = 0;
+		let txt = this._search.value;
+		this._items.forEach(item => {
+			if (!item.element) item.element = this._makeOption(item.text, this._values.has(item), false);
+			if (item.text.includes(txt)) {
+				this._listEl.appendChild(item.element);
+				this._aitems.push(item);
+				++cnt;
+			}
+		});
+
+		if (cnt) {
+			this._focusItem(0);
+		} else {
+			this._focused.index = -1;
+			this._focused.item = null;
+			this._listEl.append(this._makeOption("No items found", false, true));
+		}
+	}
+
+	_makeTag(item) {
+		const tb = document.createElement("i");
+		if (!this._disabled) tb.tabIndex = 0;
+		tb.addEventListener("click", event => {
+			event.preventDefault();
+			if (!this._disabled) this._updateResult(item)
+		});
+		const el = document.createElement("div");
+		el.classList.add("multiselect-tag");
+		el.appendChild(document.createElement("span")).textContent = item.text;
+		el.append(tb);
+		item.tag = el;
+		return el;
+	}
+
+	_makeOption(text, selected, nodata) {
+		const el = document.createElement("li");
+		el.textContent = text;
+		if (selected) el.classList.add("selected");
+		if (nodata) {
+			el.classList.add("nodata");
+		} else {
+			el.addEventListener("pointerenter", event => this._focusItem(event.target));
+		}
+		return el;
+	}
+
+	_activateSearch() {
+		this._search.classList[this._values.size ? "remove" : "add"]("active");
+	}
+
+	_focusItem(item, scroll) {
+		let idx = -1;
+		if (typeof(item) === "number") {
+			idx = item;
+			item = this._aitems[idx];
+		} else {
+			idx = this._aitems.findIndex(it => item === it.element);
+			item = (idx >= 0) ? this._aitems[idx] : null;
+		}
+		this._focused.item && this._focused.item.element.classList.remove("focused");
+		item.element.classList.add("focused");
+		this._focused = { index: idx, item: item };
+		if (scroll) scroll_to_element(item.element, this._listEl);
+	}
+
+	_clearResults() {
+		this._values.clear();
+		this._items.forEach(item => {
+			item.tag && item.tag.remove();
+			item.element && item.element.classList.remove("selected");
+		});
+		this._more && this._more.remove();
+	}
+
+	_updateResult(items) {
+		const MAX_ITEMS = 3;
+		if (!Array.isArray(items)) items = [ items ];
+		items.forEach(item => {
+			if (this._values.delete(item)) {
+				item.element && item.element.classList.remove("selected");
+			} else {
+				this._values.add(item);
+				item.element && item.element.classList.add("selected");
+			}
+		});
+		while (this._tags.firstChild) this._tags.lastChild.remove();
+		let cnt = 0;
+		for (const vi of this._values) {
+			this._tags.append(vi.tag || this._makeTag(vi));
+			if (++cnt >= MAX_ITEMS) break;
+		}
+		if (this._values.size > MAX_ITEMS) {
+			if (!this._more) {
+				this._more = document.createElement("span");
+				this._more.append("and ", "", " more");
+			}
+			this._more.childNodes[1].textContent = this._values.size - MAX_ITEMS;
+			this._tags.append(this._more);
+		}
+		if (!this._active) this._activateSearch();
+		this.dispatchEvent(new Event("change"));
+	}
+
+	_disableChanged() {
+		if (this._disabled) this.deactivate();
+		for (const item of this._values) {
+			const el = item.tag.querySelector("i");
+			if (this._disabled) el.removeAttribute("tabindex"); else el.tabIndex = 0;
+		}
+		if (this._search) this._search.disabled = this._disabled;
+	}
+}
+customElements.define("multi-select", Multiselect);

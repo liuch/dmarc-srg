@@ -159,3 +159,119 @@
 .sortable.arrows.sorted-des::after {
 	border-top-color: #777;
 }
+multi-select {
+	position: relative;
+}
+multi-select.active .multiselect-wrapper {
+	border-bottom-left-radius: 0;
+	border-bottom-right-radius: 0;
+}
+.multiselect-wrapper {
+	display: flex;
+	align-items: start;
+}
+.multiselect-input {
+	display: flex;
+	flex-direction: column;
+	gap: .3em;
+	flex: 1;
+}
+.multiselect-tags {
+	display: flex;
+	flex-flow: row wrap;
+	gap: .3em;
+}
+.multiselect-tags:empty {
+	display: none;
+}
+.multiselect-tag {
+	border-radius: .3em;
+	color: #fff;
+	background-color: var(--color-bg-selected2);
+}
+.multiselect-tag>span {
+	padding: 0 .25em 0 .5em;
+}
+.multiselect-tag>i {
+	display: inline-block;
+	border-radius: .3em;
+	width: 1.35em;
+	color: #020;
+	text-align: center;
+	transition: all .2s ease;
+}
+multi-select:not([disabled]) .multiselect-tag>i:hover {
+	color: #fff;
+	background-color: var(--color-bg-hover2);
+}
+multi-select:not([disabled]) .multiselect-tag>i, multi-select:not([disabled]) .multiselect-select {
+	cursor: pointer;
+}
+multi-select[disabled] .multiselect-tags *, multi-select[disabled] .multiselect-select {
+	opacity: .5;
+}
+.multiselect-tag>i::before {
+	content: "\D7";
+	font-weight: bold;
+}
+.multiselect-search {
+	position: absolute;
+	padding: 0;
+	margin: 0 0 0 .2em;
+	width: 0;
+	font-size: 100%;
+	border: 0;
+	background-color: transparent;
+}
+.multiselect-search.active:not([disabled]) {
+	position: static;
+	width: 100%;
+}
+.multiselect-search:focus-visible {
+	outline: none;
+}
+.multiselect-select {
+	position: relative;
+	width: 1em;
+	height: 1.4em;
+	margin: 0 -.25em 0 .5em;
+	text-align: center;
+	transition: transform .2s ease;
+}
+multi-select.active .multiselect-select {
+	transform: rotate(180deg);
+}
+.multiselect-select::before {
+	content: "";
+	position: relative;
+	top: 65%;
+	border-style: solid;
+	border-width: .3em .3em 0;
+	border-color: var(--color-fg-default) transparent transparent;
+}
+.multiselect-options {
+	position: absolute;
+	padding: 0;
+	box-sizing: border-box;
+	top: 100%;
+	left: 0;
+	width: 100%;
+	max-height: 10em;
+	overflow-y: auto;
+	border-top: none;
+	border-top-left-radius: 0;
+	border-top-right-radius: 0;
+}
+.multiselect-options li {
+	padding: .3em .5em;
+	user-select: none;
+}
+.multiselect-options li.selected {
+	font-weight: bold;
+}
+.multiselect-options li.focused {
+	background-color: var(--color-bg-selected2);
+}
+.multiselect-options li.focused.selected {
+	background-color: var(--color-bg-deleted);
+}
