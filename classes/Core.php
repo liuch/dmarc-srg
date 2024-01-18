@@ -265,7 +265,7 @@ class Core
     public static function getJsonData()
     {
         $res = null;
-        if (($_SERVER['HTTP_CONTENT_TYPE'] ?? '') === 'application/json') {
+        if (($_SERVER['CONTENT_TYPE'] ?? $_SERVER['HTTP_CONTENT_TYPE'] ?? '') === 'application/json') {
             $str = file_get_contents('php://input');
             if ($str) {
                 $res = json_decode($str, true);
