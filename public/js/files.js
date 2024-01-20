@@ -29,10 +29,10 @@ class Files {
 			upload_max_file_count: 0,
 			upload_max_file_size:  0
 		};
-		this._directories = {
-			local:  { list: [], element: null, table: null },
-			remote: { list: [], element: null, table: null }
-		};
+		this._directories = {};
+		[ "email", "local", "remote" ].forEach(type => {
+			this._directories[type] = { list: [], element: null, table: null };
+		});
 	}
 
 	display() {
@@ -40,6 +40,13 @@ class Files {
 		this._create_local_file_uploading_element();
 		this._container.appendChild(this._fieldset1);
 		if (User.level === "admin") {
+			this._create_directory_loading_element(
+				this._directories.email,
+				"email",
+				"Loading reports files from the mailboxes",
+				"No mailboxes are configured."
+			);
+			this._container.appendChild(this._directories.email.element);
 			this._create_directory_loading_element(
 				this._directories.local,
 				"local",
@@ -62,7 +69,7 @@ class Files {
 	update() {
 		if (!Status.instance().error()) {
 			let admin = User.level === "admin";
-			this._fetch_data(true, admin, admin);
+			this._fetch_data(true, admin, admin, admin);
 		}
 	}
 
@@ -150,12 +157,17 @@ class Files {
 		});
 		[
 			{ content: "", class: "cell-status" },
-			{ content: "Name" },
-			{ content: "Files" },
-			{ content: "Location" }
+			{ content: "Name" }
 		].forEach(function(col) {
 			dir.table.add_column(col);
 		}, this);
+		if (type === "email") {
+			dir.table.add_column({ content: "Host" });
+			dir.table.add_column({ content: "Mailbox" });
+		} else {
+			dir.table.add_column({ content: "Reports" });
+			dir.table.add_column({ content: "Location" });
+		}
 		fm.appendChild(dir.table.element());
 		let bb = document.createElement("div");
 		bb.setAttribute("class", "buttons-block");
@@ -171,12 +183,24 @@ class Files {
 			}).map(function(it) {
 				return it.id;
 			});
+			let cmd = null;
+			switch (type) {
+				case "email":
+					cmd = "load-mailbox";
+					break;
+				case "local":
+					cmd = "load-directory";
+					break;
+				case "remote":
+					cmd = "load-remotefs";
+					break;
+			}
 			let that = this;
 			window.fetch("files.php", {
 				method: "POST",
 				headers: Object.assign(HTTP_HEADERS, HTTP_HEADERS_POST),
 				credentials: "same-origin",
-				body: JSON.stringify({ cmd: type === "local" ? "load-directory" : "load-remotefs", ids: ids })
+				body: JSON.stringify({ cmd: cmd, ids: ids })
 			}).then(function(resp) {
 				if (!resp.ok)
 					throw new Error("Failed to load report files");
@@ -193,8 +217,7 @@ class Files {
 				Common.displayError(err);
 				Notification.add({ text: (err.message || "Error!"), type: "error" });
 			}).finally(function() {
-				let local = type === "local";
-				that._fetch_data(false, local, !local);
+				that._fetch_data(false, type === "email", type === "local", type === "remote");
 			});
 			event.preventDefault();
 		}.bind(this));
@@ -236,20 +259,25 @@ class Files {
 		dir.table.clear();
 		let d = {};
 		d.rows = dir.list.map(function(it) {
-			let files  = it.files;
-			let chkbox = false;
 			it.checked = false;
-			let rd = { cells: [], userdata: it };
-			if (files < 0) {
-				chkbox   = null;
-				files    = "Error!";
+			let rd = {
+				cells: [
+					new DirectoryCheckboxCell(it.error ? null : false),
+					{ content: it.name }
+				],
+				userdata: it
+			};
+			if (it.error) {
 				rd.class = "state-red";
-				it.error = true;
+				rd.cells.push({ content: "Error!", class: "state-text" });
+			} else {
+				if (it.files !== undefined) {
+					rd.cells.push({ content: it.files });
+				} else {
+					rd.cells.push({ content: it.host });
+				}
 			}
-			rd.cells.push(new DirectoryCheckboxCell(chkbox));
-			rd.cells.push({ content: it.name });
-			rd.cells.push({ content: files, class: "state-text" });
-			rd.cells.push({ content: it.location });
+			rd.cells.push({ content: it.location || it.mailbox });
 			return rd;
 		});
 		dir.table.add_frame(new ITableFrame(d, dir.table.last_row_index() + 1));
@@ -339,18 +367,15 @@ class Files {
 		return el;
 	}
 
-	_fetch_data(files, dirs, rfs) {
+	_fetch_data(files, ems, dirs, rfs) {
 		if (files) {
 			this._fieldset1.disabled = true;
 			this._fieldset1.insertBefore(set_wait_status(), this._fieldset1.children[0]);
 		}
 		let dmap = new Map();
-		if (dirs) {
-			dmap.set("directories", this._directories.local);
-		}
-		if (rfs) {
-			dmap.set("remotefs", this._directories.remote);
-		}
+		if (ems) dmap.set("mailboxes", this._directories.email);
+		if (dirs) dmap.set("directories", this._directories.local);
+		if (rfs) dmap.set("remotefs", this._directories.remote);
 		for (let dir of dmap.values()) {
 			let el = dir.element;
 			el.disabled = true;

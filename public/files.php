@@ -23,7 +23,9 @@
 namespace Liuch\DmarcSrg;
 
 use Liuch\DmarcSrg\Users\User;
+use Liuch\DmarcSrg\Mail\MailBoxes;
 use Liuch\DmarcSrg\Report\ReportFetcher;
+use Liuch\DmarcSrg\Sources\MailboxSource;
 use Liuch\DmarcSrg\Sources\DirectorySource;
 use Liuch\DmarcSrg\Sources\UploadedFilesSource;
 use Liuch\DmarcSrg\Sources\RemoteFilesystemSource;
@@ -70,6 +72,14 @@ if (Core::method() == 'GET') {
 
         try {
             $auth->isAllowed(User::LEVEL_ADMIN);
+            $res['mailboxes'] = array_map(function ($mb) {
+                return [
+                    'id'      => $mb['id'],
+                    'name'    => $mb['name'],
+                    'host'    => $mb['host'],
+                    'mailbox' => $mb['mailbox']
+                ];
+            }, (new MailBoxes())->list());
             $dmap = [
                 [ 'directories', (new DirectoryList())->list() ],
                 [ 'remotefs', (new RemoteFilesystemList(true))->list() ]
@@ -79,11 +89,10 @@ if (Core::method() == 'GET') {
                 foreach ($it[1] as $dir) {
                     $da = $dir->toArray();
                     try {
-                        $files = $dir->count();
+                        $da['files'] = $dir->count();
                     } catch (RuntimeException $e) {
-                        $files = -1;
+                        $da['error'] = true;
                     }
-                    $da['files'] = $files;
                     $dirs[] = $da;
                 }
                 $res[$it[0]] = $dirs;
@@ -105,19 +114,33 @@ if (Core::method() == 'POST') {
         $data = Core::getJsonData();
         if ($data) {
             if (isset($data['cmd'])) {
-                $cmd_id = array_search($data['cmd'], [ 'load-directory', 'load-remotefs' ]);
+                $cmd_id = array_search($data['cmd'], [ 'load-mailbox', 'load-directory', 'load-remotefs' ]);
                 if ($cmd_id !== false) {
                     if (isset($data['ids']) && gettype($data['ids']) === 'array' && count($data['ids']) > 0) {
                         $done = [];
                         $slst = [];
-                        $list = $cmd_id === 0 ? new DirectoryList() : new RemoteFilesystemList(true);
+                        switch ($cmd_id) {
+                            case 0:
+                                $list = new MailBoxes();
+                                break;
+                            case 1:
+                                $list = new DirectoryList();
+                                break;
+                            case 2:
+                                $list = new RemoteFilesystemList(true);
+                                break;
+                            default:
+                                $list = [];
+                        }
                         foreach ($data['ids'] as $id) {
                             $dir_id = gettype($id) === 'integer' ? $id : -1;
                             if (!in_array($id, $done, true)) {
                                 $done[] = $id;
                                 if ($cmd_id === 0) {
+                                    $slst[] = new MailboxSource($list->mailbox($dir_id));
+                                } elseif ($cmd_id === 1) {
                                     $slst[] = new DirectorySource($list->directory($dir_id));
-                                } else {
+                                } elseif ($cmd_id === 2) {
                                     $slst[] = new RemoteFilesystemSource($list->filesystem($dir_id));
                                 }
                             }
