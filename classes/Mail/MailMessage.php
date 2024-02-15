@@ -43,7 +43,7 @@ class MailMessage
 
     public function overview()
     {
-        $res = @imap_fetch_overview($this->conn, strval($this->number));
+        $res = @imap_fetch_overview($this->conn, strval($this->number), FT_UID);
         if (!isset($res[0])) {
             if ($error_message = imap_last_error()) {
                 Core::instance()->logger()->error("imap_fetch_overview failed: {$error_message}");
@@ -56,7 +56,7 @@ class MailMessage
 
     public function setSeen()
     {
-        if (!@imap_setflag_full($this->conn, strval($this->number), '\\Seen')) {
+        if (!@imap_setflag_full($this->conn, strval($this->number), '\\Seen', ST_UID)) {
             if ($error_message = imap_last_error()) {
                 $error_message = '?';
             }
@@ -95,7 +95,7 @@ class MailMessage
     private function ensureAttachment()
     {
         if ($this->attachments_cnt === -1) {
-            $structure = imap_fetchstructure($this->conn, $this->number);
+            $structure = imap_fetchstructure($this->conn, $this->number, FT_UID);
             if ($structure === false) {
                 throw new MailboxException('FetchStructure failed: ' . imap_last_error());
             }

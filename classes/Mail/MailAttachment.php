@@ -92,7 +92,7 @@ class MailAttachment
 
     private function fetchBody()
     {
-        return imap_fetchbody($this->conn, $this->mnumber, strval($this->number), FT_PEEK);
+        return imap_fetchbody($this->conn, $this->mnumber, strval($this->number), FT_PEEK | FT_UID);
     }
 
     private function toString()

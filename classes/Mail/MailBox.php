@@ -188,7 +188,7 @@ class MailBox
     {
         $this->ensureConnection();
         try {
-            $res = imap_search($this->conn, $criteria);
+            $res = imap_search($this->conn, $criteria, SE_UID);
         } catch (\ErrorException $e) {
             $res = false;
         }
@@ -210,7 +210,7 @@ class MailBox
     {
         $this->ensureConnection();
         try {
-            $res = imap_sort($this->conn, $criteria, $reverse ? 1 : 0, SE_NOPREFETCH, $search_criteria);
+            $res = imap_sort($this->conn, $criteria, $reverse ? 1 : 0, SE_NOPREFETCH | SE_UID, $search_criteria);
         } catch (\ErrorException $e) {
             $res = false;
         }
@@ -282,7 +282,7 @@ class MailBox
         $this->ensureConnection();
         $target = self::utf8ToMutf7($this->mbox) . $this->delim . self::utf8ToMutf7($mailbox_name);
         try {
-            $res = imap_mail_move($this->conn, strval($number), $target);
+            $res = imap_mail_move($this->conn, strval($number), $target, CP_UID);
         } catch (\ErrorException $e) {
             $res = false;
         }
@@ -301,7 +301,7 @@ class MailBox
     {
         $this->ensureConnection();
         try {
-            imap_delete($this->conn, strval($number));
+            imap_delete($this->conn, strval($number), FT_UID);
         } catch (\ErrorException $e) {
         }
         $this->ensureErrorLog('imap_delete');
