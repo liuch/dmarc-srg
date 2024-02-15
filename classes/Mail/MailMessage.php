@@ -57,8 +57,8 @@ class MailMessage
     public function setSeen()
     {
         if (!@imap_setflag_full($this->conn, strval($this->number), '\\Seen', ST_UID)) {
-            if ($error_message = imap_last_error()) {
-                $error_message = '?';
+            if (!($error_message = imap_last_error())) {
+                $error_message = 'unknown error';
             }
             MailBox::resetErrorStack();
             Core::instance()->logger()->error("imap_setflag_full failed: {$error_message}");
