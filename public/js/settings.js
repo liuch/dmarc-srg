@@ -21,7 +21,7 @@
 class Settings {
 	constructor() {
 		this._table = null;
-		this._scrool = null;
+		this._scroll = null;
 		this._sort   = "ascent";
 		this._element = document.getElementById("main-block");
 	}
