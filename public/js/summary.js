@@ -115,6 +115,7 @@ class Summary {
 			this.display();
 			this.update();
 		}.bind(this)).finally(function() {
+			dlg.element().remove();
 			this._options_block.lastChild.focus();
 		}.bind(this));
 	}
