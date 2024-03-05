@@ -855,12 +855,10 @@ class ModalDialog {
 	_update_first_last() {
 		this._first = null;
 		this._last  = null;
-		let list = this._element.querySelector("form").elements;
-		for (let i = 0; i < list.length; ++i) {
-			let el = list[i];
-			if (!el.elements && !el.disabled) {
-				if (!this._first)
-					this._first = el;
+		for (const el of this._element.querySelector("form").querySelectorAll("input, select, button, a[href], [tabindex]")) {
+			const ti = el.tabIndex;
+			if (!isNaN(ti) && ti >= 0 && !el.disabled) {
+				if (!this._first) this._first = el;
 				this._last = el;
 			}
 		}
@@ -1037,8 +1035,11 @@ class ReportFilterDialog extends ModalDialog {
 
 	_enable_ui(enable) {
 		let list = this._element.querySelector("form").elements;
-		for (let i = 0; i < list.length; ++i)
+		for (let i = 0; i < list.length; ++i) {
 			list[i].disabled = !enable;
+		}
+		this._update_first_last();
+		if (this._first) this._first.focus();
 	}
 
 	_update_ui() {

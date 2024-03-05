@@ -333,6 +333,8 @@ class OptionsDialog extends VerticalDialog {
 		for (const el of controls) {
 			el.disabled = !enable || el.dataset.disabled;
 		}
+		this._update_first_last();
+		if (this._first) this._first.focus();
 	}
 
 	_fetch_data() {
