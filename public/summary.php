@@ -72,13 +72,22 @@ if (Core::isJson() && isset($_GET['mode'])) {
             }
 
             $format = $_GET['format'] ?? '';
+            if (!in_array($format, [ 'raw', 'text', 'csv' ])) {
+                throw new SoftException('The `format` parameter can only be `raw`, `text` or `csv`');
+            }
             $res['reports'] = array_map(function ($d) use ($format) {
                 $rep = (new SummaryReport($_GET['period']))->setDomain(new Domain($d));
                 $r = [ 'domain' => $d ];
-                if ($format === 'raw') {
-                    $r['data'] = $rep->toArray();
-                } else {
-                    $r['text'] = $rep->text();
+                switch ($format) {
+                    case 'raw':
+                        $r['data'] = $rep->toArray();
+                        break;
+                    case 'text':
+                        $r['text'] = $rep->text();
+                        break;
+                    case 'csv':
+                        $r['csv'] = $rep->csv();
+                        break;
                 }
                 return $r;
             }, explode(',', $_GET['domain']));

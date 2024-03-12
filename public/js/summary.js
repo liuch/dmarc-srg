@@ -20,11 +20,10 @@
 
 class Summary {
 	constructor(id) {
-		this._reports = null;
 		this._element = document.getElementById("main-block");
 		this._container = null;
 		this._options_data = null;
-		this._options_block = { main: null, domains: null, period: null, button: null };
+		this._options_block = { main: null, domains: null, period: null, button1: null, button2: null };
 		this._report_block = null;
 	}
 
@@ -79,11 +78,28 @@ class Summary {
 			this._options_block[name] = li.children[1];
 		});
 
-		const btn = main.appendChild(document.createElement("button"));
-		btn.classList.add("options-button");
-		btn.textContent = "Change";
-		btn.addEventListener("click", event => this._display_dialog());
-		this._options_block.button = btn;
+		const bb = main.appendChild(document.createElement("div"));
+		bb.classList.add("buttons-block");
+
+		const btn1 = bb.appendChild(document.createElement("button"));
+		btn1.classList.add("options-button");
+		btn1.textContent = "Change the options";
+		btn1.addEventListener("click", event => this._display_dialog());
+		this._options_block.button1 = btn1;
+
+		const btn2 = bb.appendChild(document.createElement("button"));
+		btn2.classList.add("options-button", "hidden");
+		btn2.textContent = "Save CSV data to a file";
+		btn2.addEventListener("click", event => {
+			const data = Array.from(this._report_block.querySelectorAll("pre")).map(el => el.textContent);
+			const blob = new Blob(data, { type: "text/csv" });
+			const a = document.createElement("a");
+			a.href = URL.createObjectURL(blob);
+			a.download = "DMARC summary report.csv";
+			a.click();
+			setTimeout(() => URL.revokeObjectURL(a.href), 0);
+		});
+		this._options_block.button2 = btn2;
 
 		this._options_block.main = main;
 	}
@@ -133,7 +149,7 @@ class Summary {
 			this.update();
 		}.bind(this)).finally(function() {
 			dlg.element().remove();
-			this._options_block.button.focus();
+			this._options_block.button1.focus();
 		}.bind(this));
 	}
 
@@ -144,12 +160,24 @@ class Summary {
 			return;
 		}
 		this._report_block.appendChild(set_wait_status());
-		let uparams = new URLSearchParams();
-		let domain = this._options_data.domains;
-		uparams.set("domain", domain);
-		uparams.set("period", this._options_data.period);
-		uparams.set("format", this._options_data.format === "html" ? "raw" : "text");
-		window.fetch("summary.php?mode=report&" + uparams.toString(), {
+		const url = new URL("summary.php", document.location);
+		url.searchParams.set("mode", "report");
+		url.searchParams.set("domain", this._options_data.domains);
+		url.searchParams.set("period", this._options_data.period);
+		let format = null;
+		switch (this._options_data.format) {
+			case "html":
+				format = "raw";
+				break;
+			case "csv":
+				format = "csv";
+				break;
+			default:
+				format = "text";
+				break;
+		}
+		url.searchParams.set("format", format);
+		window.fetch(url, {
 			method: "GET",
 			cache: "no-store",
 			headers: HTTP_HEADERS,
@@ -159,8 +187,7 @@ class Summary {
 			return resp.json();
 		}).then(data => {
 			Common.checkResult(data);
-			this._reports = data.reports.map(rep => new SummaryReport(rep));
-			this._display_report();
+			this._display_report(data.reports.map(rep => new SummaryReport(format, rep)));
 		}).catch(err => {
 			Common.displayError(err);
 			set_error_status(this._report_block, 'Error: ' + err.message);
@@ -170,7 +197,7 @@ class Summary {
 		});
 	}
 
-	_display_report() {
+	_display_report(reports) {
 		function noDataElement() {
 			const el = document.createElement("p");
 			el.append("No data");
@@ -184,22 +211,39 @@ class Summary {
 		}
 
 		let el = null;
-		if (this._reports && this._reports.length) {
+		if (reports.length) {
 			el = document.createDocumentFragment();
-			this._reports.forEach((report, index) => {
-				const text = report.text();
-				if (index) el.append(sepElement(!text));
-				if (text) {
-					const pre = document.createElement("pre");
-					el.appendChild(document.createElement("pre")).textContent = text;
-				} else {
-					el.append(report.html() || noDataElement());
+			reports.forEach((report, index) => {
+				switch (report.format) {
+					case "raw":
+						if (index) el.append(sepElement(true));
+						el.append(report.html() || noDataElement());
+						break;
+					case "text":
+						{
+							if (index) el.append(sepElement(false));
+							const text = report.text();
+							if (text) {
+								el.appendChild(document.createElement("pre")).textContent = text;
+							} else {
+								el.append(noDataElement());
+							}
+						}
+						break;
+					case "csv":
+						el.appendChild(document.createElement("pre")).textContent = report.csv();
+						break;
 				}
 			});
 		} else {
 			el = noDataElement();
 		}
 		this._report_block.appendChild(el);
+		if (this._options_data && this._options_data.format === "csv") {
+			this._options_block.button2.classList.remove("hidden");
+		} else {
+			this._options_block.button2.classList.add("hidden");
+		}
 	}
 }
 
@@ -316,7 +360,8 @@ class OptionsDialog extends VerticalDialog {
 		let cv = this._data.format || "text";
 		[
 			[ "text", "Plain text" ],
-			[ "html", "HTML" ]
+			[ "html", "HTML" ],
+			[ "csv", "CSV data" ]
 		].forEach(it => {
 			let opt = document.createElement("option");
 			opt.setAttribute("value", it[0]);
@@ -363,7 +408,8 @@ class OptionsDialog extends VerticalDialog {
 }
 
 class SummaryReport {
-	constructor(data) {
+	constructor(format, data) {
+		this.format  = format;
 		this._report = data;
 	}
 
@@ -372,6 +418,10 @@ class SummaryReport {
 		if (lines.length > 0) {
 			return lines.join("\n");
 		}
+	}
+
+	csv() {
+		return this._report.csv || "";
 	}
 
 	html() {

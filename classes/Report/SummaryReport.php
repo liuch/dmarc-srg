@@ -31,6 +31,7 @@
 
 namespace Liuch\DmarcSrg\Report;
 
+use Liuch\DmarcSrg\Common;
 use Liuch\DmarcSrg\Statistics;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\LogicException;
@@ -313,6 +314,57 @@ class SummaryReport
         }
 
         return $res;
+    }
+
+    /**
+     * Returns the report data in CSV format
+     *
+     * @return string
+     */
+    public function csv(): string
+    {
+        $rdata = $this->reportData();
+
+        $res = [];
+        $res[] = 'Domain: ' . $this->domain->fqdn();
+
+        $res[] = 'Range: ' . $rdata['range'];
+        $res[] = '';
+
+        $res[] = 'Summary';
+        $total = $rdata['summary']['total'];
+        $res[] = sprintf('Total: %d', $total);
+        $res[] = sprintf('DKIM or SPF aligned: %s', self::num2percent($rdata['summary']['aligned'], $total));
+        $res[] = sprintf('Not aligned: %s', self::num2percent($rdata['summary']['n_aligned'], $total));
+        $res[] = sprintf('Organizations: %d', $rdata['summary']['organizations']);
+        $res[] = '';
+
+        if (count($rdata['sources']) > 0) {
+            $res[] = 'Sources';
+            $res[] = [ '', 'Total', 'SPF aligned', 'DKIM aligned' ];
+            foreach ($rdata['sources'] as &$it) {
+                $total    = $it['emails'];
+                $spf_a    = $it['spf_aligned'];
+                $dkim_a   = $it['dkim_aligned'];
+                $spf_str  = self::num2percent($spf_a, $total);
+                $dkim_str = self::num2percent($dkim_a, $total);
+                $res[] = [ $it['ip'], $total, $spf_str, $dkim_str ];
+            }
+            unset($it);
+            $res[] = '';
+        }
+
+        if (count($rdata['organizations']) > 0) {
+            $res[] = 'Organizations';
+
+            $res[] = [ '', 'emails', 'reports' ];
+            foreach ($rdata['organizations'] as &$org) {
+                $res[] = [ trim($org['name']), $org['emails'], $org['reports'] ];
+            }
+            unset($org);
+            $res[] = '';
+        }
+        return Common::arrayToCSV($res);
     }
 
     /**

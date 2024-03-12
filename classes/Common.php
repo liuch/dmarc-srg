@@ -32,6 +32,7 @@
 namespace Liuch\DmarcSrg;
 
 use Liuch\DmarcSrg\Exception\SoftException;
+use Liuch\DmarcSrg\Exception\RuntimeException;
 
 /**
  * Static common arrays and methods
@@ -98,5 +99,27 @@ class Common
         $date1 = new DateTime("{$year}-{$month}-01");
         $date2 = (clone $date1)->modify('first day of next month');
         return [ $date1, $date2 ];
+    }
+
+    /**
+     * Converts array to CSV string
+     *
+     * @param array $data Array of data to be converted
+     *
+     * @return string CSV string
+     */
+    public static function arrayToCSV(array $data): string
+    {
+        $tfd = fopen('php://temp/maxmemory:' . (10 * 1024 * 1024), 'r+');
+        foreach ($data as &$row) {
+            if (!fputcsv($tfd, is_array($row) ? $row : [ $row ], ',', '"', "\\", "\n\r")) {
+                throw new RuntimeException('fputcsv failed');
+            }
+        }
+        unset($row);
+        rewind($tfd);
+        $res = stream_get_contents($tfd);
+        fclose($tfd);
+        return $res;
     }
 }

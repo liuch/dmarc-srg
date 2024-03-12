@@ -19,4 +19,16 @@ class CommonTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals('quarantine', Common::$disposition[1]);
         $this->assertEquals('none', Common::$disposition[2]);
     }
+
+    public function testCsvConverting(): void
+    {
+        $this->assertEquals(
+            'qwe' . "\n\r" . '' . "\n\r" . '1,qwe,"q w e","""q""w"""' . "\n\r",
+            Common::arrayToCSV([
+                'qwe',
+                '',
+                [ 1, 'qwe', 'q w e', '"q"w"' ],
+            ])
+        );
+    }
 }
