@@ -1420,8 +1420,10 @@ class Multiselect extends HTMLElement {
 	_disableChanged() {
 		if (this._disabled) this.deactivate();
 		for (const item of this._values) {
-			const el = item.tag.querySelector("i");
-			if (this._disabled) el.removeAttribute("tabindex"); else el.tabIndex = 0;
+			if (item.tag) {
+				const el = item.tag.querySelector("i");
+				if (this._disabled) el.removeAttribute("tabindex"); else el.tabIndex = 0;
+			}
 		}
 		if (this._search) this._search.disabled = this._disabled;
 	}
