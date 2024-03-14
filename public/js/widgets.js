@@ -858,8 +858,10 @@ class ModalDialog {
 		for (const el of this._element.querySelector("form").querySelectorAll("input, select, button, a[href], [tabindex]")) {
 			const ti = el.tabIndex;
 			if (!isNaN(ti) && ti >= 0 && !el.disabled) {
-				if (!this._first) this._first = el;
-				this._last = el;
+				if (window.getComputedStyle(el, null).display !== "none") {
+					if (!this._first) this._first = el;
+					this._last = el;
+				}
 			}
 		}
 	}
@@ -1339,6 +1341,12 @@ class Multiselect extends HTMLElement {
 		tb.addEventListener("click", event => {
 			event.preventDefault();
 			if (!this._disabled) this._updateResult(item)
+		});
+		tb.addEventListener("keydown", event => {
+			if (event.code === "Space") {
+				event.preventDefault();
+				if (!this._disabled) this._updateResult(item);
+			}
 		});
 		const el = document.createElement("div");
 		el.classList.add("multiselect-tag");
