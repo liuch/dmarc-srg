@@ -149,8 +149,10 @@ class StatisticsMapper implements StatisticsMapperInterface
         try {
             $f_data = $this->prepareFilterData($domain, $range, $filter);
             $st = $this->connector->dbh()->prepare(
-                'SELECT `ip`, SUM(`rcount`) AS `rcount`, SUM(IF(`dkim_align` = 2, `rcount`, 0)) AS `dkim_aligned`,'
-                . ' SUM(IF(`spf_align` = 2, `rcount`, 0)) AS `spf_aligned`,'
+                'SELECT `ip`, SUM(`rcount`) AS `rcount`,'
+                . ' SUM(IF(`dkim_align` = 2 AND `spf_align` = 2, `rcount`, 0)) AS `dkim_spf_aligned`,'
+                . ' SUM(IF(`dkim_align` = 2 AND `spf_align` <> 2, `rcount`, 0)) AS `dkim_aligned`,'
+                . ' SUM(IF(`dkim_align` <> 2 AND `spf_align` = 2, `rcount`, 0)) AS `spf_aligned`,'
                 . ' SUM(IF(`disposition` = 0, `rcount`, 0)),'
                 . ' SUM(IF(`disposition` = 1, `rcount`, 0))'
                 . ' FROM `' . $this->connector->tablePrefix('rptrecords') . '` AS `rr`'
@@ -164,12 +166,13 @@ class StatisticsMapper implements StatisticsMapperInterface
             $res = [];
             while ($row = $st->fetch(\PDO::FETCH_NUM)) {
                 $res[] = [
-                    'ip'           => inet_ntop($row[0]),
-                    'emails'       => intval($row[1]),
-                    'dkim_aligned' => intval($row[2]),
-                    'spf_aligned'  => intval($row[3]),
-                    'rejected'     => intval($row[4]),
-                    'quarantined'  => intval($row[5])
+                    'ip'               => inet_ntop($row[0]),
+                    'emails'           => intval($row[1]),
+                    'dkim_spf_aligned' => intval($row[2]),
+                    'dkim_aligned'     => intval($row[3]),
+                    'spf_aligned'      => intval($row[4]),
+                    'rejected'         => intval($row[5]),
+                    'quarantined'      => intval($row[6])
                 ];
             }
             $st->closeCursor();
@@ -194,9 +197,16 @@ class StatisticsMapper implements StatisticsMapperInterface
         try {
             $f_data = $this->prepareFilterData($domain, $range, $filter);
             $st = $this->connector->dbh()->prepare(
-                'SELECT `org`, COUNT(*), SUM(`rr`.`rcount`) AS `rcount`'
+                'SELECT `org`, COUNT(*), SUM(`rr`.`rcount`) AS `rcount`,'
+                . ' SUM(`rr`.`dkim_spf_aligned`), SUM(`rr`.`dkim_aligned`), SUM(`rr`.`spf_aligned`),'
+                . ' SUM(`rr`.`rejected`), SUM(`rr`.`quarantined`)'
                 . ' FROM `' . $this->connector->tablePrefix('reports') . '` AS `rp`'
-                . ' INNER JOIN (SELECT `report_id`, SUM(`rcount`) AS `rcount` FROM `'
+                . ' INNER JOIN (SELECT `report_id`, SUM(`rcount`) AS `rcount`,'
+                . ' SUM(IF(`dkim_align` = 2 AND `spf_align` = 2, `rcount`, 0)) AS `dkim_spf_aligned`,'
+                . ' SUM(IF(`dkim_align` = 2 AND `spf_align` <> 2, `rcount`, 0)) AS `dkim_aligned`,'
+                . ' SUM(IF(`dkim_align` <> 2 AND `spf_align` = 2, `rcount`, 0)) AS `spf_aligned`,'
+                . ' SUM(IF(`disposition` = 0, `rcount`, 0)) AS `rejected`,'
+                . ' SUM(IF(`disposition` = 1, `rcount`, 0)) AS `quarantined` FROM `'
                 . $this->connector->tablePrefix('rptrecords') . '`'
                 . $this->sqlCondition($f_data, ' WHERE ', 1)
                 . ' GROUP BY `report_id`) AS `rr` ON `rp`.`id` = `rr`.`report_id`'
@@ -208,9 +218,14 @@ class StatisticsMapper implements StatisticsMapperInterface
             $res = [];
             while ($row = $st->fetch(\PDO::FETCH_NUM)) {
                 $res[] = [
-                    'name'    => $row[0],
-                    'reports' => intval($row[1]),
-                    'emails'  => intval($row[2])
+                    'name'             => $row[0],
+                    'reports'          => intval($row[1]),
+                    'emails'           => intval($row[2]),
+                    'dkim_spf_aligned' => intval($row[3]),
+                    'dkim_aligned'     => intval($row[4]),
+                    'spf_aligned'      => intval($row[5]),
+                    'rejected'         => intval($row[6]),
+                    'quarantined'      => intval($row[7])
                 ];
             }
             $st->closeCursor();

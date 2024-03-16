@@ -148,59 +148,96 @@ class SummaryReport
         $res[] = '## Summary';
         $total = $rdata['summary']['total'];
         $res[] = sprintf(' Total: %d', $total);
-        $res[] = sprintf(' DKIM or SPF aligned: %s', self::num2percent($rdata['summary']['aligned'], $total));
-        $res[] = sprintf(' Not aligned: %s', self::num2percent($rdata['summary']['n_aligned'], $total));
-        $res[] = sprintf(' Organizations: %d', $rdata['summary']['organizations']);
+        $res[] = sprintf(' Fully aligned: %s', self::num2percent($rdata['summary']['f_aligned'], $total, true));
+        $res[] = sprintf(' Partial aligned: %s', self::num2percent($rdata['summary']['p_aligned'], $total, true));
+        $res[] = sprintf(' Not aligned: %s', self::num2percent($rdata['summary']['n_aligned'], $total, true));
+        $res[] = sprintf(' Quarantined: %s', self::num2percent($rdata['summary']['quarantined'], $total, true));
+        $res[] = sprintf(' Rejected: %s', self::num2percent($rdata['summary']['rejected'], $total, true));
         $res[] = '';
 
         if (count($rdata['sources']) > 0) {
-            $res[] = '## Sources';
-            $res[] = sprintf(
-                ' %-25s %13s %13s %13s',
-                '',
-                'Total',
-                'SPF aligned',
-                'DKIM aligned'
-            );
+            $rows = [ [ '', 'Total', 'SPF only', 'DKIM only', 'Not aligned', 'Quar+Rej' ] ];
+            $lens = [ 15, 5, 8, 9, 11, 8 ];
             foreach ($rdata['sources'] as &$it) {
-                $total    = $it['emails'];
-                $spf_a    = $it['spf_aligned'];
-                $dkim_a   = $it['dkim_aligned'];
-                $spf_str  = self::num2percent($spf_a, $total);
-                $dkim_str = self::num2percent($dkim_a, $total);
-                $res[] = sprintf(
-                    ' %-25s %13d %13s %13s',
-                    $it['ip'],
-                    $total,
-                    $spf_str,
-                    $dkim_str
-                );
+                $total = $it['emails'];
+                $f_aln = $it['dkim_spf_aligned'];
+                $d_aln = $it['dkim_aligned'];
+                $s_aln = $it['spf_aligned'];
+                $n_aln = $total - $f_aln - $d_aln - $s_aln;
+                $q_dis = $it['quarantined'];
+                $r_dis = $it['rejected'];
+                if ($q_dis || $r_dis) {
+                    $s_dis = self::num2percent($q_dis + $r_dis, $total, false) . "({$q_dis}+{$r_dis})";
+                } else {
+                    $s_dis = '0';
+                }
+                // Fill row data
+                $row = [
+                    $it['ip'], strval($total), strval($s_aln), strval($d_aln),
+                    self::num2percent($n_aln, $total, true), $s_dis
+                ];
+                // Calculate column width
+                for ($i = 0; $i < count($row); ++$i) {
+                    $lens[$i] = max(mb_strlen($row[$i]), $lens[$i]);
+                }
+                //--
+                $rows[] = $row;
             }
             unset($it);
+
+            $lens[0] = min($lens[0], 55);
+            $f_str = " %-{$lens[0]}s";
+            for ($i = 1; $i < count($lens); ++$i) {
+                $f_str .= "  %{$lens[$i]}s";
+            }
+            $res[] = '## Sources';
+            foreach ($rows as &$rd) {
+                $res[] = sprintf($f_str, ...$rd);
+            }
+            unset($rd);
             $res[] = '';
         }
 
         if (count($rdata['organizations']) > 0) {
-            $res[] = '## Organizations';
-
-            $org_len = 15;
-            foreach ($rdata['organizations'] as &$org) {
-                $org_len = max($org_len, mb_strlen($org['name']));
+            $rows = [ [ '', 'Reports', 'Emails', 'SPF only', 'DKIM only', 'Not aligned', 'Quar+Rej' ] ];
+            $lens = [ 15, 7, 6, 8, 9, 11, 8 ];
+            foreach ($rdata['organizations'] as &$it) {
+                $total = $it['emails'];
+                $f_aln = $it['dkim_spf_aligned'];
+                $d_aln = $it['dkim_aligned'];
+                $s_aln = $it['spf_aligned'];
+                $n_aln = $total - $f_aln - $d_aln - $s_aln;
+                $q_dis = $it['quarantined'];
+                $r_dis = $it['rejected'];
+                if ($q_dis || $r_dis) {
+                    $s_dis = self::num2percent($q_dis + $r_dis, $total, false) . "({$q_dis}+{$r_dis})";
+                } else {
+                    $s_dis = '0';
+                }
+                // Fill row data
+                $row = [
+                    $it['name'], strval($it['reports']), strval($total), strval($s_aln), strval($d_aln),
+                    self::num2percent($n_aln, $total, true), $s_dis
+                ];
+                // Calculate column width
+                for ($i = 0; $i < count($row); ++$i) {
+                    $lens[$i] = max(mb_strlen($row[$i]), $lens[$i]);
+                }
+                //--
+                $rows[] = $row;
             }
-            unset($org);
+            unset($it);
 
-            $org_len = min($org_len, 55);
-            $res[] = sprintf(" %-{$org_len}s %8s %8s", '', 'emails', 'reports');
-            $frm_str = " %-{$org_len}s %8d %8d";
-            foreach ($rdata['organizations'] as &$org) {
-                $res[] = sprintf(
-                    $frm_str,
-                    trim($org['name']),
-                    $org['emails'],
-                    $org['reports']
-                );
+            $lens[0] = min($lens[0], 50);
+            $f_str = " %-{$lens[0]}s";
+            for ($i = 1; $i < count($lens); ++$i) {
+                $f_str .= "  %{$lens[$i]}s";
             }
-            unset($org);
+            $res[] = '## Reporting organizations';
+            foreach ($rows as &$rd) {
+                $res[] = sprintf($f_str, ...$rd);
+            }
+            unset($rd);
             $res[] = '';
         }
 
@@ -222,12 +259,22 @@ class SummaryReport
         $d3s = 'border:1px solid #888;';
         $d4s = 'text-align:right;';
         $d5s = 'padding:.3em;';
+        $rs2 = 'rowspan="2"';
+        $cs2 = 'colspan="2"';
 
-        $add_red = function (int $num) {
-            return $num > 0 ? 'color:#f00;' : '';
-        };
-        $add_green = function (int $num) {
-            return $num > 0 ? 'color:#080;' : '';
+        $get_color = function (string $name, int $num) {
+            $cn = '';
+            if ($num > 0) {
+                switch ($name) {
+                    case 'red':
+                        $cn = 'f00';
+                        break;
+                    case 'green':
+                        $cn = '080';
+                        break;
+                }
+            }
+            return empty($cn) ? '' : "color:#{$cn};";
         };
 
         $rdata = $this->reportData();
@@ -238,20 +285,21 @@ class SummaryReport
         $res[] = "<h3 {$h2a}>Summary</h3>";
         $res[] = '<table>';
         $total = $rdata['summary']['total'];
-        $a_cnt = $rdata['summary']['aligned'];
-        $n_cnt = $rdata['summary']['n_aligned'];
-        $res[] = " <tr><td>Total: </td><td style=\"{$d1s}\">" . $total . '</td></tr>';
-        $color = $add_green($a_cnt);
-        $res[] = " <tr><td>DKIM or SPF aligned: </td><td style=\"{$d1s}{$color}\">{$a_cnt}</td></tr>";
-        $color = $add_red($n_cnt);
-        $res[] = " <tr><td>Not aligned: </td><td style=\"{$d1s}{$color}\">{$n_cnt}</td></tr>";
-        $res[] = " <tr><td>Organizations: </td><td style=\"{$d1s}\">" .
-                 $rdata['summary']['organizations'] .
-                 '</td></tr>';
+        $res[] = " <tr><td>Total: </td><td style=\"{$d1s}\">{$total}</td></tr>";
+        foreach ([
+            [ 'Fully aligned', $rdata['summary']['f_aligned'], 'green' ],
+            [ 'Partial aligned', $rdata['summary']['p_aligned'], '' ],
+            [ 'Not aligned', $rdata['summary']['n_aligned'], 'red' ],
+            [ 'Quarantined', $rdata['summary']['quarantined'], 'red' ],
+            [ 'Rejected', $rdata['summary']['rejected'], 'red' ]
+        ] as &$rd) {
+            $color = $get_color($rd[2], $rd[1]);
+            $s_data = self::num2percent($rd[1], $total, true);
+            $res[] = " <tr><td>{$rd[0]}: </td><td style=\"{$d1s}{$color}\">{$s_data}</td></tr>";
+        }
+        unset($rd);
         $res[] = '</table>';
 
-        $rs2 = 'rowspan="2"';
-        $cs3 = 'colspan="3"';
         $s_cnt = count($rdata['sources']);
         if ($s_cnt > 0) {
             $res[] = "<h3 {$h2a}>Sources</h3>";
@@ -260,31 +308,30 @@ class SummaryReport
             $res[] = ' <thead>';
             $style = "style=\"{$d3s}{$d5s}\"";
             $res[] = "  <tr><th {$rs2} {$style}>IP address</th><th {$rs2} {$style}>Email volume</th>" .
-                     "<th {$cs3} {$style}>SPF</th><th {$cs3} {$style}>DKIM</th></tr>";
+                     "<th {$cs2} {$style}>Partial aligned</th><th {$rs2} {$style}>Not aligned</th>" .
+                     "<th {$cs2} {$style}>Disposition</th></tr>";
             $style = "style=\"{$d2s}{$d3s}{$d5s}\"";
-            $res[] = "  <tr><th {$style}>pass</th><th {$style}>fail</th><th {$style}>rate</th>" .
-                     "<th {$style}>pass</th><th {$style}>fail</th><th {$style}>rate</th></tr>";
+            $res[] = "  <tr><th {$style}>SPF only</th><th {$style}>DKIM only</th>" .
+                     "<th {$style}>quar+rej</th><th {$style}>fail rate</th></tr>";
             $res[] = ' </thead>';
             $res[] = ' <tbody>';
+            $style = "style=\"{$d3s}{$d5s}";
             foreach ($rdata['sources'] as &$row) {
-                $ip     = htmlspecialchars($row['ip']);
-                $total  = $row['emails'];
-                $spf_a  = $row['spf_aligned'];
-                $spf_n  = $total - $spf_a;
-                $spf_p  = sprintf('%.0f%%', $spf_a / $total * 100);
-                $dkim_a = $row['dkim_aligned'];
-                $dkim_n = $total - $dkim_a;
-                $dkim_p = sprintf('%.0f%%', $dkim_a / $total * 100);
-                $style  = "style=\"{$d3s}{$d5s}";
-
-                $row_str  = "  <tr><td {$style}\">{$ip}</td><td {$style}{$d4s}\">{$total}</td>";
-                $row_str .= "<td {$style}{$d4s}{$add_green($spf_a)}\">{$spf_a}</td>";
-                $row_str .= "<td {$style}{$d4s}{$add_red($spf_n)}\">{$spf_n}</td>";
-                $row_str .= "<td {$style}{$d4s}\">{$spf_p}</td>";
-                $row_str .= "<td {$style}{$d4s}{$add_green($dkim_a)}\">{$dkim_a}</td>";
-                $row_str .= "<td {$style}{$d4s}{$add_red($dkim_n)}\">{$dkim_n}</td>";
-                $row_str .= "<td {$style}{$d4s}\">{$dkim_p}</td>";
-                $res[] = $row_str . '</tr>';
+                $ip    = htmlspecialchars($row['ip']);
+                $total = $row['emails'];
+                $f_aln = $row['dkim_spf_aligned'];
+                $d_aln = $row['dkim_aligned'];
+                $s_aln = $row['spf_aligned'];
+                $n_aln = $total - $f_aln - $d_aln - $s_aln;
+                $q_dis = $row['quarantined'];
+                $r_dis = $row['rejected'];
+                $s_dis = ($q_dis || $r_dis) ? "{$q_dis}+{$r_dis}" : '0';
+                $res[] = "  <tr><td {$style}\">{$ip}</td><td {$style}{$d4s}\">{$total}</td>" .
+                         "<td {$style}{$d4s}\">{$s_aln}</td><td {$style}{$d4s}\">{$d_aln}</td>" .
+                         "<td {$style}{$d4s}{$get_color('red', $n_aln)}\">{$n_aln}</td>" .
+                         "<td {$style}{$d4s}{$get_color('red', $q_dis + $r_dis)}\">{$s_dis}</td>" .
+                         "<td {$style}{$d4s}\">" . self::num2percent($q_dis + $r_dis, $total, false) .
+                         '</td></tr>';
             }
             unset($row);
             $res[] = ' </tbody>';
@@ -298,15 +345,32 @@ class SummaryReport
             $res[] = " <caption {$c1a}>Total records: {$o_cnt}</caption>";
             $res[] = ' <thead>';
             $style = "style=\"{$d3s}{$d5s}\"";
-            $res[] = "  <tr><th {$style}>Name</th><th {$style}>Emails</th><th {$style}>Reports</th></tr>";
+            $res[] = "  <tr><th {$rs2} {$style}>Name</th><th {$cs2} {$style}>Volume</th>" .
+                     "<th {$cs2} {$style}>Partial aligned</th><th {$rs2} {$style}>Not aligned</th>" .
+                     "<th {$cs2} {$style}>Disposition</th></tr>";
+            $res[] = "  <tr><th {$style}>reports</th><th {$style}>emails</th>" .
+                     "<th {$style}>SPF only</th><th {$style}>DKIM only</th>" .
+                     "<th {$style}>quar+rej</th><th {$style}>fail rate</th></tr>";
             $res[] = ' </thead>';
             $res[] = ' <tbody>';
+            $style = "style=\"{$d3s}{$d5s}";
             foreach ($rdata['organizations'] as &$row) {
-                $name   = htmlspecialchars($row['name']);
-                $style2 = "style=\"{$d3s}{$d4s}{$d5s}\"";
-                $res[] = "  <tr><td {$style}>{$name}</td>" .
-                         "<td {$style2}>{$row['emails']}</td>" .
-                         "<td {$style2}>{$row['reports']}</td></tr>";
+                $name   = htmlspecialchars(trim($row['name']));
+                $total  = $row['emails'];
+                $f_aln  = $row['dkim_spf_aligned'];
+                $d_aln  = $row['dkim_aligned'];
+                $s_aln  = $row['spf_aligned'];
+                $n_aln  = $total - $f_aln - $d_aln - $s_aln;
+                $q_dis  = $row['quarantined'];
+                $r_dis  = $row['rejected'];
+                $s_dis  = ($q_dis || $r_dis) ? "{$q_dis}+{$r_dis}" : '0';
+                $res[] = "  <tr><td {$style}\">{$name}</td>" .
+                         "<td {$style}{$d4s}\">{$row['reports']}</td><td {$style}{$d4s}\">{$total}</td>" .
+                         "<td {$style}{$d4s}\">{$s_aln}</td><td {$style}{$d4s}\">{$d_aln}</td>" .
+                         "<td {$style}{$d4s}{$get_color('red', $n_aln)}\">{$n_aln}</td>" .
+                         "<td {$style}{$d4s}{$get_color('red', $q_dis + $r_dis)}\">{$s_dis}</td>" .
+                         "<td {$style}{$d4s}\">" . self::num2percent($q_dis + $r_dis, $total, false) .
+                         '</td></tr>';
             }
             unset($row);
             $res[] = ' </tbody>';
@@ -334,21 +398,30 @@ class SummaryReport
         $res[] = 'Summary';
         $total = $rdata['summary']['total'];
         $res[] = sprintf('Total: %d', $total);
-        $res[] = sprintf('DKIM or SPF aligned: %s', self::num2percent($rdata['summary']['aligned'], $total));
-        $res[] = sprintf('Not aligned: %s', self::num2percent($rdata['summary']['n_aligned'], $total));
-        $res[] = sprintf('Organizations: %d', $rdata['summary']['organizations']);
+        $res[] = sprintf('Fully aligned: %s', self::num2percent($rdata['summary']['f_aligned'], $total, true));
+        $res[] = sprintf('Partial aligned: %s', self::num2percent($rdata['summary']['p_aligned'], $total, true));
+        $res[] = sprintf('Not aligned: %s', self::num2percent($rdata['summary']['n_aligned'], $total, true));
+        $res[] = sprintf('Quarantined: %s', self::num2percent($rdata['summary']['quarantined'], $total, true));
+        $res[] = sprintf('Rejected: %s', self::num2percent($rdata['summary']['rejected'], $total, true));
         $res[] = '';
 
         if (count($rdata['sources']) > 0) {
             $res[] = 'Sources';
-            $res[] = [ '', 'Total', 'SPF aligned', 'DKIM aligned' ];
+            $res[] = [ '', 'Total', 'SPF only', 'DKIM only', 'Not aligned', 'Quar+Rej' ];
             foreach ($rdata['sources'] as &$it) {
-                $total    = $it['emails'];
-                $spf_a    = $it['spf_aligned'];
-                $dkim_a   = $it['dkim_aligned'];
-                $spf_str  = self::num2percent($spf_a, $total);
-                $dkim_str = self::num2percent($dkim_a, $total);
-                $res[] = [ $it['ip'], $total, $spf_str, $dkim_str ];
+                $total = $it['emails'];
+                $f_aln = $it['dkim_spf_aligned'];
+                $d_aln = $it['dkim_aligned'];
+                $s_aln = $it['spf_aligned'];
+                $n_aln = $total - $f_aln - $d_aln - $s_aln;
+                $q_dis = $it['quarantined'];
+                $r_dis = $it['rejected'];
+                if ($q_dis || $r_dis) {
+                    $s_dis = self::num2percent($q_dis + $r_dis, $total, false) . "({$q_dis}+{$r_dis})";
+                } else {
+                    $s_dis = '0';
+                }
+                $res[] = [ $it['ip'], $total, $s_aln, $d_aln, self::num2percent($n_aln, $total, true), $s_dis ];
             }
             unset($it);
             $res[] = '';
@@ -356,12 +429,26 @@ class SummaryReport
 
         if (count($rdata['organizations']) > 0) {
             $res[] = 'Organizations';
-
-            $res[] = [ '', 'emails', 'reports' ];
-            foreach ($rdata['organizations'] as &$org) {
-                $res[] = [ trim($org['name']), $org['emails'], $org['reports'] ];
+            $res[] = [ '', 'Reports', 'Emails', 'SPF only', 'DKIM only', 'Not aligned', 'Quar+Rej' ];
+            foreach ($rdata['organizations'] as &$it) {
+                $total = $it['emails'];
+                $f_aln = $it['dkim_spf_aligned'];
+                $d_aln = $it['dkim_aligned'];
+                $s_aln = $it['spf_aligned'];
+                $n_aln = $total - $f_aln - $d_aln - $s_aln;
+                $q_dis = $it['quarantined'];
+                $r_dis = $it['rejected'];
+                if ($q_dis || $r_dis) {
+                    $s_dis = self::num2percent($q_dis + $r_dis, $total, false) . "({$q_dis}+{$r_dis})";
+                } else {
+                    $s_dis = '0';
+                }
+                $res[] = [
+                    trim($it['name']), $it['reports'], $total, $s_aln, $d_aln,
+                    self::num2percent($n_aln, $total, true), $s_dis
+                ];
             }
-            unset($org);
+            unset($it);
             $res[] = '';
         }
         return Common::arrayToCSV($res);
@@ -370,17 +457,22 @@ class SummaryReport
     /**
      * Returns the percentage with the original number. If $per is 0 then '0' is returned.
      *
-     * @param int $per  Value
-     * @param int $cent Divisor for percentage calculation
+     * @param int  $per      Value
+     * @param int  $cent     Divisor for percentage calculation
+     * @param bool $with_num Whether to add the numeric value to the result
      *
      * @return string
      */
-    private static function num2percent(int $per, int $cent): string
+    private static function num2percent(int $per, int $cent, bool $with_num): string
     {
         if (!$per) {
             return '0';
         }
-        return sprintf('%.0f%%(%d)', $per / $cent * 100, $per);
+        $res = sprintf('%.0f%%', $per / $cent * 100);
+        if ($with_num) {
+            $res .= "({$per})";
+        }
+        return $res;
     }
 
     /**
@@ -427,21 +519,19 @@ class SummaryReport
 
         $summ      = $stat->summary();
         $total     = $summ['emails']['total'];
-        $aligned   = $summ['emails']['dkim_spf_aligned'] +
-                     $summ['emails']['dkim_aligned'] +
-                     $summ['emails']['spf_aligned'];
-        $n_aligned = $total - $aligned;
+        $f_aligned = $summ['emails']['dkim_spf_aligned'];
+        $p_aligned = $summ['emails']['dkim_aligned'] + $summ['emails']['spf_aligned'];
+        $n_aligned = $total - $f_aligned - $p_aligned;
         $rdata['summary'] = [
             'total'         => $total,
             'organizations' => $summ['organizations']
         ];
-        if ($total > 0) {
-            $rdata['summary']['aligned']   = $aligned;
-            $rdata['summary']['n_aligned'] = $n_aligned;
-        } else {
-            $rdata['summary']['aligned']   = $aligned;
-            $rdata['summary']['n_aligned'] = $aligned;
-        }
+
+        $rdata['summary']['f_aligned']   = $f_aligned;
+        $rdata['summary']['p_aligned']   = $p_aligned;
+        $rdata['summary']['n_aligned']   = $n_aligned;
+        $rdata['summary']['rejected']    = $summ['emails']['rejected'];
+        $rdata['summary']['quarantined'] = $summ['emails']['quarantined'];
 
         $rdata['sources'] = $stat->ips();
 

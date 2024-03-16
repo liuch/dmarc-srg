@@ -426,172 +426,126 @@ class SummaryReport {
 	}
 
 	html() {
-		let data = this._report.data;
-		let html = document.createDocumentFragment();
-		let header = document.createElement("h2");
-		header.appendChild(document.createTextNode("Domain: " + this._report.domain));
-		html.appendChild(header);
+		const data = this._report.data;
+		const html = document.createDocumentFragment();
+
+		html.appendChild(document.createElement("h2")).textContent = "Domain: " + this._report.domain;
+		html.appendChild(document.createElement("div")).append(
+			"Range: ", (new Date(data.date_range.begin)).toLocaleDateString(),
+			" - ", (new Date(data.date_range.end)).toLocaleDateString()
+		);
+
 		{
-			let range = document.createElement("div");
-			let d1 = (new Date(data.date_range.begin)).toLocaleDateString();
-			let d2 = (new Date(data.date_range.end)).toLocaleDateString();
-			range.appendChild(document.createTextNode("Range: " + d1 + " - " + d2));
-			html.appendChild(range);
-		}
-		{
-			let header = document.createElement("h3");
-			header.appendChild(document.createTextNode("Summary"));
-			html.appendChild(header);
-			let cont = document.createElement("div");
-			cont.setAttribute("class", "left-titled");
-			html.appendChild(cont);
-			function add_row(title, value, cname) {
-				let te = document.createElement("span");
-				te.appendChild(document.createTextNode(title + ": "));
-				cont.appendChild(te);
-				let ve = document.createElement("span");
-				if (cname) {
-					ve.setAttribute("class", cname);
-				}
-				ve.appendChild(document.createTextNode(value));
-				cont.appendChild(ve);
-			}
-			let emails = data.summary.emails;
-			let total = emails.total;
-			add_row("Total", total);
-			let aligned = emails.dkim_spf_aligned + emails.dkim_aligned + emails.spf_aligned;
-			let n_aligned = total - aligned;
-			add_row(
-				"DKIM or SPF aligned",
-				SummaryReport.num2percent(aligned, total),
-				aligned && "report-result-pass" || null
-			);
-			add_row(
-				"Not aligned",
-				SummaryReport.num2percent(n_aligned, total),
-				n_aligned && "report-result-fail" || null
-			);
-			add_row("Organizations", data.summary.organizations);
+			html.appendChild(document.createElement("h3")).textContent = "Summary";
+			const cont = html.appendChild(document.createElement("div"));
+			cont.classList.add("left-titled");
+			const emails = data.summary.emails;
+			const total = emails.total;
+			cont.append(SummaryReport.makeSummaryRow("Total", total, null, null));
+			const f_aligned = emails.dkim_spf_aligned;
+			const p_aligned = emails.dkim_aligned + emails.spf_aligned;
+			const n_aligned = total - f_aligned - p_aligned;
+			const rejected = emails.rejected;
+			const quarantined = emails.quarantined;
+			[
+				[ "Fully aligned", f_aligned, "pass" ], [ "Partial aligned", p_aligned, null ],
+				[ "Not aligned", n_aligned, "fail" ], [ "Quarantined", quarantined, "fail" ],
+				[ "Rejected", rejected, "fail" ]
+			].forEach(it => cont.append(SummaryReport.makeSummaryRow(it[0], it[1], total, it[2])));
 		}
 		if (data.sources && data.sources.length) {
-			let header = document.createElement("h3");
-			header.appendChild(document.createTextNode("Sources"));
-			html.appendChild(header);
-			let table = document.createElement("table");
-			table.setAttribute("class", "report-table");
-			html.appendChild(table);
-
-			let caption = document.createElement("caption");
-			caption.appendChild(document.createTextNode("Total records: " + data.sources.length));
-			table.appendChild(caption);
-			let thead = document.createElement("thead");
+			html.appendChild(document.createElement("h3")).textContent = "Sources";
+			const table = html.appendChild(document.createElement("table"));
+			table.classList.add("report-table");
+			table.appendChild(document.createElement("caption")).textContent = "Total records: " + data.sources.length;
+			const thead = document.createElement("thead");
 			table.appendChild(thead);
-			[
+			thead.append(SummaryReport.makeHeaderRow(
+				[ [ "IP address", 0, 2 ], [ "Email volume", 0, 2 ], [ "Partial aligned", 2, 0 ], [ "Not aligned", 0, 2 ], [ "Disposition", 2, 0 ] ]
+			));
+			thead.append(SummaryReport.makeHeaderRow(
+				[ [ "SPF only" ], [ "DKIM only" ], [ "quar+rej" ], [ "fail rate" ] ]
+			));
+			const tbody = table.appendChild(document.createElement("tbody"));
+			data.sources.forEach(sou => {
+				const tr = tbody.appendChild(document.createElement("tr"));
+				[ Common.makeIpElement(sou.ip), sou.emails, sou.spf_aligned, sou.dkim_aligned ].forEach(
+					v => tr.append(SummaryReport.makeResultElement("td", v, null))
+				);
+				const dq = sou.quarantined;
+				const dr = sou.rejected;
+				const ds = dq || dr ? `${dq.toLocaleString()}+${dr.toLocaleString()}` : 0;
 				[
-					[ "IP address", 0, 2 ], [ "Email volume", 0, 2 ], [ "SPF", 3, 0 ], [ "DKIM", 3, 0 ]
-				],
-				[
-					[ "pass" ], [ "fail" ], [ "rate" ], [ "pass" ], [ "fail" ], [ "rate" ]
-				]
-			].forEach(function(row) {
-				let tr = document.createElement("tr");
-				thead.appendChild(tr);
-				row.forEach(function(col) {
-					let th = document.createElement("th");
-					th.appendChild(document.createTextNode(col[0]));
-					if (col[1]) {
-						th.setAttribute("colspan", col[1]);
-					}
-					if (col[2]) {
-						th.setAttribute("rowspan", col[2]);
-					}
-					tr.appendChild(th);
-				});
-			});
-			let tbody = document.createElement("tbody");
-			table.appendChild(tbody);
-			data.sources.forEach(function(sou) {
-				let tr = document.createElement("tr");
-				tbody.appendChild(tr);
-				let va = [];
-				va.push([ Common.makeIpElement(sou.ip), 0 ]);
-				let ett = sou.emails;
-				let spf = sou.spf_aligned;
-				let dkm = sou.dkim_aligned;
-				va.push([ ett, 1 ]);
-				va.push([ spf, 3 ]);
-				va.push([ ett - spf, 5 ]);
-				va.push([ spf / ett, 8 ]);
-				va.push([ dkm, 3 ]);
-				va.push([ ett - dkm, 5 ]);
-				va.push([ dkm / ett, 8 ]);
-				va.forEach(function(it) {
-					let val  = it[0];
-					let mode = it[1];
-					let td   = document.createElement("td");
-					if (val && (mode & 2)) {
-						td.setAttribute("class", "report-result-pass");
-					}
-					if (val && (mode & 4)) {
-						td.setAttribute("class", "report-result-fail");
-					}
-					if (mode & 8) {
-						val = (val * 100).toFixed(0) + "%";
-					} else if (mode & 1) {
-						val = val.toLocaleString();
-					}
-					if (typeof(val) === "object") {
-						td.appendChild(val);
-					} else {
-						td.appendChild(document.createTextNode(val));
-					}
-					tr.appendChild(td);
-				});
+					sou.emails - sou.dkim_aligned - sou.spf_aligned - sou.dkim_spf_aligned, ds
+				].forEach(v => tr.append(SummaryReport.makeResultElement("td", v, "fail")));
+				tr.append(SummaryReport.makeResultElement("td", SummaryReport.num2percent(dq + dr, sou.emails, false)));
 			});
 		}
 		if (data.organizations && data.organizations.length) {
-			let header = document.createElement("h3");
-			header.appendChild(document.createTextNode("Organizations"));
-			html.appendChild(header);
-			let table = document.createElement("table");
-			table.setAttribute("class", "report-table");
-			html.appendChild(table);
+			html.appendChild(document.createElement("h3")).textContent = "Reporting organizations";
+			const table = html.appendChild(document.createElement("table"));
+			table.classList.add("report-table");
 
-			let caption = document.createElement("caption");
-			caption.appendChild(document.createTextNode("Total records: " + data.organizations.length));
-			table.appendChild(caption);
-			let thead = document.createElement("thead");
-			table.appendChild(thead);
-			let tr = document.createElement("tr");
-			thead.appendChild(tr);
-			[ "Name", "Emails", "Reports" ].forEach(function(org) {
-				let th = document.createElement("th");
-				th.appendChild(document.createTextNode(org));
-				tr.appendChild(th);
-			});
-			let tbody = document.createElement("tbody");
-			table.appendChild(tbody);
-			data.organizations.forEach(function(org) {
-				let tr = document.createElement("tr");
-				tbody.appendChild(tr);
-				let va = [];
-				va.push(org.name);
-				va.push(org.emails.toLocaleString());
-				va.push(org.reports.toLocaleString());
-				va.forEach(function(v) {
-					let td = document.createElement("td");
-					td.appendChild(document.createTextNode(v));
-					tr.appendChild(td);
-				});
+			table.appendChild(document.createElement("caption")).textContent = "Total records: " + data.organizations.length;
+			const thead = table.appendChild(document.createElement("thead"));
+			thead.append(SummaryReport.makeHeaderRow(
+				[ [ "Name", 0, 2 ], [ "Volume", 2, 0 ], [ "Partial aligned", 2, 0 ], [ "Not aligned", 0, 2 ], [ "Disposition", 2, 0 ] ]
+			));
+			thead.append(SummaryReport.makeHeaderRow(
+				[ [ "reports" ], [ "emails" ], [ "SPF only" ], [ "DKIM only" ], [ "quar+rej" ], [ "fail rate" ] ]
+			));
+			const tbody = table.appendChild(document.createElement("tbody"));
+			data.organizations.forEach(org => {
+				const tr = tbody.appendChild(document.createElement("tr"));
+				[
+					org.name, org.reports, org.emails, org.spf_aligned, org.dkim_aligned
+				].forEach(v => tr.append(SummaryReport.makeResultElement("td", v)));
+				const dq = org.quarantined;
+				const dr = org.rejected;
+				const ds = dq || dr ? `${dq.toLocaleString()}+${dr.toLocaleString()}` : 0;
+				[
+					org.emails - org.dkim_aligned - org.spf_aligned - org.dkim_spf_aligned, ds
+				].forEach(v => tr.append(SummaryReport.makeResultElement("td", v, "fail")));
+				tr.append(SummaryReport.makeResultElement("td", SummaryReport.num2percent(dq + dr, org.emails, false)));
 			});
 		}
 		return html;
 	}
 
-	static num2percent(per, cent) {
-		if (!per) {
-			return "0";
+	static num2percent(per, cent, with_num) {
+		if (!per) return 0;
+		let res = "" + Math.round(per / cent * 100) + "%";
+		if (with_num) res += " (" + per + ")";
+		return res;
+	}
+
+	static makeSummaryRow(title, value, total, type) {
+		const re = document.createDocumentFragment();
+		const te = re.appendChild(document.createElement("span"));
+		te.textContent = title + ": ";
+		if (total) {
+			re.append(SummaryReport.makeResultElement("span", SummaryReport.num2percent(value, total, true), type));
+		} else {
+			re.append(value);
 		}
-		return "" + Math.round(per / cent * 100, per) + "% (" + per + ")";
+		return re;
+	}
+
+	static makeHeaderRow(data) {
+		const tr = document.createElement("tr");
+		data.forEach(row => {
+			const td = tr.appendChild(document.createElement("th"));
+			if (row[1]) td.colSpan = row[1];
+			if (row[2]) td.rowSpan = row[2];
+			td.textContent = row[0];
+		});
+		return tr;
+	}
+
+	static makeResultElement(name, value, type) {
+		const el = document.createElement(name);
+		if (value && type) el.classList.add("report-result-" + type);
+		el.append(typeof(value) === "number" ? value.toLocaleString() : value);
+		return el;
 	}
 }
