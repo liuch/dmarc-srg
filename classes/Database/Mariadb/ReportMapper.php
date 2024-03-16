@@ -313,7 +313,7 @@ class ReportMapper implements ReportMapperInterface
                     'domain'      => $row[3],
                     'report_id'   => $row[4],
                     'seen'        => (bool) $row[5],
-                    'messages'    => $row[6],
+                    'messages'    => intval($row[6]),
                     'dkim_align'  => Common::$align_res[$row[7]],
                     'spf_align'   => Common::$align_res[$row[8]],
                     'disposition' => Common::$disposition[$row[9]]
