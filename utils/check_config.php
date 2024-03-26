@@ -303,6 +303,71 @@ try {
         $endChecking('Configuration not found', RESULT_SKIPPED);
     }
 
+    echo PHP_EOL, '=== REPORT MAILER ===', PHP_EOL;
+    $startChecking('Getting configuration');
+    $mailer = $core->config('mailer');
+    if (is_array($mailer)) {
+        $endChecking();
+        try {
+            $method = $core->config('mailer/method', 'mail');
+            $library = $core->config('mailer/library', 'internal');
+            $startChecking('Checking mailer/method');
+            $endChecking(in_array($method, [ 'smtp', 'mail' ]) ? '' : "Unknown mailing method: '{$method}'");
+            switch ($method) {
+                case 'smtp':
+                    $startChecking('Checking mailer/library');
+                    $endChecking(
+                        $library === 'phpmailer' ?
+                            '' :
+                            ('The smtp method requires the phpmailer library, but ' .
+                            (empty($library) ? 'none' : $library) . ' is specified')
+                    );
+                    $startChecking('Checking mailer/host');
+                    $endChecking(empty($core->config('mailer/host')) ? 'Host must be specified' : '');
+                    $startChecking('Checking mailer/port');
+                    $endChecking(!is_int($core->config('mailer/port')) ? 'Port must be specified' : '');
+                    $startChecking('Checking mailer/encryption');
+                    $enc = $core->config('mailer/encryption');
+                    $endChecking(
+                        in_array($enc, [ 'ssl', 'starttls', 'none', null ]) ?
+                            '' :
+                            ('Unknown encryption method: ' . $enc)
+                    );
+                    break;
+                case 'mail':
+                    break;
+            }
+            $startChecking('Checking mailer/library');
+            switch ($library) {
+                case 'phpmailer':
+                    if (!class_exists('\PHPMailer\PHPMailer\PHPMailer')) {
+                        throw new SoftException('The smtp method is used but the PHPMailer library is not installed');
+                    }
+                    break;
+                case 'internal':
+                    break;
+                default:
+                    throw new SoftException("Unsupported mailing library: '{$library}'");
+            }
+            $endChecking();
+            $startChecking('Checking mailer/default');
+            if (!filter_var($core->config('mailer/default', ''), FILTER_VALIDATE_EMAIL)) {
+                throw new SoftException('Invalid e-mail address');
+            }
+            $endChecking();
+            $startChecking('Checking mailer/from');
+            if (!filter_var($core->config('mailer/from', ''), FILTER_VALIDATE_EMAIL)) {
+                throw new SoftException('Invalid e-mail address');
+            }
+            $endChecking();
+            //
+        } catch (SoftException $e) {
+            $endChecking($e->getMessage());
+        }
+    } else {
+        $endChecking('Configuration not found', RESULT_SKIPPED);
+    }
+
     echo PHP_EOL, '===', PHP_EOL;
     if ($e_cnt === 0 && $w_cnt === 0) {
         echo 'Success!', PHP_EOL;

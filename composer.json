@@ -17,6 +17,7 @@
         "ext-pdo_mysql": "*",
         "ext-xml": "*",
         "ext-zip": "*",
+	"phpmailer/phpmailer": "^6.8.0",
         "league/flysystem-aws-s3-v3": "^2.5"
     },
     "suggest": {},

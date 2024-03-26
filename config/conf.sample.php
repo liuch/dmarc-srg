@@ -45,7 +45,7 @@ $mailboxes = [
     'password'        => 'password',
     // Mailbox name
     'mailbox'         => 'INBOX',
-    // IMAP authorization methods to be excluded.
+    // IMAP authentication methods to be excluded.
     // For example: 'auth_exclude' => [ 'GSSAPI', 'NTLM' ]
     'auth_exclude'    => []
 ];
@@ -188,8 +188,67 @@ $fetcher = [
 // Settings for sending summary reports if it is necessary.
 // It uses in utils/summary_report.php
 $mailer = [
+    /**
+     * The library used to send e-mails. The following values are currently supported:
+     * 'internal'  - use the PHP internal functions. Default value.
+     * 'phpmailer' - use the PHPMailer library. You can install it with composer.
+     */
+    'library' => 'internal',
+
+    /**
+     * The method used to send email. Note: The 'smtp' method requires the PHPMailer library. Make sure it is installed.
+     * 'mail' - use the standard PHP mail() function. Default value.
+     * 'smtp' - sent via SMTP. This method required the PHPMailer library. See below for required parameters.
+     */
+    'method' => 'mail',
+
+    /**
+     * Sender's e-mail address
+     */
     'from'    => 'postmaster@yourdomain.net',
-    'default' => 'user@yourdomain.net'
+
+    /**
+     * Recepient's default e-mail address
+     */
+    'default' => 'user@yourdomain.net',
+
+    /*
+     * For method 'smtp' the following parameters must be specified:
+     */
+
+    /**
+     * SMTP host to connect to.
+     */
+    //'host' => 'mailhost.net',
+
+    /**
+     * TCP port to connect to.
+     * Typically it is 465 for SSL/TLS, 587 for STARTTLS, or 25.
+     */
+    //'port' => 465,
+
+    /**
+     * Connection encryption method. The valid values are:
+     * 'none'     - without encryption (strongly not recommend).
+     * 'ssl'      - SSL/TLS on a separate port, for SMTP it is usually port 465. Default value.
+     * 'starttls' - STARTTLS method, usually on the standard SMTP port 587.
+     */
+    //'encryption' => 'ssl',
+
+    /**
+     * Set true if you want to connect to the SMTP server without certificate validation
+     */
+    //'novalidate-cert' => false,
+
+    /**
+     * User name. Specify an empty string if authentication is not required.
+     */
+    //'username' => 'someusername',
+
+    /**
+     * User password. Specify an empty string if authentication is not required.
+     */
+    //'password'  => 'somepasword'
 ];
 
 //
