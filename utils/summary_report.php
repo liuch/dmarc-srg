@@ -51,6 +51,7 @@
 
 namespace Liuch\DmarcSrg;
 
+use Liuch\DmarcSrg\Mail\Mailer;
 use Liuch\DmarcSrg\Mail\MailBody;
 use Liuch\DmarcSrg\Domains\Domain;
 use Liuch\DmarcSrg\Domains\DomainList;
@@ -102,7 +103,7 @@ try {
         throw new SoftException('Unknown email message format: ' . $format);
     }
     if (!$emailto) {
-        $emailto = $core->config('mailer/default');
+        $emailto = $core->config('mailer/default', '');
     }
 
     if ($domain === 'all') {
@@ -169,92 +170,20 @@ try {
             }
         }
     }
+    $mbody = new MailBody();
+    $mbody->text = $text;
+    $mbody->html = $html;
 
+    $mailer = Mailer::get($core->config('mailer', []));
+    $mailer->setFrom($core->config('mailer/from', ''));
+    $mailer->addAddress($emailto);
     if ($dom_cnt === 1) {
-        $subject = "{$rep->subject()} for {$domain->fqdn()}";
+        $mailer->setSubject("{$rep->subject()} for {$domain->fqdn()}");
     } else {
-        $subject = "{$rep->subject()} for {$dom_cnt} domains";
+        $mailer->setSubject("{$rep->subject()} for {$dom_cnt} domains");
     }
-
-    $library = $core->config('mailer/library', 'internal');
-    if ($library === 'internal') {
-        $mbody = new MailBody();
-        if (!is_null($text)) {
-            $mbody->setText($text);
-        }
-        if (!is_null($html)) {
-            $mbody->setHtml(array_merge([ '<html><body>' ], $html, [ '</body></html>' ]));
-        }
-
-        $headers = [
-            'From'         => $core->config('mailer/from'),
-            'MIME-Version' => '1.0',
-            'Content-Type' => $mbody->contentType()
-        ];
-
-        mail(
-            $emailto,
-            mb_encode_mimeheader($subject, 'UTF-8'),
-            implode("\r\n", $mbody->content()),
-            $headers
-        );
-    } elseif ($library === 'phpmailer') {
-        $mailer = new \PHPMailer\PHPMailer\PHPMailer(true);
-        try {
-            $mailer->setFrom($core->config('mailer/from'));
-            $mailer->addAddress($emailto);
-            $mailer->Subject = $subject;
-            $mailer->XMailer = null;
-            if (is_null($html)) {
-                $mailer->Body = implode("\r\n", $text);
-            } else {
-                $mailer->isHTML();
-                $mailer->Body = implode("\r\n", $html);
-                if (!is_null($text)) {
-                    $mailer->AltBody = implode("\r\n", $text);
-                }
-            }
-            if ($core->config('mailer/method') === 'smtp') {
-                $mailer->isSMTP();
-                $mailer->Host = $core->config('mailer/host');
-                $mailer->Port = $core->config('mailer/port');
-                switch ($core->config('mailer/encryption', 'ssl')) {
-                    case 'ssl':
-                        $mailer->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
-                        break;
-                    case 'starttls':
-                        $mailer->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
-                        break;
-                    case 'none':
-                        $mailer->SMTPAutoTLS = false;
-                        break;
-                }
-                $username = $core->config('mailer/username');
-                if (!empty($username)) {
-                    $mailer->SMTPAuth = true;
-                    $mailer->Username = $username;
-                    $mailer->Password = $core->config('mailer/password', '');
-                }
-                //$mailer->SMTPDebug = \PHPMailer\PHPMailer\SMTP::DEBUG_SERVER; // for testing purposes
-            } else {
-                $mailer->isMail();
-            }
-            if ($core->config('mailer/novalidate-cert', false)) {
-                $mailer->SMTPOptions = [
-                    'ssl' => [
-                        'verify_peer'       => false,
-                        'verify_peer_name'  => false,
-                        'allow_self_signed' => true
-                    ]
-                ];
-            }
-            $mailer->send();
-        } catch (\Exception $e) {
-            throw new SoftException($e->getMessage());
-        }
-    } else {
-        throw new SoftException('Unsupported mailing library: ' . $library);
-    }
+    $mailer->setBody($mbody);
+    $mailer->send();
 } catch (SoftException $e) {
     echo 'Error: ' . $e->getMessage() . PHP_EOL;
     exit(1);

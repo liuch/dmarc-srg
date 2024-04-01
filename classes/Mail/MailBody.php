@@ -27,33 +27,21 @@ namespace Liuch\DmarcSrg\Mail;
  */
 class MailBody
 {
-    private $text     = null;
-    private $html     = null;
     private $boundary = null;
 
     /**
-     * Sets text content as a part of the message body
+     * Plain text message body as an array of strings
      *
-     * @param array $text Text part of the message as an array of strings
-     *
-     * @return void
+     * @var null|array
      */
-    public function setText(array &$text): void
-    {
-        $this->text = $text;
-    }
+    public $text = null;
 
     /**
-     * Sets html content as a part of the message body
+     * HTML text message body as an array of strings
      *
-     * @param array $html Html part of the message as and array of strings
-     *
-     * @return void
+     * @var null|array
      */
-    public function setHtml(array $html): void
-    {
-        $this->html = $html;
-    }
+    public $html = null;
 
     /**
      * Return Content-Type header value for the whole message
