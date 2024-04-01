@@ -23,10 +23,7 @@
 namespace Liuch\DmarcSrg\Mail;
 
 use Liuch\DmarcSrg\Core;
-use Liuch\DmarcSrg\ErrorHandler;
 use Liuch\DmarcSrg\Exception\LogicException;
-use Liuch\DmarcSrg\Exception\RuntimeException;
-use Liuch\DmarcSrg\Exception\MailboxException;
 
 class MailBoxes implements \Iterator
 {
