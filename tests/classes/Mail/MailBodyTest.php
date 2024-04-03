@@ -18,29 +18,29 @@ class MailBodyTest extends \PHPUnit\Framework\TestCase
     public function testTextContentType(): void
     {
         $body = new MailBody();
-        $body->setText($this->text);
+        $body->text = $this->text;
         $this->assertSame('text/plain; charset=utf-8', $body->contentType());
     }
 
     public function testHtmlContentType(): void
     {
         $body = new MailBody();
-        $body->setHtml($this->html);
+        $body->html = $this->html;
         $this->assertSame('text/html; charset=utf-8', $body->contentType());
     }
 
     public function testMultipartContentType(): void
     {
         $body = new MailBody();
-        $body->setText($this->text);
-        $body->setHtml($this->html);
+        $body->text = $this->text;
+        $body->html = $this->html;
         $this->assertStringStartsWith('multipart/alternative; boundary=', $body->contentType());
     }
 
     public function testTextContent(): void
     {
         $body = new MailBody();
-        $body->setText($this->text);
+        $body->text = $this->text;
         $content = $body->content();
         $this->assertCount(1, $content);
         $this->assertSame('text string', $content[0]);
@@ -49,7 +49,7 @@ class MailBodyTest extends \PHPUnit\Framework\TestCase
     public function testHtmlContent(): void
     {
         $body = new MailBody();
-        $body->setText($this->html);
+        $body->html = $this->html;
         $content = $body->content();
         $this->assertCount(1, $content);
         $this->assertSame('html string', $content[0]);
@@ -58,8 +58,8 @@ class MailBodyTest extends \PHPUnit\Framework\TestCase
     public function testMultipartContent(): void
     {
         $body = new MailBody();
-        $body->setText($this->text);
-        $body->setHtml($this->html);
+        $body->text = $this->text;
+        $body->html = $this->html;
         $boundary = substr($body->contentType(), 33, -1);
         $content = $body->content();
         $this->assertCount(10, $content);
