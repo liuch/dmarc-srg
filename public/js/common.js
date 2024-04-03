@@ -116,6 +116,20 @@ class Common {
 				return this.toLocaleString(undefined, { timeZone: 'UTC', timeZoneName: 'short' });
 			};
 		}
+		if (!Date.prototype.toUIDateString) {
+			Date.prototype.toUIDateString = function(prefer_utc) {
+				if (this.outputMode === "local" || (this.outputMode === "auto" && !prefer_utc)) {
+					return this.toLocaleDateString(
+						undefined,
+						{ year:"numeric", month:"short", day:"numeric" }
+					);
+				}
+				return this.toLocaleDateString(
+					undefined,
+					{ timeZone:"UTC", year:"numeric", month:"short", day:"numeric" }
+				);
+			};
+		}
 	}
 
 	static makeIpElement(ip) {

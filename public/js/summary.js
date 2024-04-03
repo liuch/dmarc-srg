@@ -431,8 +431,8 @@ class SummaryReport {
 
 		html.appendChild(document.createElement("h2")).textContent = "Domain: " + this._report.domain;
 		html.appendChild(document.createElement("div")).append(
-			"Range: ", (new Date(data.date_range.begin)).toLocaleDateString(),
-			" - ", (new Date(data.date_range.end)).toLocaleDateString()
+			"Range: ", (new Date(data.date_range.begin)).toUIDateString(true),
+			" - ", (new Date(data.date_range.end)).toUIDateString(true)
 		);
 
 		{
