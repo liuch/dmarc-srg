@@ -700,6 +700,9 @@ textarea.description {
 	margin-left: 0.3em;
 	cursor: pointer;
 }
+.buttons-block > button {
+	margin: 0;
+}
 button.options-button {
 	color: inherit;
 }

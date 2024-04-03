@@ -32,6 +32,7 @@
 namespace Liuch\DmarcSrg\Report;
 
 use Liuch\DmarcSrg\Common;
+use Liuch\DmarcSrg\DateTime;
 use Liuch\DmarcSrg\Statistics;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\LogicException;
@@ -43,8 +44,10 @@ class SummaryReport
 {
     private const LAST_WEEK  = -1;
     private const LAST_MONTH = -2;
+    private const DATE_RANGE = -3;
 
     private $period  = 0;
+    private $range   = null;
     private $domain  = null;
     private $stat    = null;
     private $subject = '';
@@ -61,30 +64,55 @@ class SummaryReport
         switch ($period) {
             case 'lastweek':
                 $period  = self::LAST_WEEK;
-                $subject = ' weekly';
+                $subject = ' weekly digest';
                 break;
             case 'lastmonth':
                 $period  = self::LAST_MONTH;
-                $subject = ' monthly';
+                $subject = ' monthly digest';
                 break;
             default:
                 $ndays = 0;
                 $av = explode(':', $period);
-                if (count($av) === 2 && $av[0] === 'lastndays') {
-                    $ndays = intval($av[1]);
-                    if ($ndays <= 0) {
-                        throw new SoftException('The parameter "days" has an incorrect value');
+                if (count($av) === 2) {
+                    switch ($av[0]) {
+                        case 'lastndays':
+                            $ndays = intval($av[1]);
+                            if ($ndays <= 0) {
+                                throw new SoftException('The parameter "days" has an incorrect value');
+                            }
+                            $period  = $ndays;
+                            $subject = sprintf(' %d day%s digest', $ndays, ($ndays > 1 ? 's' : ''));
+                            break;
+                        case 'range':
+                            $range = explode('-', $av[1]);
+                            if (count($range) === 2) {
+                                foreach ($range as &$r) {
+                                    $cnt = 0;
+                                    $sd = preg_replace('/^(\d{4})(\d{2})(\d{2})$/', '\1-\2-\3', $r, -1, $cnt);
+                                    if (!$cnt) {
+                                        throw new SoftException('The parameter "range" has an incorrect value');
+                                    }
+                                    $r = new DateTime($sd);
+                                }
+                                unset($r);
+                                if ($range[0] > $range[1]) {
+                                    throw new SoftException('Incorrect date range');
+                                }
+                                $period  = self::DATE_RANGE;
+                                $subject = ' report ' . $this->rangeToString($range);
+                                $range[1]->modify('next day');
+                                $this->range = $range;
+                            }
+                            break;
                     }
-                    $subject = sprintf(' %d day%s', $ndays, ($ndays > 1 ? 's' : ''));
                 }
-                $period = $ndays;
                 break;
         }
         if (empty($subject)) {
             throw new SoftException('The parameter "period" has an incorrect value');
         }
         $this->period  = $period;
-        $this->subject = "DMARC{$subject} digest";
+        $this->subject = "DMARC{$subject}";
     }
 
     /**
@@ -494,6 +522,9 @@ class SummaryReport
                 case self::LAST_MONTH:
                     $this->stat = Statistics::lastMonth($this->domain);
                     break;
+                case self::DATE_RANGE:
+                    $this->stat = Statistics::fromTo($this->domain, $this->range[0], $this->range[1]);
+                    break;
                 default:
                     $this->stat = Statistics::lastNDays($this->domain, $this->period);
                     break;
@@ -512,10 +543,7 @@ class SummaryReport
 
         $stat  = $this->stat;
         $rdata = [];
-        $range = $stat->range();
-        $cyear = (new \Datetime())->format('Y');
-        $dform = ($range[0]->format('Y') !== $cyear || $range[1]->format('Y') !== $cyear) ? 'M d Y' : 'M d';
-        $rdata['range'] = $range[0]->format($dform) . ' - ' . $range[1]->format($dform);
+        $rdata['range'] = $this->rangeToString($stat->range());
 
         $summ      = $stat->summary();
         $total     = $summ['emails']['total'];
@@ -538,5 +566,23 @@ class SummaryReport
         $rdata['organizations'] = $stat->organizations();
 
         return $rdata;
+    }
+
+    /**
+     * Returns the range string in short format (without the current year)
+     *
+     * @param array $range Array with two dates
+     *
+     * @return string
+     */
+    private function rangeToString(array $range): string
+    {
+        $cyear = (new \Datetime())->format('Y');
+        $dform = ($range[0]->format('Y') !== $cyear || $range[1]->format('Y') !== $cyear) ? 'M d Y' : 'M d';
+        $res = $range[0]->format($dform);
+        if ($range[0] != $range[1]) {
+            $res .= ' - ' . $range[1]->format($dform);
+        }
+        return $res;
     }
 }

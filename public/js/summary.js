@@ -54,6 +54,12 @@ class Summary {
 		let format = url_params.get("format");
 		if (domain && period) {
 			this._options_data = { domains: domain, period: period, format: format || "text" };
+			if (period.startsWith("range:")) {
+				this._options_data.range = period.substring(6).split("-").map(v => {
+					return v.replace(/^(\d{4})(\d{2})(\d{2})$/, "$1-$2-$3");
+				});
+				this._options_data.period = "range";
+			}
 		} else {
 			this._options_data = null;
 		}
@@ -108,6 +114,9 @@ class Summary {
 		[ "period", "format" ].forEach(id => {
 			this._options_block[id].textContent = this._options_data && this._options_data[id] || "none";
 		});
+		if (this._options_data.period === "range") {
+			this._options_block.period.append(` [ ${this._options_data.range.join(" - ")} ]`);
+		}
 		const de = this._options_block.domains;
 		const dl = this._options_data && this._options_data.domains && this._options_data.domains.split(",") || [ "none" ];
 		de.replaceChildren(dl.slice(0, 3).join(", "));
@@ -130,16 +139,17 @@ class Summary {
 
 	_display_dialog() {
 		let dlg = new OptionsDialog(this._options_data);
+		dlg.element().classList.add("report-dialog");
 		document.getElementById("main-block").appendChild(dlg.element());
-		dlg.show().then(function(d) {
-			if (!d) {
-				return;
-			}
-			let url = new URL(document.location.href);
+		dlg.show().then(d => {
+			if (!d) return;
+			const url = new URL(document.location.href);
 			url.searchParams.set("domain", d.domain);
 			let period = d.period;
 			if (period === "lastndays") {
 				period += ":" + d.days;
+			} else if (period === "range") {
+				period += ":" + d.range.map(val => val.replaceAll("-", "")).join("-");
 			}
 			url.searchParams.set("period", period);
 			url.searchParams.set("format", d.format);
@@ -147,10 +157,10 @@ class Summary {
 			remove_all_children(this._element);
 			this.display();
 			this.update();
-		}.bind(this)).finally(function() {
+		}).finally(() => {
 			dlg.element().remove();
 			this._options_block.button1.focus();
-		}.bind(this));
+		});
 	}
 
 	_fetch_report() {
@@ -163,7 +173,11 @@ class Summary {
 		const url = new URL("summary.php", document.location);
 		url.searchParams.set("mode", "report");
 		url.searchParams.set("domain", this._options_data.domains);
-		url.searchParams.set("period", this._options_data.period);
+		let period = this._options_data.period;
+		if (period === "range") {
+			period += ":" + this._options_data.range.map(r => r.replaceAll("-", "")).join("-");
+		}
+		url.searchParams.set("period", period);
 		let format = null;
 		switch (this._options_data.format) {
 			case "html":
@@ -257,18 +271,28 @@ class OptionsDialog extends VerticalDialog {
 			{ name: "domains", title: "Domains", type: "multi-select" },
 			{ name: "period", title: "Period" },
 			{ name: "days", title: "Days", type: "input" },
+			{ name: "range", title: "Range", type: "div" },
 			{ name: "format", title: "Format" }
 		];
 	}
 
 	_gen_content() {
 		this._ui_data.forEach(row => {
-			let i_el = this._insert_input_row(row.title, row.name, row.type);
-			if (row.name === "days") {
+			const i_el = this._insert_input_row(row.title, row.name, row.type);
+			const name = row.name;
+			if (name === "days") {
 				i_el.setAttribute("type", "number");
 				i_el.setAttribute("min", "1");
 				i_el.setAttribute("max", "9999");
 				i_el.setAttribute("value", "");
+			} else if (name === "range") {
+				const r1 = i_el.appendChild(document.createElement("input"));
+				r1.type = "date";
+				r1.name = "date1";
+				i_el.append(" - ");
+				const r2 = i_el.appendChild(document.createElement("input"));
+				r2.type = "date";
+				r2.name = "date2";
 			}
 			row.element = i_el;
 		});
@@ -278,16 +302,27 @@ class OptionsDialog extends VerticalDialog {
 			this._update_first_last();
 		});
 		this._ui_data[1].element.addEventListener("change", event => {
-			let days_el = this._ui_data[2].element;
-			if (event.target.value === "lastndays") {
-				days_el.disabled = false;
-				delete days_el.dataset.disabled;
-				days_el.value = days_el.dataset.value || "1";
+			const day_el = this._ui_data[2].element;
+			const per_el = this._ui_data[3].element;
+			const period = event.target.value;
+			if (period === "range") {
+				day_el.parentElement.classList.add("hidden");
+				per_el.parentElement.classList.remove("hidden");
+				per_el.querySelectorAll("input").forEach(inp => inp.required = true);
 			} else {
-				days_el.disabled = true;
-				days_el.dataset.value = days_el.value || "1";
-				days_el.dataset.disabled = true;
-				days_el.value = "";
+				per_el.parentElement.classList.add("hidden");
+				day_el.parentElement.classList.remove("hidden");
+				per_el.querySelectorAll("input").forEach(inp => inp.required = false);
+			}
+			if (period === "lastndays") {
+				day_el.disabled = false;
+				delete day_el.dataset.disabled;
+				day_el.value = day_el.dataset.value || "1";
+			} else {
+				day_el.disabled = true;
+				day_el.dataset.value = day_el.value || "1";
+				day_el.dataset.disabled = true;
+				day_el.value = "";
 			}
 		});
 		this._update_period_element();
@@ -309,10 +344,20 @@ class OptionsDialog extends VerticalDialog {
 		let res = {
 			domain: this._ui_data[0].element.getValues().join(","),
 			period: this._ui_data[1].element.value,
-			format: this._ui_data[3].element.value
+			format: this._ui_data[4].element.value
 		};
-		if (res.period === "lastndays") {
-			res.days = parseInt(this._ui_data[2].element.value) || 1;
+		switch (res.period) {
+			case "lastndays":
+				res.days = parseInt(this._ui_data[2].element.value) || 1;
+				break;
+			case "range":
+				res.range = Array.from(this._ui_data[3].element.querySelectorAll("input")).map(inp => inp.value);
+				if (Date.UTC(...res.range[0].split("-")) > Date.UTC(...res.range[1].split("-"))) {
+					Notification.add({ text: "Incorrect date range", type: "error" });
+					this._ui_data[3].element.querySelector("input").focus();
+					return;
+				}
+				break;
 		}
 		this._result = res;
 		this.hide();
@@ -338,7 +383,8 @@ class OptionsDialog extends VerticalDialog {
 		[
 			[ "lastweek", "Last week"],
 			[ "lastmonth", "Last month" ],
-			[ "lastndays", "Last N days" ]
+			[ "lastndays", "Last N days" ],
+			[ "range", "Date range"]
 		].forEach(it => {
 			let opt = document.createElement("option");
 			opt.setAttribute("value", it[0]);
@@ -353,11 +399,17 @@ class OptionsDialog extends VerticalDialog {
 			i_el.setAttribute("value", val);
 			i_el.dataset.value = val;
 		}
+		if (this._data.range) {
+			this._ui_data[3].element.querySelectorAll("input").forEach((el, idx) => {
+				let rv = this._data.range[idx];
+				if (rv) el.setAttribute("value", rv);
+			});
+		}
 		el.dispatchEvent(new Event("change"));
 	}
 
 	_update_format_element() {
-		let el = this._ui_data[3].element;
+		let el = this._ui_data[4].element;
 		let cv = this._data.format || "text";
 		[
 			[ "text", "Plain text" ],

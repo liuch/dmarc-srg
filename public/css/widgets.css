@@ -68,6 +68,9 @@
 	.dialog .container {
 		border: solid 0.1rem #888;
 	}
+	.report-dialog .dialog {
+		min-width: 28em;
+	}
 	.titled-input {
 		display: table;
 		margin: -.5em 0;
