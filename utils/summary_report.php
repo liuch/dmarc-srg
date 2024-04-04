@@ -23,20 +23,26 @@
  *
  * This script creates a summary report and sends it by email.
  * The email addresses must be specified in the configuration file.
- * The script have two required parameters: `domain` and `period`, and two optional: `emailto` and `format`.
+ * The script have two required parameters: `domain` and `period`, and three optional: `offset`, `emailto` and `format`.
  * The `domain` parameter must contain a domain name, a comma-separated list of domains, or `all`.
  * The `period` parameter must have one of these values:
  *   `lastmonth`   - to make a report for the last month;
  *   `lastweek`    - to make a report for the last week;
  *   `lastndays:N` - to make a report for the last N days;
+ * The `offset` parameter is optional. It is intended to be used in conjunction with the `period` parameter
+ *   and allows you to specify a date range offset to the past. Must be the number days, weeks or months
+ *   for `lastNDays`, `lastWeek` and `lastMonth` respectively. The default value is 0.
  * The `emailto` parameter is optional. Set it if you want to use a different email address to sent the report to.
  * The `format` parameter is optional. It provides the ability to specify the email message format.
- * Possible values are: `text`, `html`, `text+html`. The default value is `text`.
+ *   Possible values are: `text`, `html`, `text+html`. The default value is `text`.
  *
  * Some examples:
  *
  * $ php utils/summary_report.php domain=example.com period=lastweek
  * will send a weekly summary report by email for the domain example.com
+ *
+ * $ php utils/summary_report.php domain=example.com period=lastweek offset=1
+ * will send a summary report by email for the domain example.com for the week before last week
  *
  * $ php utils/summary_report.php domain=example.com period=lastndays:10
  * will send a summary report by email for last 10 days for the domain example.com
@@ -68,6 +74,7 @@ if (php_sapi_name() !== 'cli') {
 
 $domain  = null;
 $period  = null;
+$offset  = '0';
 $emailto = null;
 $format  = 'text';
 for ($i = 1; $i < count($argv); ++$i) {
@@ -79,6 +86,9 @@ for ($i = 1; $i < count($argv); ++$i) {
                 break;
             case 'period':
                 $period = $av[1];
+                break;
+            case 'offset':
+                $offset = $av[1];
                 break;
             case 'emailto':
                 $emailto = $av[1];
@@ -99,6 +109,9 @@ try {
     if (!$period) {
         throw new SoftException('Parameter "period" is not specified');
     }
+    if (filter_var($offset, FILTER_VALIDATE_INT, [ 'options' => [ 'min_range' => 0 ] ]) === false) {
+        throw new SoftException('Parameter "offset" must be a positive integer');
+    }
     if (!in_array($format, [ 'text', 'html', 'text+html' ], true)) {
         throw new SoftException('Unknown email message format: ' . $format);
     }
@@ -114,7 +127,7 @@ try {
         }, explode(',', $domain));
     }
 
-    $rep = new SummaryReport($period);
+    $rep = new SummaryReport($period, intval($offset));
     switch ($format) {
         case 'text':
             $text = [];

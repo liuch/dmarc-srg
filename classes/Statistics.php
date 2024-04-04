@@ -86,15 +86,19 @@ class Statistics
      * Returns an instance of the class for the last week
      *
      * @param Domains\Domain|null         $domain See the constructor for the details
+     * @param int                         $offset Offset to the past (weeks)
      * @param Database\DatabaseController $db     The database controller
      *
      * @return Statistics Instance of the class
      */
-    public static function lastWeek($domain, $db = null)
+    public static function lastWeek($domain, int $offset = 0, $db = null)
     {
         $r = new Statistics($domain, $db);
         $r->range['date1'] = new DateTime('monday last week');
-        $r->range['date2'] = (clone $r->range['date1'])->add(new \DateInterval('P7D'));
+        if ($offset > 0) {
+            $r->range['date1']->sub(new \DateInterval("P{$offset}W"));
+        }
+        $r->range['date2'] = (clone $r->range['date1'])->add(new \DateInterval('P1W'));
         return $r;
     }
 
@@ -102,15 +106,19 @@ class Statistics
      * Returns an instance of the class for the last month
      *
      * @param Domains\Domain|null         $domain See the construct for the details
+     * @param int                         $offset Offset to the past (months)
      * @param Database\DatabaseController $db     The database controller
      *
      * @return Statistics Instance of the class
      */
-    public static function lastMonth($domain, $db = null)
+    public static function lastMonth($domain, int $offset = 0, $db = null)
     {
         $r = new Statistics($domain, $db);
         $r->range['date1'] = new DateTime('midnight first day of last month');
-        $r->range['date2'] = new DateTime('midnight first day of this month');
+        if ($offset > 0) {
+            $r->range['date1']->sub(new \DateInterval("P{$offset}M"));
+        }
+        $r->range['date2'] = (clone $r->range['date1'])->add(new \DateInterval('P1M'));
         return $r;
     }
 
@@ -119,14 +127,18 @@ class Statistics
      *
      * @param Domains\Domain|null         $domain See the construct for the details
      * @param int                         $ndays  Number of days
+     * @param int                         $offset Offset to the past (days)
      * @param Database\DatabaseController $db     The database controller
      *
      * @return Statistics Instance of the class
      */
-    public static function lastNDays($domain, int $ndays, $db = null)
+    public static function lastNDays($domain, int $ndays, int $offset = 0, $db = null)
     {
         $r = new Statistics($domain, $db);
         $r->range['date2'] = new DateTime('midnight');
+        if ($offset > 0) {
+            $r->range['date2']->sub(new \DateInterval("P{$offset}D"));
+        }
         $r->range['date1'] = (clone $r->range['date2'])->sub(new \DateInterval("P{$ndays}D"));
         return $r;
     }

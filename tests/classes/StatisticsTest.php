@@ -30,26 +30,54 @@ class StatisticsTest extends \PHPUnit\Framework\TestCase
 
     public function testLastWeek(): void
     {
-        $range = Statistics::lastWeek($this->domain, $this->db)->range();
+        $range = Statistics::lastWeek($this->domain, 0, $this->db)->range();
         $date1 = new DateTime('midnight monday last week');
-        $date2 = (new DateTime('midnight monday this week'))->sub(new \DateInterval('PT1S'));
+        $date2 = (clone $date1)->add(new \DateInterval('P1W'))->sub(new \DateInterval('PT1S'));
+        $this->assertSame($date1->format('c'), $range[0]->format('c'));
+        $this->assertSame($date2->format('c'), $range[1]->format('c'));
+    }
+
+    public function testLastWeekOffset(): void
+    {
+        $range = Statistics::lastWeek($this->domain, 5, $this->db)->range();
+        $date1 = (new DateTime('midnight monday last week'))->sub(new \DateInterval('P5W'));
+        $date2 = (clone $date1)->add(new \DateInterval('P1W'))->sub(new \DateInterval('PT1S'));
         $this->assertSame($date1->format('c'), $range[0]->format('c'));
         $this->assertSame($date2->format('c'), $range[1]->format('c'));
     }
 
     public function testLastMonth(): void
     {
-        $range = Statistics::lastMonth($this->domain, $this->db)->range();
+        $range = Statistics::lastMonth($this->domain, 0, $this->db)->range();
         $date1 = new DateTime('midnight first day of last month');
-        $date2 = (new DateTime('midnight first day of this month'))->sub(new \DateInterval('PT1S'));
+        $date2 = (clone $date1)->add(new \DateInterval('P1M'))->sub(new \DateInterval('PT1S'));
+        $this->assertSame($date1->format('c'), $range[0]->format('c'));
+        $this->assertSame($date2->format('c'), $range[1]->format('c'));
+    }
+
+    public function testLastMonthOffset(): void
+    {
+        $range = Statistics::lastMonth($this->domain, 7, $this->db)->range();
+        $date1 = (new DateTime('midnight first day of last month'))->sub(new \DateInterval('P7M'));
+        $date2 = (clone $date1)->add(new \DateInterval('P1M'))->sub(new \DateInterval('PT1S'));
         $this->assertSame($date1->format('c'), $range[0]->format('c'));
         $this->assertSame($date2->format('c'), $range[1]->format('c'));
     }
 
     public function testLastNDays(): void
     {
-        $range = Statistics::lastNDays($this->domain, 10, $this->db)->range();
+        $range = Statistics::lastNDays($this->domain, 10, 0, $this->db)->range();
         $date2 = new DateTime('midnight');
+        $date1 = (clone $date2)->sub(new \DateInterval('P10D'));
+        $date2->sub(new \DateInterval('PT1S'));
+        $this->assertSame($date1->format('c'), $range[0]->format('c'));
+        $this->assertSame($date2->format('c'), $range[1]->format('c'));
+    }
+
+    public function testLastNDaysOffset(): void
+    {
+        $range = Statistics::lastNDays($this->domain, 10, 9, $this->db)->range();
+        $date2 = (new DateTime('midnight'))->sub(new \DateInterval('P9D'));
         $date1 = (clone $date2)->sub(new \DateInterval('P10D'));
         $date2->sub(new \DateInterval('PT1S'));
         $this->assertSame($date1->format('c'), $range[0]->format('c'));

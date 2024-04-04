@@ -47,6 +47,7 @@ class SummaryReport
     private const DATE_RANGE = -3;
 
     private $period  = 0;
+    private $offset  = 0;
     private $range   = null;
     private $domain  = null;
     private $stat    = null;
@@ -58,8 +59,9 @@ class SummaryReport
      * @param string $period The period for which the report is created
      *                       Must me one of the following values: `lastweek`, `lastmonth`, and `lastndays:N`
      *                       where N is the number of days the report is created for
+     * @param int            $offset Range offset
      */
-    public function __construct(string $period)
+    public function __construct(string $period, int $offset = 0)
     {
         switch ($period) {
             case 'lastweek':
@@ -111,7 +113,11 @@ class SummaryReport
         if (empty($subject)) {
             throw new SoftException('The parameter "period" has an incorrect value');
         }
+        if ($offset < 0) {
+            throw new SoftException('The parameter "offset" has an incorrect value');
+        }
         $this->period  = $period;
+        $this->offset  = $offset;
         $this->subject = "DMARC{$subject}";
     }
 
@@ -517,16 +523,16 @@ class SummaryReport
         if (!$this->stat) {
             switch ($this->period) {
                 case self::LAST_WEEK:
-                    $this->stat = Statistics::lastWeek($this->domain);
+                    $this->stat = Statistics::lastWeek($this->domain, $this->offset);
                     break;
                 case self::LAST_MONTH:
-                    $this->stat = Statistics::lastMonth($this->domain);
+                    $this->stat = Statistics::lastMonth($this->domain, $this->offset);
                     break;
                 case self::DATE_RANGE:
                     $this->stat = Statistics::fromTo($this->domain, $this->range[0], $this->range[1]);
                     break;
                 default:
-                    $this->stat = Statistics::lastNDays($this->domain, $this->period);
+                    $this->stat = Statistics::lastNDays($this->domain, $this->period, $this->offset);
                     break;
             }
         }
