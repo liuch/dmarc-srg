@@ -1394,6 +1394,7 @@ class Multiselect extends HTMLElement {
 			item.element && item.element.classList.remove("selected");
 		});
 		this._more && this._more.remove();
+		this.dispatchEvent(new Event("change"));
 	}
 
 	_updateResult(items) {
