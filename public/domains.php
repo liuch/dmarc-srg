@@ -61,14 +61,30 @@ require realpath(__DIR__ . '/..') . '/init.php';
 if (Core::isJson()) {
     try {
         if (Core::method() == 'GET') {
-            Core::instance()->auth()->isAllowed(User::LEVEL_USER);
+            $core = Core::instance();
+            $core->auth()->isAllowed(User::LEVEL_USER);
 
+            $user = $core->user();
             if (isset($_GET['domain'])) {
-                Core::sendJson((new Domain($_GET['domain']))->toArray());
+                $fqdn = trim($_GET['domain']);
+                if (empty($fqdn)) {
+                    $core->auth()->isAllowed(User::LEVEL_MANAGER);
+                    $res = [];
+                    if ($user->id() !== 0 && $core->config('users/domain_verification', 'none') === 'dns') {
+                        $res['verification'] = 'dns';
+                        $res['verification_data'] = 'dmarcsrg-verification=' . $user->verificationString();
+                    }
+                } else {
+                    $domain = new Domain($_GET['domain']);
+                    $domain->isAssigned($user, true);
+                    $domain->active(); // In order to get the domain data
+                    $res = $domain->toArray();
+                }
+                Core::sendJson($res);
                 return;
             }
 
-            $res = (new DomainList())->getList();
+            $res = (new DomainList($user))->getList();
             $list = array_map(function ($domain) {
                 return $domain->toArray();
             }, $res['domains']);
@@ -88,22 +104,34 @@ if (Core::isJson()) {
                     'active'      => $data['active'] ?? null,
                     'description' => $data['description'] ?? null
                 ]);
+                $user   = Core::instance()->user();
                 $action = $data['action'] ?? '';
                 switch ($action) {
                     case 'add':
-                        if ($domain->exists()) {
+                        if ($domain->isAssigned($user)) {
                             throw new SoftException('The domain already exists');
                         }
-                        $domain->save();
+                        if ($user->id() !== 0) {
+                            $method = $core->config('users/domain_verification', 'none');
+                            if ($method !== 'none') {
+                                $domain->verifyOwnership($user->verificationString(), $method);
+                            }
+                        }
+                        if (!$domain->exists()) {
+                            $domain->save();
+                        }
+                        $domain->assignUser($user);
                         break;
                     case 'update':
-                        if (!$domain->exists()) {
-                            throw new SoftException('The domain does not exist');
-                        }
+                        $domain->isAssigned($user, true);
                         $domain->save();
                         break;
                     case 'delete':
-                        $domain->delete();
+                        if ($user->id() === 0) {
+                            $domain->delete();
+                        } else {
+                            $domain->unassignUser($user);
+                        }
                         unset($domain);
                         break;
                     default:

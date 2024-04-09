@@ -23,7 +23,9 @@
 namespace Liuch\DmarcSrg;
 
 use Liuch\DmarcSrg\Users\User;
+use Liuch\DmarcSrg\Domains\Domain;
 use Liuch\DmarcSrg\Report\Report;
+use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\RuntimeException;
 
 require realpath(__DIR__ . '/..') . '/init.php';
@@ -31,11 +33,19 @@ require realpath(__DIR__ . '/..') . '/init.php';
 if (!empty($_GET['org']) && !empty($_GET['time']) && !empty($_GET['domain']) && !empty($_GET['report_id'])) {
     if (Core::isJson()) {
         try {
-            Core::instance()->auth()->isAllowed(User::LEVEL_USER);
+            $core = Core::instance();
+            $core->auth()->isAllowed(User::LEVEL_USER);
+
+            $domain = new Domain($_GET['domain']);
+            $dom_ex = $domain->isAssigned($core->user()) ? null : new SoftException('Report not found');
+
             if (Core::method() == 'GET') {
+                if ($dom_ex) {
+                    throw $dom_ex;
+                }
                 $rep = new Report(
                     [
-                        'domain'     => $_GET['domain'],
+                        'domain'     => $domain,
                         'org'        => $_GET['org'],
                         'begin_time' => new DateTime($_GET['time']),
                         'report_id'  => $_GET['report_id']
@@ -48,17 +58,18 @@ if (!empty($_GET['org']) && !empty($_GET['time']) && !empty($_GET['domain']) && 
                 if ($_GET['action'] === 'set') {
                     $jdata = Core::getJsonData();
                     if ($jdata && isset($jdata['name']) && isset($jdata['value'])) {
-                        $name = $jdata['name'];
-                        $value = $jdata['value'];
+                        if ($dom_ex) {
+                            throw $dom_ex;
+                        }
                         $rep = new Report(
                             [
-                                'domain'     => $_GET['domain'],
+                                'domain'     => $domain,
                                 'org'        => $_GET['org'],
                                 'begin_time' => new DateTime($_GET['time']),
                                 'report_id'  => $_GET['report_id']
                             ]
                         );
-                        Core::sendJson($rep->set($name, $value));
+                        Core::sendJson($rep->set($jdata['name'], $jdata['value']));
                         return;
                     }
                 }

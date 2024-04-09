@@ -34,9 +34,9 @@ namespace Liuch\DmarcSrg\Database\Mariadb;
 use Liuch\DmarcSrg\DateTime;
 use Liuch\DmarcSrg\Database\DomainMapperInterface;
 use Liuch\DmarcSrg\Exception\SoftException;
+use Liuch\DmarcSrg\Exception\LogicException;
 use Liuch\DmarcSrg\Exception\DatabaseFatalException;
 use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
-use Liuch\DmarcSrg\Exception\DatabaseException;
 
 /**
  * DomainMapper class implementation for MariaDB
@@ -70,7 +70,7 @@ class DomainMapper implements DomainMapperInterface
                 'SELECT `id` FROM `' . $this->connector->tablePrefix('domains') .
                 '` WHERE ' . $this->sqlCondition($data)
             );
-            $this->sqlBindValue($st, 1, $data);
+            $this->sqlBindValues($st, $data, 1);
             $st->execute();
             $res = $st->fetch(\PDO::FETCH_NUM);
             $st->closeCursor();
@@ -82,6 +82,34 @@ class DomainMapper implements DomainMapperInterface
             throw new DatabaseFatalException('Failed to get domain ID', -1, $e);
         }
         return true;
+    }
+
+    /**
+     * Returns true if the domain exists and is assigned to the user
+     *
+     * @param array $data    Array with domain data to check
+     * @param int   $user_id User ID to check
+     *
+     * @return bool
+     */
+    public function isAssigned(array &$data, int $user_id): bool
+    {
+        $res = null;
+        try {
+            $st = $this->connector->dbh()->prepare(
+                'SELECT 1 FROM `' . $this->connector->tablePrefix('userdomains') . '` INNER JOIN `'
+                . $this->connector->tablePrefix('domains') . '` ON `domain_id` = `id` WHERE `user_id` = ? AND '
+                . $this->sqlCondition($data)
+            );
+            $st->bindValue(1, $user_id, \PDO::PARAM_INT);
+            $this->sqlBindValues($st, $data, 2);
+            $st->execute();
+            $res = $st->fetch(\PDO::FETCH_NUM);
+            $st->closeCursor();
+        } catch (\PDOException $e) {
+            throw new DatabaseFatalException('Failed to get user domain data', -1, $e);
+        }
+        return boolval($res);
     }
 
     /**
@@ -98,7 +126,7 @@ class DomainMapper implements DomainMapperInterface
                 'SELECT `id`, `fqdn`, `active`, `description`, `created_time`, `updated_time` FROM `'
                 . $this->connector->tablePrefix('domains') . '` WHERE ' . $this->sqlCondition($data)
             );
-            $this->sqlBindValue($st, 1, $data);
+            $this->sqlBindValues($st, $data, 1);
             $st->execute();
             $res = $st->fetch(\PDO::FETCH_NUM);
             $st->closeCursor();
@@ -140,7 +168,7 @@ class DomainMapper implements DomainMapperInterface
                 $st->execute();
                 $st->closeCursor();
             } catch (\PDOException $e) {
-                throw new DatabaseException('Failed to update the domain data', -1, $e);
+                throw new DatabaseFatalException('Failed to update the domain data', -1, $e);
             }
         } else {
             try {
@@ -181,16 +209,16 @@ class DomainMapper implements DomainMapperInterface
      *
      * Deletes the domain if there are no reports for this domain in the database.
      *
-     * @param array $data Domain data
+     * @param int $id Domain ID
      *
      * @return void
      */
-    public function delete(array &$data): void
+    public function delete(int $id): void
     {
         $db = $this->connector->dbh();
         $db->beginTransaction();
         try {
-            $filter = [ 'domain' => $data['id'] ];
+            $filter = [ 'domain' => $id ];
             $limit  = [ 'offset' => 0, 'count' => 0 ];
             $r_count = $this->connector->getMapper('report')->count($filter, $limit);
             if ($r_count > 0) {
@@ -208,8 +236,14 @@ class DomainMapper implements DomainMapperInterface
                     "Failed to delete: there {$s1} {$r_count} incoming report{$s2} for this domain"
                 );
             }
+            $st = $db->prepare(
+                'DELETE FROM `' . $this->connector->tablePrefix('userdomains') . '` WHERE `domain_id` = ?'
+            );
+            $st->bindValue(1, $id, \PDO::PARAM_INT);
+            $st->execute();
+            $st->closeCursor();
             $st = $db->prepare('DELETE FROM `' . $this->connector->tablePrefix('domains') . '` WHERE `id` = ?');
-            $st->bindValue(1, $data['id'], \PDO::PARAM_INT);
+            $st->bindValue(1, $id, \PDO::PARAM_INT);
             $st->execute();
             $st->closeCursor();
             $db->commit();
@@ -225,16 +259,23 @@ class DomainMapper implements DomainMapperInterface
     /**
      * Returns a list of domains data from the database
      *
+     * @param int $user_id User ID to retrieve the list for
+     *
      * @return array
      */
-    public function list(): array
+    public function list(int $user_id): array
     {
         $list = [];
         try {
-            $st = $this->connector->dbh()->query(
-                'SELECT `id`, `fqdn`, `active`, `description`, `created_time`, `updated_time` FROM `'
-                . $this->connector->tablePrefix('domains') . '`'
-            );
+            $query_str = 'SELECT `id`, `fqdn`, `active`, `description`, `created_time`, `updated_time` FROM `';
+            if ($user_id) {
+                $query_str .= $this->connector->tablePrefix('userdomains') . '` INNER JOIN `'
+                    . $this->connector->tablePrefix('domains') . '` ON `domain_id` = `id` WHERE `user_id` = '
+                    . $user_id;
+            } else {
+                $query_str .= $this->connector->tablePrefix('domains') . '`';
+            }
+            $st = $this->connector->dbh()->query($query_str);
             while ($row = $st->fetch(\PDO::FETCH_NUM)) {
                 $list[] = [
                     'id'           => intval($row[0]),
@@ -255,16 +296,22 @@ class DomainMapper implements DomainMapperInterface
     /**
      * Returns an ordered array with domain names from the database
      *
+     * @param int $user_id User ID to retrieve the list for
+     *
      * @return array
      */
-    public function names(): array
+    public function names(int $user_id): array
     {
         $res = [];
         try {
-            $st = $this->connector->dbh()->query(
-                'SELECT `fqdn` FROM `' . $this->connector->tablePrefix('domains') . '` ORDER BY `fqdn`',
-                \PDO::FETCH_NUM
-            );
+            if ($user_id) {
+                $query_str = 'SELECT `fqdn` FROM `' . $this->connector->tablePrefix('userdomains')
+                    . '` INNER JOIN `' . $this->connector->tablePrefix('domains')
+                    . '` ON `domain_id` = `id` WHERE `user_id` = ' . $user_id . ' ORDER BY `fqdn`';
+            } else {
+                $query_str = 'SELECT `fqdn` FROM `' . $this->connector->tablePrefix('domains') . '` ORDER BY `fqdn`';
+            }
+            $st = $this->connector->dbh()->query($query_str, \PDO::FETCH_NUM);
             while ($name = $st->fetchColumn(0)) {
                 $res[] = $name;
             }
@@ -278,15 +325,24 @@ class DomainMapper implements DomainMapperInterface
     /**
      * Returns the total number of domains in the database
      *
-     * @param int $max The maximum number of records to count. 0 means no limitation.
+     * @param int $user_id User ID
+     * @param int $max     The maximum number of records to count. 0 means no limitation.
      *
      * @return int The total number of domains
      */
-    public function count(int $max = 0): int
+    public function count(int $user_id, int $max = 0): int
     {
         $number = 0;
         try {
-            $query_str = 'SELECT COUNT(*) FROM `' . $this->connector->tablePrefix('domains') . '`';
+            if ($user_id === 0) {
+                $tn = 'domains';
+                $wr = '';
+            } else {
+                $tn = 'userdomains';
+                $wr = " WHERE `user_id` = {$user_id}";
+            }
+            $tn = $this->connector->tablePrefix($tn);
+            $query_str = "SELECT COUNT(*) FROM `{$tn}`{$wr}";
             if ($max > 0) {
                 $query_str .= " LIMIT {$max}";
             }
@@ -297,6 +353,137 @@ class DomainMapper implements DomainMapperInterface
             throw new DatabaseFatalException('Failed to get the number of domains', -1, $e);
         }
         return $number;
+    }
+
+    /**
+     * Assigns the domain to a user
+     *
+     * @param array $data    Domain data
+     * @param int   $user_id User ID
+     *
+     * @return void
+     */
+    public function assignUser(array &$data, int $user_id): void
+    {
+        if (!$user_id) {
+            throw new LogicException('Attempting to assign a domain to admin');
+        }
+
+        $db = $this->connector->dbh();
+        $db->beginTransaction();
+        try {
+            $st = $db->prepare(
+                'SELECT `id` FROM `' . $this->connector->tablePrefix('domains')
+                . '` WHERE ' . $this->sqlCondition($data)
+            );
+            $this->sqlBindValues($st, $data, 1);
+            $st->execute();
+            $id = $st->fetchColumn(0);
+            $st->closeCursor();
+            if ($id !== false) {
+                $data['id'] = intval($id);
+                $st = $db->prepare(
+                    'SELECT 1 FROM `' . $this->connector->tablePrefix('users') . '` WHERE `id` = ?'
+                );
+                $st->bindValue(1, $user_id, \PDO::PARAM_INT);
+                $st->execute();
+                $res = $st->fetchColumn(0);
+                $st->closeCursor();
+                if ($res) {
+                    $ud_tn = $this->connector->tablePrefix('userdomains');
+                    $st = $db->prepare('SELECT 1 FROM `' . $ud_tn . '` WHERE `domain_id` = ? AND `user_id` = ?');
+                    $st->bindValue(1, $data['id'], \PDO::PARAM_INT);
+                    $st->bindValue(2, $user_id, \PDO::PARAM_INT);
+                    $st->execute();
+                    $res = $st->fetchColumn(0);
+                    $st->closeCursor();
+                    if (!$res) {
+                        $st = $db->prepare('INSERT INTO `' . $ud_tn . '` (`domain_id`, `user_id`) VALUES (?, ?)');
+                        $st->bindValue(1, $data['id'], \PDO::PARAM_INT);
+                        $st->bindValue(2, $user_id, \PDO::PARAM_INT);
+                        $st->execute();
+                        $st->closeCursor();
+                    }
+                }
+            }
+            $db->commit();
+        } catch (\Exception $e) {
+            $db->rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Unassign the domain from a user
+     *
+     * @param array $data    Domain data
+     * @param int   $user_id User ID
+     *
+     * @return void
+     */
+    public function unassignUser(array &$data, int $user_id): void
+    {
+        if (!$user_id) {
+            throw new LogicException('Attempting to unassign a domain from admin');
+        }
+
+        try {
+            $dm_tn = $this->connector->tablePrefix('domains');
+            $ud_tn = $this->connector->tablePrefix('userdomains');
+            $st = $this->connector->dbh()->prepare(
+                "DELETE `{$ud_tn}` FROM `{$ud_tn}` INNER JOIN `{$dm_tn}` ON `domain_id` = `id` WHERE "
+                . $this->sqlCondition($data)
+            );
+            $this->sqlBindValues($st, $data, 1);
+            $st->execute();
+            $st->closeCursor();
+        } catch (\PDOException $e) {
+            throw new DatabaseFatalException('Failed to unassign a domain', -1, $e);
+        }
+    }
+
+    /**
+     * Updates the list of domains assigned to a user
+     *
+     * @param array $domains List of domains
+     * @param int   $user_id User ID
+     *
+     * @return void
+     */
+    public function updateUserDomains(array &$domains, int $user_id): void
+    {
+        if (!$user_id) {
+            throw new LogicException('Attempting to udpate domains for admin');
+        }
+
+        $db = $this->connector->dbh();
+        $db->beginTransaction();
+        try {
+            $st = $db->prepare(
+                'DELETE FROM `' . $this->connector->tablePrefix('userdomains') . '` WHERE `user_id` = ?'
+            );
+            $st->bindValue(1, $user_id, \PDO::PARAM_INT);
+            $st->execute();
+            $st->closeCursor();
+            $cnt = count($domains);
+            if ($cnt) {
+                $query_str = 'INSERT INTO `' . $this->connector->tablePrefix('userdomains')
+                    . '` (`domain_id`, `user_id`) SELECT `id`, ' . $user_id . ' FROM `'
+                    . $this->connector->tablePrefix('domains') . '` WHERE `fqdn` IN ('
+                    . substr(str_repeat('?,', $cnt), 0, -1) . ')';
+                $st = $db->prepare($query_str);
+                $pos = 0;
+                foreach ($domains as $dom_str) {
+                    $st->bindValue(++$pos, $dom_str, \PDO::PARAM_STR);
+                }
+                $st->execute();
+                $st->closeCursor();
+            }
+            $db->commit();
+        } catch (\Exception $e) {
+            $db->rollBack();
+            throw $e;
+        }
     }
 
     /**
@@ -318,12 +505,12 @@ class DomainMapper implements DomainMapperInterface
      * Binds values for SQL queries based on existing domain data
      *
      * @param \PDOStatement $st   PDO Statement to bind to
-     * @param int           $pos  Start position for binding
      * @param array         $data Domain data
+     * @param int           $pos  Start position for binding
      *
      * @return void
      */
-    private function sqlBindValue($st, int $pos, array &$data): void
+    private function sqlBindValues($st, array &$data, int $pos): void
     {
         if (isset($data['id'])) {
             $st->bindValue($pos, $data['id'], \PDO::PARAM_INT);

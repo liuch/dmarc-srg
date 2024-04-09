@@ -32,7 +32,7 @@ class AuthTest extends \PHPUnit\Framework\TestCase
              ->method('config')
              ->with($this->logicalOr(
                  $this->equalTo('admin/password'),
-                 $this->equalTo('admin/user_management')
+                 $this->equalTo('users/user_management')
              ))
              ->will($this->returnCallback(function ($param) {
                  return $param === 'admin/password' ? 'some' : false;
@@ -78,7 +78,7 @@ class AuthTest extends \PHPUnit\Framework\TestCase
              ->method('config')
              ->with($this->logicalOr(
                  $this->equalTo('admin/password'),
-                 $this->equalTo('admin/user_management')
+                 $this->equalTo('users/user_management')
              ))
              ->will($this->returnCallback(function ($param) {
                  return $param === 'admin/password' ? 'some' : true;
@@ -144,7 +144,7 @@ class AuthTest extends \PHPUnit\Framework\TestCase
              ->method('config')
              ->with($this->logicalOr(
                  $this->equalTo('admin/password'),
-                 $this->equalTo('admin/user_management')
+                 $this->equalTo('users/user_management')
              ))
              ->will($this->returnCallback(function ($param) {
                  return $param === 'admin/password' ? 'some' : false;

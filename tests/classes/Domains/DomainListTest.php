@@ -2,6 +2,7 @@
 
 namespace Liuch\DmarcSrg;
 
+use Liuch\DmarcSrg\Users\UserList;
 use Liuch\DmarcSrg\Domains\Domain;
 use Liuch\DmarcSrg\Domains\DomainList;
 use Liuch\DmarcSrg\Database\DomainMapperInterface;
@@ -15,7 +16,8 @@ class DomainListTest extends \PHPUnit\Framework\TestCase
             [ 'id' => 2, 'fqdn' => 'example.net' ],
             [ 'id' => 3, 'fqdn' => 'example.com' ]
         ];
-        $result = (new DomainList($this->getDbMapperOnce('list', $data)))->getList();
+        $user   = UserList::getUserByName('admin');
+        $result = (new DomainList($user, $this->getDbMapperOnce('list', $data)))->getList();
         $this->assertSame(false, $result['more']);
         $list = $result['domains'];
         $this->assertSame(count($data), count($list));
@@ -29,8 +31,9 @@ class DomainListTest extends \PHPUnit\Framework\TestCase
 
     public function testGettingNames(): void
     {
+        $user  = UserList::getUserByName('admin');
         $names = [ 'example.org', 'example.net', 'example.com' ];
-        $this->assertSame($names, (new DomainList($this->getDbMapperOnce('names', $names)))->names());
+        $this->assertSame($names, (new DomainList($user, $this->getDbMapperOnce('names', $names)))->names());
     }
 
     private function getDbMapperOnce(string $method, $value): object

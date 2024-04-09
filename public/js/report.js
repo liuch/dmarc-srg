@@ -79,11 +79,7 @@ class ReportWidget {
 				if (that._rep_id === report_id + report_time) {
 					remove_all_children(that._cn_element);
 					that._cn_element.appendChild(rep.element());
-					rep.set_value("seen", true).then(function(data) {
-						Common.checkResult(data);
-					}).catch(function(err) {
-						Common.displayError(err);
-					});
+					rep.set_value("seen", true);
 				}
 				resolve();
 			}).catch(function(err) {

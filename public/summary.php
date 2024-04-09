@@ -53,13 +53,15 @@ require realpath(__DIR__ . '/..') . '/init.php';
 
 if (Core::isJson() && isset($_GET['mode'])) {
     try {
-        Core::instance()->auth()->isAllowed(User::LEVEL_USER);
+        $core = Core::instance();
+        $core->auth()->isAllowed(User::LEVEL_USER);
+        $user = $core->user();
 
         $mode = $_GET['mode'];
         if ($mode === 'options') {
             Core::sendJson(
                 [
-                    'domains' => (new DomainList())->names()
+                    'domains' => (new DomainList($user))->names()
                 ]
             );
             return;
@@ -75,8 +77,13 @@ if (Core::isJson() && isset($_GET['mode'])) {
             if (!in_array($format, [ 'raw', 'text', 'csv' ])) {
                 throw new SoftException('The `format` parameter can only be `raw`, `text` or `csv`');
             }
-            $res['reports'] = array_map(function ($d) use ($format) {
-                $rep = (new SummaryReport($_GET['period']))->setDomain(new Domain($d));
+
+            $rep = new SummaryReport($_GET['period']);
+            $reports = [];
+            foreach (explode(',', $_GET['domain']) as $d) {
+                $dom = new Domain($d);
+                $dom->isAssigned($user, true);
+                $rep->setDomain($dom);
                 $r = [ 'domain' => $d ];
                 switch ($format) {
                     case 'raw':
@@ -89,8 +96,9 @@ if (Core::isJson() && isset($_GET['mode'])) {
                         $r['csv'] = $rep->csv();
                         break;
                 }
-                return $r;
-            }, explode(',', $_GET['domain']));
+                $reports[] = $r;
+            }
+            $res['reports'] = $reports;
 
             Core::sendJson($res);
             return;

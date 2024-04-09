@@ -36,10 +36,11 @@ interface StatisticsMapperInterface
     /**
      * Returns summary information for the specified domain and date range
      *
-     * @param \Liuch\DmarcSrg\Domains\Domain|null $domain Domain for which the information is needed.
-     *                                                    Null is for all domains.
-     * @param array                               $range  Array with two dates
-     * @param array                               $filter Array with filtering parameters
+     * @param \Liuch\DmarcSrg\Domains\Domain|null $domain  Domain for which the information is needed.
+     *                                                     Null is for all domains.
+     * @param array                               $range   Array with two dates
+     * @param array                               $filter  Array with filtering parameters
+     * @param int                                 $user_id User ID to get statistics for
      *
      * @return array Array with Summary information:
      *                          'emails' => [
@@ -51,29 +52,31 @@ interface StatisticsMapperInterface
      *                              'rejected'         => Rejected (int)
      *                          ];
      */
-    public function summary($domain, array &$range, array &$filter): array;
+    public function summary($domain, array &$range, array &$filter, int $user_id): array;
 
     /**
      * Returns a list of ip-addresses from which the e-mail messages were received, with some statistics for each one
      *
-     * @param \Liuch\DmarcSrg\Domains\Domain|null $domain Domain for which the information is needed.
-     *                                                    Null is for all domains.
-     * @param array                               $range  Array with two dates
-     * @param array                               $filter Array with filtering parameters
+     * @param \Liuch\DmarcSrg\Domains\Domain|null $domain  Domain for which the information is needed.
+     *                                                     Null is for all domains.
+     * @param array                               $range   Array with two dates
+     * @param array                               $filter  Array with filtering parameters
+     * @param int                                 $user_id User ID to get statistics for
      *
      * @return array A list of ip-addresses with fields `ip`, `emails`, `dkim_aligned`, `spf_aligned`
      */
-    public function ips($domain, array &$range, array &$filter): array;
+    public function ips($domain, array &$range, array &$filter, int $user_id): array;
 
     /**
      * Returns a list of organizations that sent the reports with some statistics for each one
      *
-     * @param \Liuch\DmarcSrg\Domains\Domain|null $domain Domain for which the information is needed.
-     *                                                    Null is for all domains.
-     * @param array                               $range  Array with two dates
-     * @param array                               $filter Array with filtering parameters
+     * @param \Liuch\DmarcSrg\Domains\Domain|null $domain  Domain for which the information is needed.
+     *                                                     Null is for all domains.
+     * @param array                               $range   Array with two dates
+     * @param array                               $filter  Array with filtering parameters
+     * @param int                                 $user_id User ID to get statistics for
      *
      * @return array List of organizations with fields `name`, `reports`, `emails`
      */
-    public function organizations($domain, array &$range, array &$filter): array;
+    public function organizations($domain, array &$range, array &$filter, int $user_id): array;
 }

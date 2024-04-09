@@ -745,8 +745,17 @@ button.options-button {
 	margin-top: 0;
 	margin-bottom: 0;
 }
-.about .vertical-content {
+.about .vertical-content, .verification .vertical-content {
 	max-width: 30em;
+}
+.verification textarea {
+	height: 4em;
+}
+.warn-block {
+	color: #000;
+	padding: .5em;
+	text-align: center;
+	background-color: var(--color-nt-warning);
 }
 button.toolbar {
 	position: absolute;

@@ -120,17 +120,25 @@ class Core
                     $this->user = new AdminUser($this);
                 } else {
                     $this->user = new DbUser($_SESSION['user']);
-                    $cts = (new DateTime())->getTimestamp();
-                    if (!isset($_SESSION['s_time']) || $_SESSION['s_time'] + 5 <= $cts) {
-                        if (isset($_SESSION['s_id']) &&
-                            $this->user->session() === $_SESSION['s_id'] &&
-                            $this->user->isEnabled()
-                        ) {
-                            $_SESSION['s_time'] = $cts;
-                            $_SESSION['user']['level'] = $this->user->level();
-                        } else {
+                    try {
+                        $cts = (new DateTime())->getTimestamp();
+                        if (!isset($_SESSION['s_time']) || $_SESSION['s_time'] + 5 <= $cts) {
+                            if (isset($_SESSION['s_id']) &&
+                                $this->user->session() === $_SESSION['s_id'] &&
+                                $this->user->isEnabled()
+                            ) {
+                                $_SESSION['s_time'] = $cts;
+                                $_SESSION['user']['level'] = $this->user->level();
+                            } else {
+                                $this->destroySession();
+                            }
+                        }
+                    } catch (SoftException $e) {
+                        if (!$this->user->exists()) {
+                            $this->user = null;
                             $this->destroySession();
                         }
+                        throw $e;
                     }
                 }
             }

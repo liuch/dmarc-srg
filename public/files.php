@@ -109,10 +109,10 @@ if (Core::method() == 'GET') {
 
 if (Core::method() == 'POST') {
     try {
-        Core::instance()->auth()->isAllowed(User::LEVEL_MANAGER);
-
         $data = Core::getJsonData();
         if ($data) {
+            Core::instance()->auth()->isAllowed(User::LEVEL_ADMIN);
+
             if (isset($data['cmd'])) {
                 $cmd_id = array_search($data['cmd'], [ 'load-mailbox', 'load-directory', 'load-remotefs' ]);
                 if ($cmd_id !== false) {
@@ -161,6 +161,8 @@ if (Core::method() == 'POST') {
                 }
             }
         } elseif (isset($_FILES['report_file']) && isset($_POST['cmd']) && $_POST['cmd'] === 'upload-report') {
+            Core::instance()->auth()->isAllowed(User::LEVEL_MANAGER);
+
             $results = (new ReportFetcher(new UploadedFilesSource($_FILES['report_file'])))->fetch();
             Core::sendJson(ReportFetcher::makeSummaryResult($results));
             return;

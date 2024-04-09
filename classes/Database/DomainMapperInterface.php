@@ -43,6 +43,16 @@ interface DomainMapperInterface
     public function exists(array &$data): bool;
 
     /**
+     * Returns true if the domain exists and is assigned to the user
+     *
+     * @param array $data    Array with domain data to check
+     * @param int   $user_id User ID to check
+     *
+     * @return bool
+     */
+    public function isAssigned(array &$data, int $user_id): bool;
+
+    /**
      * Fetch the domain data from the database by its id or name
      *
      * @param array $data Domain data to update
@@ -65,32 +75,67 @@ interface DomainMapperInterface
      *
      * Deletes the domain if there are no reports for this domain in the database.
      *
-     * @param array $data Domain data
+     * @param int $id Domain ID
      *
      * @return void
      */
-    public function delete(array &$data): void;
+    public function delete(int $id): void;
 
     /**
      * Returns a list of domains data from the database
      *
+     * @param int $user_id User ID to retrieve the list for
+     *
      * @return array
      */
-    public function list(): array;
+    public function list(int $user_id): array;
 
     /**
      * Returns an ordered array with domain names from the database
      *
+     * @param int $user_id User ID to retrieve the list for
+     *
      * @return array
      */
-    public function names(): array;
+    public function names(int $user_id): array;
 
     /**
      * Returns the total number of domains in the database
      *
-     * @param int $max The maximum number of records to count. 0 means no limitation.
+     * @param int $user_id User ID
+     * @param int $max     The maximum number of records to count. 0 means no limitation.
      *
      * @return int The total number of domains
      */
-    public function count(int $max = 0): int;
+    public function count(int $user_id, int $max = 0): int;
+
+    /**
+     * Assigns the domain to a user
+     *
+     * @param array $data    Domain data
+     * @param int   $user_id User ID
+     *
+     * @return void
+     */
+    public function assignUser(array &$data, int $user_id): void;
+
+    /**
+     * Unassign the domain from a user
+     *
+     * @param array $data    Domain data
+     * @param int   $user_id User ID
+     *
+     * @return void
+     */
+    public function unassignUser(array &$data, int $user_id): void;
+
+    /**
+     * Updates the list of domains assigned to a user
+     *
+     * @param array $domains List of domains
+     * @param int   $user_id User ID
+     *
+     * @return void
+     */
+    public function updateUserDomains(array &$domains, int $user_id): void;
 }

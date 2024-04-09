@@ -31,4 +31,11 @@ class CommonTest extends \PHPUnit\Framework\TestCase
             ])
         );
     }
+
+    public function testRandomString(): void
+    {
+        $this->assertEquals(10, strlen(Common::randomString(10)));
+        $this->assertNotEquals(Common::randomString(4), Common::randomString(4));
+        $this->assertMatchesRegularExpression('/^[0-9a-zA-Z]+$/', Common::randomString(64));
+    }
 }

@@ -94,4 +94,14 @@ interface UserMapperInterface
      * @param string $hash Password hash to save
      */
     public function savePasswordHash(array &$data, string $hash): void;
+
+    /**
+     * Updates the user's key string
+     *
+     * @param array  $data User data
+     * @param string $key  User key string to set
+     *
+     * @return void
+     */
+    public function setUserKey(array &$data, string $key): void;
 }

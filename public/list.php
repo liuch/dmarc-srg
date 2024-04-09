@@ -31,7 +31,8 @@ require realpath(__DIR__ . '/..') . '/init.php';
 if (Core::method() == 'GET') {
     if (Core::isJson() && isset($_GET['list'])) {
         try {
-            Core::instance()->auth()->isAllowed(User::LEVEL_USER);
+            $core = Core::instance();
+            $core->auth()->isAllowed(User::LEVEL_USER);
 
             $lst = explode(',', $_GET['list']);
             $res = [];
@@ -40,7 +41,7 @@ if (Core::method() == 'GET') {
                 $dir = isset($_GET['direction']) ? $_GET['direction'] : 'ascent';
                 $order = isset($_GET['order']) ? $_GET['order'] : 'begin_time';
                 $filter = Common::getFilter();
-                $list = new ReportList();
+                $list = new ReportList($core->user());
                 if ($filter) {
                     $list->setFilter($filter);
                 }
@@ -52,7 +53,7 @@ if (Core::method() == 'GET') {
                 $res = $list->getList($pos);
             }
             if (array_search('filters', $lst) !== false) {
-                $res['filters'] = (new ReportList())->getFilterList();
+                $res['filters'] = (new ReportList($core->user()))->getFilterList();
             }
             Core::sendJson($res);
         } catch (RuntimeException $e) {

@@ -129,12 +129,15 @@ class DomainList {
 	_display_edit_dialog(fqdn) {
 		let dlg_par = {};
 		if (fqdn === "*new") {
-			dlg_par["new"] = true;
+			dlg_par["new"]  = true;
+			dlg_par.disable = User.level !== "admin";
 		}
 		else {
 			dlg_par.fqdn    = fqdn;
-			dlg_par.minimal = (User.level !== "admin" && User.level !== "manager");
+			dlg_par.disable = User.level === "user";
 		}
+		dlg_par.level = User.level;
+
 		let dlg = new DomainEditDialog(dlg_par);
 		this._element.appendChild(dlg.element());
 		let that = this;
@@ -228,18 +231,18 @@ class DomainEditDialog extends VerticalDialog {
 	constructor(params) {
 		let tl = null;
 		let ba = [];
-		if (!params.minimal) ba.push("save");
-		if (!params["new"]) {
-			tl = "Domain settings";
-			if (!params.minimal) ba.push("delete");
+		if (params.level !== "user") ba.push("save");
+		if (params["new"]) {
+			tl = "New domain";
 		}
 		else {
-			tl = "New domain";
+			tl = "Domain settings";
+			if (params.level !== "user") ba.push("delete");
 		}
 		ba.push("close");
 		super({ title: tl, buttons: ba });
 		this._data    = params || {};
-		this._content = null;
+		this._note_el = null;
 		this._fqdn_el = null;
 		this._actv_el = null;
 		this._desc_el = null;
@@ -249,7 +252,10 @@ class DomainEditDialog extends VerticalDialog {
 	}
 
 	_gen_content() {
-		let min = this._data.minimal;
+		let dis = this._data.disable;
+
+		this._note_el = this._content.appendChild(document.createElement("div"));
+		this._note_el.classList.add("hidden", "warn-block");
 
 		let fq = document.createElement("input");
 		fq.setAttribute("type", "text");
@@ -272,14 +278,14 @@ class DomainEditDialog extends VerticalDialog {
 			op2.appendChild(document.createTextNode("No"));
 			en.appendChild(op2);
 			en.required = true;
-			if (min) en.disabled = true;
+			en.disabled = dis;
 			this._insert_input_row("Active", en);
 			this._actv_el = en;
 		}
 
 		let tx = document.createElement("textarea");
 		tx.classList.add("description")
-		if (min) tx.disabled = true;
+		tx.disabled = dis;
 		this._insert_input_row("Description", tx);
 		this._desc_el = tx;
 
@@ -308,16 +314,14 @@ class DomainEditDialog extends VerticalDialog {
 			}
 		}.bind(this));
 
-		if (!this._data["new"] && !this._fetched) {
-			this._fetch_data();
-		}
+		if (!this._fetched) this._fetch_data();
 	}
 
 	_fetch_data() {
 		this._enable_ui(false);
 		this._content.appendChild(set_wait_status());
 		let uparams = new URLSearchParams();
-		uparams.set("domain", this._data.fqdn);
+		uparams.set("domain", this._data.fqdn || "");
 
 		let that = this;
 		window.fetch("domains.php?" + uparams.toString(), {
@@ -332,8 +336,8 @@ class DomainEditDialog extends VerticalDialog {
 		}).then(function(data) {
 			that._fetched = true;
 			Common.checkResult(data);
-			data.created_time = new Date(data.created_time);
-			data.updated_time = new Date(data.updated_time);
+			if (data.created_time) data.created_time = new Date(data.created_time);
+			if (data.updated_time) data.updated_time = new Date(data.updated_time);
 			that._update_ui(data);
 			that._enable_ui(true);
 		}).catch(function(err) {
@@ -345,6 +349,19 @@ class DomainEditDialog extends VerticalDialog {
 	}
 
 	_update_ui(data) {
+		if (data.verification === "dns") {
+			this._note_el.classList.remove("hidden");
+			let lm = document.createElement("a");
+			lm.href = "";
+			lm.textContent = "Learn more";
+			this._note_el.append("Domain verification is required! ", lm);
+			lm.addEventListener("click", event => {
+				event.preventDefault();
+				this._display_verification_dialog(data.verification_data, lm);
+			});
+		}
+		if (this._data["new"]) return;
+
 		let val = "";
 		for (let i = 0; i < this._actv_el.options.length; ++i) {
 			let op = this._actv_el.options[i];
@@ -387,10 +404,10 @@ class DomainEditDialog extends VerticalDialog {
 	}
 
 	_enable_ui(en) {
-		let min = this._data.minimal;
+		let dis = this._data.disable;
 		this._fqdn_el.disabled = !en || !this._data["new"];
-		this._actv_el.disabled = !en || min;
-		this._desc_el.disabled = !en || min;
+		this._actv_el.disabled = !en || dis;
+		this._desc_el.disabled = !en || dis;
 		for (let i = 2; i < this._buttons.length - 1; ++i) {
 			this._buttons[i].disabled = !en;
 		}
@@ -479,5 +496,38 @@ class DomainEditDialog extends VerticalDialog {
 			that._content.querySelector(".wait-message").remove();
 			that._enable_ui(true);
 		});
+	}
+
+	_display_verification_dialog(data, source_el) {
+		const dlg = new VerificationDialog(data);
+		this._element.classList.add("hidden");
+		document.getElementById("main-block").append(dlg.element());
+		dlg.show().finally(() => {
+			dlg.element().remove();
+			this._element.classList.remove("hidden");
+			source_el.focus();
+		});
+	}
+}
+
+class VerificationDialog extends ModalDialog {
+	constructor(data) {
+		super({ title: "Domain verification information", buttons: [ "close" ] });
+		this._data = data;
+	}
+
+	_gen_content() {
+		this._element.children[0].classList.add("verification");
+		this._content.classList.add("vertical-content");
+		const t1 = document.createElement("div");
+		t1.textContent = "To ensure that you are the owner of the domain, add a TXT record to the DNS settings at your domain registrar with the following content:";
+		const t2 = document.createElement("textarea");
+		t2.textContent = this._data;
+		t2.readOnly = true;
+		const t3 = document.createElement("div");
+		t3.textContent = "Once the domain has been successfully added, the TXT record can be deleted.";
+		const t4 = document.createElement("div");
+		t4.textContent = "Important! Some registrars may require additional time to publish your verification code. If the tool can't find your new TXT record, wait an hour before you try again."
+		this._content.append(t1, t2, t3, t4);
 	}
 }

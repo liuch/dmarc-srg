@@ -122,4 +122,22 @@ class Common
         fclose($tfd);
         return $res;
     }
+
+    /**
+     * Returns a random string of the specified length
+     *
+     * @param int String length
+     *
+     * @return string
+     */
+    public static function randomString(int $len = 16): string
+    {
+        $chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $c_len = strlen($chars);
+        $res   = '';
+        do {
+            $res .= $chars[random_int(0, 61)];
+        } while (--$len > 0);
+        return $res;
+    }
 }

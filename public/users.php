@@ -35,8 +35,9 @@
  *                           If the value is `delete`, all the fields below will be ignored.
  *     `level`       integer One of the User::LEVEL_* values
  *     `enabled`     boolean Set `false` to temporarily deactivate the user
+ *     `domains`     array   Array of domain names to assign. If undefined, no changes are required.
  *   Example:
- *     { "name": "user194", "action": "update", "enabled": true }
+ *     { "name": "user194", "action": "update", "enabled": true, "domains": [ "domain1.org", "domain2.org" ] }
  * Other HTTP methods:
  *   It returns an error
  *
@@ -53,6 +54,7 @@ namespace Liuch\DmarcSrg;
 use Liuch\DmarcSrg\Users\User;
 use Liuch\DmarcSrg\Users\DbUser;
 use Liuch\DmarcSrg\Users\UserList;
+use Liuch\DmarcSrg\Domains\DomainList;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\RuntimeException;
 
@@ -63,34 +65,55 @@ if (Core::isJson()) {
         $core = Core::instance();
 
         if (Core::method() == 'GET') {
-            $core->auth()->isAllowed(User::LEVEL_USER);
+            if (!isset($_GET['user'])) {
+                // Retrieving a list of all users
+                $core->auth()->isAllowed(User::LEVEL_ADMIN);
 
-            $uname = $_GET['user'] ?? '';
+                $list = array_map(function ($user) {
+                    return $user->toArray();
+                }, (new UserList())->getList()['users']);
+
+                Core::sendJson([
+                    'users' => $list,
+                    'more'  => false
+                ]);
+                return;
+            }
+
+            $uname = $_GET['user'];
+            if (empty($uname)) {
+                // New user
+                $core->auth()->isAllowed(User::LEVEL_ADMIN);
+
+                Core::sendJson([
+                    'domains' => [ 'available' => (new DomainList(UserList::getUserByName('admin')))->names() ]
+                ]);
+                return;
+            }
+
             if ($core->user()->name() === $uname && $core->user()->level() < User::LEVEL_ADMIN) {
+                // Current user and not Admin
+                $core->auth()->isAllowed(User::LEVEL_USER);
+
                 $udata = (new DbUser($uname))->toArray();
                 Core::sendJson([
-                    'name' =>     $udata['name'],
-                    'level' =>    $data['level'],
+                    'name'     => $udata['name'],
+                    'level'    => $udata['level'],
                     'password' => $udata['password'] // bool value
                 ]);
                 return;
             }
 
+            // Retrieving user data by Admin
             $core->auth()->isAllowed(User::LEVEL_ADMIN);
 
-            if (!empty($uname)) {
-                Core::sendJson((new DbUser($uname))->toArray());
-                return;
-            }
-
-            $list = array_map(function ($user) {
-                return $user->toArray();
-            }, (new UserList())->getList()['users']);
-
-            Core::sendJson([
-                'users' => $list,
-                'more'  => false
-            ]);
+            $user = new DbUser($uname);
+            $res  = $user->toArray();
+            $res['domains'] = [
+                'available' => (new DomainList(UserList::getUserByName('admin')))->names(),
+                'assigned'  => (new DomainList($user))->names()
+            ];
+            Core::sendJson($res);
             return;
         } elseif (Core::method() == 'POST') {
             $data = Core::getJsonData();
@@ -162,6 +185,14 @@ if (Core::isJson()) {
                         throw new SoftException(
                             'Unknown action. Valid values are "add", "update", "delete", "set_password".'
                         );
+                }
+
+                $domains = $data['domains'] ?? null;
+                if (is_array($domains)) {
+                    $domains = array_values(array_unique(array_filter($domains, function ($val) {
+                        return is_string($val);
+                    })));
+                    $user->assignDomains($domains);
                 }
 
                 $res = [

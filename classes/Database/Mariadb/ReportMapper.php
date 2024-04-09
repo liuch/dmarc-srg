@@ -162,8 +162,16 @@ class ReportMapper implements ReportMapperInterface
                 if (!$domain_data['active']) {
                     throw new SoftException('Failed to add an incoming report: the domain is inactive');
                 }
+                $user_id = Core::instance()->user()->id();
+                if ($user_id !== 0 && !$domain_mapper->isAssigned($domain_data, $user_d)) {
+                    // The domain exists but is not assigned to the current user
+                    $this->unknownDomain($domain_data);
+                }
             } catch (DatabaseNotFoundException $e) {
                 // The domain is not found. Let's try to add it automatically.
+                if (Core::instance()->user()->id() !== 0) {
+                    $this->unknownDomain($domain_data);
+                }
                 $this->insertDomain($domain_data, $domain_mapper);
             }
 
@@ -272,19 +280,21 @@ class ReportMapper implements ReportMapperInterface
      *
      * This method returns a list of reports that depends on the $filter, $order and $limit.
      *
-     * @param array $filter Key-value array with filtering parameters
-     * @param array $order  Key-value array:
-     *                      'field'     => string, 'begin_time'
-     *                      'direction' => string, 'ascent' or 'descent'
-     * @param array $limit  Key-value array with two keys: `offset` and `count`
+     * @param array $filter  Key-value array with filtering parameters
+     * @param array $order   Key-value array:
+     *                       'field'     => string, 'begin_time'
+     *                       'direction' => string, 'ascent' or 'descent'
+     * @param array $limit   Key-value array with two keys: `offset` and `count`
+     * @param int   $user_id User ID to retrieve the list for
      *
      * @return array
      */
-    public function list(array &$filter, array &$order, array &$limit): array
+    public function list(array &$filter, array &$order, array &$limit, int $user_id): array
     {
         $db = $this->connector->dbh();
         $list = [];
         $f_data = $this->prepareFilterData($filter);
+        $user_doms = $this->sqlUserRestriction($user_id, '`d`.`id`');
         $order_str = $this->sqlOrderList($order, '`rp`.`id`');
         $cond_str0 = $this->sqlConditionList($f_data, ' AND ', 0);
         $cond_str1 = $this->sqlConditionList($f_data, ' HAVING ', 1);
@@ -297,7 +307,7 @@ class ReportMapper implements ReportMapperInterface
                 . '` AS `rr` RIGHT JOIN (SELECT `rp`.`id`, `org`, `begin_time`, `end_time`, `external_id`,'
                 . ' `fqdn`, `seen` FROM `' . $this->connector->tablePrefix('reports')
                 . '` AS `rp` INNER JOIN `' . $this->connector->tablePrefix('domains')
-                . '` AS `d` ON `d`.`id` = `rp`.`domain_id`' . $cond_str0 . $order_str
+                . '` AS `d` ON `d`.`id` = `rp`.`domain_id`' . $user_doms . $cond_str0 . $order_str
                 . ') AS `rp` ON `rp`.`id` = `rr`.`report_id` GROUP BY `rp`.`id`'
                 . $cond_str1 . $order_str . $limit_str
             );
@@ -336,6 +346,9 @@ class ReportMapper implements ReportMapperInterface
      */
     public function count(array &$filter, array &$limit): int
     {
+        if (Core::instance()->user()->id()) {
+            throw new LogicException('The count method cannot be call by non-admin user');
+        }
         $cnt = 0;
         $f_data = $this->prepareFilterData($filter);
         try {
@@ -381,6 +394,9 @@ class ReportMapper implements ReportMapperInterface
      */
     public function delete(array &$filter, array &$order, array &$limit): void
     {
+        if ($this->user->id()) {
+            throw new LogicException('Attempted deletion of reports by non-admin user');
+        }
         $f_data = $this->prepareFilterData($filter);
         $cond_str = $this->sqlConditionList($f_data, ' WHERE ', 0);
         $order_str = $this->sqlOrderList($order, '`id`');
@@ -417,18 +433,21 @@ class ReportMapper implements ReportMapperInterface
     /**
      * Returns a list of months with years of the form: 'yyyy-mm' for which there is at least one report
      *
+     * @param int $user_id User ID to retrieve the list for
+     *
      * @return array
      */
-    public function months(): array
+    public function months(int $user_id): array
     {
         $res = [];
         $rep_tn = $this->connector->tablePrefix('reports');
         try {
+            $ud = $this->sqlUserRestriction($user_id, '`rp`.`domain_id`');
             $st = $this->connector->dbh()->query(
                 'SELECT DISTINCT DATE_FORMAT(`date`, "%Y-%m") AS `month` FROM'
                 . ' ((SELECT DISTINCT `begin_time` AS `date` FROM `' . $rep_tn
-                . '`) UNION (SELECT DISTINCT `end_time` AS `date` FROM `' . $rep_tn
-                . '`)) AS `r` ORDER BY `month` DESC'
+                . '` AS `rp`' . $ud . ') UNION (SELECT DISTINCT `end_time` AS `date` FROM `' . $rep_tn
+                . '` AS `rp`' . $ud . ')) AS `r` ORDER BY `month` DESC'
             );
             while ($row = $st->fetch(\PDO::FETCH_NUM)) {
                 $res[] = $row[0];
@@ -443,15 +462,18 @@ class ReportMapper implements ReportMapperInterface
     /**
      * Returns a list of reporting organizations from which there is at least one report
      *
+     * @param int $user_id User ID to retrieve the list for
+     *
      * @return array
      */
-    public function organizations(): array
+    public function organizations(int $user_id): array
     {
         $res = [];
         $rep_tn = $this->connector->tablePrefix('reports');
         try {
+            $ud = $this->sqlUserRestriction($user_id, '`rp`.`domain_id`');
             $st = $this->connector->dbh()->query(
-                'SELECT DISTINCT `org` FROM `' . $rep_tn . '` ORDER BY `org`'
+                'SELECT DISTINCT `org` FROM `' . $rep_tn . "` AS `rp`{$ud} ORDER BY `org`"
             );
             while ($row = $st->fetch(\PDO::FETCH_NUM)) {
                 $res[] = $row[0];
@@ -461,6 +483,23 @@ class ReportMapper implements ReportMapperInterface
             throw new DatabaseFatalException('Failed to get a list of organizations', -1, $e);
         }
         return $res;
+    }
+
+    /**
+     * Returns the part of sql query restricting the select result by user_id
+     *
+     * @param int    $user_id User ID
+     * @param string $column  Column name to join
+     *
+     * @return string
+     */
+    private function sqlUserRestriction(int $user_id, string $column): string
+    {
+        if (!$user_id) {
+            return '';
+        }
+        return ' INNER JOIN `' . $this->connector->tablePrefix('userdomains') . '` AS `ud` ON '
+            . $column . ' = `ud`.`domain_id` WHERE `user_id` = ' . $user_id;
     }
 
     /**
@@ -495,34 +534,58 @@ class ReportMapper implements ReportMapperInterface
      * @param array  $data   Domain data
      * @param object $mapper Domain mapper
      *
+     * @throws SoftException
+     *
      * @return void
      */
     private function insertDomain(array &$data, $mapper): void
     {
-        $mapper = $this->connector->getMapper('domain');
-        if ($mapper->count(1) !== 0) {
-            if (is_null(self::$allowed_domains)) {
-                $allowed = Core::instance()->config('fetcher/allowed_domains', '');
-                if (!empty($allowed)) {
-                    self::$allowed_domains = "<{$allowed}>i";
-                }
-            }
-            try {
-                $add = !empty(self::$allowed_domains) && preg_match(self::$allowed_domains, $data['fqdn']) === 1;
-            } catch (\ErrorException $e) {
-                $add = false;
-                Core::instance()->logger()->warning(
-                    'The allow_domains parameter in the settings has an incorrect regular expression value.'
-                );
-            }
-            if (!$add) {
-                throw new SoftException('Failed to add an incoming report: unknown domain: ' . $data['fqdn']);
+        $core = Core::instance();
+
+        if (is_null(self::$allowed_domains)) {
+            $allowed = $core->config('fetcher/allowed_domains', '');
+            if (!empty($allowed)) {
+                self::$allowed_domains = "<{$allowed}>i";
             }
         }
 
+        $add_f = false;
+        if ($mapper->count(0, 1) === 0) {
+            $add_f = true;
+        } else {
+            try {
+                $add_f = !empty(self::$allowed_domains) && preg_match(self::$allowed_domains, $data['fqdn']) === 1;
+            } catch (\ErrorException $e) {
+                $core->logger()->warning(
+                    'The allow_domains parameter in the settings has an incorrect regular expression value.'
+                );
+            }
+        }
+
+        if (!$add_f) {
+            $this->unknownDomain($data);
+        }
         $data['active'] = true;
         $data['description'] = 'The domain was added automatically.';
         $mapper->save($data);
+    }
+
+    /**
+     * Throws an exception Unknown domain
+     *
+     * @param array $data Domain data
+     *
+     * @throws SoftException
+     *
+     * @return void
+     */
+    private function unknownDomain(array &$data): void
+    {
+        $msg = 'Failed to add an incoming report: unknown domain';
+        if (!empty($data['fqdn'])) {
+            $msg .= " {$data['fqdn']}";
+        }
+        throw new SoftException($msg);
     }
 
     /**

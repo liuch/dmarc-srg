@@ -57,10 +57,11 @@ class StatisticsMapper implements StatisticsMapperInterface
     /**
      * Returns summary information for the specified domain and date range
      *
-     * @param \Liuch\DmarcSrg\Domains\Domain|null $domain Domain for which the information is needed.
-     *                                                    Null is for all domains.
-     * @param array                               $range  Array with two dates
-     * @param array                               $filter Array with filtering parameters
+     * @param \Liuch\DmarcSrg\Domains\Domain|null $domain  Domain for which the information is needed.
+     *                                                     Null is for all domains.
+     * @param array                               $range   Array with two dates
+     * @param array                               $filter  Array with filtering parameters
+     * @param int                                 $user_id User ID to get statistics for
      *
      * @return array Array with Summary information:
      *                          'emails' => [
@@ -72,12 +73,13 @@ class StatisticsMapper implements StatisticsMapperInterface
      *                              'rejected'         => Rejected (int)
      *                          ];
      */
-    public function summary($domain, array &$range, array &$filter): array
+    public function summary($domain, array &$range, array &$filter, int $user_id): array
     {
         $is_domain = $domain ? true : false;
         $db = $this->connector->dbh();
         try {
-            $f_data = $this->prepareFilterData($domain, $range, $filter);
+            $users  = $this->sqlUserRestriction($user_id);
+            $f_data = $this->prepareFilterData($domain, $range, $user_id, $filter);
             $st = $db->prepare(
                 'SELECT SUM(`rcount`), SUM(IF(`dkim_align` = 2 AND `spf_align` = 2, `rcount`, 0)),'
                 . ' SUM(IF(`dkim_align` = 2 AND `spf_align` <> 2, `rcount`, 0)),'
@@ -86,7 +88,7 @@ class StatisticsMapper implements StatisticsMapperInterface
                 . ' SUM(IF(`disposition` = 1, `rcount`, 0))'
                 . ' FROM `' . $this->connector->tablePrefix('rptrecords') . '` AS `rr`'
                 . ' INNER JOIN `' . $this->connector->tablePrefix('reports')
-                . '` AS `rp` ON `rr`.`report_id` = `rp`.`id`'
+                . '` AS `rp` ON `rr`.`report_id` = `rp`.`id`' . $users
                 . $this->sqlCondition($f_data, ' WHERE ', 0) . $this->sqlCondition($f_data, ' AND ', 1)
             );
             $this->sqlBindValues($st, $f_data, [ 0, 1 ]);
@@ -104,8 +106,8 @@ class StatisticsMapper implements StatisticsMapperInterface
 
             if (!isset($filter['dkim']) && !isset($filter['spf']) && !isset($filter['disposition'])) {
                 $st = $db->prepare(
-                    'SELECT COUNT(*) FROM (SELECT `org` FROM `' . $this->connector->tablePrefix('reports') . '`'
-                    . $this->sqlCondition($f_data, ' WHERE ', 0) . ' GROUP BY `org`) AS `orgs`'
+                    'SELECT COUNT(*) FROM (SELECT `org` FROM `' . $this->connector->tablePrefix('reports') . '` AS `rp`'
+                    . $users . $this->sqlCondition($f_data, ' WHERE ', 0) . ' GROUP BY `org`) AS `orgs`'
                 );
             } else {
                 $st = $db->prepare(
@@ -114,7 +116,7 @@ class StatisticsMapper implements StatisticsMapperInterface
                     . ' MIN(`disposition`) AS `disposition`'
                     . ' FROM `' . $this->connector->tablePrefix('reports') . '` AS `rp`'
                     . ' INNER JOIN `' . $this->connector->tablePrefix('rptrecords') . '` AS `rr`'
-                    . ' ON `rp`.`id` = `rr`.`report_id`' . $this->sqlCondition($f_data, ' WHERE ', 0)
+                    . ' ON `rp`.`id` = `rr`.`report_id`' . $users . $this->sqlCondition($f_data, ' WHERE ', 0)
                     . ' GROUP BY `rr`.`report_id`'
                     . ') AS `sr`' . $this->sqlCondition($f_data, ' WHERE ', 1) . ' GROUP BY `org`) AS `orgs`'
                 );
@@ -137,17 +139,18 @@ class StatisticsMapper implements StatisticsMapperInterface
     /**
      * Returns a list of ip-addresses from which the e-mail messages were received, with some statistics for each one
      *
-     * @param \Liuch\DmarcSrg\Domains\Domain|null $domain Domain for which the information is needed.
-     *                                                    Null is for all domains.
-     * @param array                               $range  Array with two dates
-     * @param array                               $filter Array with filtering parameters
+     * @param \Liuch\DmarcSrg\Domains\Domain|null $domain  Domain for which the information is needed.
+     *                                                     Null is for all domains.
+     * @param array                               $range   Array with two dates
+     * @param array                               $filter  Array with filtering parameters
+     * @param int                                 $user_id User ID to get statistics for
      *
      * @return array A list of ip-addresses with fields `ip`, `emails`, `dkim_aligned`, `spf_aligned`
      */
-    public function ips($domain, array &$range, array &$filter): array
+    public function ips($domain, array &$range, array &$filter, int $user_id): array
     {
         try {
-            $f_data = $this->prepareFilterData($domain, $range, $filter);
+            $f_data = $this->prepareFilterData($domain, $range, $user_id, $filter);
             $st = $this->connector->dbh()->prepare(
                 'SELECT `ip`, SUM(`rcount`) AS `rcount`,'
                 . ' SUM(IF(`dkim_align` = 2 AND `spf_align` = 2, `rcount`, 0)) AS `dkim_spf_aligned`,'
@@ -157,7 +160,7 @@ class StatisticsMapper implements StatisticsMapperInterface
                 . ' SUM(IF(`disposition` = 1, `rcount`, 0))'
                 . ' FROM `' . $this->connector->tablePrefix('rptrecords') . '` AS `rr`'
                 . ' INNER JOIN `' . $this->connector->tablePrefix('reports')
-                . '` AS `rp` ON `rr`.`report_id` = `rp`.`id`'
+                . '` AS `rp` ON `rr`.`report_id` = `rp`.`id`' . $this->sqlUserRestriction($user_id)
                 . $this->sqlCondition($f_data, ' WHERE ', 0) . $this->sqlCondition($f_data, ' AND ', 1)
                 . ' GROUP BY `ip` ORDER BY `rcount` DESC'
             );
@@ -185,17 +188,18 @@ class StatisticsMapper implements StatisticsMapperInterface
     /**
      * Returns a list of organizations that sent the reports with some statistics for each one
      *
-     * @param \Liuch\DmarcSrg\Domains\Domain|null $domain Domain for which the information is needed.
-     *                                                    Null is for all domains.
-     * @param array                               $range  Array with two dates
-     * @param array                               $filter Array with filtering parameters
+     * @param \Liuch\DmarcSrg\Domains\Domain|null $domain  Domain for which the information is needed.
+     *                                                     Null is for all domains.
+     * @param array                               $range   Array with two dates
+     * @param array                               $filter  Array with filtering parameters
+     * @param int                                 $user_id User ID to get statistics for
      *
      * @return array List of organizations with fields `name`, `reports`, `emails`
      */
-    public function organizations($domain, array &$range, array &$filter): array
+    public function organizations($domain, array &$range, array &$filter, int $user_id): array
     {
         try {
-            $f_data = $this->prepareFilterData($domain, $range, $filter);
+            $f_data = $this->prepareFilterData($domain, $range, $user_id, $filter);
             $st = $this->connector->dbh()->prepare(
                 'SELECT `org`, COUNT(*), SUM(`rr`.`rcount`) AS `rcount`,'
                 . ' SUM(`rr`.`dkim_spf_aligned`), SUM(`rr`.`dkim_aligned`), SUM(`rr`.`spf_aligned`),'
@@ -210,7 +214,7 @@ class StatisticsMapper implements StatisticsMapperInterface
                 . $this->connector->tablePrefix('rptrecords') . '`'
                 . $this->sqlCondition($f_data, ' WHERE ', 1)
                 . ' GROUP BY `report_id`) AS `rr` ON `rp`.`id` = `rr`.`report_id`'
-                . $this->sqlCondition($f_data, ' WHERE ', 0)
+                . $this->sqlUserRestriction($user_id) . $this->sqlCondition($f_data, ' WHERE ', 0)
                 . ' GROUP BY `org` ORDER BY `rcount` DESC'
             );
             $this->sqlBindValues($st, $f_data, [ 1, 0 ]);
@@ -245,20 +249,25 @@ class StatisticsMapper implements StatisticsMapperInterface
     /**
      * Returns prepared filter data for SQL queries
      *
-     * @param \Liuch\DmarcSrg\Domains\Domain|null $domain Domain for the condition
-     * @param array                               $range  Date range
-     * @param array                               $filter Key-value array with filtering parameters
+     * @param \Liuch\DmarcSrg\Domains\Domain|null $domain  Domain for the condition
+     * @param array                               $range   Date range
+     * @param int                                 $user_id User ID
+     * @param array                               $filter  Key-value array with filtering parameters
      *
      * @return array
      */
-    private function prepareFilterData($domain, array &$range, array &$filter): array
+    private function prepareFilterData($domain, array &$range, int $user_id, array &$filter): array
     {
         $sql_cond1 = [];
         $sql_cond2 = [];
         $bindings1 = [];
         $bindings2 = [];
+        if ($user_id) {
+            $sql_cond1[] = '`user_id` = ?';
+            $bindings1[] = [ $user_id, \PDO::PARAM_INT ];
+        }
         if ($domain) {
-            $sql_cond1[] = '`domain_id` = ?';
+            $sql_cond1[] = '`rp`.`domain_id` = ?';
             $bindings1[] = [ $domain->id(), \PDO::PARAM_INT ];
         }
         $sql_cond1[] = '`begin_time` < ? AND `end_time` >= ?';
@@ -327,6 +336,22 @@ class StatisticsMapper implements StatisticsMapperInterface
             'sql_cond' => [ $sql_cond1, $sql_cond2 ],
             'bindings' => [ $bindings1, $bindings2 ]
         ];
+    }
+
+    /**
+     * Returns the part of sql query restricting the select result by user_id
+     *
+     * @param int $user_id User ID
+     *
+     * @return string
+     */
+    private function sqlUserRestriction(int $user_id): string
+    {
+        if (!$user_id) {
+            return '';
+        }
+        return ' INNER JOIN `' . $this->connector->tablePrefix('userdomains')
+            . '` AS `ud` ON `rp`.`domain_id` = `ud`.`domain_id`';
     }
 
     /**

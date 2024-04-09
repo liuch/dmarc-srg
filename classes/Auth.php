@@ -103,7 +103,7 @@ class Auth
             } catch (SoftException $e) {
             }
         }
-        throw new AuthException('Authentication failed. Try later');
+        throw new AuthException('Authentication failed. Try again');
     }
 
     /**
@@ -152,7 +152,7 @@ class Auth
     public function authenticationType(): string
     {
         if ($this->isEnabled()) {
-            return $this->core->config('admin/user_management', false) ? 'base' : 'password-only';
+            return $this->core->config('users/user_management', false) ? 'base' : 'password-only';
         }
         return 'none';
     }

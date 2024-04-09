@@ -23,6 +23,7 @@
 namespace Liuch\DmarcSrg\Report;
 
 use Liuch\DmarcSrg\Core;
+use Liuch\DmarcSrg\Domains\Domain;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
 
@@ -35,6 +36,9 @@ class Report
     {
         $this->data = $data;
         $this->db   = $db ?? Core::instance()->database();
+        if ($this->data['domain'] instanceof Domain) {
+            $this->data['domain'] = $this->data['domain']->fqdn();
+        }
     }
 
     public static function fromXmlFile($fd)
@@ -52,7 +56,7 @@ class Report
         try {
             $this->db->getMapper('report')->fetch($this->data);
         } catch (DatabaseNotFoundException $e) {
-            throw new SoftException('The report is not found');
+            throw new SoftException('Report not found');
         }
     }
 

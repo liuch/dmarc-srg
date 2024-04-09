@@ -64,7 +64,7 @@ if (gettype($leave) !== 'integer' || $leave < 0) {
 }
 
 try {
-    $rl = new ReportList();
+    $rl = new ReportList($core->user());
     $cnt = $rl->count() - $leave;
     if ($cnt > 0) {
         $rl->setFilter([ 'before_time' => $days_date ]);

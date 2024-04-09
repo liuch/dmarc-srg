@@ -47,6 +47,7 @@ class ReportList
     public const ORDER_DESCENT    = 3;
 
     private $db     = null;
+    private $user   = null;
     private $limit  = 0;
     private $filter = [];
     private $order  = null;
@@ -54,11 +55,13 @@ class ReportList
     /**
      * The constructor
      *
-     * @param \Liuch\DmarcSrg\Database\DatabaseController $db The database controller
+     * @param \Liuch\DmarcSrg\Users\User                  $user User to get list
+     * @param \Liuch\DmarcSrg\Database\DatabaseController $db   The database controller
      */
-    public function __construct($db = null)
+    public function __construct($user, $db = null)
     {
-        $this->db = $db ?? Core::instance()->database();
+        $this->user = $user;
+        $this->db   = $db ?? Core::instance()->database();
         $this->resetOrderParams();
     }
 
@@ -84,7 +87,7 @@ class ReportList
             'count'  => $max_rec + 1
         ];
 
-        $list = $this->db->getMapper('report')->list($this->filter, $this->order, $limit);
+        $list = $this->db->getMapper('report')->list($this->filter, $this->order, $limit, $this->user->id());
         if (count($list) > $max_rec) {
             $more = true;
             unset($list[$max_rec]);
@@ -194,10 +197,11 @@ class ReportList
     {
         $domainMapper = $this->db->getMapper('domain');
         $reportMapper = $this->db->getMapper('report');
+        $user_id      = $this->user->id();
         return [
-            'domain'       => $domainMapper->names(),
-            'month'        => $reportMapper->months(),
-            'organization' => $reportMapper->organizations(),
+            'domain'       => $domainMapper->names($user_id),
+            'month'        => $reportMapper->months($user_id),
+            'organization' => $reportMapper->organizations($user_id),
             'dkim'         => [ 'pass', 'fail' ],
             'spf'          => [ 'pass', 'fail' ],
             'disposition'  => [ 'none', 'reject', 'quarantine' ],

@@ -217,6 +217,64 @@ class Domain
     }
 
     /**
+     * Returns true if the domain exists in the database and is assigned to the user
+     *
+     * @param \Liuch\DmarcSrg\Users\User $user      User to check
+     * @param bool                       $exception Throw an exception instead of returning false
+     *
+     * @return bool
+     */
+    public function isAssigned($user, bool $exception = false): bool
+    {
+        if ($this->ex_f !== false) {
+            $user_id = $user->id();
+            if ($user_id === 0) {
+                // It is the admin
+                if ($this->exists()) {
+                    return true;
+                }
+            } elseif ($this->db->getMapper('domain')->isAssigned($this->data, $user_id)) {
+                $this->ex_f = true;
+                return true;
+            }
+        }
+        if ($exception) {
+            $this->unknownDomain();
+        }
+        return false;
+    }
+
+    /**
+     * Assigns the domain to a user
+     *
+     * @param \Liuch\DmarcSrg\Users\User $user The user to whom the domain should be assigned
+     *
+     * @return void
+     */
+    public function assignUser($user): void
+    {
+        $user_id = $user->id();
+        if ($user_id !== 0) {
+            $this->db->getMapper('domain')->assignUser($this->data, $user_id);
+        }
+    }
+
+    /**
+     * Unassigns the domain from a user
+     *
+     * @param \Liuch\DmarcSrg\Users\User $user The user from whom the domain should be unassigned
+     *
+     * @return void
+     */
+    public function unassignUser($user): void
+    {
+        $user_id = $user->id();
+        if ($user_id !== 0) {
+            $this->db->getMapper('domain')->unassignUser($this->data, $user_id);
+        }
+    }
+
+    /**
      * Saves the domain to the database
      *
      * Updates the domain's description in the database if the domain exists or insert a new record otherwise.
@@ -243,8 +301,41 @@ class Domain
         if (is_null($this->data['id'])) {
             $this->fetchData();
         }
-        $this->db->getMapper('domain')->delete($this->data);
+        $this->db->getMapper('domain')->delete($this->data['id']);
         $this->ex_f = false;
+    }
+
+    /**
+     * Verifies domain ownership
+     *
+     * @throws SoftException
+     *
+     * @param string $key    Verification key
+     * @param string $method Verification method
+     *
+     * return void
+     */
+    public function verifyOwnership(string $key, string $method): void
+    {
+        $passed = false;
+        switch ($method) {
+            case 'dns':
+                $dr = dns_get_record($this->data['fqdn'], DNS_TXT);
+                if ($dr) {
+                    $str = 'dmarcsrg-verification=' . $key;
+                    foreach ($dr as &$rec) {
+                        if (trim($rec['txt']) === $str) {
+                            $passed = true;
+                            break;
+                        }
+                    }
+                    unset($rec);
+                }
+                break;
+        }
+        if (!$passed) {
+            throw new SoftException('Domain verification failed');
+        }
     }
 
     /**
@@ -280,7 +371,23 @@ class Domain
             $this->ex_f = true;
         } catch (DatabaseNotFoundException $e) {
             $this->ex_f = false;
-            throw new SoftException('Domain not found');
+            $this->unknownDomain();
         }
+    }
+
+    /**
+     * Throws an exception that the domain doesn't exist
+     *
+     * @throws SoftException
+     *
+     * @return void
+     */
+    private function unknownDomain(): void
+    {
+        $name = '';
+        if (!empty($this->data['fqdn'])) {
+            $name = ': ' . $this->data['fqdn'];
+        }
+        throw new SoftException('Unknown domain' . $name);
     }
 }

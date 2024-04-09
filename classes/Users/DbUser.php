@@ -32,6 +32,7 @@
 namespace Liuch\DmarcSrg\Users;
 
 use Liuch\DmarcSrg\Core;
+use Liuch\DmarcSrg\Common;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\LogicException;
 use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
@@ -55,6 +56,7 @@ class DbUser extends User
             'email'        => null,
             'key'          => null,
             'session'      => null,
+            'domains'      => null,
             'created_time' => null,
             'updated_time' => null
     ];
@@ -132,6 +134,12 @@ class DbUser extends User
                     }
                     $this->data['updated_time'] = $data['updated_time'];
                 }
+                if (isset($data['domains'])) {
+                    if (!is_int($data['domains'])) {
+                        break;
+                    }
+                    $this->data['domains'] = $data['domains'];
+                }
                 if (!is_null($this->data['id']) || !is_null($this->data['name'])) {
                     return;
                 }
@@ -202,6 +210,18 @@ class DbUser extends User
             $this->fetchData();
         }
         return $this->data['enabled'];
+    }
+
+    /**
+     * Sets the list of domains available to the user
+     *
+     * @param array  $domains Array of domain names
+     *
+     * @return void
+     */
+    public function assignDomains(array &$domains): void
+    {
+        $this->db->getMapper('domain')->updateUserDomains($domains, $this->id());
     }
 
     /**
@@ -297,6 +317,22 @@ class DbUser extends User
     {
         $hash = password_hash($password, PASSWORD_DEFAULT);
         $this->db->getMapper('user')->savePasswordHash($this->data, $hash);
+    }
+
+    /**
+     * Returns a random string bound to the user
+     *
+     * @return string
+     */
+    public function verificationString(): string
+    {
+        if (is_null($this->data['key'])) {
+            $this->fetchData();
+        }
+        if (empty($this->data['key'])) {
+            $this->db->getMapper('user')->setUserKey($this->data, Common::randomString(32));
+        }
+        return $this->data['key'];
     }
 
     /**

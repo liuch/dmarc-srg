@@ -265,7 +265,9 @@ class UserMapper implements UserMapperInterface
         $list = [];
         try {
             $st = $this->connector->dbh()->query(
-                'SELECT `id`, `name`, `level`, `enabled`, `email`, `key`, `created_time`, `updated_time` FROM `'
+                'SELECT `id`, `name`, `level`, `enabled`, `email`, `key`, `created_time`, `updated_time`, '
+                . '(SELECT COUNT(*) FROM `' . $this->connector->tablePrefix('userdomains')
+                . '` WHERE `user_id` = `id`) AS `domains` FROM `'
                 . $this->connector->tablePrefix('users') . '`'
             );
             while ($row = $st->fetch(\PDO::FETCH_NUM)) {
@@ -277,7 +279,8 @@ class UserMapper implements UserMapperInterface
                     'email'        => $row[4],
                     'key'          => $row[5],
                     'created_time' => new DateTime($row[6]),
-                    'updated_time' => new DateTime($row[7])
+                    'updated_time' => new DateTime($row[7]),
+                    'domains'      => intval($row[8])
                 ];
             }
             $st->closeCursor();
@@ -335,6 +338,31 @@ class UserMapper implements UserMapperInterface
             $st->closeCursor();
         } catch (\PDOException $e) {
             throw new DatabaseFatalException('Failed to save user data', -1, $e);
+        }
+    }
+
+    /**
+     * Updates the user's key string
+     *
+     * @param array  $data User data
+     * @param string $key  User key string to set
+     *
+     * @return void
+     */
+    public function setUserKey(array &$data, string $key): void
+    {
+        try {
+            $st = $this->connector->dbh()->prepare(
+                'UPDATE `' . $this->connector->tablePrefix('users')
+                . '` SET `key` = ? WHERE ' . $this->sqlCondition($data)
+            );
+            $st->bindValue(1, $key, \PDO::PARAM_STR);
+            $this->sqlBindValues($st, $data, 2);
+            $st->execute();
+            $st->closeCursor();
+            $data['key'] = $key;
+        } catch (\PDOException $e) {
+            throw new DatabaseFatalException('Failed to update user key', -1, $e);
         }
     }
 

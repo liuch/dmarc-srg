@@ -45,12 +45,10 @@ if (Core::isJson()) {
             if (!($result['error_code'] ?? 0)) {
                 if (in_array('user', $fields)) {
                     $user = $core->user();
-                    if ($user) {
-                        $result['user'] = [
-                            'name'  => $user->name(),
-                            'level' => User::levelToString($user->level())
-                        ];
-                    }
+                    $result['user'] = [
+                        'name'  => $user->name(),
+                        'level' => User::levelToString($user->level())
+                    ];
                 }
 
                 if (in_array('settings', $fields) && !empty($_GET['settings'])) {
@@ -78,6 +76,7 @@ if (Core::isJson()) {
                         $stat = Statistics::lastNDays($domain, $days);
                         $days = "the last {$days} days";
                     }
+                    $stat->setUser($core->user());
                     if ($filter) {
                         $stat->setFilter($filter);
                     }

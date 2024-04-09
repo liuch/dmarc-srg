@@ -38,16 +38,19 @@ use Liuch\DmarcSrg\Core;
  */
 class DomainList
 {
-    private $db = null;
+    private $db   = null;
+    private $user = null;
 
     /**
      * The constructor
      *
-     * @param \Liuch\DmarcSrg\Database\DatabaseController $db The database controller
+     * @param \Liuch\DmarcSrg\Users\User                  $user User to which domais are assigned
+     * @param \Liuch\DmarcSrg\Database\DatabaseController $db   The database controller
      */
-    public function __construct($db = null)
+    public function __construct($user, $db = null)
     {
-        $this->db = $db ?? Core::instance()->database();
+        $this->user = $user;
+        $this->db   = $db ?? Core::instance()->database();
     }
 
     /**
@@ -58,7 +61,7 @@ class DomainList
     public function getList(): array
     {
         $list = [];
-        foreach ($this->db->getMapper('domain')->list() as $dd) {
+        foreach ($this->db->getMapper('domain')->list($this->user->id()) as $dd) {
             $list[] = new Domain($dd, $this->db);
         }
         return [
@@ -74,6 +77,6 @@ class DomainList
      */
     public function names(): array
     {
-        return $this->db->getMapper('domain')->names();
+        return $this->db->getMapper('domain')->names($this->user->id());
     }
 }

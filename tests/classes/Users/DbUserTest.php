@@ -129,6 +129,7 @@ class DbUserTest extends \PHPUnit\Framework\TestCase
             'level'        => User::LEVEL_USER,
             'email'        => 'w@b.c',
             'key'          => 'zxd',
+            'domains'      => null,
             'created_time' => new \DateTime(),
             'updated_time' => (new \DateTime())->modify('+1 day')
         ];

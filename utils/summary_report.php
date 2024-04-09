@@ -23,7 +23,8 @@
  *
  * This script creates a summary report and sends it by email.
  * The email addresses must be specified in the configuration file.
- * The script have two required parameters: `domain` and `period`, and three optional: `offset`, `emailto` and `format`.
+ * The script have two required parameters: `domain` and `period`,
+ *   and four optional: `offset`, `emailto`, `format`, `user`.
  * The `domain` parameter must contain a domain name, a comma-separated list of domains, or `all`.
  * The `period` parameter must have one of these values:
  *   `lastmonth`   - to make a report for the last month;
@@ -35,17 +36,23 @@
  * The `emailto` parameter is optional. Set it if you want to use a different email address to sent the report to.
  * The `format` parameter is optional. It provides the ability to specify the email message format.
  *   Possible values are: `text`, `html`, `text+html`. The default value is `text`.
+ * The `user` parameter is optional. It can be useful for specifying a list of assigned domains for a single user
+ *   when the `domain` options is set to `all`. Only makes sense if the user_management mode is active.
+ *   The default value is `admin`.
  *
  * Some examples:
  *
  * $ php utils/summary_report.php domain=example.com period=lastweek
- * will send a weekly summary report by email for the domain example.com
+ * will send a summary report for the last week for the domain example.com via email
  *
  * $ php utils/summary_report.php domain=example.com period=lastweek offset=1
- * will send a summary report by email for the domain example.com for the week before last week
+ * will send a summary report for the week before last week for the domain example.com via email
  *
  * $ php utils/summary_report.php domain=example.com period=lastndays:10
- * will send a summary report by email for last 10 days for the domain example.com
+ * will send a summary report for last 10 days for the domain example.com via email
+ *
+ * $ php utils/summary_report.php domain=all user=frederick1 period=lastmonth
+ * will send a summary report for the last month for all domains assigned to user frederick1 to frederick@example.com.
  *
  * The best place to use it is cron.
  *
@@ -77,6 +84,7 @@ $period  = null;
 $offset  = '0';
 $emailto = null;
 $format  = 'text';
+$uname   = 'admin';
 for ($i = 1; $i < count($argv); ++$i) {
     $av = explode('=', $argv[$i]);
     if (count($av) == 2) {
@@ -96,13 +104,16 @@ for ($i = 1; $i < count($argv); ++$i) {
             case 'format':
                 $format = $av[1];
                 break;
+            case 'user':
+                $uname = $av[1];
+                break;
         }
     }
 }
 
 $core = Core::instance();
 try {
-    $core->user('admin');
+    $core->user($uname);
     if (!$domain) {
         throw new SoftException('Parameter "domain" is not specified');
     }
@@ -120,7 +131,7 @@ try {
     }
 
     if ($domain === 'all') {
-        $domains = (new DomainList())->getList()['domains'];
+        $domains = (new DomainList($core->user()))->getList()['domains'];
     } else {
         $domains = array_map(function ($d) {
             return new Domain($d);
@@ -158,7 +169,7 @@ try {
         }
 
         $domain = $domains[$i];
-        if ($domain->exists()) {
+        if ($domain->isAssigned($core->user())) {
             $rep->setDomain($domain);
             if (!is_null($text)) {
                 foreach ($rep->text() as &$row) {

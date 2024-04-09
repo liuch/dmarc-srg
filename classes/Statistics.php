@@ -42,6 +42,8 @@ class Statistics
     private $db     = null;
     /** @var Domains\Domain|null */
     private $domain = null;
+    /** @var Users\User|null */
+    private $user   = null;
     /** @var array<string,DateTime|null> */
     private $range  = [
             'date1' => null,
@@ -144,6 +146,18 @@ class Statistics
     }
 
     /**
+     * Sets the user for whom statistics are generated
+     *
+     * @param Users\User $user User to generate statistics
+     *
+     * @return self
+     */
+    public function setUser($user)
+    {
+        $this->user = $user;
+    }
+
+    /**
      * Returns the date from and the date to in an array
      *
      * @return DateTime[] - The range of the statistics
@@ -160,7 +174,12 @@ class Statistics
      */
     public function summary(): array
     {
-        return $this->db->getMapper('statistics')->summary($this->domain, $this->range, $this->filter);
+        return $this->db->getMapper('statistics')->summary(
+            $this->domain,
+            $this->range,
+            $this->filter,
+            $this->user ? $this->user->id() : 0
+        );
     }
 
     /**
@@ -171,7 +190,12 @@ class Statistics
      */
     public function ips(): array
     {
-        return $this->db->getMapper('statistics')->ips($this->domain, $this->range, $this->filter);
+        return $this->db->getMapper('statistics')->ips(
+            $this->domain,
+            $this->range,
+            $this->filter,
+            $this->user ? $this->user->id() : 0
+        );
     }
 
     /**
@@ -181,7 +205,12 @@ class Statistics
      */
     public function organizations(): array
     {
-        return $this->db->getMapper('statistics')->organizations($this->domain, $this->range, $this->filter);
+        return $this->db->getMapper('statistics')->organizations(
+            $this->domain,
+            $this->range,
+            $this->filter,
+            $this->user ? $this->user->id() : 0
+        );
     }
 
     /**

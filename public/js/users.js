@@ -59,7 +59,7 @@ class UserList {
 			Common.checkResult(data);
 			const d = { more: data.more };
 			d.rows = data.users.map(it => this._make_row_data(it));
-			d.rows.push(new NewUserRow(4));
+			d.rows.push(new NewUserRow(5));
 			const fr = new UserFrame(d, this._table.last_row_index() + 1);
 			this._table.clear();
 			this._table.add_frame(fr);
@@ -67,7 +67,7 @@ class UserList {
 			this._table.focus();
 		}).catch(err => {
 			Common.displayError(err);
-			this._table.display_status("error");
+			this._table.display_status("error", err.message || null);
 		});
 	}
 
@@ -97,6 +97,7 @@ class UserList {
 			{ content: "", sortable: true, name: "status", class: "cell-status" },
 			{ content: "Name", sortable: true, name: "name" },
 			{ content: "Access level", sortable: false, name: "level" },
+			{ content: "Domains", sortable: false, name: "domains" },
 			{ content: "Updated", sortable: true, name: "date" },
 		].forEach(col => {
 			const c = this._table.add_column(col);
@@ -109,6 +110,7 @@ class UserList {
 		rd.cells.push(new UserStatusCell(d.enabled));
 		rd.cells.push({ content: d.name, class: "user-name" });
 		rd.cells.push({ content: d.level, class: "user-level" });
+		rd.cells.push({ content: d.domains });
 		rd.cells.push(new UserTimeCell(new Date(d.updated_time)));
 		return rd;
 	}
@@ -212,8 +214,7 @@ class UserEditDialog extends VerticalDialog {
 		if (!params["new"]) {
 			title = "User settings";
 			if (!params.minimal) ba.splice(1, 0, "delete");
-		}
-		else {
+		} else {
 			title = "New user";
 		}
 		super({ title: title, buttons: ba });
@@ -221,15 +222,18 @@ class UserEditDialog extends VerticalDialog {
 		this._name_el = null;
 		this._alvl_el = null;
 		this._actv_el = null;
+		this._doms_el = null;
 		this._pasw_el = null;
 		this._c_tm_el = null;
 		this._u_tm_el = null;
+		this._domains = new Set();
 		this._fetched = false;
 	}
 
 	_gen_content() {
 		const min = this._data.minimal;
 
+		// Name
 		const nm = document.createElement("input");
 		nm.type = "text";
 		if (!this._data["new"]) {
@@ -241,6 +245,7 @@ class UserEditDialog extends VerticalDialog {
 		this._insert_input_row("Name", nm);
 		this._name_el = nm;
 
+		// Level
 		const lv = document.createElement("select");
 		[ "Manager", "User" ].forEach(val => {
 			const op = document.createElement("option");
@@ -255,6 +260,7 @@ class UserEditDialog extends VerticalDialog {
 		this._alvl_el = lv;
 
 		if (!min) {
+			// Enabled
 			const en = document.createElement("select");
 			[ "Yes", "No" ].forEach(val => {
 				const op = document.createElement("option");
@@ -265,8 +271,15 @@ class UserEditDialog extends VerticalDialog {
 			en.required = true;
 			this._insert_input_row("Enabled", en);
 			this._actv_el = en;
+
+			// Domains
+			const dm = document.createElement("multi-select");
+			dm.setAttribute("placeholder", "No domains");
+			this._insert_input_row("Domains", dm);
+			this._doms_el = dm;
 		}
 
+		// Password
 		const sp = document.createElement("span");
 		sp.textContent = "None ";
 		if (!this._data["new"]) {
@@ -282,6 +295,7 @@ class UserEditDialog extends VerticalDialog {
 		this._insert_input_row("Password", sp);
 		this._pasw_el = sp;
 
+		// Created
 		const ct = document.createElement("input");
 		ct.type = "text";
 		ct.value = "n/a";
@@ -289,6 +303,7 @@ class UserEditDialog extends VerticalDialog {
 		this._insert_input_row("Created", ct);
 		this._c_tm_el = ct;
 
+		// Updated
 		const ut = document.createElement("input");
 		ut.type = "text";
 		ut.value = "n/a";
@@ -296,17 +311,31 @@ class UserEditDialog extends VerticalDialog {
 		this._insert_input_row("Updated", ut);
 		this._u_tm_el = ut;
 
-		this._inputs.addEventListener("input", event => {
-			if (this._fetched || this._data["new"]) {
-				this._buttons[1].disabled = (
-					this._name_el.value.trim() === "" || this._alvl_el.value === "" || (
-					this._alvl_el.dataset.server === this._alvl_el.value && (
-					!this._actv_el || this._actv_el.dataset.server === this._actv_el.value))
-				);
-			}
-		});
 
-		if (!this._data["new"] && !this._fetched) this._fetch_data();
+		this._inputs.addEventListener("input", event => this._input_handler(event));
+		this._doms_el && this._doms_el.addEventListener("change", event => this._input_handler(event));
+
+		if (!this._fetched) this._fetch_data();
+	}
+
+	_input_handler(event) {
+		if (!this._fetched) return;
+
+		let dis = true;
+		if (this._name_el.value.trim() !== "" && this._alvl_el.value !== "") {
+			if (this._alvl_el.dataset.server !== this._alvl_el.value) {
+				dis = false;
+			} else if (this._actv_el && this._actv_el.dataset.server !== this._actv_el.value) {
+				dis = false;
+			} else if (this._doms_el) {
+				const dlist = this._doms_el.getValues();
+				if (dlist.length != this._domains.size || !dlist.every(d => this._domains.has(d))) {
+					dis = false;
+
+				}
+			}
+		}
+		this._buttons[1].disabled = dis;
 	}
 
 	_add_button(container, text, type) {
@@ -339,7 +368,7 @@ class UserEditDialog extends VerticalDialog {
 		this._enable_ui(false);
 		this._content.appendChild(set_wait_status());
 		const url = new URL("users.php", document.location);
-		url.searchParams.set("user", this._data.name);
+		url.searchParams.set("user", this._data.name || "");
 
 		return window.fetch(url, {
 			method: "GET",
@@ -352,8 +381,9 @@ class UserEditDialog extends VerticalDialog {
 		}).then(data => {
 			this._fetched = true;
 			Common.checkResult(data);
-			data.created_time = new Date(data.created_time);
-			data.updated_time = new Date(data.updated_time);
+			[ "created_time", "updated_time" ].forEach(it => {
+				data[it] && (data[it] = new Date(data[it]))
+			});
 			this._update_ui(data);
 			this._enable_ui(true);
 		}).catch(err => {
@@ -368,6 +398,7 @@ class UserEditDialog extends VerticalDialog {
 		this._name_el.disabled = !en || !this._data["new"];
 		this._alvl_el.disabled = !en || this._data.minimal;
 		if (this._actv_el) this._actv_el.disabled = !en;
+		if (this._doms_el) this._doms_el.disabled = !en;
 		for (let i = 2; i < this._buttons.length - 1; ++i) {
 			this._buttons[i].disabled = !en;
 		}
@@ -376,8 +407,13 @@ class UserEditDialog extends VerticalDialog {
 	}
 
 	_update_ui(data) {
-		this._set_option_value(this._alvl_el, data.level);
-		if (this._actv_el) this._set_option_value(this._actv_el, data.enabled && "yes" || "no");
+		if (data.level) this._set_option_value(this._alvl_el, data.level);
+		if (this._actv_el) this._set_option_value(this._actv_el, (data.enabled || this._data["new"]) ? "yes" : "no");
+		if (this._doms_el) {
+			this._domains = new Set(data.domains.assigned);
+			data.domains.available.forEach(d => this._doms_el.appendItem(d));
+			if (data.domains.assigned) this._doms_el.setValues(data.domains.assigned);
+		}
 		if (data.password) this._set_password_yes();
 		this._c_tm_el.value = data.created_time && data.created_time.toUIString() || "n/a";
 		this._u_tm_el.value = data.updated_time && data.updated_time.toUIString() || "n/a";
@@ -412,8 +448,14 @@ class UserEditDialog extends VerticalDialog {
 		const body = {};
 		body.name    = this._data["new"] && this._name_el.value || this._data.name;
 		body.level   = this._alvl_el.value;
-		body.enabled = this._actv_el.value === "yes";
+		body.enabled = this._actv_el && this._actv_el.value === "yes";
 		body.action  = this._data["new"] && "add" || "update";
+		if (this._doms_el) {
+			const dlist = this._doms_el.getValues();
+			if (this._domains.size != dlist.length || dlist.some(d => !this._domains.has(d))) {
+				body.domains = dlist;
+			}
+		}
 
 		window.fetch("users.php", {
 			method: "POST",

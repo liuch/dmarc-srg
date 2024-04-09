@@ -72,15 +72,16 @@ interface ReportMapperInterface
      *
      * This method returns a list of reports that depends on the $filter, $order and $limit.
      *
-     * @param array $filter Key-value array with filtering parameters
-     * @param array $order  Key-value array:
-     *                      'field'     => string, 'begin_time'
-     *                      'direction' => string, 'ascent' or 'descent'
-     * @param array $limit  Key-value array with two keys: `offset` and `count`
+     * @param array $filter  Key-value array with filtering parameters
+     * @param array $order   Key-value array:
+     *                       'field'     => string, 'begin_time'
+     *                       'direction' => string, 'ascent' or 'descent'
+     * @param array $limit   Key-value array with two keys: `offset` and `count`
+     * @param int   $user_id User ID to retrieve the list for
      *
      * @return array
      */
-    public function list(array &$filter, array &$order, array &$limit): array;
+    public function list(array &$filter, array &$order, array &$limit, int $user_id): array;
 
     /**
      * Returns the number of reports matching the specified filter and limits
@@ -110,14 +111,18 @@ interface ReportMapperInterface
     /**
      * Returns a list of months with years of the form: 'yyyy-mm' for which there is at least one report
      *
+     * @param int $user_id User ID to retrieve the list for
+     *
      * @return array
      */
-    public function months(): array;
+    public function months(int $user_id): array;
 
     /**
      * Returns a list of reporting organizations from which there is at least one report
      *
+     * @param int $user_id User ID to retrieve the list for
+     *
      * @return array
      */
-    public function organizations(): array;
+    public function organizations(int $user_id): array;
 }

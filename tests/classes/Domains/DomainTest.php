@@ -141,14 +141,16 @@ class DomainTest extends \PHPUnit\Framework\TestCase
                        ->disableOriginalConstructor()
                        ->setMethods([ $method ])
                        ->getMockForAbstractClass();
-        $mapper->expects($this->once())
-               ->method($method)
-               ->willReturnCallback(function (&$data) use ($key, $value) {
-                if (!empty($key)) {
-                    $data[$key] = $value;
-                }
-                return $value;
-               });
+        $mr = $mapper->expects($this->once())->method($method);
+        if (empty($key)) {
+            if (!is_null($value)) {
+                $mr->willReturn($value);
+            }
+        } else {
+            $mr->willReturnCallback(function (&$data) use ($key, $value) {
+                $data[$key] = $value;
+            });
+        }
 
         $db = $this->getMockBuilder(DatabaseController::class)
                    ->disableOriginalConstructor()

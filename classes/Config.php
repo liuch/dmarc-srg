@@ -50,7 +50,7 @@ class Config
         require($config_file);
         foreach ([
                 'debug', 'database', 'mailboxes', 'directories', 'remote_filesystems',
-                'admin', 'mailer', 'fetcher', 'cleaner', 'custom_css'
+                'admin', 'users', 'mailer', 'fetcher', 'cleaner', 'custom_css'
             ] as $key
         ) {
             $this->data[$key] = $$key ?? null;
