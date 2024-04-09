@@ -114,7 +114,7 @@ class Summary {
 		[ "period", "format" ].forEach(id => {
 			this._options_block[id].textContent = this._options_data && this._options_data[id] || "none";
 		});
-		if (this._options_data.period === "range") {
+		if (this._options_data && this._options_data.period === "range") {
 			this._options_block.period.append(` [ ${this._options_data.range.join(" - ")} ]`);
 		}
 		const de = this._options_block.domains;
