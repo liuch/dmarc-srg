@@ -38,7 +38,7 @@ Ensure that all the files are in their own sub-folder.
 ### Requirements
 * MariaDB or MySQL
 * PHP 7.3 or higher
-* Installed php-mysql, php-xml, php-zip, php-json, and php-imap
+* Installed php-mbstring, php-mysql, php-xml, php-zip, php-json, and php-imap
 * A working webserver (not necessary)
 
 ### Create the database
