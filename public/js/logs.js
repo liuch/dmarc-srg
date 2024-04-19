@@ -408,7 +408,10 @@ class ReportLogFilterDialog extends VerticalDialog {
 			op.append(it[1]);
 			frm.success.appendChild(op);
 		});
-		[ [ "", "Any" ], [ "uploaded_file", "Uploaded file" ], [ "email", "Mailbox" ], [ "directory", "Directory" ] ].forEach(function(it) {
+		[
+			[ "", "Any" ], [ "uploaded_file", "Uploaded file" ], [ "email", "Mailbox" ],
+			[ "directory", "Directory" ], [ "remotefs", "Remote FS" ]
+		].forEach(function(it) {
 			const op = document.createElement("option");
 			op.setAttribute("value", it[0]);
 			op.append(it[1]);
