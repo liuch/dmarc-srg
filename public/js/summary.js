@@ -426,10 +426,15 @@ class OptionsDialog extends VerticalDialog {
 	}
 
 	_enable_ui(enable) {
+		const dom_el = this._ui_data[0].element;
 		const controls = Array.from(this._element.querySelector("form").elements);
-		controls.push(this._ui_data[0].element);
+		controls.push(dom_el);
 		for (const el of controls) {
-			el.disabled = !enable || el.dataset.disabled;
+			if (el.type === "submit") {
+				el.disabled = !enable || dom_el.isEmpty();
+			} else {
+				el.disabled = !enable || el.dataset.disabled;
+			}
 		}
 		this._update_first_last();
 		if (this._first) this._first.focus();
