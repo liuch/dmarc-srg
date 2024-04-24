@@ -143,6 +143,9 @@ try {
             break;
     }
     $dom_cnt = count($domains);
+    if ($dom_cnt == 0) {
+        throw new SoftException('The user has no assigned domains');
+    }
     for ($i = 0; $i < $dom_cnt; ++$i) {
         if ($i > 0) {
             if (!is_null($text)) {
@@ -172,7 +175,7 @@ try {
         } else {
             $nf_message = "Domain \"{$domain->fqdn()}\" does not exist";
             if ($dom_cnt === 1) {
-                throw new SoftException("Domain \"{$domain->fqdn()}\" does not exist");
+                throw new SoftException($nf_message);
             }
             if (!is_null($text)) {
                 $text[] = "# {$nf_message}";
