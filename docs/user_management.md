@@ -28,27 +28,27 @@ There are currently three levels of access: 'admin', 'manager', 'user'. Only the
 
 |           Action           |  Admin  | Manager |  User   |
 |----------------------------|:-------:|:-------:|:-------:|
-| _*Incoming reports*_       |         |         |         |
+| ***Incoming reports***     |         |         |         |
 | View Report list           |   Yes   |   Yes   |   Yes   |
 | View report                |   Yes   |   Yes   |   Yes   |
 | Load from local file       |   Yes   |   Yes   |   No    |
 | Load from mailboxes        |   Yes   |   No    |   No    |
 | Load from server directory |   Yes   |   No    |   No    |
 | Load from remote FS        |   Yes   |   No    |   No    |
-| _*Summary reports*_        |         |         |         |
+| ***Summary reports***      |         |         |         |
 | Create and view reports    |   Yes   |   Yes   |   Yes   |
-| _*Domains*_                |         |         |         |
+| ***Domains***              |         |         |         |
 | View domains               |   Yes   |   Yes   |   Yes   |
 | Add domains                |   Yes   | Yes [^1]|   No    |
 | Delete domains             |   Yes   | Yes [^2]|   No    |
 | Edit domains               |   Yes   |   Yes   |   No    |
 | Assign/unassign domains    |   Yes   |   No    |   No    |
-| _*Users*_                  |         |         |         |
+| ***Users***                |         |         |         |
 | View users                 |   Yes   |   No    |   No    |
 | Add users                  |   Yes   |   No    |   No    |
 | Delete users               |   Yes   |   No    |   No    |
 | Edit users                 |   Yes   |   No    |   No    |
-| _*Other actions*_          |         |         |         |
+| ***Other actions***        |         |         |         |
 | Database management        |   Yes   |   No    |   No    |
 | Logs                       |   Yes   |   No    |   No    |
 
