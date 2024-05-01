@@ -51,7 +51,7 @@
  * $ php utils/summary_report.php domain=example.com period=lastndays:10
  * will send a summary report for last 10 days for the domain example.com via email
  *
- * $ php utils/summary_report.php domain=all user=frederick1 period=lastmonth
+ * $ php utils/summary_report.php domain=all user=frederick1 period=lastmonth emailto=frederick@example.com
  * will send a summary report for the last month for all domains assigned to user frederick1 to frederick@example.com.
  *
  * The best place to use it is cron.
