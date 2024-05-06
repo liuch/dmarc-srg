@@ -33,7 +33,7 @@
 		width: 15em;
 	}
 	.notification {
-		border-radius: 0.25rem;
+		border-radius: 5px;
 	}
 	.notification:not(:last-child) {
 		margin-bottom: 0.5rem;

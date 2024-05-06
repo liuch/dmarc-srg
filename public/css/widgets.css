@@ -66,7 +66,7 @@
 		position: static;
 	}
 	.dialog .container {
-		border: solid 0.1rem #888;
+		border: 1px solid #888;
 	}
 	.report-dialog .dialog {
 		min-width: 28em;
@@ -141,7 +141,7 @@
 .sortable.arrows::before, .sortable.arrows::after {
 	content: '';
 	border-style: solid;
-	border-width: 0.4em 0.3em;
+	border-width: 6px 5px;
 	border-color: transparent;
 	height: 0;
 	position: absolute;
@@ -188,7 +188,7 @@ multi-select.active .multiselect-wrapper {
 	display: none;
 }
 .multiselect-tag {
-	border-radius: .3em;
+	border-radius: 5px;
 	color: #fff;
 	background-color: var(--color-bg-selected2);
 }
@@ -197,7 +197,7 @@ multi-select.active .multiselect-wrapper {
 }
 .multiselect-tag>i {
 	display: inline-block;
-	border-radius: .3em;
+	border-radius: 5px;
 	width: 1.35em;
 	color: #020;
 	text-align: center;
@@ -249,7 +249,7 @@ multi-select.active .multiselect-select {
 	position: relative;
 	top: 65%;
 	border-style: solid;
-	border-width: .3em .3em 0;
+	border-width: 5px 5px 0;
 	border-color: var(--color-fg-default) transparent transparent;
 }
 .multiselect-options {

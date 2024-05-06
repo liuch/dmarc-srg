@@ -223,25 +223,23 @@ class ITable {
 
 		this.element();
 		this._status = document.createElement("div");
-		this._status.setAttribute("class", "table-row colspanned");
-		let el = document.createElement("div");
-		el.setAttribute("class", "table-cell");
-		this._status.appendChild(el);
-		let el2 = document.createElement("div");
-		el2.setAttribute("class", "table-cell");
-		el2.appendChild(document.createTextNode("\u00A0")); // Non breaking space
-		this._status.appendChild(el2);
+		this._status.classList.add("table-row", "colspanned");
+		const tc1 = this._status.appendChild(document.createElement("div"));
+		tc1.classList.add("table-cell");
+		const tc2 = this._status.appendChild(document.createElement("div"));
+		tc2.classList.add("table-cell");
+		tc2.textContent = "\u00A0"; // Non breaking space
 		if (status === "wait") {
-			set_wait_status(el);
+			set_wait_status(tc1);
 		}
 		else {
-			remove_all_children(this._body);
+			this._body.replaceChildren();
 			if (status === "nodata") {
-				el.classList.add("nodata");
-				el.appendChild(document.createTextNode(text || "No data"));
+				this._status.classList.add("nodata");
+				tc1.appendChild(document.createTextNode(text || "No data"));
 			}
 			else {
-				set_error_status(el, text);
+				set_error_status(tc1, text);
 			}
 		}
 		this._body.appendChild(this._status);
@@ -967,13 +965,13 @@ class AboutDialog extends ModalDialog {
 			oblock.appendChild(vl);
 		}
 
-		let lblock = document.createElement("div");
+		const lblock = this._content.appendChild(document.createElement("div"));
+		lblock.classList.add("text");
 		lblock.appendChild(document.createTextNode(
 			"This program is free software: you can redistribute it and/or modify it \
 under the terms of the GNU General Public License as published by the Free \
 Software Foundation, either version 3 of the License."
 		));
-		this._content.appendChild(lblock);
 	}
 
 	_submit() {

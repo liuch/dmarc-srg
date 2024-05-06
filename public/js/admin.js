@@ -145,41 +145,28 @@ class Admin {
 	}
 
 	_create_db_item_menu_element() {
-		let el = document.createElement("div");
-		let span = document.createElement("span");
+		const el = document.createElement("div");
+		el.classList.add("button");
+		const span = el.appendChild(document.createElement("span"));
 		span.setAttribute("role", "button");
-		span.appendChild(document.createTextNode("..."));
-		el.appendChild(span);
+		span.textContent = "...";
 		//
-		let mn = document.createElement("div");
-		mn.setAttribute("class", "db-item-menu popup-menu round-border hidden");
-		let ul = document.createElement("ul");
-		Admin.db_actions.forEach(function(it) {
-			let li = document.createElement("li");
-			li.setAttribute("data-action", it.action);
-			li.setAttribute("data-title", it.title);
-			li.setAttribute("title", it.long_title);
-			let sp = document.createElement("span");
-			sp.appendChild(document.createTextNode(it.name));
-			li.appendChild(sp);
-			ul.appendChild(li);
-			if (it.action === "upgradedb")
-				li.classList.add("hidden");
-		}, this);
-		mn.appendChild(ul);
-		el.appendChild(mn);
-		let t = this;
-		el.addEventListener("click", function(event) {
-			let it = event.target.closest("li");
-			if (it || event.target.parentNode === this) {
-				event.stopPropagation();
-				this.querySelector(".popup-menu").classList.toggle("hidden");
-			}
-			if (it) {
-				let action = it.getAttribute("data-action");
-				let title  = it.getAttribute("data-title");
-				t._do_db_action_password(action, title);
-			}
+		const mn = el.appendChild(document.createElement("div"));
+		mn.classList.add("db-item-menu", "popup-menu", "round-border", "hidden");
+		const ul = mn.appendChild(document.createElement("ul"));
+		Admin.db_actions.forEach(it => {
+			const li = ul.appendChild(document.createElement("li"));
+			li.title = it.long_title;
+			li.dataset.title = it.title;
+			li.dataset.action = it.action;
+			li.appendChild(document.createElement("span")).textContent = it.name;
+			if (it.action === "upgradedb") li.classList.add("hidden");
+		});
+		el.addEventListener("click", event => {
+			event.stopPropagation();
+			el.querySelector(".popup-menu").classList.toggle("hidden");
+			const item = event.target.closest("li");
+			if (item) this._do_db_action_password(item.dataset.action, item.dataset.title);
 		});
 		return el;
 	}

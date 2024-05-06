@@ -16,7 +16,7 @@
 	border-radius: 3px;
 	border-width: 0;
 	backface-visibility: hidden;
-	transition: all 600ms cubic-bezier(0.86, 0, 0.07, 1);
+	transition: all 300ms cubic-bezier(0.86, 0, 0.07, 1);
 	z-index: 2;
 }
 #main-menu-button .button-decor::after, #main-menu-button .button-decor::before {
@@ -70,7 +70,7 @@
 	list-style: none;
 	background-color: var(--color-bg-header);
 	box-shadow: 3px 0px 6px var(--color-sh-default);
-	transition: all 600ms cubic-bezier(0.86, 0, 0.07, 1);
+	transition: all 300ms cubic-bezier(0.86, 0, 0.07, 1);
 	z-index: 1;
 }
 .menu-box ul {
@@ -133,5 +133,5 @@
 	text-decoration: underline;
 }
 .submenu .selected {
-	border-left: 0.2em solid #c45;
+	border-left: 3px solid #c45;
 }
