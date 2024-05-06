@@ -93,7 +93,7 @@ Router.start = function() {
 		setTimeout(function() {
 			let dlg = new AboutDialog({
 				authors: [
-					{ name:  "Aleksey Andreev", url:   "https://github.com/liuch", years: "2021-2023" }
+					{ name:  "Aleksey Andreev", url:   "https://github.com/liuch", years: "2021-2024" }
 				],
 				documentation: [
 					{ ancor: "README on GitHub", url: "https://github.com/liuch/dmarc-srg/blob/master/README.md" }
