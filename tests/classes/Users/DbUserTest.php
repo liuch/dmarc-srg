@@ -136,7 +136,7 @@ class DbUserTest extends \PHPUnit\Framework\TestCase
         $user = new DbUser($data, $this->getDatabaseNever());
         unset($data['id']);
         $data['password'] = null;
-        $data['level'] = User::levelToString($data['level']);
+        $data['level'] = $data['level'];
         $this->assertSame($data, $user->toArray());
 
         $this->expectException(SoftException::class);

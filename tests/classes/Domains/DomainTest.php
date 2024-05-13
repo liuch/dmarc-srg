@@ -53,6 +53,20 @@ class DomainTest extends \PHPUnit\Framework\TestCase
         $this->assertSame(true, (new Domain(1, $this->getDbMapperOnce('exists', '', true)))->exists());
     }
 
+    public function testEnsureExist(): void
+    {
+        (new Domain(1, $this->getDbMapperOnce('exists', '', true)))->ensure('exist');
+        $this->expectException(SoftException::class);
+        (new Domain(1, $this->getDbMapperOnce('exists', '', false)))->ensure('exist');
+    }
+
+    public function testEnsureNonexist(): void
+    {
+        (new Domain(1, $this->getDbMapperOnce('exists', '', false)))->ensure('nonexist');
+        $this->expectException(SoftException::class);
+        (new Domain(1, $this->getDbMapperOnce('exists', '', true)))->ensure('nonexist');
+    }
+
     public function testId(): void
     {
         $this->assertSame(1, (new Domain(1, $this->getDbMapperNever()))->id());

@@ -147,6 +147,33 @@ class Domain
     }
 
     /**
+     * Ensures the domain is in the specified state and throws an exception if it is not.
+     *
+     * @param string $state Can be one of these values: 'exist', 'nonexist'
+     *
+     * @throws SoftException
+     *
+     * @return void
+     */
+    public function ensure(string $state): void
+    {
+        switch ($state) {
+            case 'exist':
+                if (!$this->exists()) {
+                    $this->unknownDomain();
+                }
+                break;
+            case 'nonexist':
+                if ($this->exists()) {
+                    throw new SoftException('The domain already exists');
+                }
+                break;
+            default:
+                throw new LogicException('Unknown domain state');
+        }
+    }
+
+    /**
      * Returns the domain id
      *
      * @return int The domain id

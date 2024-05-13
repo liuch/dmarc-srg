@@ -84,6 +84,12 @@ class DbUser extends User
                 $this->data['name'] = strtolower(trim($data));
                 $this->checkName();
                 return;
+            case 'integer':
+                if ($data <= 0) {
+                    break;
+                }
+                $this->data['id'] = $data;
+                return;
             case 'array':
                 if (isset($data['id'])) {
                     if (gettype($data['id']) !== 'integer' || $data['id'] <= 0) {
@@ -158,6 +164,33 @@ class DbUser extends User
             $this->ex_f = $this->db->getMapper('user')->exists($this->data);
         }
         return $this->ex_f;
+    }
+
+    /**
+     * Ensures the user is in the specified state and throws an exception if it is not.
+     *
+     * @param string $state Can be one of these values: 'exist', 'nonexist'
+     *
+     * @throws SoftException
+     *
+     * @return void
+     */
+    public function ensure(string $state): void
+    {
+        switch ($state) {
+            case 'exist':
+                if (!$this->exists()) {
+                    throw new SoftException('The user does not exist');
+                }
+                break;
+            case 'nonexist':
+                if ($this->exists()) {
+                    throw new SoftException('The user already exists');
+                }
+                break;
+            default:
+                throw new LogicException('Unknown user state');
+        }
     }
 
     /**
@@ -246,11 +279,13 @@ class DbUser extends User
      */
     public function toArray(): array
     {
-        if (is_null($this->data['id']) || is_null($this->data['name'])) {
-            $this->fetchData();
+        foreach ([ 'id', 'name', 'level', 'enabled' ] as $it) {
+            if (is_null($this->data[$it])) {
+                $this->fetchData();
+                break;
+            }
         }
         $res = $this->data;
-        $res['level'] = static::levelToString($res['level']);
         unset($res['id']);
         unset($res['session']);
         return $res;

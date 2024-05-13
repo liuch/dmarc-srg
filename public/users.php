@@ -70,7 +70,9 @@ if (Core::isJson()) {
                 $core->auth()->isAllowed(User::LEVEL_ADMIN);
 
                 $list = array_map(function ($user) {
-                    return $user->toArray();
+                    $ua = $user->toArray();
+                    $ua['level'] = User::levelToString($ua['level']);
+                    return $ua;
                 }, (new UserList())->getList()['users']);
 
                 Core::sendJson([
@@ -98,7 +100,7 @@ if (Core::isJson()) {
                 $udata = (new DbUser($uname))->toArray();
                 Core::sendJson([
                     'name'     => $udata['name'],
-                    'level'    => $udata['level'],
+                    'level'    => User::levelToString($udata['level']),
                     'password' => $udata['password'] // bool value
                 ]);
                 return;
@@ -109,6 +111,7 @@ if (Core::isJson()) {
 
             $user = new DbUser($uname);
             $res  = $user->toArray();
+            $res['level'] = User::levelToString($res['level']);
             $res['domains'] = [
                 'available' => (new DomainList(UserList::getUserByName('admin')))->names(),
                 'assigned'  => (new DomainList($user))->names()
@@ -200,7 +203,9 @@ if (Core::isJson()) {
                     'message'    => 'Successfully'
                 ];
                 if (isset($user)) {
-                    $res['user'] = $user->toArray();
+                    $ua = $user->toArray();
+                    $ua['level'] = User::levelToString($ua['level']);
+                    $res['user'] = $ua;
                 }
                 Core::sendJson($res);
                 return;
