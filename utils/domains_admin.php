@@ -26,22 +26,21 @@
  * The available commands are:
  *   `list`    - Outputs a list of domains sorted by FQDN. No parameters.
  *   `add`     - Adds a new domain to the database. Parameters:
- *               name=<FQDN>               Required.
- *               active=<true|false>       Optional. The default value is false. The valid values are:
- *                                         true, false, 0, 1, yes, no. The value is case insensitive.
- *               description=<description> Optional. The default value is null.
+ *               name=<FQDN>                       Required.
+ *               active=<true|false>               Optional. The default value is false. The valid values are:
+ *                                                 true, false, 1, 0, yes, no. The value is case insensitive.
+ *               description=<description>         Optional. The default value is null.
  *   `show`    - Displays domain information. Parameters:
  *               id=<domain ID>|name=<domain name> Required.
  *   `modify`  - Modifies domain. Parameters:
  *               id=<domain ID>|name=<domain name> Required.
- *               active=<true|false>       Optional.
- *               description=<description> Optional.
+ *               active=<true|false>               Optional.
+ *               description=<description>         Optional.
  *               Note: The command changes only the specified domain data. The rest of the data remains unchanged.
- *
  *   `delete`  - Deletes a domain from the database. Parameters:
  *               id=<domain ID>|name=<domain name> Required.
  *
- * Some expamles:
+ * Some examples:
  *
  * $php utils/domains_admin.php list
  * will display a list of available domains from the database
@@ -87,7 +86,7 @@ $parseArguments = function (array $allowed) use (&$argv): array {
         for ($i = 2; $i < count($argv); ++$i) {
             $av = explode('=', $argv[$i], 2);
             if (count($av) == 1 || !in_array($av[0], $allowed)) {
-                throw new SoftException("Incorrect paremeter \"{$av[0]}\"");
+                throw new SoftException("Incorrect parameter \"{$av[0]}\"");
             }
             $res[$av[0]] = $av[1];
         }
@@ -119,10 +118,8 @@ $getDomain = function (array $args) {
     return $domain;
 };
 
-$res  = null;
-$core = Core::instance();
 try {
-    $core->user('admin');
+    Core::instance()->user('admin');
     $action = $argv[1] ?? '';
     switch ($action) {
         case 'list':
@@ -152,9 +149,7 @@ try {
                 $dd['description'] = $args['description'];
             }
             $domain = new Domain($dd);
-            if ($domain->exists()) {
-                throw new SoftException('The domain already exists');
-            }
+            $domain->ensure('nonexist');
             $domain->save();
             echo 'Done.', PHP_EOL;
             break;
@@ -173,9 +168,7 @@ try {
         case 'modify':
             $args = $parseArguments([ 'id', 'name', 'active', 'description' ]);
             $domain = $getDomain($args);
-            if (!$domain->exists()) {
-                throw new SoftException('Domain does not exist');
-            }
+            $domain->ensure('exist');
             $mf = false;
             $dd = $domain->toArray();
             if (isset($args['active'])) {
@@ -201,9 +194,7 @@ try {
             break;
         case 'delete':
             $domain = $getDomain($parseArguments([ 'id', 'name' ]));
-            if (!$domain->exists()) {
-                throw new SoftException('Domain does not exist');
-            }
+            $domain->ensure('exist');
             $domain->delete();
             echo 'Done.', PHP_EOL;
             break;

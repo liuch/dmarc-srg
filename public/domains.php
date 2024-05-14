@@ -77,7 +77,6 @@ if (Core::isJson()) {
                 } else {
                     $domain = new Domain($_GET['domain']);
                     $domain->isAssigned($user, true);
-                    $domain->active(); // In order to get the domain data
                     $res = $domain->toArray();
                 }
                 Core::sendJson($res);

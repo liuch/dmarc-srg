@@ -235,8 +235,11 @@ class Domain
      */
     public function toArray(): array
     {
-        if (is_null($this->data['id']) || is_null($this->data['fqdn'])) {
-            $this->fetchData();
+        foreach ([ 'id', 'fqdn', 'active' ] as $it) {
+            if (is_null($this->data[$it])) {
+                $this->fetchData();
+                break;
+            }
         }
         $res = $this->data;
         unset($res['id']);
