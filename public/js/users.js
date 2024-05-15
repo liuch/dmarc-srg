@@ -281,6 +281,7 @@ class UserEditDialog extends VerticalDialog {
 
 		// Password
 		const sp = document.createElement("span");
+		sp.classList.add("value");
 		sp.textContent = "None ";
 		if (!this._data["new"]) {
 			const pw = document.createElement("a");
