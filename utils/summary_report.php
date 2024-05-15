@@ -79,13 +79,26 @@ if (php_sapi_name() !== 'cli') {
     exit(1);
 }
 
+if (!isset($argv)) {
+    echo 'Cannot get the script arguments. Probably register_argc_argv is disabled.', PHP_EOL;
+    exit(1);
+}
+
 $domain  = null;
 $period  = null;
 $offset  = '0';
 $emailto = null;
 $format  = 'text';
 $uname   = 'admin';
-for ($i = 1; $i < count($argv); ++$i) {
+$acount  = count($argv);
+if ($acount <= 1) {
+    echo "Usage: {$argv[0]} domain=<domains>|all", PHP_EOL;
+    echo '           period=lastmonth|lastweek|lastndays:<days>', PHP_EOL;
+    echo '           [offset=<days>] [format=text|html|text+html]', PHP_EOL;
+    echo '           [emailto=<email address>] [user=<username>]', PHP_EOL;
+    exit(1);
+}
+for ($i = 1; $i < $acount; ++$i) {
     $av = explode('=', $argv[$i]);
     if (count($av) == 2) {
         switch ($av[0]) {
