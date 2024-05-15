@@ -80,6 +80,11 @@ if (php_sapi_name() !== 'cli') {
     exit(1);
 }
 
+if (!isset($argv)) {
+    echo 'Cannot get the script arguments. Probably register_argc_argv is disabled.', PHP_EOL;
+    exit(1);
+}
+
 $parseArguments = function (array $allowed) use (&$argv): array {
     $res = [];
     if (count($argv) > 2) {
@@ -199,6 +204,9 @@ try {
             echo 'Done.', PHP_EOL;
             break;
         default:
+            echo 'Unknown command ', $action, PHP_EOL, PHP_EOL;
+            // no break needed
+        case '':
             echo "Usage: {$argv[0]} <command> [<parameters>]", PHP_EOL, PHP_EOL;
             echo 'Commands:', PHP_EOL;
             echo '  list         Outputs a list of domains sorted by FQDN. No parameters.', PHP_EOL;

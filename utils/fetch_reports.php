@@ -61,35 +61,38 @@ if (php_sapi_name() !== 'cli') {
     exit(1);
 }
 
+if (!isset($argv)) {
+    echo 'Cannot get the script arguments. Probably register_argc_argv is disabled.', PHP_EOL;
+    exit(1);
+}
+
 $usage  = false;
 $source = null;
-if (isset($argv)) {
-    for ($i = 1; $i < count($argv); ++$i) {
-        $av = explode('=', $argv[$i]);
-        if (count($av) !== 2) {
-            echo 'Invalid parameter format' . PHP_EOL;
+for ($i = 1; $i < count($argv); ++$i) {
+    $av = explode('=', $argv[$i]);
+    if (count($av) !== 2) {
+        echo 'Invalid parameter format' . PHP_EOL;
+        $usage = true;
+        break;
+    }
+    switch ($av[0]) {
+        case 'source':
+            $source = $av[1];
+            break;
+        default:
+            echo 'Unknown parameter "' . $av[0] . '"' . PHP_EOL;
             $usage = true;
             break;
-        }
-        switch ($av[0]) {
-            case 'source':
-                $source = $av[1];
-                break;
-            default:
-                echo 'Unknown parameter "' . $av[0] . '"' . PHP_EOL;
-                $usage = true;
-                break;
-        }
     }
-    if ($source && !in_array($source, [ 'email', 'directory', 'remotefs' ])) {
-        echo 'Invalid source type "' . $source . '". "email", "directory" or "remotefs" expected.' . PHP_EOL;
-        exit(1);
-    }
+}
+if ($source && !in_array($source, [ 'email', 'directory', 'remotefs' ])) {
+    echo 'Invalid source type "' . $source . '". "email", "directory" or "remotefs" expected.' . PHP_EOL;
+    exit(1);
 }
 
 if ($usage) {
     echo PHP_EOL;
-    echo 'Usage: ' . basename(__FILE__) . ' [source=email|directory|remotefs]' . PHP_EOL;
+    echo "Usage: {$argv[0]} [source=email|directory|remotefs]", PHP_EOL;
     exit(1);
 }
 
