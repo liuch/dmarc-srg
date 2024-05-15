@@ -49,6 +49,11 @@ if (php_sapi_name() !== 'cli') {
     exit(1);
 }
 
+if (!isset($argv)) {
+    echo 'Cannot get the script arguments. Probably register_argc_argv is disabled.', PHP_EOL;
+    exit(1);
+}
+
 $res  = null;
 $core = Core::instance();
 try {
@@ -66,8 +71,11 @@ try {
                 }
                 unset($t);
             }
-            echo 'Version: ', ($res['version'] ?? 'n/a'), PHP_EOL;
-            echo 'Tables:  ', $tcn, PHP_EOL;
+            echo 'Version     : ', ($res['version'] ?? 'n/a'), PHP_EOL;
+            echo 'Tables      : ', $tcn, PHP_EOL;
+            $prefix = $core->config('database/table_prefix');
+            echo 'Table prefix: ', (empty($prefix) ? 'None' : "\"{$prefix}\""), PHP_EOL;
+            echo PHP_EOL;
             break;
         case 'init':
             $res = $core->database()->initDb();
@@ -94,7 +102,12 @@ try {
             $res = $core->database()->cleanDb();
             break;
         default:
-            echo "Usage: {$argv[0]} status|init|upgrade|drop", PHP_EOL;
+            echo "Usage: {$argv[0]} <command>", PHP_EOL, PHP_EOL;
+            echo 'Commands:', PHP_EOL;
+            echo '  status     Displays the database status.', PHP_EOL;
+            echo '  init       Creates all the required the database tables.', PHP_EOL;
+            echo '  upgrade    Upgrages the database structure if it is necessary.', PHP_EOL;
+            echo '  drop       Deletes all tables from the database taking into account the table prefix.', PHP_EOL;
             exit(1);
     }
 } catch (RuntimeException $e) {
