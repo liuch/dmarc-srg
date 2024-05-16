@@ -163,7 +163,7 @@ class ReportMapper implements ReportMapperInterface
                     throw new SoftException('Failed to add an incoming report: the domain is inactive');
                 }
                 $user_id = Core::instance()->user()->id();
-                if ($user_id !== 0 && !$domain_mapper->isAssigned($domain_data, $user_d)) {
+                if ($user_id !== 0 && !$domain_mapper->isAssigned($domain_data, $user_id)) {
                     // The domain exists but is not assigned to the current user
                     $this->unknownDomain($domain_data);
                 }
