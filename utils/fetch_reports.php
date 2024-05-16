@@ -197,6 +197,9 @@ try {
                     $cont = $source->container();
                     $pr['mailbox'] = $cont->mailbox() . ' (' . $cont->name() . ')';
                 }
+                if (isset($res['debug_info']['content'])) {
+                    $pr['debug_info'] = $res['debug_info']['content'];
+                }
                 $problems[] = $pr;
             }
         }

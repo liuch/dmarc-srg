@@ -48,7 +48,13 @@ class ReportData
         try {
             while ($file_data = fread($fd, 4096)) {
                 if (!xml_parse($parser, $file_data, feof($fd))) {
-                    throw new RuntimeException('XML error!');
+                    $pc = xml_get_error_code($parser);
+                    $error_str  = 'XML error!' . PHP_EOL;
+                    $error_str .= 'Parser code: ' . $pc . PHP_EOL;
+                    $error_str .= 'Parser message: ' . xml_error_string($pc) . PHP_EOL;
+                    $error_str .= 'Line: ' . xml_get_current_line_number($parser);
+                    $error_str .= '; Column: ' . xml_get_current_column_number($parser) . PHP_EOL;
+                    throw new RuntimeException('Incorrect XML report file', -1, new RuntimeException($error_str));
                 }
             }
         } finally {
