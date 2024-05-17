@@ -45,7 +45,7 @@ class Status {
 	_fetch(params) {
 		let url = new URL("status.php", document.location);
 		let fields = [ "state", "user" ];
-		let s_list = params.settings || [];;
+		let s_list = params.settings || [];
 		if (params.page !== "list") this._use_filter = false;
 		if (this._use_filter === null || (params.settings && params.settings.length)) {
 			fields.push("settings");

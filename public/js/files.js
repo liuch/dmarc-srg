@@ -124,6 +124,7 @@ class Files {
 			}).then(function(data) {
 				Common.checkResult(data);
 				Notification.add({ text: (data.message || "Uploaded successfully!"), type: "info" });
+				Status.instance().update().catch(() => {});
 			}).catch(function(err) {
 				Common.displayError(err);
 				Notification.add({ text: (err.message || "Error!"), type: "error" });
@@ -213,6 +214,7 @@ class Files {
 					that._notify_other_errors(data.other_errors);
 				}
 				Common.checkResult(data);
+				Status.instance().update().catch(() => {});
 			}).catch(function(err) {
 				Common.displayError(err);
 				Notification.add({ text: (err.message || "Error!"), type: "error" });
