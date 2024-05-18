@@ -51,13 +51,14 @@ $mailboxes = [
 ];
 
 /**
- * It is only required if you want to get reports from a server directory.
+ * This option is NOT INTENDED for direct access to MAILBOX directories.
+ * It is only required if you want to get reports files (xml, zip, gz) from a server directory.
  * In order to collect reports from several directories, you should put each
  * directory settings in an array. Processing of the directories is not recursive.
  * It is recommended to use atomic methods for adding files to these directories.
  * Attention! All successfully processed files will be deleted from the directories
  * and all others will be moved to subdirectory `failed`, that will be created
- * automatically if it does not exist.
+ * automatically if it does not exist. You can change this behavior under fetcher->directories.
  */
 //$directories = [
 //    // Just for displaying in the web-admin and utilities. Not necessary.
