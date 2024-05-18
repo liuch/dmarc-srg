@@ -73,12 +73,14 @@ In general, DmarcSrg is designed to automatically receive incoming DMARC reports
 
 ### Utils
 - `utils/check_config.php` - checks your configuration.
+- `utils/domains_admin.php` - allows to manipulate the list of domains in the database.
 - `utils/database_admin.php` - performs some administration functions with the database.
 - `utils/fetch_reports.php` - fetches DMARC reports from mailboxes and server local directories and saves them to the database.
 - `utils/mailbox_cleaner.php` - deletes old DMARC report email messages in mailboxes.
 - `utils/reportlog_cleaner.php` - deletes old log entries.
 - `utils/reports_cleaner.php` - deletes old reports from the database.
 - `utils/summary_report.php` - creates a summary report and sends it by email.
+- `utils/users_admin.php` - allows to manipulate the list of users in the database.
 
 You can find more detailed information about each script in the comments to it.
 
@@ -86,7 +88,7 @@ You can find more detailed information about each script in the comments to it.
 
 For example, if you want to get a summary report for the last week, you should run a command like this:
 
-`$ cd /usr/local/share/dmarc-srg && php utils/summary_report.php domain=example.com period=lastweek`
+`$ php /usr/local/share/dmarc-srg/utils/summary_report.php domain=example.com period=lastweek`
 
 # Web interface
 Use the public/ directory to access the web interface. You will see the basic Report List view, allowing you to navigate through the reports that have been parsed. Using the menu go to the Admin section and create tables in the database and check the accessibility of the mailboxes if necessary.
