@@ -45,7 +45,7 @@ use Liuch\DmarcSrg\Exception\ForbiddenException;
  */
 class Core
 {
-    public const APP_VERSION = '2.0';
+    public const APP_VERSION = '2.1';
 
     private const SESSION_NAME = 'session';
 
