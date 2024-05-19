@@ -167,16 +167,12 @@ if (Core::isJson()) {
                 switch ($action) {
                     case 'add':
                         $check_level();
-                        if ($user->exists()) {
-                            throw new SoftException('The user already exists');
-                        }
+                        $user->ensure('nonexist');
                         $user->save();
                         break;
                     case 'update':
                         $check_level();
-                        if (!$user->exists()) {
-                            throw new SoftException('The user does not exists');
-                        }
+                        $user->ensure('exist');
                         $user->save();
                         break;
                     case 'delete':
