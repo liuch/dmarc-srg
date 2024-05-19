@@ -173,7 +173,7 @@ try {
                 throw new SoftException('Parameter "name" must be specified');
             }
             $ud = [ 'name' => $args['name'] ];
-            $ud['level']   = isset($args['level']) ? $getLevelParameter($args) : 'user';
+            $ud['level']   = isset($args['level']) ? $getLevelParameter($args) : User::LEVEL_USER;
             $ud['enabled'] = isset($args['enabled']) ? $getEnabledParameter($args) : false;
             $user = new DbUser($ud);
             $user->ensure('nonexist');
