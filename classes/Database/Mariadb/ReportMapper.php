@@ -303,7 +303,9 @@ class ReportMapper implements ReportMapperInterface
             $st = $db->prepare(
                 'SELECT `org`, `begin_time`, `end_time`, `fqdn`, `external_id`, `seen`, SUM(`rcount`) AS `rcount`,'
                 . ' MIN(`dkim_align`) AS `dkim_align`, MIN(`spf_align`) AS `spf_align`,'
-                . ' MIN(`disposition`) AS `disposition` FROM `' . $this->connector->tablePrefix('rptrecords')
+                . ' SUM(IF(`disposition` = 0, `rcount`, 0)) AS `rejected`,'
+                . ' SUM(IF(`disposition` = 1, `rcount`, 0)) AS `quarantined`'
+                . ' FROM `' . $this->connector->tablePrefix('rptrecords')
                 . '` AS `rr` RIGHT JOIN (SELECT `rp`.`id`, `org`, `begin_time`, `end_time`, `external_id`,'
                 . ' `fqdn`, `seen` FROM `' . $this->connector->tablePrefix('reports')
                 . '` AS `rp` INNER JOIN `' . $this->connector->tablePrefix('domains')
@@ -326,7 +328,8 @@ class ReportMapper implements ReportMapperInterface
                     'messages'    => intval($row[6]),
                     'dkim_align'  => Common::$align_res[$row[7]],
                     'spf_align'   => Common::$align_res[$row[8]],
-                    'disposition' => Common::$disposition[$row[9]]
+                    'rejected'    => intval($row[9]),
+                    'quarantined' => intval($row[10])
                 ];
             }
             $st->closeCursor();
@@ -705,12 +708,20 @@ class ReportMapper implements ReportMapperInterface
                                 $filters[1]['a_str'][] = '`spf_align` = ?';
                                 $filters[1]['bindings'][] = [ $val, \PDO::PARAM_INT ];
                             } elseif ($fn == 'disposition') {
-                                $val = array_search($fv, Common::$disposition);
-                                if ($val === false) {
-                                    throw new SoftException('Report list filter: Incorrect value of disposition');
+                                switch ($fv) {
+                                    case 'none':
+                                        $str = '`rejected` = 0 AND `quarantined` = 0';
+                                        break;
+                                    case 'quarantine':
+                                        $str = '`quarantined` > 0';
+                                        break;
+                                    case 'reject':
+                                        $str = '`rejected` > 0';
+                                        break;
+                                    default:
+                                        throw new SoftException('Report list filter: Incorrect value of disposition');
                                 }
-                                $filters[1]['a_str'][] = '`disposition` = ?';
-                                $filters[1]['bindings'][] = [ $val, \PDO::PARAM_INT ];
+                                $filters[1]['a_str'][] = $str;
                             } elseif ($fn == 'status') {
                                 if ($fv === 'read') {
                                     $val = true;
