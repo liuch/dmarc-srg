@@ -20,7 +20,7 @@
 
 class ITable {
 	constructor(params) {
-		this._table = null;
+		this._element = null;
 		this._class = null;
 		this._header = null;
 		this._status = null;
@@ -43,89 +43,77 @@ class ITable {
 	}
 
 	element() {
-		if (!this._table) {
-			let that = this;
-			this._table = document.createElement("div");
-			if (this._class)
-				this._table.setAttribute("class", this._class);
-			this._table.classList.add("table");
-			this._table.setAttribute("tabindex", -1);
-			this._table.addEventListener("focus", function(event) {
-				that._focused = true;
-				that._update_focus();
+		if (!this._element) {
+			this._element = document.createElement("div");
+			if (this._class) this._element.setAttribute("class", this._class);
+			this._element.classList.add("table");
+			this._element.setAttribute("tabindex", -1);
+			this._element.addEventListener("focus", event => {
+				this._focused = true;
+				this._update_focus();
 			}, true);
-			this._table.addEventListener("blur", function(event) {
-				that._focused = false;
-				that._update_focus();
+			this._element.addEventListener("blur", event => {
+				this._focused = false;
+				this._update_focus();
 			}, true);
-			let th = document.createElement("div");
+			let th = this._element.appendChild(document.createElement("div"));
 			th.setAttribute("class", "table-header");
-			this._table.appendChild(th);
-			this._header = document.createElement("div");
+			this._header = th.appendChild(document.createElement("div"));
 			this._header.setAttribute("class", "table-row");
-			this._header.addEventListener("click", function(event) {
-				let col = that.get_column_by_element(event.target);
+			this._header.addEventListener("click", event => {
+				const col = this.get_column_by_element(event.target);
 				if (col && col.is_sortable()) {
-					if (that._onsort) {
-						that._onsort(col);
-					}
+					if (this._onsort) this._onsort(col);
 				}
 			});
-			th.appendChild(this._header);
 			this._fill_columns();
-			this._body = document.createElement("div");
+			this._body = this._element.appendChild(document.createElement("div"));
 			this._body.setAttribute("class", "table-body");
-			this._body.addEventListener("click", function(event) {
-				let row = that._get_row_by_element(event.target);
+			this._body.addEventListener("click", event => {
+				let row = this._get_row_by_element(event.target);
 				if (row) {
-					that._set_selected_rows([ row ]);
-					if (that._onclick)
-						that._onclick(row);
+					this._set_selected_rows([ row ]);
+					if (this._onclick) this._onclick(row);
 				}
 			});
-			this._body.addEventListener("focus", function(event) {
-				let row = that._get_row_by_element(event.target);
+			this._body.addEventListener("focus", event => {
+				let row = this._get_row_by_element(event.target);
 				if (row) {
-					that._update_focused_row(row);
-					if (that._onfocus)
-						that._onfocus(row.element());
+					this._update_focused_row(row);
+					if (this._onfocus) this._onfocus(row.element());
 				}
 			}, true);
-			this._body.addEventListener("blur", function(event) {
-				let row = that._get_row_by_element(event.target);
-				if (row) {
-					row.onfocus(false);
-				}
+			this._body.addEventListener("blur", event => {
+				let row = this._get_row_by_element(event.target);
+				if (row) row.onfocus(false);
 			}, true);
-			this._body.addEventListener("keydown", function(event) {
+			this._body.addEventListener("keydown", event => {
 				let row = null;
 				switch (event.code) {
 					case "ArrowDown":
-						row = that._get_row(that._focused_row !== null && (that._focused_row.id() + 1) || 0);
+						row = this._get_row(this._focused_row !== null && (this._focused_row.id() + 1) || 0);
 						break;
 					case "ArrowUp":
-						if (that._focused_row) {
-							let id = that._focused_row.id();
-							if (id >= 0)
-								row = that._get_row(id - 1);
+						if (this._focused_row) {
+							let id = this._focused_row.id();
+							if (id >= 0) row = this._get_row(id - 1);
 						}
 						else {
-							row = that._get_row(0);
+							row = this._get_row(0);
 						}
 						break;
 					case "PageUp":
-						if (that._focused_row && that._frames.length > 0) {
-							let c_id = that._focused_row.id();
-							let f_fr = that._frames[0];
+						if (this._focused_row && this._frames.length > 0) {
+							let c_id = this._focused_row.id();
+							let f_fr = this._frames[0];
 							let f_id = f_fr.first_index();
-							if (c_id == f_id)
-								break;
-							let s_el = that._get_scroll_element();
+							if (c_id == f_id) break;
+							let s_el = this._get_scroll_element();
 							if (s_el) {
-								let r_ht = that._focused_row.element().getBoundingClientRect().height;
+								let r_ht = this._focused_row.element().getBoundingClientRect().height;
 								let s_ht = s_el.getBoundingClientRect().height;
 								let n_id = Math.max(c_id - Math.floor(s_ht / r_ht) - 1, f_id);
-								row = that._get_row(n_id);
+								row = this._get_row(n_id);
 							}
 							else {
 								row = f_fr.row(f_id);
@@ -133,18 +121,17 @@ class ITable {
 						}
 						break;
 					case "PageDown":
-						if (that._focused_row && that._frames.length > 0) {
-							let c_id = that._focused_row.id();
-							let l_fr = that._frames[that._frames.length - 1];
+						if (this._focused_row && this._frames.length > 0) {
+							let c_id = this._focused_row.id();
+							let l_fr = this._frames[this._frames.length - 1];
 							let l_id = l_fr.last_index();
-							if (c_id == l_id)
-								break;
-							let s_el = that._get_scroll_element();
+							if (c_id == l_id) break;
+							let s_el = this._get_scroll_element();
 							if (s_el) {
-								let r_ht = that._focused_row.element().getBoundingClientRect().height;
+								let r_ht = this._focused_row.element().getBoundingClientRect().height;
 								let s_ht = s_el.getBoundingClientRect().height;
 								let n_id = Math.min(c_id + Math.floor(s_ht / r_ht) - 1, l_id);
-								row = that._get_row(n_id);
+								row = this._get_row(n_id);
 							}
 							else {
 								row = l_fr.row(l_id);
@@ -152,34 +139,32 @@ class ITable {
 						}
 						break;
 					case "Home":
-						if (that._frames.length > 0) {
-							let first_frame = that._frames[0];
+						if (this._frames.length > 0) {
+							let first_frame = this._frames[0];
 							row = first_frame.row(first_frame.first_index());
 						}
 						break;
 					case "End":
-						if (that._frames.length > 0) {
-							let last_frame = that._frames[that._frames.length - 1];
+						if (this._frames.length > 0) {
+							let last_frame = this._frames[this._frames.length - 1];
 							row = last_frame.row(last_frame.last_index());
 						}
 						break;
 					case "Enter":
 					case "NumpadEnter":
-						if (that._onclick && that._focused_row)
-							that._onclick(that._focused_row);
+						if (this._onclick && this._focused_row) this._onclick(this._focused_row);
 						event.preventDefault();
 						return;
 				}
 				if (row) {
 					row.element().focus();
-					that._set_selected_rows([ row ]);
+					this._set_selected_rows([ row ]);
 					event.preventDefault();
 				}
 			});
 			this._fill_frames();
-			this._table.appendChild(this._body);
 		}
-		return this._table;
+		return this._element;
 	}
 
 	more() {
@@ -215,10 +200,12 @@ class ITable {
 	}
 
 	display_status(status, text) {
-		if (this._status && !status) {
+		if (this._status) {
 			this._status.remove();
-			this._status = null;
-			return;
+			if (!status) {
+				this._status = null;
+				return;
+			}
 		}
 
 		this.element();
@@ -292,42 +279,42 @@ class ITable {
 	}
 
 	sort(col_name, direction) {
-		if (this._frames.length == 1) {
-			for (let i = 0; i < this._columns.length; ++i) {
-				let col = this._columns[i];
-				if (col.is_sortable() && col.name() === col_name) {
-					let fr = this._frames[0];
-					fr.sort(i, direction);
-					if (this._body) {
-						remove_all_children(this._body);
-						this._body.appendChild(fr.element());
-					}
-					return;
-				}
+		if (this._frames.length != 1) return;
+
+		for (let i = 0; i < this._columns.length; ++i) {
+			const col = this._columns[i];
+			if (col.is_sortable() && col.name() === col_name) {
+				const fr = this._frames[0];
+				fr.sort(i, direction);
+				if (this._body) this._body.replaceChildren(fr.element());
+				return;
 			}
 		}
 	}
 
 	set_sorted(col_name, direction) {
-		this._columns.forEach(function(col) {
-			if (col.is_sortable()) {
-				if (col.name() !== col_name) {
-					col.sort(null);
-				}
-				else {
-					if (direction === "toggle") {
+		for (const col of this._columns) {
+			if (!col.is_sortable()) continue;
+			if (col.name() !== col_name) {
+				col.sort(null);
+				continue;
+			}
+
+			if (direction === "toggle") {
+				switch (col.sorted()) {
+					case "ascent":
+						direction = "descent";
+						break;
+					case "descent":
+						direction = "ascent";
+						break;
+					default:
 						direction = null;
-						if (col.sorted() === "ascent") {
-							direction = "descent";
-						}
-						else if (col.sorted() === "descent") {
-							direction = "ascent";
-						}
-					}
-					col.sort(direction);
+						break;
 				}
 			}
-		});
+			col.sort(direction);
+		}
 	}
 
 	_fill_columns() {
@@ -337,40 +324,32 @@ class ITable {
 	}
 
 	_fill_frames() {
-		this._frames.forEach(function(fr) {
-			this._body.appendChild(fr.element());
-		}, this);
+		this._frames.forEach(fr => this._body.append(fr.element()));
 	}
 
 	_get_row(row_id) {
-		for (let i = 0; i < this._frames.length; ++i) {
-			let fr = this._frames[i];
-			if (fr.last_index() >= row_id) {
-				if (fr.first_index() <= row_id)
-					return fr.row(row_id);
+		const fr = this._frames.find(fr => {
+			return fr.last_index() >= row_id && fr.first_index() <= row_id;
+		});
+		return fr && fr.row(row_id) || null;
+	}
+
+	_get_row_by_element(el) {
+		if (el) {
+			const r_el = el.closest("div.table-row");
+			if (r_el) {
+				const id = parseInt(r_el.dataset.id);
+				if (id !== NaN) return this._get_row(id);
 			}
 		}
 		return null;
 	}
 
-	_get_row_by_element(el) {
-		let row = null;
-		if (el) {
-			el = el.closest("div.table-row");
-			if (el) {
-				let id = parseInt(el.getAttribute("data-id"));
-				if (id !== NaN)
-					row = this._get_row(id);
-			}
-		}
-		return row;
-	}
-
 	_update_focus() {
 		if (this._focused)
-			this._table.classList.add("focused");
+			this._element.classList.add("focused");
 		else
-			this._table.classList.remove("focused");
+			this._element.classList.remove("focused");
 	}
 
 	_update_focused_row(row) {
@@ -383,24 +362,20 @@ class ITable {
 	}
 
 	_set_selected_rows(rows) {
-		this._selected_rows.forEach(function(row) {
-			row.select(false);
-		});
-		rows.forEach(function(row) {
-			row.select(true);
-		});
+		this._selected_rows.forEach(row => row.select(false));
+		rows.forEach(row => row.select(true));
 		this._selected_rows = rows;
 	}
 
 	_get_scroll_element() {
-		let t_rect = this._table.getBoundingClientRect();
-		let p_elem = this._table.parentElement;
+		let t_rect = this._element.getBoundingClientRect();
+		let p_elem = this._element.parentElement;
 		while (p_elem) {
 			let p_rect = p_elem.getBoundingClientRect();
 			if (t_rect.top < p_rect.top || t_rect.bottom > p_rect.bottom) {
 				return p_elem;
 			}
-			p_elem = p_elem.paretnElement;
+			p_elem = p_elem.parentElement;
 		}
 	}
 }
@@ -408,7 +383,7 @@ class ITable {
 class ITableFrame {
 	constructor(data, pos) {
 		this._pos = pos;
-		this._more = data.more && true || false;
+		this._more = !!data.more;
 		let id = pos;
 		this._rows = data.rows.map(function(rd) {
 			if (!(rd instanceof ITableRow)) {
@@ -429,18 +404,13 @@ class ITableFrame {
 
 	last_index() {
 		let cnt = this._rows.length;
-		if (cnt > 0) {
-			return this._pos + cnt - 1;
-		}
-		return null;
+		return cnt > 0 ? this._pos + cnt - 1 : null;
 	}
 
 	row(id) {
 		let idx = id - this._pos;
-		if (idx >= 0 && idx < this._rows.length) {
-			return this._rows[idx];
-		}
-		return null;
+		if (idx < 0 || idx >= this._rows.length) return null;
+		return this._rows[idx];
 	}
 
 	more() {
@@ -448,30 +418,29 @@ class ITableFrame {
 	}
 
 	element() {
-		let fr = document.createDocumentFragment();
-		this._rows.forEach(function(row) {
+		const fr = document.createDocumentFragment();
+		this._rows.forEach(row => {
+			row.table = this.table;
 			fr.appendChild(row.element());
 		});
 		return fr;
 	}
 
+	update() {
+		this._rows.forEach(row => row.update());
+	}
+
 	sort(col_idx, direction) {
 		let dir = (direction === "ascent" && 1) || (direction === "descent" && 2) || 0;
-		if (dir) {
-			let that = this;
-			this._rows.sort(function(a, b) {
-				let c1 = a.cell(col_idx);
-				let c2 = b.cell(col_idx);
-				if (dir === 1) {
-					return that._compare_cells(c2, c1);
-				}
-				return that._compare_cells(c1, c2);
-			});
-			let id = this._pos;
-			this._rows.forEach(function(row) {
-				row.id(id++);
-			});
-		}
+		if (!dir) return;
+
+		this._rows.sort((a, b) => {
+			const c1 = a.cell(col_idx);
+			const c2 = b.cell(col_idx);
+			return dir === 1 ? this._compare_cells(c2, c1) : this._compare_cells(c1, c2);
+		});
+		let id = this._pos;
+		this._rows.forEach(row => row.id(id++));
 	}
 
 	_compare_cells(c1, c2) {
@@ -509,26 +478,32 @@ class ITableRow {
 	}
 
 	element() {
-		if (!this._element) {
-			this._element = document.createElement("div");
-			this._element.setAttribute("data-id", this._id);
-			if (this._class)
-				this._element.setAttribute("class", this._class);
-			this._element.classList.add("table-row");
-			this._cells.forEach(function(col) {
-				this._element.appendChild(col.element());
-			}, this);
+		let row_el = this._element;
+		if (!row_el) {
+			row_el = document.createElement("div");
+			row_el.dataset.id = this._id;
+			if (this._class) row_el.setAttribute("class", this._class);
+			row_el.classList.add("table-row");
+			this._element = row_el;
+
+			row_el.append(...this._get_cell_elements());
 			this._update_focus();
 			this._update_tabindex();
 			this._update_select();
 		}
-		return this._element;
+		return row_el;
+	}
+
+	update() {
+		if (this._element) {
+			const col_set = this.table && this.table.column_set || 4095;
+			this._element.replaceChildren(this._get_cell_elements());
+		}
 	}
 
 	onfocus(flag) {
 		this._focused = flag;
-		if (this._element)
-			this._update_focus();
+		if (this._element) this._update_focus();
 	}
 
 	tabindex(index) {
@@ -540,16 +515,13 @@ class ITableRow {
 
 	select(flag) {
 		this._selected = flag;
-		if (this._element)
-			this._update_select();
+		if (this._element) this._update_select();
 	}
 
 	id(new_id) {
 		if (new_id !== undefined && new_id !== this._id) {
 			this._id = new_id;
-			if (this._element) {
-				this._element.setAttribute("data-id", this._id);
-			}
+			if (this._element) this._element.dataset.id = new_id;
 		}
 		return this._id;
 	}
@@ -577,6 +549,21 @@ class ITableRow {
 			this._element.classList.remove("selected");
 		}
 	}
+
+	_get_cell_elements() {
+		const col_set = this.table && this.table.column_set || 4095;
+		const res = [];
+		let bmask = 1;
+		for (const col of this._cells) {
+			if (col_set & bmask) {
+				res.push(col.element());
+			} else {
+				col.remove();
+			}
+			bmask <<= 1;
+		}
+		return res;
+	}
 }
 
 class ITableCell {
@@ -593,27 +580,21 @@ class ITableCell {
 	element() {
 		if (!this._element) {
 			this._element = document.createElement("div");
-			if (this._title) {
-				this._element.setAttribute("title", this._title);
-			}
-			if (this._class) {
-				this._element.setAttribute("class", this._class);
-			}
-			if (this._label) {
-				this._element.setAttribute("data-label", this._label);
-			}
+			if (this._title) this._element.title = this._title;
+			if (this._class) this._element.setAttribute("class", this._class);
+			if (this._label) this._element.dataset.label = this._label;
 			this._element.classList.add("table-cell");
-			let content = this.value("dom");
-			if (content !== null) {
-				if (typeof(content) === "object") {
-					this._element.appendChild(content)
-				}
-				else {
-					this._element.appendChild(document.createTextNode(content));
-				}
-			}
+			const content = this.value("dom");
+			if (content !== null) this._element.append(content);
 		}
 		return this._element;
+	}
+
+	remove() {
+		if (this._element) {
+			this._element.remove();
+			this._element = null;
+		}
 	}
 
 	value(target) {

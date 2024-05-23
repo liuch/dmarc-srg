@@ -66,16 +66,12 @@ function date_range_to_string(d1, d2) {
 }
 
 function create_report_result_element(name, value, long_rec, result) {
-	let span = document.createElement("span");
-	if (long_rec)
-		span.appendChild(document.createTextNode(name + ": " + value));
-	else
-		span.appendChild(document.createTextNode(name));
-	span.setAttribute("title", value);
-	let extra_class = "";
-	if (result === undefined || result !== "")
-		extra_class = " report-result-" + (result || value);
-	span.setAttribute("class", "report-result" + extra_class);
+	const span = document.createElement("span");
+	if (long_rec) name += ": " + value;
+	span.append(name);
+	span.title = value;
+	span.classList.add("report-result");
+	if (result === undefined || result !== "") span.classList.add("report-result-" + (result || value));
 	return span;
 }
 
