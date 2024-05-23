@@ -30,6 +30,7 @@ class ITable {
 		this._onsort = null;
 		this._onclick = null;
 		this._onfocus = null;
+		this.column_set = 4095;
 		if (params) {
 			this._class = params.class || null;
 			this._onsort = params.onsort || null;
@@ -183,19 +184,33 @@ class ITable {
 			sorted:   data.sorted
 		});
 		this._columns.push(col);
-		if (this._header)
-			this._header.appendChild(col.element());
+		if (this._header) {
+			const c_idx = this._columns.length - 1;
+			if (this.column_set & (1 << c_idx)) this._header.appendChild(col.element());
+		}
 		return col;
+	}
+
+	set_columns_visible(indexes) {
+		let col_set = indexes.reduce((res, idx) => {
+			res += (1 << idx);
+			return res;
+		}, 0);
+		if (this.column_set !== col_set) {
+			this.column_set = col_set;
+			if (this._header) this._fill_columns();
+			this._frames.forEach(fr => fr.update());
+		}
 	}
 
 	get_column_by_element(el) {
 		el = el && el.closest("div.table-cell");
-		if (el) {
-			for (let i = 0; i < this._columns.length; ++i) {
-				let col = this._columns[i];
-				if (el === col.element())
-					return col;
-			}
+		if (!el) return null;
+
+		let bmask = 1;
+		for (const col of this._columns) {
+			if ((this.column_set & bmask) && el === col.element()) return col;
+			bmask <<= 1;
 		}
 	}
 
@@ -247,6 +262,7 @@ class ITable {
 			return
 		}
 
+		frame.table = this;
 		if (this._frames.length > 0 && this._frames[0].first_index() > frame.last_index()) {
 			this._frames.unshift(frame);
 			if (this._body)
@@ -318,9 +334,16 @@ class ITable {
 	}
 
 	_fill_columns() {
-		this._columns.forEach(function(col) {
-			this._header.appendChild(col.element());
-		}, this);
+		let bmask = 1;
+		this._header.replaceChildren(...this._columns.reduce((res, col) => {
+			if (this.column_set & bmask) {
+				res.push(col.element());
+			} else {
+				col.remove();
+			}
+			bmask <<= 1;
+			return res;
+		}, []));
 	}
 
 	_fill_frames() {
@@ -392,6 +415,7 @@ class ITableFrame {
 			rd.id(id++);
 			return rd;
 		});
+		this.table = null;
 	}
 
 	count() {
