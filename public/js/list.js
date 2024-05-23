@@ -159,13 +159,17 @@ class ReportList {
 			{ content: "Reporting Organization" },
 			{ content: "Report ID", class: "report-id" },
 			{ content: "Messages" },
-			{ content: "Result" }
-		].forEach(function(col) {
+			{ content: "Result" },
+			{ content: "Disposition" },
+			{ content: "Quarantined" },
+			{ content: "Rejected" }
+		].forEach(col => {
 			let c = this._table.add_column(col);
 			if (c.name() === this._sort.column) {
 				c.sort(this._sort.direction);
 			}
-		}, this);
+		});
+		this._table.set_columns_visible([ 0, 1, 2, 4, 5, 6 ]);
 	}
 
 	_update_table() {
@@ -275,7 +279,14 @@ class ReportList {
 		rd.cells.push({ content: d.org_name, label: "Reporting Organization" });
 		rd.cells.push({ content: d.report_id, class: "report-id" });
 		rd.cells.push({ content: d.messages, label: "Messages" });
-		rd.cells.push(new StatusColumn({ dkim_align: d.dkim_align, spf_align: d.spf_align }));
+		rd.cells.push(new ResultColumn({ dkim_align: d.dkim_align, spf_align: d.spf_align }, { label: "Result" }));
+		rd.cells.push(new DispositionColumn({
+			none: d.messages - d.rejected - d.quarantined,
+			rejected: d.rejected,
+			quarantined: d.quarantined
+		}, { label: "Disposition" }));
+		rd.cells.push(new FailsColumn(d.quarantined, { label: "Quarantined" }));
+		rd.cells.push(new FailsColumn(d.rejected, { label: "Rejected" }));
 		return rd;
 	}
 
@@ -353,14 +364,7 @@ class ReportTableRow extends ITableRow {
 	}
 }
 
-class StatusColumn extends ITableCell {
-	element() {
-		if (!this._element) {
-			super.element().setAttribute("data-label", "Result");
-		}
-		return this._element;
-	}
-
+class ResultColumn extends ITableCell {
 	value(target) {
 		if (target === "dom") {
 			let d = this._content;
@@ -374,6 +378,37 @@ class StatusColumn extends ITableCell {
 			return fr;
 		}
 		return super.value(target);
+	}
+}
+
+class DispositionColumn extends ITableCell {
+	value(target) {
+		if (target === "dom") {
+			const fr = document.createDocumentFragment();
+			const d = this._content;
+			if (d.none) fr.append(create_report_result_element("None", d.none, true, "pass"));
+			if (d.quarantined) fr.append(create_report_result_element("Quar", d.quarantined, true, "fail"));
+			if (d.rejected) fr.append(create_report_result_element("Rej", d.rejected, true, "fail"));
+			return fr;
+		}
+		return super.value(target);
+	}
+}
+
+class ColoredIntColumn extends ITableCell {
+	_make_colored_int_element(value, factor) {
+		const el = document.createElement("span");
+		factor *= value;
+		if (factor) el.classList.add("report-result-" + (factor > 0 ? "pass" : "fail"));
+		el.append(value);
+		return el;
+	}
+}
+
+class FailsColumn extends ColoredIntColumn {
+	value(target) {
+		if (target !== "dom") return super.value(target);
+		return this._make_colored_int_element(this._content, -1);
 	}
 }
 
