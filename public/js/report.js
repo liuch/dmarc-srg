@@ -450,7 +450,7 @@ class Report {
 
 	_get_filter_button() {
 		let btn = document.createElement("button");
-		btn.classList.add("toolbar");
+		btn.classList.add("toolbar-btn");
 		btn.textContent = "filter: ";
 		btn.appendChild(document.createElement("span"));
 		btn.addEventListener("click", function(event) {

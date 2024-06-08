@@ -22,6 +22,7 @@ const User = { name: null, level: null, auth_type: null };
 
 class UserList {
 	constructor() {
+		this._page = null;
 		this._table = null;
 		this._scroll = null;
 		this._element = document.getElementById("main-block");
@@ -29,10 +30,12 @@ class UserList {
 	}
 
 	display() {
+		this._make_page_container();
 		this._make_scroll_container();
 		this._make_table();
-		this._scroll.appendChild(this._table.element());
-		this._element.appendChild(this._scroll);
+		this._scroll.append(this._table.element());
+		this._page.append(this._scroll);
+		this._element.appendChild(this._page);
 		this._table.focus();
 	}
 
@@ -71,9 +74,14 @@ class UserList {
 		});
 	}
 
+	_make_page_container() {
+		this._page = document.createElement("div");
+		this._page.classList.add("page-container");
+	}
+
 	_make_scroll_container() {
 		this._scroll = document.createElement("div");
-		this._scroll.setAttribute("class", "main-table-container");
+		this._scroll.classList.add("table-wrapper");
 	}
 
 	_make_table() {

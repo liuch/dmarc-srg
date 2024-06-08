@@ -86,12 +86,13 @@ interface ReportMapperInterface
     /**
      * Returns the number of reports matching the specified filter and limits
      *
-     * @param array $filter Key-value array with filtering parameters
-     * @param array $limit  Key-value array with two keys: `offset` and `count`
+     * @param array $filter  Key-value array with filtering parameters
+     * @param array $limit   Key-value array with two keys: `offset` and `count`
+     * @param int   $user_id User ID to count reports for
      *
      * @return int
      */
-    public function count(array &$filter, array &$limit): int;
+    public function count(array &$filter, array &$limit, int $user_id): int;
 
     /**
      * Deletes reports from the database

@@ -517,8 +517,7 @@ class ITableRow {
 
 	update() {
 		if (this._element) {
-			const col_set = this.table && this.table.column_set || 4095;
-			this._element.replaceChildren(this._get_cell_elements());
+			this._element.replaceChildren(...this._get_cell_elements());
 		}
 	}
 
@@ -685,6 +684,87 @@ class ITableColumn extends ITableCell {
 				this._element.classList[c_act[key]]("sorted-" + key);
 			}
 		}
+	}
+}
+
+class Toolbar {
+	constructor() {
+		this._element = null;
+		this._items   = [];
+		this._spacer  = {}; // Just a unique value
+	}
+
+	element() {
+		if (!this._element) {
+			const el = document.createElement("div");
+			el.classList.add("toolbar");
+			this._element = el;
+			let spacer  = false
+			for (const it of this._items) {
+				if (it === this._spacer) {
+					spacer = this._spacer;
+					continue;
+				}
+				if (spacer) {
+					it.classList.add("spacer-left");
+					spacer = false;
+				}
+				if (it instanceof ToolbarButton) {
+					el.append(it.element());
+				} else {
+					el.append(it);
+				}
+			}
+		}
+		return this._element;
+	}
+
+	appendItem(item) {
+		this._items.push(item);
+		return this;
+	}
+
+	appendSpacer() {
+		this._items.push(this._spacer);
+		return this;
+	}
+}
+
+class ToolbarButton {
+	constructor(params) {
+		this._element = null;
+		this._title   = params.title || null;
+		this._content = params.content || null;
+		this._onclick = params.onclick || null;
+	}
+
+	element() {
+		if (!this._element) {
+			const el = document.createElement("button");
+			el.tabIndex = -1;
+			if (this._content) el.append(this._content);
+			if (this._title) el.title = this._title;
+			if (this._onclick) el.addEventListener("click", this._onclick);
+			this._element = el;
+		}
+		return this._element;
+	}
+
+	static svgIcon(view_box, html) {
+		const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+		svg.setAttribute("focusable", "false");
+		svg.setAttribute("fill", "currentColor");
+		svg.setAttribute("viewBox", view_box);
+		svg.innerHTML = html;
+		return svg;
+	}
+
+	static filterIcon() {
+		return this.svgIcon('0 1 15 15', '<path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2z"/>');
+	}
+
+	static columnsIcon() {
+		return this.svgIcon('0 0 17 17', '<path d="M0 1.5A1.5 1.5 0 0 1 1.5 0h13A1.5 1.5 0 0 1 16 1.5v13a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 14.5zM1.5 1a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 .5.5H5V1zM10 15V1H6v14zm1 0h3.5a.5.5 0 0 0 .5-.5v-13a.5.5 0 0 0-.5-.5H11z"/>');
 	}
 }
 

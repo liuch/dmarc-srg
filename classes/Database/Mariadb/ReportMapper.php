@@ -342,23 +342,45 @@ class ReportMapper implements ReportMapperInterface
     /**
      * Returns the number of reports matching the specified filter and limits
      *
-     * @param array $filter Key-value array with filtering parameters
-     * @param array $limit  Key-value array with two keys: `offset` and `count`
+     * @param array $filter  Key-value array with filtering parameters
+     * @param array $limit   Key-value array with two keys: `offset` and `count`
+     * @param int   $user_id User ID to count reports for
      *
      * @return int
      */
-    public function count(array &$filter, array &$limit): int
+    public function count(array &$filter, array &$limit, int $user_id): int
     {
-        if (Core::instance()->user()->id()) {
-            throw new LogicException('The count method cannot be call by non-admin user');
-        }
         $cnt = 0;
         $f_data = $this->prepareFilterData($filter);
         try {
-            $st = $this->connector->dbh()->prepare(
-                'SELECT COUNT(*) FROM `' . $this->connector->tablePrefix('reports') . '` AS `rp`'
-                . $this->sqlConditionList($f_data, ' WHERE ', 0)
-            );
+            if (isset($filter['dkim']) || isset($filter['spf']) || isset($filter['disposition'])) {
+                $st = $this->connector->dbh()->prepare(
+                    'SELECT COUNT(*) FROM ('
+                    . 'SELECT MIN(`dkim_align`) AS `dkim_align`, MIN(`spf_align`) AS `spf_align`,'
+                    . ' SUM(IF(`disposition` = 0, `rcount`, 0)) AS `rejected`,'
+                    . ' SUM(IF(`disposition` = 1, `rcount`, 0)) AS `quarantined`'
+                    . ' FROM `' . $this->connector->tablePrefix('rptrecords')
+                    . '` AS `rr` RIGHT JOIN (SELECT `rp`.`id` FROM `' . $this->connector->tablePrefix('reports')
+                    . '` AS `rp` INNER JOIN `' . $this->connector->tablePrefix('domains')
+                    . '` AS `d` ON `d`.`id` = `rp`.`domain_id`' . $this->sqlUserRestriction($user_id, '`d`.`id`')
+                    . $this->sqlConditionList($f_data, ' AND ', 0)
+                    . ') AS `rp` ON `rp`.`id` = `rr`.`report_id` GROUP BY `rp`.`id`'
+                    . $this->sqlConditionList($f_data, ' HAVING ', 1)
+                    . ') AS `ct`'
+                );
+            } elseif ($user_id) {
+                $st = $this->connector->dbh()->prepare(
+                    'SELECT COUNT(*) FROM `' . $this->connector->tablePrefix('reports') . '` AS `rp`'
+                    . ' INNER JOIN `' . $this->connector->tablePrefix('domains')
+                    . '` AS `d` ON `d`.`id` = `rp`.`domain_id`' . $this->sqlUserRestriction($user_id, '`d`.`id`')
+                    . $this->sqlConditionList($f_data, ' AND ', 0)
+                );
+            } else {
+                $st = $this->connector->dbh()->prepare(
+                    'SELECT COUNT(*) FROM `' . $this->connector->tablePrefix('reports') . '` AS `rp`'
+                    . $this->sqlConditionList($f_data, ' WHERE ', 0)
+                );
+            }
             $l_empty = [ 'offset' => 0, 'count' => 0 ];
             $this->sqlBindValues($st, $f_data, $l_empty);
             $st->execute();

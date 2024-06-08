@@ -20,6 +20,7 @@
 
 class Logs {
 	constructor() {
+		this._page = null;
 		this._table = null;
 		this._scroll = null;
 		this._filter = null;
@@ -32,10 +33,12 @@ class Logs {
 
 	display() {
 		this._gen_settings_button();
+		this._make_page_container();
 		this._make_scroll_container();
 		this._make_table();
-		this._scroll.appendChild(this._table.element());
-		this._element.appendChild(this._scroll);
+		this._scroll.append(this._table.element());
+		this._page.append(this._scroll);
+		this._element.append(this._page);
 		this._ensure_settins_button();
 		this._table.focus();
 	}
@@ -129,14 +132,18 @@ class Logs {
 		again();
 	}
 
+	_make_page_container() {
+		this._page = document.createElement("div");
+		this._page.classList.add("page-container");
+	}
+
 	_make_scroll_container() {
-		let that = this;
-		let el = document.createElement("div");
-		el.setAttribute("class", "main-table-container");
-		el.addEventListener("scroll", function() {
-			if (!that._fetching && el.scrollTop + el.clientHeight >= el.scrollHeight * 0.95) {
-				if (that._table.frames_count() === 0 || that._table.more()) {
-					that._fetch_list();
+		const el = document.createElement("div");
+		el.classList.add("table-wrapper");
+		el.addEventListener("scroll", event => {
+			if (!this._fetching && el.scrollTop + el.clientHeight >= el.scrollHeight * 0.95) {
+				if (this._table.frames_count() === 0 || this._table.more()) {
+					this._fetch_list();
 				}
 			}
 		});

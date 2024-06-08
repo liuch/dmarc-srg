@@ -153,7 +153,7 @@ class ReportList
      *                      'organization' => string
      *                      'spf'          => string, 'fail' or 'pass'
      *                      'status'       => string, 'read' or 'unread'
-     *                      Note! 'dkim', 'spf' and 'disposition' do not affect the delete and count methods
+     *                      Note! 'dkim', 'spf' and 'disposition' do not affect the delete method
      *
      * @return self
      */
@@ -174,7 +174,7 @@ class ReportList
     public function count(): int
     {
         $limit = [ 'offset' => 0, 'count' => $this->limit ];
-        return $this->db->getMapper('report')->count($this->filter, $limit);
+        return $this->db->getMapper('report')->count($this->filter, $limit, $this->user->id());
     }
 
     /**

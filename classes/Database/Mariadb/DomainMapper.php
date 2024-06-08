@@ -220,7 +220,7 @@ class DomainMapper implements DomainMapperInterface
         try {
             $filter = [ 'domain' => $id ];
             $limit  = [ 'offset' => 0, 'count' => 0 ];
-            $r_count = $this->connector->getMapper('report')->count($filter, $limit);
+            $r_count = $this->connector->getMapper('report')->count($filter, $limit, 0);
             if ($r_count > 0) {
                 switch ($r_count) {
                     case 1:

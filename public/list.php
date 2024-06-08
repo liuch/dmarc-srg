@@ -74,8 +74,15 @@ if (Core::method() == 'GET') {
                     if (!$filter) {
                         $filter = [];
                     }
-                    $filter['status'] = 'unread';
-                    $uc = $list->setFilter($filter)->count();
+                    $status = $filter['status'] ?? '';
+                    if ($status === 'unread') {
+                        $uc = $tc;
+                    } elseif ($status === 'read') {
+                        $uc = 0;
+                    } else {
+                        $filter['status'] = 'unread';
+                        $uc = $list->setFilter($filter)->count();
+                    }
                 }
                 $res['count'] = [ 'total' => $tc, 'unread' => $uc ];
             }

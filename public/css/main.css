@@ -7,6 +7,7 @@
 		--color-fg-custom:    #666;
 		--color-fg-menu:      #333;
 		--color-bg-default:   #fff;
+		--color-bg-toolbar:   #f7f7f7;
 		--color-bg-header:    #eee;
 		--color-bg-title:     #ddd;
 		--color-bg-dialog:    #fff;
@@ -48,6 +49,7 @@
 		--color-fg-custom:    #aaadbb;
 		--color-fg-menu:      #9ca6b1;
 		--color-bg-default:   #0d1117;
+		--color-bg-toolbar:   #11151e;
 		--color-bg-header:    #161b22;
 		--color-bg-title:     #262b32;
 		--color-bg-dialog:    #111a24;
@@ -113,7 +115,7 @@ button, select, textarea, input, .multiselect-wrapper, .multiselect-options {
 button, select, .multiselect-wrapper, .multiselect-options {
 	background-color: var(--color-bg-button);
 }
-button:hover, select:hover, button.toolbar:hover, .button:hover, multi-select:not([disabled]) .multiselect-wrapper:hover {
+button:hover, select:hover, .button:hover, multi-select:not([disabled]) .multiselect-wrapper:hover {
 	background-color: var(--color-bg-hover);
 }
 multi-select {
@@ -176,6 +178,9 @@ hr {
 }
 textarea.description {
 	height: 7em;
+}
+label>input:first-child {
+	margin-right: .7em;
 }
 .text {
 	line-height: 1.6;
@@ -325,11 +330,6 @@ textarea.description {
 		font-weight: normal;
 	}
 }
-@media screen and (max-width:60em) {
-	.report-list .table-cell.report-id {
-		display: none;
-	}
-}
 .bottom-border {
 	border-bottom: 1px solid var(--color-br-strong);
 }
@@ -377,18 +377,23 @@ textarea.description {
 	margin: 0.3rem;
 	font-style: normal;
 }
-.main-table-container, .subtable {
+.page-container, .subtable {
 	border: 1px solid var(--color-br-weak);
 	border-radius: 7px;
 }
-.main-table-container {
+.page-container {
+	display: flex;
+	flex-direction: column;
 	position: fixed;
-	overflow-x: hidden;
-	overflow-y: auto;
 	top: 6rem;
-	left: 0.5rem;
-	right: 0.5rem;
-	bottom: 0.5rem;
+	left: .5rem;
+	right: .5em;
+	bottom: .5em;
+	overflow: hidden;
+}
+.table-wrapper {
+	flex: 1;
+	overflow: hidden auto;
 }
 .main-table {
 	color: var(--color-fg-muted);
@@ -402,6 +407,15 @@ textarea.description {
 .main-table .table-header {
 	position: sticky;
 	top: 0;
+}
+.toolbar {
+	background-color: var(--color-bg-toolbar);
+}
+.toolbar, .toolbar button {
+	color: var(--color-fg-muted);
+}
+.toolbar span {
+	font-size: 85%;
 }
 .main-table .table-header .table-cell {
 	position: relative;
@@ -713,7 +727,7 @@ textarea.description {
 button.options-button {
 	color: inherit;
 }
-.options-button:hover, .options-button.active {
+.options-button:hover, .options-button.active, .toolbar button.active {
 	color: #080;
 }
 .options-block h2 {
@@ -771,7 +785,7 @@ button.options-button {
 	text-align: center;
 	background-color: var(--color-nt-warning);
 }
-button.toolbar {
+.toolbar-btn {
 	position: absolute;
 	right: 0;
 	padding: .1em .5em;
@@ -780,7 +794,7 @@ button.toolbar {
 	background-color: unset;
 	cursor: pointer;
 }
-button.toolbar::before, button.toolbar::after {
+.toolbar-btn::before, .toolbar-btn::after {
 	content: "";
 	position: absolute;
 	box-sizing: border-box;
@@ -789,12 +803,12 @@ button.toolbar::before, button.toolbar::after {
 	border-top: 1px solid var(--color-br-input);
 	border-bottom: 1px solid var(--color-br-input);
 }
-button.toolbar::before {
+.toolbar-btn::before {
 	top: 0;
 	left: 0;
 	border-left: 1px solid var(--color-br-input);
 }
-button.toolbar::after {
+.toolbar-btn::after {
 	right: 0;
 	bottom: 0;
 	border-right: 1px solid var(--color-br-input);

@@ -20,6 +20,7 @@
 
 class ReportList {
 	constructor() {
+		this._page = null;
 		this._table = null;
 		this._scroll = null;
 		this._filter = null;
@@ -27,19 +28,32 @@ class ReportList {
 		this._element = document.getElementById("main-block");
 		this._element2 = document.getElementById("detail-block");
 		this._fetching = false;
-		this._settings_btn = null;
+		this._filter_btn = null;
+		this._rep_counter = null;
+		this._cnt_updated = 0;
 		this._settings_dlg = null;
+		this._column_list = [
+			{ name: "domain", content: "Domain" },
+			{ name: "begin_time", content: "Date", sortable: true },
+			{ name: "organization", content: "Reporting Organization" },
+			{ name: "report_id", content: "Report ID", class: "report-id" },
+			{ name: "messages", content: "Messages" },
+			{ name: "result", content: "Result" },
+			{ name: "disposition", content: "Disposition" },
+			{ name: "quarantined", content: "Quarantined" },
+			{ name: "rejected", content: "Rejected" }
+		];
 	}
 
 	display() {
-		this._gen_settings_button();
-		this._gen_content_container();
-		this._gen_table();
-		this._scroll.appendChild(this._table.element());
-		this._element.appendChild(this._scroll);
+		this._make_page_container();
+		this._make_scroll_container();
+		this._make_table();
+		this._scroll.append(this._table.element());
+		this._page.append(this._make_toolbar().element(), this._scroll);
+		this._element.append(this._page);
 		this._ensure_report_widget();
 		this._element2.appendChild(ReportWidget.instance().element());
-		this._ensure_settins_button();
 		ReportWidget.instance().hide();
 		this._table.focus();
 	}
@@ -55,12 +69,12 @@ class ReportList {
 	}
 
 	onpopstate() {
-		if (!this._scroll) {
+		if (!this._page) {
 			this.display();
 			this.update();
 		}
 		else {
-			if (!this._element.contains(this._scroll)) this._element.replaceChildren(this._scroll);
+			if (!this._element.contains(this._page)) this._element.replaceChildren(this._page);
 			const f = Common.getFilterFromURL(new URL(document.location), this._filter);
 			if (f !== undefined) {
 				this._filter = f;
@@ -70,17 +84,9 @@ class ReportList {
 				this._update_settings_button();
 			}
 		}
-		this._ensure_settins_button();
 		this._ensure_report_widget();
 		if (this._table) {
 			this._table.focus();
-		}
-	}
-
-	_ensure_settins_button() {
-		let title_el = document.querySelector("h1");
-		if (!title_el.contains(this._settings_btn)) {
-			title_el.appendChild(this._settings_btn);
 		}
 	}
 
@@ -93,45 +99,49 @@ class ReportList {
 		}
 	}
 
-	_gen_settings_button() {
-		if (!this._settings_btn) {
-			let btn = document.createElement("span");
-			btn.setAttribute("class", "options-button");
-			btn.appendChild(document.createTextNode("\u{2699}"));
-			let that = this;
-			btn.addEventListener("click", function(event) {
-				that._display_settings_dialog();
-				event.preventDefault();
-			});
-			this._settings_btn = btn;
-		}
-	}
-
 	_update_settings_button() {
-		if (this._settings_btn) {
-			if (this._filter)
-				this._settings_btn.classList.add("active");
-			else {
-				this._settings_btn.classList.remove("active");
-			}
+		if (this._filter_btn) {
+			this._filter_btn.element().classList[ this._filter ? "add" : "remove" ]("active");
 		}
 	}
 
-	_gen_content_container() {
-		let that = this;
-		let el = document.createElement("div");
-		el.setAttribute("class", "main-table-container");
-		el.addEventListener("scroll", function() {
-			if (!that._fetching && el.scrollTop + el.clientHeight >= el.scrollHeight * 0.95) {
-				if (that._table.frames_count() === 0 || that._table.more()) {
-					that._fetch_list();
+	_make_page_container() {
+		const el = document.createElement("div");
+		el.classList.add("page-container");
+		this._page = el;
+	}
+
+	_make_scroll_container() {
+		const el = document.createElement("div");
+		el.classList.add("table-wrapper");
+		el.addEventListener("scroll", event => {
+			if (!this._fetching && el.scrollTop + el.clientHeight >= el.scrollHeight * 0.95) {
+				if (this._table.frames_count() === 0 || this._table.more()) {
+					this._fetch_list();
 				}
 			}
 		});
 		this._scroll = el;
 	}
 
-	_gen_table() {
+	_make_toolbar() {
+		const tb = new Toolbar();
+		this._filter_btn = new ToolbarButton({
+			title:   "Filter",
+			content: ToolbarButton.filterIcon(),
+			onclick: () => this._display_settings_dialog()
+		});
+		const cb = new ToolbarButton({
+			title:   "Columns",
+			content: ToolbarButton.columnsIcon(),
+			onclick: () => this._display_columns_dialog()
+		});
+		this._rep_counter = new ReportCounter();
+		tb.appendItem(this._filter_btn).appendItem(cb).appendSpacer().appendItem(this._rep_counter.element());
+		return tb;
+	}
+
+	_make_table() {
 		this._table = new ReportTable({
 			class:   "main-table report-list small-cards",
 			onclick: function(row) {
@@ -150,23 +160,13 @@ class ReportList {
 				scroll_to_element(el, this._scroll);
 			}.bind(this)
 		});
-		[
-			{ content: "Domain" },
-			{ content: "Date", sortable: true, name: "begin_time" },
-			{ content: "Reporting Organization" },
-			{ content: "Report ID", class: "report-id" },
-			{ content: "Messages" },
-			{ content: "Result" },
-			{ content: "Disposition" },
-			{ content: "Quarantined" },
-			{ content: "Rejected" }
-		].forEach(col => {
+		this._column_list.forEach(col => {
 			let c = this._table.add_column(col);
 			if (c.name() === this._sort.column) {
 				c.sort(this._sort.direction);
 			}
 		});
-		this._table.set_columns_visible([ 0, 1, 2, 4, 5, 6 ]);
+		this._get_visible_columns(true);
 	}
 
 	_update_table() {
@@ -197,17 +197,17 @@ class ReportList {
 			url.searchParams.set("domain", data.domain);
 			url.searchParams.set("report_id", data.report_id);
 			window.history.pushState({ from: "list" }, "", url);
-			let that = this;
 			let filter = this._filter && {
 				dkim: this._filter.dkim || "",
 				spf: this._filter.spf || "",
 				disposition: this._filter.disposition || ""
 			} || null;
-			ReportWidget.instance().show_report(data.domain, data.time, data.org, data.report_id, filter).then(function() {
-				if (!that._table.seen(id)) {
-					that._table.seen(id, true);
+			ReportWidget.instance().show_report(data.domain, data.time, data.org, data.report_id, filter).then(() => {
+				if (!this._table.seen(id)) {
+					this._table.seen(id, true);
+					this._rep_counter.decrease();
 				}
-			}).catch(function(err) {
+			}).catch(err => {
 				Common.displayError(err);
 				if (err.error_code && err.error_code === -2) {
 					LoginDialog.start();
@@ -221,11 +221,16 @@ class ReportList {
 	_fetch_list() {
 		this._table.display_status("wait");
 		this._fetching = true;
+		const qlist = [ "reports" ];
+		const pos = this._table.last_row_index() + 1;
+		const now =  Date.now();
+		if (!pos  || now - this._cnt_updated >= 60000) {
+			qlist.push("count");
+			this._cnt_updated = now;
+		}
 
-		let pos = this._table.last_row_index() + 1;
-
-		let uparams = new URLSearchParams();
-		uparams.set("list", "reports");
+		const uparams = new URLSearchParams();
+		uparams.set("list", qlist.join(","));
 		uparams.set("position", pos);
 		uparams.set("order", this._sort.column);
 		uparams.set("direction", this._sort.direction);
@@ -235,31 +240,31 @@ class ReportList {
 			}
 		}
 
-		let that = this;
-		return window.fetch("list.php?" + uparams.toString(), {
+		return window.fetch("list.php?" + uparams, {
 			method: "GET",
 			cache: "no-store",
 			headers: HTTP_HEADERS,
 			credentials: "same-origin"
-		}).then(function(resp) {
+		}).then(resp => {
 			if (!resp.ok)
 				throw new Error("Failed to fetch the report list");
 			return resp.json();
-		}).then(function(data) {
-			that._table.display_status(null);
+		}).then(data => {
+			this._table.display_status(null);
 			Common.checkResult(data);
 			let d = { more: data.more };
-			d.rows = data.reports.map(function(it) {
-				return new ReportTableRow(that._make_row_data(it));
+			d.rows = data.reports.map(it => {
+				return new ReportTableRow(this._make_row_data(it));
 			});
 			let fr = new ITableFrame(d, pos);
-			that._table.add_frame(fr);
+			this._table.add_frame(fr);
+			if (data.count) this._rep_counter.set(data.count);
 			return fr;
-		}).catch(function(err) {
+		}).catch(err => {
 			Common.displayError(err);
-			that._table.display_status("error");
-		}).finally(function() {
-			that._fetching = false;
+			this._table.display_status("error");
+		}).finally(() => {
+			this._fetching = false;
 		});
 	}
 
@@ -294,32 +299,108 @@ class ReportList {
 	_display_settings_dialog() {
 		let dlg = this._settings_dlg;
 		if (!this._settings_dlg) {
-			dlg = new ReportListSettingsDialog({ filter:  this._filter });
+			dlg = new ReportListFilterDialog({ filter:  this._filter });
 			this._settings_dlg = dlg;
 		}
-		this._element.appendChild(dlg.element());
-		dlg.show().then(function(d) {
-			if (d) {
-				let url = new URL(document.location.href);
-				url.searchParams.delete("filter[]");
-				for (let k in d) {
-					if (d[k]) {
-						url.searchParams.append("filter[]", k + ":" + d[k]);
-					}
-				}
-				window.history.replaceState(null, "", url);
-				const f = Common.getFilterFromURL(url, this._filter);
-				if (f !== undefined) {
-					this._filter = f;
-					Status.instance().reset();
-					Status.instance().update({ page: "list" });
-					this._update_table();
-					this._update_settings_button();
-				}
+		this._element.append(dlg.element());
+		dlg.show().then(d => {
+			if (!d) return;
+			const url = new URL(document.location);
+			url.searchParams.delete("filter[]");
+			for (const k in d) {
+				if (d[k]) url.searchParams.append("filter[]", `${k}:${d[k]}`);
 			}
-		}.bind(this)).finally(function() {
+			window.history.replaceState(null, "", url);
+			const f = Common.getFilterFromURL(url, this._filter);
+			if (f !== undefined) {
+				this._filter = f;
+				Status.instance().reset();
+				Status.instance().update({ page: "list" });
+				this._update_table();
+				this._update_settings_button();
+			}
+
+		}).finally(() => {
 			this._table.focus();
-		}.bind(this));
+		});
+	}
+
+	_get_visible_columns(update) {
+		let names = null;
+		try {
+			names = JSON.parse(window.localStorage.getItem("reportListColumns"));
+		} catch (err) {
+		}
+		let res = null;
+		if (Array.isArray(names)) {
+			res = names.filter(name => this._column_list.find(c => (c.name === name)));
+		}
+		if (!res || !res.length) res = [ "domain", "begin_time", "organization", "messages", "result", "disposition" ];
+		if (update) {
+			this._table.set_columns_visible(this._column_list.reduce((list, col, idx) => {
+				if (res.includes(col.name)) list.push(idx);
+				return list;
+			}, []));
+		}
+		return res;
+	}
+
+	_save_visible_columns (columns) {
+		try {
+			window.localStorage.setItem("reportListColumns", JSON.stringify(columns));
+		} catch (err) {
+			Notification.add({ text: "Unable to save the column set", type: "error" });
+		}
+	}
+
+	_display_columns_dialog() {
+		const dlg = new ReportListColumnsDialog({ columns: this._column_list, checked: this._get_visible_columns(false) });
+		this._element.append(dlg.element())
+		dlg.show().then(d => {
+			if (!d) return;
+			this._save_visible_columns(d);
+			this._get_visible_columns(true);
+		}).finally(() => {
+			dlg.element().remove();
+			this._table.focus();
+		});
+	}
+}
+
+class ReportCounter {
+	constructor() {
+		this._total = null;
+		this._unread = null;
+		this._element = null;
+		this._total_el = null;
+		this._unread_el = null;
+	}
+
+	set(data) {
+		this._total = data.total;
+		this._unread = data.unread;
+		if (this._element) this._update_element();
+	}
+
+	decrease() {
+		--this._unread;
+		if (this._element) this._update_element();
+	}
+
+	element() {
+		if (!this._element) {
+			this._element = document.createElement("span");
+			this._total_el = document.createElement("strong");
+			this._unread_el = document.createElement("strong");
+			this._update_element();
+			this._element.append("Unread: ", this._unread_el, " of ", this._total_el);
+		}
+		return this._element;
+	}
+
+	_update_element() {
+		this._total_el.textContent = this._total !== null ? this._total : '-';
+		this._unread_el.textContent = this._unread !== null ? this._unread : '-';
 	}
 }
 
@@ -413,9 +494,9 @@ class FailsColumn extends ColoredIntColumn {
 	}
 }
 
-class ReportListSettingsDialog extends ReportFilterDialog {
+class ReportListFilterDialog extends ReportFilterDialog {
 	constructor(params) {
-		params.title = "List display settings";
+		params.title = "Report list filter";
 		params.item_list = [ "domain", "month", "organization", "dkim", "spf", "disposition", "status" ];
 		super(params);
 	}
@@ -444,5 +525,50 @@ class ReportListSettingsDialog extends ReportFilterDialog {
 		}).finally(function() {
 			that._content.querySelector(".wait-message").remove();
 		});
+	}
+}
+
+class ReportListColumnsDialog extends ModalDialog {
+	constructor(params) {
+		super({ title: "Columns", buttons: [ "apply", "close" ] });
+		this._columns = params.columns;
+		this._checked = params.checked;
+	}
+
+	element() {
+		if (!this._element) {
+			super.element();
+			const fs = document.createElement("fieldset");
+			this._content.replaceWith(fs);
+			fs.classList.add("vertical-content", "round-border");
+			fs.appendChild(document.createElement("legend")).textContent = "Check visible columns";
+			this._columns.forEach(ci => {
+				fs.append(this._make_column_checkbox(ci.name, ci.content, this._checked.includes(ci.name)));
+			});
+			fs.addEventListener("change", event => {
+				this._buttons[1].disabled = !fs.querySelector("input[type=checkbox]:checked");
+			});
+			fs.dispatchEvent(new Event("change"));
+			this._content = fs;
+		}
+		return this._element;
+	}
+
+	_submit() {
+		this._result = [];
+		for (const chb of this._content.querySelectorAll("input[type=checkbox]")) {
+			if (chb.checked) this._result.push(chb.name);
+		}
+		this.hide();
+	}
+
+	_make_column_checkbox(name, title, checked) {
+		const lb = document.createElement("label");
+		const cb = lb.appendChild(document.createElement("input"));
+		cb.type = "checkbox";
+		cb.name = name;
+		if (checked) cb.checked = true;
+		lb.append(title);
+		return lb;
 	}
 }
