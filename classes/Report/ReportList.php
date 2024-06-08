@@ -106,9 +106,9 @@ class ReportList
      * @param int $field     The field to sort by. Currently only ORDER_BEGIN_TIME is available.
      * @param int $direction The sorting direction. ORDER_ASCENT or ORDER_DESCENT must be used here.
      *
-     * @return void
+     * @return self
      */
-    public function setOrder(int $field, int $direction): void
+    public function setOrder(int $field, int $direction)
     {
         $this->order = null;
         if ($field > self::ORDER_NONE && $field < self::ORDER_ASCENT) {
@@ -122,6 +122,7 @@ class ReportList
         } else {
             $this->resetOrderParams();
         }
+        return $this;
     }
 
     /**
@@ -129,15 +130,16 @@ class ReportList
      *
      * @param int $num Maximum number of records in the list
      *
-     * @return void
+     * @return self
      */
-    public function setMaxCount(int $num): void
+    public function setMaxCount(int $num)
     {
         if ($num > 0) {
             $this->limit = $num;
         } else {
             $this->limit = 0;
         }
+        return $this;
     }
 
     /**
@@ -153,11 +155,12 @@ class ReportList
      *                      'status'       => string, 'read' or 'unread'
      *                      Note! 'dkim', 'spf' and 'disposition' do not affect the delete and count methods
      *
-     * @return void
+     * @return self
      */
-    public function setFilter(array $filter): void
+    public function setFilter(array $filter)
     {
         $this->filter = $filter;
+        return $this;
     }
 
     /**
