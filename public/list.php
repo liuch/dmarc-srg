@@ -36,6 +36,7 @@ if (Core::method() == 'GET') {
 
             $lst = explode(',', $_GET['list']);
             $res = [];
+            $first_page = false;
             if (array_search('reports', $lst) !== false) {
                 $pos = isset($_GET['position']) ? intval($_GET['position']) : 0;
                 $dir = isset($_GET['direction']) ? $_GET['direction'] : 'ascent';
@@ -51,6 +52,32 @@ if (Core::method() == 'GET') {
                     ReportList::ORDER_BEGIN_TIME : ReportList::ORDER_NONE;
                 $list->setOrder($n_order, $n_dir);
                 $res = $list->getList($pos);
+                $first_page = ($pos === 0);
+            }
+            if (array_search('count', $lst) !== false) {
+                if ($first_page && !$res['more'] && intval($_GET['position'] ?? 0) === 0) {
+                    $tc = 0;
+                    $uc = 0;
+                    foreach ($res['reports'] as $r) {
+                        if (!$r['seen']) {
+                            ++$uc;
+                        }
+                        ++$tc;
+                    }
+                } else {
+                    $list = new ReportList($core->user());
+                    $filter = Common::getFilter();
+                    if ($filter) {
+                        $list->setFilter($filter);
+                    }
+                    $tc = $list->count();
+                    if (!$filter) {
+                        $filter = [];
+                    }
+                    $filter['status'] = 'unread';
+                    $uc = $list->setFilter($filter)->count();
+                }
+                $res['count'] = [ 'total' => $tc, 'unread' => $uc ];
             }
             if (array_search('filters', $lst) !== false) {
                 $res['filters'] = (new ReportList($core->user()))->getFilterList();
