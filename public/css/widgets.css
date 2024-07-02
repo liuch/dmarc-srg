@@ -116,12 +116,10 @@
 	white-space: nowrap;
 }
 .dialog .title-text {
-	display: flex;
 	margin: auto;
 	padding-left: 0.7em;
 }
 .dialog .close-btn {
-	display: flex;
 	margin-right: 0.1em;
 	color: var(--color-fg-default);
 	font-size: 1.2rem;
