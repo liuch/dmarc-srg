@@ -32,24 +32,18 @@ function remove_all_children(el) {
 }
 
 function set_wait_status(el, text) {
-	let wait = document.createElement("div");
-	wait.setAttribute("class", "wait-message");
-	wait.appendChild(document.createTextNode(text || "Getting data..."));
-	if (el) {
-		remove_all_children(el);
-		el.appendChild(wait);
-	}
+	const wait = document.createElement("div");
+	wait.classList.add("wait-message");
+	wait.append(text || "Getting data...");
+	if (el) el.replaceChildren(wait);
 	return wait;
 }
 
 function set_error_status(el, text) {
-	let err = document.createElement("div");
-	err.setAttribute("class", "error-message");
-	err.appendChild(document.createTextNode(text || "Error!"));
-	if (el) {
-		remove_all_children(el);
-		el.appendChild(err);
-	}
+	const err = document.createElement("div");
+	err.classList.add("error-message");
+	err.append(text || "Error!");
+	if (el) el.replaceChildren(err);
 	return err;
 }
 

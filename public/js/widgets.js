@@ -225,7 +225,7 @@ class ITable {
 
 		this.element();
 		this._status = document.createElement("div");
-		this._status.classList.add("table-row", "colspanned");
+		this._status.classList.add("table-row", "colspanned", "noninteractive");
 		const tc1 = this._status.appendChild(document.createElement("div"));
 		tc1.classList.add("table-cell");
 		const tc2 = this._status.appendChild(document.createElement("div"));
@@ -233,18 +233,16 @@ class ITable {
 		tc2.textContent = "\u00A0"; // Non breaking space
 		if (status === "wait") {
 			set_wait_status(tc1);
-		}
-		else {
+		} else {
 			this._body.replaceChildren();
 			if (status === "nodata") {
-				this._status.classList.add("nodata");
-				tc1.appendChild(document.createTextNode(text || "No data"));
-			}
-			else {
+				tc1.append(text || "No data");
+			} else {
 				set_error_status(tc1, text);
 			}
 		}
-		this._body.appendChild(this._status);
+		this._status.classList.add("nodata");
+		this._body.append(this._status);
 	}
 
 	last_row_index() {

@@ -375,6 +375,7 @@ textarea.description {
 .error-message {
 	color: var(--color-st-txtred);
 	margin: 0.3rem;
+	font-style: normal;
 }
 .main-table-container, .subtable {
 	border: 1px solid var(--color-br-weak);
@@ -409,10 +410,10 @@ textarea.description {
 .main-table .table-cell {
 	padding: .3em 1em;
 }
-.main-table .table-body .table-row:not(.nodata) {
+.main-table .table-body .table-row:not(.noninteractive) {
 	cursor: pointer;
 }
-.main-table .table-body .table-row:not(.nodata):hover, .main-table .table-row.virtual-item:hover .table-cell {
+.main-table .table-body .table-row:not(.noninteractive):hover, .main-table .table-row.virtual-item:hover .table-cell {
 	background-color: var(--color-bg-selected);
 }
 .focused {
