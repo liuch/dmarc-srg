@@ -275,8 +275,7 @@ class ITable {
 
 	clear() {
 		this._frames = [];
-		if (this._body)
-			remove_all_children(this._body);
+		if (this._body) this._body.replaceChildren();
 		this._focused_row = null;
 		this._selected_rows = [];
 	}
@@ -1058,12 +1057,11 @@ class ReportFilterDialog extends ModalDialog {
 	}
 
 	_update_select_element(sl, d, v) {
-		remove_all_children(sl);
 		let ao = document.createElement("option");
 		ao.setAttribute("value", "");
 		ao.setAttribute("selected", "selected");
 		ao.appendChild(document.createTextNode("Any"));
-		sl.appendChild(ao);
+		sl.replaceChildren(ao);
 		let v2 = "";
 		if (d) {
 			let op = null;

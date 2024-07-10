@@ -26,11 +26,6 @@ const HTTP_HEADERS_POST = {
 	"Content-Type": "application/json"
 };
 
-function remove_all_children(el) {
-	while (el.firstChild)
-		el.lastChild.remove();
-}
-
 function set_wait_status(el, text) {
 	const wait = document.createElement("div");
 	wait.classList.add("wait-message");

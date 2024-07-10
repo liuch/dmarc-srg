@@ -271,11 +271,8 @@ class DropdownListBox {
 	}
 
 	_update_element() {
-		if (this._element.children.length != 2) {
-			remove_all_children(this._element);
-			this._element.appendChild(this._content_container());
-			this._element.appendChild(this._list_container());
-		}
+		if (this._element.children.length != 2)
+			this._element.replaceChildren(this._content_container(), this._list_container());
 	}
 
 	_content_container() {

@@ -229,32 +229,20 @@ class Files {
 
 	_display_files_info() {
 		this._fcount_info = document.createElement("div");
-		this._fcount_info.setAttribute("class", "state-gray");
-		let dv = document.createElement("div");
-		dv.setAttribute("class", "state-text");
-		dv.appendChild(
-			document.createTextNode(
-				"You can upload not more than " + this._limits.upload_max_file_count + " files."
-			)
-		);
-		this._fcount_info.appendChild(dv);
+		this._fcount_info.classList.add("state-gray");
+		let dv = this._fcount_info.appendChild(document.createElement("div"));
+		dv.classList.add("state-text");
+		dv.append("You can upload not more than " + this._limits.upload_max_file_count + " files.");
 
 		this._fsize_info = document.createElement("div");
-		this._fsize_info.setAttribute("class", "state-gray");
-		dv = document.createElement("div");
-		dv.setAttribute("class", "state-text");
-		dv.appendChild(
-			document.createTextNode(
-				"You can upload a file with no more than " + bytes2size(this._limits.upload_max_file_size) + "."
-			)
-		);
-		this._fsize_info.appendChild(dv);
+		this._fsize_info.classList.add("state-gray");
+		dv = this._fsize_info.appendChild(document.createElement("div"));
+		dv.classList.add("state-text");
+		dv.append("You can upload a file with no more than " + bytes2size(this._limits.upload_max_file_size) + ".");
 
-		dv = document.createElement("div");
-		dv.setAttribute("class", "info-block");
-		dv.appendChild(this._fcount_info);
-		dv.appendChild(this._fsize_info);
-		this._fieldset1.appendChild(dv);
+		dv = this._fieldset1.appendChild(document.createElement("div"));
+		dv.classList.add("info-block");
+		dv.append(this._fcount_info, this._fsize_info);
 	}
 
 	_update_directory_loading_element(dir) {

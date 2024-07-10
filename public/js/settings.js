@@ -115,7 +115,10 @@ class Settings {
 		let rd = { cells: [], userdata: d.name };
 		rd.cells.push({ content: d.name, class: "setting-name", label: "Name " });
 		rd.cells.push({ content: d.value, class: "setting-value", label: "Value " });
-		rd.cells.push({ content: Settings._descriptions_short[d.name] || Settings._descriptions[d.name] || "No description", label: "Description " });
+		rd.cells.push({
+			content: Settings._descriptions_short[d.name] || Settings._descriptions[d.name] || "No description",
+			label: "Description "
+		});
 		if (d.value !== d.default) {
 			rd.class = "custom-value";
 		}

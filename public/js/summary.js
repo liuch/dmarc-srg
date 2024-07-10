@@ -154,7 +154,7 @@ class Summary {
 			url.searchParams.set("period", period);
 			url.searchParams.set("format", d.format);
 			window.history.replaceState(null, "", url.toString());
-			remove_all_children(this._element);
+			this._element.replaceChildren();
 			this.display();
 			this.update();
 		}).finally(() => {
@@ -164,7 +164,7 @@ class Summary {
 	}
 
 	_fetch_report() {
-		remove_all_children(this._report_block);
+		this._report_block.replaceChildren();
 		if (!this._options_data) {
 			this._report_block.appendChild(document.createTextNode("Report options are not selected"));
 			return;
@@ -517,9 +517,10 @@ class SummaryReport {
 			table.appendChild(document.createElement("caption")).textContent = "Total records: " + data.sources.length;
 			const thead = document.createElement("thead");
 			table.appendChild(thead);
-			thead.append(SummaryReport.makeHeaderRow(
-				[ [ "IP address", 0, 2 ], [ "Email volume", 0, 2 ], [ "Partial aligned", 2, 0 ], [ "Not aligned", 0, 2 ], [ "Disposition", 2, 0 ] ]
-			));
+			thead.append(SummaryReport.makeHeaderRow([
+				[ "IP address", 0, 2 ],  [ "Email volume", 0, 2 ], [ "Partial aligned", 2, 0 ],
+				[ "Not aligned", 0, 2 ], [ "Disposition", 2, 0 ]
+			]));
 			thead.append(SummaryReport.makeHeaderRow(
 				[ [ "SPF only" ], [ "DKIM only" ], [ "quar+rej" ], [ "fail rate" ] ]
 			));
@@ -545,12 +546,13 @@ class SummaryReport {
 
 			table.appendChild(document.createElement("caption")).textContent = "Total records: " + data.organizations.length;
 			const thead = table.appendChild(document.createElement("thead"));
-			thead.append(SummaryReport.makeHeaderRow(
-				[ [ "Name", 0, 2 ], [ "Volume", 2, 0 ], [ "Partial aligned", 2, 0 ], [ "Not aligned", 0, 2 ], [ "Disposition", 2, 0 ] ]
-			));
-			thead.append(SummaryReport.makeHeaderRow(
-				[ [ "reports" ], [ "emails" ], [ "SPF only" ], [ "DKIM only" ], [ "quar+rej" ], [ "fail rate" ] ]
-			));
+			thead.append(SummaryReport.makeHeaderRow([
+				[ "Name", 0, 2 ], [ "Volume", 2, 0 ], [ "Partial aligned", 2, 0 ],
+				[ "Not aligned", 0, 2 ], [ "Disposition", 2, 0 ]
+			]));
+			thead.append(SummaryReport.makeHeaderRow([
+				[ "reports" ], [ "emails" ], [ "SPF only" ], [ "DKIM only" ], [ "quar+rej" ], [ "fail rate" ]
+			]));
 			const tbody = table.appendChild(document.createElement("tbody"));
 			data.organizations.forEach(org => {
 				const tr = tbody.appendChild(document.createElement("tr"));

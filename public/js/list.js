@@ -60,10 +60,7 @@ class ReportList {
 			this.update();
 		}
 		else {
-			if (!this._element.contains(this._scroll)) {
-				remove_all_children(this._element);
-				this._element.appendChild(this._scroll);
-			}
+			if (!this._element.contains(this._scroll)) this._element.replaceChildren(this._scroll);
 			const f = Common.getFilterFromURL(new URL(document.location), this._filter);
 			if (f !== undefined) {
 				this._filter = f;
@@ -275,7 +272,11 @@ class ReportList {
 		rd.cells.push({ content: d.domain, label: "Domain" });
 		let d1 = new Date(d.date.begin);
 		let d2 = new Date(d.date.end);
-		rd.cells.push({ content: date_range_to_string(d1, d2), title: d1.toUIString(true) + " - " + d2.toUIString(true), label: "Date" });
+		rd.cells.push({
+			content: date_range_to_string(d1, d2),
+			title: d1.toUIString(true) + " - " + d2.toUIString(true),
+			label: "Date"
+		});
 		rd.cells.push({ content: d.org_name, label: "Reporting Organization" });
 		rd.cells.push({ content: d.report_id, class: "report-id" });
 		rd.cells.push({ content: d.messages, label: "Messages" });

@@ -297,8 +297,8 @@ Router._update_user = function() {
 }
 
 Router._clear_data = function() {
-	remove_all_children(document.getElementById("main-block"));
-	remove_all_children(document.getElementById("detail-block"));
+	document.getElementById("main-block").replaceChildren();
+	document.getElementById("detail-block").replaceChildren();
 };
 
 Router._modules = {

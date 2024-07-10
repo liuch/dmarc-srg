@@ -48,8 +48,8 @@ class ReportWidget {
 
 	oncleardata() {
 		if (!this._element || !document.contains(this._element)) {
-			remove_all_children(document.getElementById("main-block"));
-			remove_all_children(document.getElementById("detail-block"));
+			document.getElementById("main-block").replaceChildren();
+			document.getElementById("detail-block").replaceChildren();
 		}
 	}
 
@@ -77,8 +77,7 @@ class ReportWidget {
 			let rep = new Report(domain, report_time, org, report_id, filter);
 			rep.fetch().then(function() {
 				if (that._rep_id === report_id + report_time) {
-					remove_all_children(that._cn_element);
-					that._cn_element.appendChild(rep.element());
+					that._cn_element.replaceChildren(rep.element());
 					rep.set_value("seen", true);
 				}
 				resolve();
@@ -528,7 +527,7 @@ class Report {
 			ea.push(el);
 		}
 		let bt = this._filter_btn.childNodes[1];
-		remove_all_children(bt);
+		bt.replaceChildren();
 		if (ea.length > 0) {
 			for (let i = 0; i < ea.length; ++i) {
 				if (i) bt.append(", ");
