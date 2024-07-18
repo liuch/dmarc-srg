@@ -118,7 +118,7 @@ class Core
                         throw new ForbiddenException('The user session has been broken!');
                     }
                     $this->user = new AdminUser($this);
-                } else {
+                } elseif ($this->config('users/user_management', false)) {
                     $this->user = new DbUser($_SESSION['user']);
                     try {
                         $cts = (new DateTime())->getTimestamp();
@@ -140,6 +140,8 @@ class Core
                         }
                         throw $e;
                     }
+                } else {
+                    $this->destroySession();
                 }
             }
         } else {
