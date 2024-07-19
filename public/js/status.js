@@ -144,7 +144,7 @@ class Status {
 		let failed = total - passed - forwarded;
 		this._set_element_data(
 			"processed",
-			(total === -1 || total === undefined) && "?" || this._formatted_number(total),
+			(total === -1 || total === undefined) && "?" || Common.abbrNumber(total, 10000),
 			total !== -1 && "state-blue" || null
 		);
 		this._set_element_data(
@@ -171,23 +171,6 @@ class Status {
 				el.removeAttribute("title");
 			}
 		}
-	}
-
-	_formatted_number(val) {
-		if (val < 10000) return val.toLocaleString();
-		let f = 1;
-		let u = "";
-		if (val >= 1000000000) {
-			f = 1000000000;
-			u = "G";
-		} else if (val >= 1000000) {
-			f = 1000000;
-			u = "M";
-		} else if (val >= 1000) {
-			f = 1000;
-			u = "K";
-		}
-		return (Math.round((val / f + Number.EPSILON) * 10) / 10).toLocaleString() + u;
 	}
 
 	_formatted_statistic(val, total) {

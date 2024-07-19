@@ -156,6 +156,26 @@ class Common {
 	}
 
 	/**
+	 * Reduces large numbers with the addition of postfixes K, M, B.
+	 */
+	static abbrNumber(val, min) {
+		if (min !== undefined && val < min) return val.toLocaleString();
+		let f = 1;
+		let u = "";
+		if (val >= 1e9) {
+			f = 1e9;
+			u = "B";
+		} else if (val >= 1e6) {
+			f = 1e6;
+			u = "M";
+		} else if (val >= 1e3) {
+			f = 1e3;
+			u = "K";
+		}
+		return (Math.round((val / f + Number.EPSILON) * 10) / 10).toLocaleString() + u;
+	}
+
+	/**
 	 * Gets the filter value as an object from the passed url, compares it to the passed cfilter,
 	 * returns the new value, or undefined if the filter has not changed.
 	 */

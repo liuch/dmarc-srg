@@ -284,7 +284,7 @@ class ReportList {
 		});
 		rd.cells.push({ content: d.org_name, label: "Reporting Organization" });
 		rd.cells.push({ content: d.report_id, class: "report-id" });
-		rd.cells.push({ content: d.messages, label: "Messages" });
+		rd.cells.push({ content: Common.abbrNumber(d.messages, 1e6), label: "Messages" });
 		rd.cells.push(new ResultColumn({ dkim_align: d.dkim_align, spf_align: d.spf_align }, { label: "Result" }));
 		rd.cells.push(new DispositionColumn({
 			none: d.messages - d.rejected - d.quarantined,
@@ -468,9 +468,9 @@ class DispositionColumn extends ITableCell {
 		if (target === "dom") {
 			const fr = document.createDocumentFragment();
 			const d = this._content;
-			if (d.none) fr.append(create_report_result_element("None", d.none, true, "pass"));
-			if (d.quarantined) fr.append(create_report_result_element("Quar", d.quarantined, true, "fail"));
-			if (d.rejected) fr.append(create_report_result_element("Rej", d.rejected, true, "fail"));
+			if (d.none) fr.append(create_report_result_element("None", Common.abbrNumber(d.none), true, "pass"));
+			if (d.quarantined) fr.append(create_report_result_element("Quar", Common.abbrNumber(d.quarantined), true, "fail"));
+			if (d.rejected) fr.append(create_report_result_element("Rej", Common.abbrNumber(d.rejected), true, "fail"));
 			return fr;
 		}
 		return super.value(target);
@@ -482,7 +482,7 @@ class ColoredIntColumn extends ITableCell {
 		const el = document.createElement("span");
 		factor *= value;
 		if (factor) el.classList.add("report-result-" + (factor > 0 ? "pass" : "fail"));
-		el.append(value);
+		el.append(Common.abbrNumber(value, 1e6));
 		return el;
 	}
 }
