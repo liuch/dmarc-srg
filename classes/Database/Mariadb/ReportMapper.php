@@ -302,7 +302,10 @@ class ReportMapper implements ReportMapperInterface
         try {
             $st = $db->prepare(
                 'SELECT `org`, `begin_time`, `end_time`, `fqdn`, `external_id`, `seen`, SUM(`rcount`) AS `rcount`,'
-                . ' MIN(`dkim_align`) AS `dkim_align`, MIN(`spf_align`) AS `spf_align`,'
+                . ' SUM(IF(`dkim_align` = 0, `rcount`, 0)) AS `dkim_align_fail`,'
+                . ' SUM(IF(`dkim_align` = 1, `rcount`, 0)) AS `dkim_align_unknown`,'
+                . ' SUM(IF(`spf_align` = 0, `rcount`, 0)) AS `spf_align_fail`,'
+                . ' SUM(IF(`spf_align` = 1, `rcount`, 0)) AS `spf_align_unknown`,'
                 . ' SUM(IF(`disposition` = 0, `rcount`, 0)) AS `rejected`,'
                 . ' SUM(IF(`disposition` = 1, `rcount`, 0)) AS `quarantined`'
                 . ' FROM `' . $this->connector->tablePrefix('rptrecords')
@@ -316,20 +319,33 @@ class ReportMapper implements ReportMapperInterface
             $this->sqlBindValues($st, $f_data, $limit);
             $st->execute();
             while ($row = $st->fetch(\PDO::FETCH_NUM)) {
+                $messages  = intval($row[6]);
+                $dkim_fail = intval($row[7]);
+                $dkim_unkn = intval($row[8]);
+                $spf_fail  = intval($row[9]);
+                $spf_unkn  = intval($row[10]);
                 $list[] = [
                     'org_name'    => $row[0],
                     'date'        => [
-                        'begin' => new DateTime($row[1]),
-                        'end'   => new DateTime($row[2])
+                        'begin'   => new DateTime($row[1]),
+                        'end'     => new DateTime($row[2])
                     ],
                     'domain'      => $row[3],
                     'report_id'   => $row[4],
                     'seen'        => (bool) $row[5],
-                    'messages'    => intval($row[6]),
-                    'dkim_align'  => Common::$align_res[$row[7]],
-                    'spf_align'   => Common::$align_res[$row[8]],
-                    'rejected'    => intval($row[9]),
-                    'quarantined' => intval($row[10])
+                    'messages'    => $messages,
+                    'dkim_align'  => [
+                        'fail'    => $dkim_fail,
+                        'unknown' => $dkim_unkn,
+                        'pass'    => $messages - $dkim_fail - $dkim_unkn
+                    ],
+                    'spf_align'   => [
+                        'fail'    => $spf_fail,
+                        'unknown' => $spf_unkn,
+                        'pass'    => $messages - $spf_fail - $spf_unkn
+                    ],
+                    'rejected'    => intval($row[11]),
+                    'quarantined' => intval($row[12])
                 ];
             }
             $st->closeCursor();
@@ -356,7 +372,10 @@ class ReportMapper implements ReportMapperInterface
             if (isset($filter['dkim']) || isset($filter['spf']) || isset($filter['disposition'])) {
                 $st = $this->connector->dbh()->prepare(
                     'SELECT COUNT(*) FROM ('
-                    . 'SELECT MIN(`dkim_align`) AS `dkim_align`, MIN(`spf_align`) AS `spf_align`,'
+                    . 'SELECT SUM(IF(`dkim_align` = 0, `rcount`, 0)) AS `dkim_align_fail`,'
+                    . ' SUM(IF(`dkim_align` = 1, `rcount`, 0)) AS `dkim_align_unknown`,'
+                    . ' SUM(IF(`spf_align` = 0, `rcount`, 0)) AS `spf_align_fail`,'
+                    . ' SUM(IF(`spf_align` = 1, `rcount`, 0)) AS `spf_align_unknown`,'
                     . ' SUM(IF(`disposition` = 0, `rcount`, 0)) AS `rejected`,'
                     . ' SUM(IF(`disposition` = 1, `rcount`, 0)) AS `quarantined`'
                     . ' FROM `' . $this->connector->tablePrefix('rptrecords')
@@ -708,27 +727,23 @@ class ReportMapper implements ReportMapperInterface
                                 $filters[0]['a_str'][] = '`org` = ?';
                                 $filters[0]['bindings'][] = [ $fv, \PDO::PARAM_STR ];
                             } elseif ($fn == 'dkim') {
-                                if ($fv === Common::$align_res[0]) {
-                                    $val = 0;
-                                } else {
-                                    $val = count(Common::$align_res) - 1;
-                                    if ($fv !== Common::$align_res[$val]) {
-                                        throw new SoftException('Report list filter: Incorrect DKIM value');
-                                    }
+                                if (!in_array($fv, Common::$align_res, true)) {
+                                    throw new SoftException('Report list filter: Incorrect DKIM value');
                                 }
-                                $filters[1]['a_str'][] = '`dkim_align` = ?';
-                                $filters[1]['bindings'][] = [ $val, \PDO::PARAM_INT ];
+                                if ($fv === 'pass') {
+                                    $filters[1]['a_str'][] = '`dkim_align_fail` = 0 AND `dkim_align_unknown` = 0';
+                                } else {
+                                    $filters[1]['a_str'][] = "`dkim_align_{$fv}` > 0";
+                                }
                             } elseif ($fn == 'spf') {
-                                if ($fv === Common::$align_res[0]) {
-                                    $val = 0;
-                                } else {
-                                    $val = count(Common::$align_res) - 1;
-                                    if ($fv !== Common::$align_res[$val]) {
-                                        throw new SoftException('Report list filter: Incorrect SPF value');
-                                    }
+                                if (!in_array($fv, Common::$align_res, true)) {
+                                    throw new SoftException('Report list filter: Incorrect SPF value');
                                 }
-                                $filters[1]['a_str'][] = '`spf_align` = ?';
-                                $filters[1]['bindings'][] = [ $val, \PDO::PARAM_INT ];
+                                if ($fv === 'pass') {
+                                    $filters[1]['a_str'][] = '`spf_align_fail` = 0 AND `spf_align_unknown` = 0';
+                                } else {
+                                    $filters[1]['a_str'][] = "`spf_align_{$fv}` > 0";
+                                }
                             } elseif ($fn == 'disposition') {
                                 switch ($fv) {
                                     case 'none':

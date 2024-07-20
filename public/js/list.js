@@ -451,12 +451,21 @@ class ResultColumn extends ITableCell {
 		if (target === "dom") {
 			let d = this._content;
 			let fr = document.createDocumentFragment();
-			if (d.dkim_align) {
-				fr.appendChild(create_report_result_element("DKIM", d.dkim_align));
-			}
-			if (d.spf_align) {
-				fr.appendChild(create_report_result_element("SPF", d.spf_align));
-			}
+			[ [ "dkim_align", "DKIM" ], [ "spf_align", "SPF" ] ].forEach(ai => {
+				const align = d[ai[0]];
+				if (align) {
+					if (![ "fail", "unknown" ].reduce((cnt, ares) => {
+						if (align[ares]) {
+							const val = Common.abbrNumber(align[ares]);
+							fr.append(create_report_result_element(ai[1], val, true, ares));
+							++cnt;
+						}
+						return cnt;
+					}, 0)) {
+						fr.append(create_report_result_element(ai[1], "pass"));
+					}
+				}
+			});
 			return fr;
 		}
 		return super.value(target);
