@@ -54,16 +54,6 @@ function date_range_to_string(d1, d2) {
 	return s1;
 }
 
-function create_report_result_element(name, value, long_rec, result) {
-	const span = document.createElement("span");
-	if (long_rec) name += ": " + value;
-	span.append(name);
-	span.title = value;
-	span.classList.add("report-result");
-	if (result === undefined || result !== "") span.classList.add("report-result-" + (result || value));
-	return span;
-}
-
 function scroll_to_element(element, container) { // because scrollIntoView is poorly supported by browsers
 	let diff = null;
 	let e_rect = element.getBoundingClientRect();
@@ -139,6 +129,20 @@ class Common {
 			return el;
 		}
 		return tn;
+	}
+
+	static createReportResultElement(name, result, value) {
+		const span = document.createElement("span");
+		if (value) name += ": " + value;
+		span.textContent = name;
+		const atitle = [ result, value ].reduce((res, it, idx) => {
+			if (it && (!idx || it !== res[0])) res.push(it);
+			return res;
+		}, []);
+		if (atitle.length) span.title = atitle.join(": ");
+		span.classList.add("report-result");
+		if (result) span.classList.add("report-result-" + result);
+		return span;
 	}
 
 	static checkResult(data) {

@@ -457,12 +457,12 @@ class ResultColumn extends ITableCell {
 					if (![ "fail", "unknown" ].reduce((cnt, ares) => {
 						if (align[ares]) {
 							const val = Common.abbrNumber(align[ares]);
-							fr.append(create_report_result_element(ai[1], val, true, ares));
+							fr.append(Common.createReportResultElement(ai[1], ares, val))
 							++cnt;
 						}
 						return cnt;
 					}, 0)) {
-						fr.append(create_report_result_element(ai[1], "pass"));
+						fr.append(Common.createReportResultElement(ai[1], "pass"));
 					}
 				}
 			});
@@ -477,9 +477,9 @@ class DispositionColumn extends ITableCell {
 		if (target === "dom") {
 			const fr = document.createDocumentFragment();
 			const d = this._content;
-			if (d.none) fr.append(create_report_result_element("None", Common.abbrNumber(d.none), true, "pass"));
-			if (d.quarantined) fr.append(create_report_result_element("Quar", Common.abbrNumber(d.quarantined), true, "fail"));
-			if (d.rejected) fr.append(create_report_result_element("Rej", Common.abbrNumber(d.rejected), true, "fail"));
+			[ [ "none", "None", "pass" ], [ "quarantined", "Quar", "fail" ], [ "rejected", "Rej", "fail" ] ].forEach(it => {
+				if (d[it[0]]) fr.append(Common.createReportResultElement(it[1], it[2], Common.abbrNumber(d[it[0]])));
+			});
 			return fr;
 		}
 		return super.value(target);

@@ -371,81 +371,59 @@ class Report {
 		return fr;
 	}
 
-	_create_ev_policy_fragment(data) {
-		let fr = document.createDocumentFragment();
-		if (data.dkim_align)
-			fr.appendChild(create_report_result_element("DKIM", data.dkim_align, true));
-		if (data.spf_align)
-			fr.appendChild(create_report_result_element("SPF", data.spf_align, true));
-		if (data.disposition)
-			fr.appendChild(create_report_result_element("disposition", data.disposition, true, ""));
-		return fr;
-	}
+	_create_values_fragment(values, keys) {
+		if (!Array.isArray(values)) values = [ values ];
+		const params = keys.map(key => {
+			let r = false;
+			if (key.at(0) === "!") {
+				r = true;
+				key = key.substring(1);
+			}
+			const a = key.split(":");
+			return { name: a[0], title: a[1] || a[0], result: r };
 
-	_create_reason_fragment(data) {
-		let fr = document.createDocumentFragment();
-		data.forEach(function(rec) {
-			let ctn = this._get_row_container(fr, data);
-			if (rec.type)
-				ctn.appendChild(create_report_result_element("type", rec.type, true, ""));
-			if (rec.comment)
-				ctn.appendChild(create_report_result_element("comment", rec.comment, true, ""));
-		}.bind(this));
-		return fr;
-	}
-
-	_create_identifiers_fragment(data) {
-		let fr = document.createDocumentFragment();
-		if (data.header_from)
-			fr.appendChild(create_report_result_element("header_from", data.header_from, true, ""));
-		if (data.envelope_from)
-			fr.appendChild(create_report_result_element("envelope_from", data.envelope_from, true, ""));
-		if (data.envelope_to)
-			fr.appendChild(create_report_result_element("envelope_to", data.envelope_to, true, ""));
-		return fr;
-	}
-
-	_create_dkim_auth_fragment(data) {
-		if (!data)
-			return "n/a";
-		let fr = document.createDocumentFragment();
-		data.forEach(function(rec) {
-			let ctn = this._get_row_container(fr, data);
-			if (rec.domain)
-				ctn.appendChild(create_report_result_element("domain", rec.domain, true, ""));
-			if (rec.selector)
-				ctn.appendChild(create_report_result_element("selector", rec.selector, true, ""));
-			if (rec.result)
-				ctn.appendChild(create_report_result_element("result", rec.result, true));
-		}.bind(this));
-		return fr;
-	}
-
-	_create_spf_auth_fragment(data) {
-		if (!data)
-			return "n/a";
-		let fr = document.createDocumentFragment();
-		data.forEach(function(rec) {
-			let ctn = this._get_row_container(fr, data);
-			if (rec.domain)
-				ctn.appendChild(create_report_result_element("domain", rec.domain, true, ""));
-			if (rec.result)
-				ctn.appendChild(create_report_result_element("result", rec.result, true));
-		}.bind(this));
+		});
+		const fr = document.createDocumentFragment();
+		const lcnt = values.length;
+		values.forEach(val => {
+			const elist = params.reduce((res, param) => {
+				let v = val[param.name];
+				if (v) {
+					const r = param.result && v || null;
+					res.push(Common.createReportResultElement(param.title, r, v));
+				}
+				return res;
+			}, []);
+			(lcnt < 2 ? fr : fr.appendChild(document.createElement("div"))).append(...elist);
+		});
 		return fr;
 	}
 
 	_create_pub_policy_fragment(data) {
-		if (!data)
-			return "n/a";
-		let fr = document.createDocumentFragment();
-		[
-			[ "adkim", data.adkim ], [ "aspf", data.aspf ], [ "p", data.p ], [ "sp", data.sp ],
-			[ "np", data.np ], [ "pct", data.pct ], [ "fo", data.fo ]
-		].forEach(function(pol) {
-			if (pol[1]) fr.appendChild(create_report_result_element(pol[0], pol[1], true, ""));
-		});
-		return fr;
+		if (!data) return "n/a";
+		return this._create_values_fragment(data, [ "adkim", "aspf", "p", "sp", "np", "pct", "fo" ]);
+	}
+
+	_create_ev_policy_fragment(data) {
+		return this._create_values_fragment(data, [ "!dkim_align:DKIM", "!spf_align:SPF", "disposition" ]);
+	}
+
+	_create_reason_fragment(data) {
+		return this._create_values_fragment(data, [ "type", "comment" ]);
+	}
+
+	_create_identifiers_fragment(data) {
+		return this._create_values_fragment(data, [ "header_from", "envelope_from", "envelope_to" ]);
+	}
+
+	_create_dkim_auth_fragment(data) {
+		if (!data) return "n/a";
+		return this._create_values_fragment(data, [ "domain", "selector", "!result" ]);
+	}
+
+	_create_spf_auth_fragment(data) {
+		if (!data) return "n/a";
+		return this._create_values_fragment(data, [ "domain", "!result" ]);
 	}
 
 	_get_filter_button() {
