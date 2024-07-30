@@ -30,6 +30,9 @@ class ReportData
     public static $rep_data = null;
     public static $tag_id   = null;
 
+    private static $skip_depth  = 0;
+    private static $strict_mode = false;
+
     public static function fromXmlFile($fd)
     {
         self::$tag_id = '<root>';
@@ -66,7 +69,10 @@ class ReportData
 
     public static function xmlStartTag($parser, $name, $attrs)
     {
-        self::xmlEnterTag($name);
+        if (self::$skip_depth || !self::xmlEnterTag($name)) {
+            ++self::$skip_depth;
+            return;
+        }
 
         switch (self::$tag_id) {
             case 'rec':
@@ -103,6 +109,11 @@ class ReportData
 
     public static function xmlEndTag($parser, $name)
     {
+        if (self::$skip_depth) {
+            --self::$skip_depth;
+            return;
+        }
+
         switch (self::$tag_id) {
             case 'reason':
                 $idx = count(self::$rep_data['records']) - 1;
@@ -153,6 +164,10 @@ class ReportData
 
     public static function xmlTagData($parser, $data)
     {
+        if (self::$skip_depth) {
+            return;
+        }
+
         switch (self::$tag_id) {
             case 'error_string':
                 if (self::$tag_id === 'error_string') {
@@ -210,15 +225,19 @@ class ReportData
         }
     }
 
-    public static function xmlEnterTag($name)
+    public static function xmlEnterTag($name): bool
     {
         if (!isset(self::$report_tags[self::$tag_id]['children']) ||
             !isset(self::$report_tags[self::$tag_id]['children'][$name])
         ) {
+            if (self::$strict_mode) {
                 throw new RuntimeException("Unknown tag: {$name}");
+            }
+            return false;
         }
 
         self::$tag_id = self::$report_tags[self::$tag_id]['children'][$name];
+        return true;
     }
 
     public static function xmlLeaveTag()
