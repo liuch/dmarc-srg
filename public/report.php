@@ -53,13 +53,15 @@ if (!empty($_GET['org']) && !empty($_GET['time']) && !empty($_GET['domain']) && 
                 $rep = new Report(
                     [
                         'domain'     => $domain,
-                        'org'        => $_GET['org'],
-                        'begin_time' => $ts,
+                        'org_name'   => $_GET['org'],
+                        'date'       => [
+                            'begin'  => $ts
+                        ],
                         'report_id'  => $_GET['report_id']
                     ]
                 );
                 $rep->fetch();
-                Core::sendJson([ 'report' => $rep->get() ]);
+                Core::sendJson([ 'report' => $rep->toArray() ]);
                 return;
             } elseif (Core::method() == 'POST') {
                 if ($_GET['action'] === 'set') {
@@ -71,8 +73,10 @@ if (!empty($_GET['org']) && !empty($_GET['time']) && !empty($_GET['domain']) && 
                         $rep = new Report(
                             [
                                 'domain'     => $domain,
-                                'org'        => $_GET['org'],
-                                'begin_time' => $ts,
+                                'org_name'   => $_GET['org'],
+                                'date'       => [
+                                    'begin'  => $ts
+                                ],
                                 'report_id'  => $_GET['report_id']
                             ]
                         );

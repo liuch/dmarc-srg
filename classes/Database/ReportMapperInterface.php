@@ -31,41 +31,45 @@
 
 namespace Liuch\DmarcSrg\Database;
 
+use Liuch\DmarcSrg\Report\ReportData;
+
 interface ReportMapperInterface
 {
     /**
      * Fetches report data from the database and stores it in the passed array
      *
-     * @param array $data Array with report data. To identify the report,
-     *                    the array must contain at least two fields:
-     *                    `report_id` - External report id from the xml file
-     *                    `domain`    - Fully Qualified Domain Name without a trailing dot
+     * @param ReportData $data Report data class.
+     *                         To identify the report it must contain at least these fields:
+     *                         `report_id`   - External report id from the xml file
+     *                         `domain`      - Fully Qualified Domain Name without a trailing dot
+     *                         `org_name`    - Organization name
+     *                         `date=>begin` - Begin timestamp of the report time range
      *
      * @return void
      */
-    public function fetch(array &$data): void;
+    public function fetch($data): void;
 
     /**
      * Inserts report data into the database.
      *
-     * @param array $data Report data
+     * @param ReportData $data Report data
      *
      * @return void
      */
-    public function save(array &$data): void;
+    public function save($data): void;
 
     /**
      * Sets report record property in database.
      *
      * It has nothing to do with the fields of the report itself.
      *
-     * @param array  $data  Report data
-     * @param string $name  Property name. Currently only `seen` is supported.
-     * @param mixed  $value Property value
+     * @param ReportData $data  Report data.
+     * @param string     $name  Name of property to change. Currently only `seen` is supported.
+     * @param mixed      $value New property value
      *
      * @return void
      */
-    public function setProperty(array &$data, string $name, $value): void;
+    public function setProperty($data, string $name, $value): void;
 
     /**
      * Returns a list of reports with specified parameters

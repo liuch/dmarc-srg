@@ -34,17 +34,23 @@ class Report
 
     public function __construct($data, $db = null)
     {
+        if (is_array($data)) {
+            $domain = $data['domain'];
+            $data = ReportData::fromArray($data);
+        } else {
+            $domain = $data->domain;
+        }
+        if ($domain instanceof Domain) {
+            $data->domain = $domain->fqdn();
+        }
         $this->data = $data;
         $this->db   = $db ?? Core::instance()->database();
-        if ($this->data['domain'] instanceof Domain) {
-            $this->data['domain'] = $this->data['domain']->fqdn();
-        }
     }
 
     public static function fromXmlFile($fd)
     {
         $data = ReportData::fromXmlFile($fd);
-        if (!self::checkData($data)) {
+        if (!$data->isValid()) {
             throw new SoftException('Incorrect or incomplete report data');
         }
         return new Report($data);
@@ -62,8 +68,8 @@ class Report
 
     public function save(string $real_fname)
     {
-        $b_ts = $this->data['begin_time'];
-        $e_ts = $this->data['end_time'];
+        $b_ts = $this->data->date['begin'];
+        $e_ts = $this->data->date['end'];
         if (!$b_ts->getTimestamp() || !$e_ts->getTimestamp()
             || strlen($b_ts->format('Y')) !== 4 || strlen($e_ts->format('Y')) !== 4
         ) {
@@ -77,9 +83,14 @@ class Report
         return [ 'message' => 'The report is loaded successfully' ];
     }
 
-    public function get()
+    public function __get(string $name)
     {
-        return $this->data;
+        return $this->data->$name;
+    }
+
+    public function toArray(): array
+    {
+        return $this->data->toArray();
     }
 
     public function set($name, $value)
@@ -87,81 +98,6 @@ class Report
         $this->prepareData(false);
         $this->db->getMapper('report')->setProperty($this->data, $name, $value);
         return [ 'message' => 'Ok' ];
-    }
-
-    /**
-     * Checks report data for correctness and completeness
-     *
-     * @param array $data Report data
-     *
-     * @return bool
-     */
-    private static function checkData(array $data): bool
-    {
-        static $fields = [
-            'domain'             => [ 'required' => true,  'type' => 'string' ],
-            'begin_time'         => [ 'required' => true,  'type' => 'object' ],
-            'end_time'           => [ 'required' => true,  'type' => 'object' ],
-            'org'                => [ 'required' => true,  'type' => 'string' ],
-            'external_id'        => [ 'required' => true,  'type' => 'string' ],
-            'email'              => [ 'required' => false, 'type' => 'string' ],
-            'extra_contact_info' => [ 'required' => false, 'type' => 'string' ],
-            'error_string'       => [ 'required' => false, 'type' => 'array'  ],
-            'policy_adkim'       => [ 'required' => false, 'type' => 'string' ],
-            'policy_aspf'        => [ 'required' => false, 'type' => 'string' ],
-            'policy_p'           => [ 'required' => false, 'type' => 'string' ],
-            'policy_sp'          => [ 'required' => false, 'type' => 'string' ],
-            'policy_np'          => [ 'required' => false, 'type' => 'string' ],
-            'policy_pct'         => [ 'required' => false, 'type' => 'string' ],
-            'policy_fo'          => [ 'required' => false, 'type' => 'string' ],
-            'records'            => [ 'required' => true,  'type' => 'array'  ]
-        ];
-        if (!self::checkRow($data, $fields) || count($data['records']) === 0) {
-            return false;
-        }
-
-        static $rfields = [
-            'ip'            => [ 'required' => true,  'type' => 'string'  ],
-            'rcount'        => [ 'required' => true,  'type' => 'integer' ],
-            'disposition'   => [ 'required' => true,  'type' => 'string'  ],
-            'reason'        => [ 'required' => false, 'type' => 'array'   ],
-            'dkim_auth'     => [ 'required' => false, 'type' => 'array'   ],
-            'spf_auth'      => [ 'required' => false, 'type' => 'array'   ],
-            'dkim_align'    => [ 'required' => true,  'type' => 'string'  ],
-            'spf_align'     => [ 'required' => true,  'type' => 'string'  ],
-            'envelope_to'   => [ 'required' => false, 'type' => 'string'  ],
-            'envelope_from' => [ 'required' => false, 'type' => 'string'  ],
-            'header_from'   => [ 'required' => false, 'type' => 'string'  ]
-        ];
-        foreach ($data['records'] as &$rec) {
-            if (gettype($rec) !== 'array' || !self::checkRow($rec, $rfields)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * Checks one row of report data
-     *
-     * @param array $row Data row
-     * @param array $def Row definition
-     *
-     * @return bool
-     */
-    private static function checkRow(array &$row, array &$def): bool
-    {
-        foreach ($def as $key => &$dd) {
-            if (isset($row[$key])) {
-                if (gettype($row[$key]) !== $dd['type']) {
-                    return false;
-                }
-            } elseif ($dd['required']) {
-                return false;
-            }
-        }
-        return true;
     }
 
     /**
@@ -174,16 +110,21 @@ class Report
     private function prepareData(bool $replace): void
     {
         $data = [];
-        foreach ([ 'domain', 'begin_time', 'org', 'report_id'] as $fld) {
-            if (empty($this->data[$fld])) {
-                throw new SoftException('Not enough data to identify the report');
+        $ne_f = false;
+        foreach ([ 'domain', 'date', 'org_name', 'report_id'] as $fld) {
+            if (empty($this->data->$fld)) {
+                $ne_f = true;
+                break;
             }
             if ($replace) {
-                $data[$fld] = $this->data[$fld];
+                $data[$fld] = $this->data->$fld;
             }
         }
+        if ($ne_f || empty($this->data->date['begin'])) {
+            throw new SoftException('Not enough data to identify the report');
+        }
         if ($replace) {
-            $this->data = $data;
+            $this->data = ReportData::fromArray($data);
         }
     }
 }

@@ -159,9 +159,8 @@ class ReportFetcher
                     }
                 }
                 if ($report) {
-                    $rd = $report->get();
-                    if (isset($rd['external_id'])) {
-                        $result['report_id'] = $rd['external_id'];
+                    if (isset($report->report_id)) {
+                        $result['report_id'] = $report->report_id;
                     }
                 }
             }

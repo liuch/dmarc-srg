@@ -74,7 +74,7 @@ class ReportLogMapper implements ReportLogMapperInterface
                 throw new DatabaseNotFoundException();
             }
             $data['domain']      = $row[0];
-            $data['external_id'] = $row[1];
+            $data['report_id']   = $row[1];
             $data['event_time']  = new DateTime($row[2]);
             $data['filename']    = $row[3];
             $data['source']      = intval($row[4]);
@@ -112,7 +112,7 @@ class ReportLogMapper implements ReportLogMapperInterface
             }
             $ts = $data['event_time'] ?? (new DateTime());
             $st->bindValue(1, $data['domain'], \PDO::PARAM_STR);
-            $st->bindValue(2, $data['external_id'], \PDO::PARAM_STR);
+            $st->bindValue(2, $data['report_id'], \PDO::PARAM_STR);
             $st->bindValue(3, $ts->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
             $st->bindValue(4, $data['filename'], \PDO::PARAM_STR);
             $st->bindValue(5, $data['source'], \PDO::PARAM_INT);

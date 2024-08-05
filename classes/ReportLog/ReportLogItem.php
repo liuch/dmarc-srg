@@ -34,7 +34,7 @@ class ReportLogItem
     private $data = [
         'id'          => null,
         'domain'      => null,
-        'external_id' => null,
+        'report_id'   => null,
         'event_time'  => null,
         'filename'    => null,
         'source'      => 0,
@@ -58,9 +58,8 @@ class ReportLogItem
     {
         $li = new ReportLogItem($source, $filename, $db);
         $li->data['success'] = true;
-        $rdata = $report->get();
-        $li->data['domain'] = $rdata['domain'];
-        $li->data['external_id'] = $rdata['external_id'];
+        $li->data['domain'] = $report->domain;
+        $li->data['report_id'] = $report->report_id;
         $li->data['message'] = $message;
         return $li;
     }
@@ -70,12 +69,11 @@ class ReportLogItem
         $li = new ReportLogItem($source, $filename, $db);
         $li->data['success'] = false;
         if (!is_null($report)) {
-            $rdata = $report->get();
-            $li->data['domain'] = $rdata['domain'];
-            $li->data['external_id'] = $rdata['external_id'];
+            $li->data['domain'] = $report->domain;
+            $li->data['report_id'] = $report->report_id;
         } else {
             $li->data['domain'] = null;
-            $li->data['external_id'] = null;
+            $li->data['report_id'] = null;
         }
         $li->data['message'] = $message;
         return $li;

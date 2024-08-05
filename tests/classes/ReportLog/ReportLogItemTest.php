@@ -13,12 +13,13 @@ class ReportLogItemTest extends \PHPUnit\Framework\TestCase
 {
     public function testForSuccess(): void
     {
+        $db = $this->getDbMapperNever();
         $rli = ReportLogItem::success(
             Source::SOURCE_MAILBOX,
-            $this->getReportMock([ 'domain' => 'example.org', 'external_id' => 'rrggoo' ]),
+            new Report([ 'domain' => 'example.org', 'report_id' => 'rrggoo' ], $db),
             'filename.gz',
             'Success!',
-            $this->getDbMapperNever()
+            $db
         );
         $this->assertTrue($rli->toArray()['success']);
     }
@@ -66,7 +67,7 @@ class ReportLogItemTest extends \PHPUnit\Framework\TestCase
         $sdata = [
             'id'          => 66,
             'domain'      => 'example.org',
-            'external_id' => 'gg44dd',
+            'report_id'   => 'gg44dd',
             'event_time'  => new \DateTime(),
             'filename'    => 'filename.zip',
             'source'      => Source::SOURCE_DIRECTORY,
@@ -89,7 +90,7 @@ class ReportLogItemTest extends \PHPUnit\Framework\TestCase
                 [
                     'id'          => null,
                     'domain'      => 'example.org',
-                    'external_id' => 'xxvvbb',
+                    'report_id'   => 'xxvvbb',
                     'event_time'  => null,
                     'filename'    => 'filename.xml',
                     'source'      => Source::SOURCE_MAILBOX,
@@ -104,7 +105,7 @@ class ReportLogItemTest extends \PHPUnit\Framework\TestCase
                 [
                     'id'          => null,
                     'domain'      => null,
-                    'external_id' => null,
+                    'report_id'   => null,
                     'event_time'  => null,
                     'filename'    => null,
                     'source'      => Source::SOURCE_UPLOADED_FILE,
@@ -117,7 +118,7 @@ class ReportLogItemTest extends \PHPUnit\Framework\TestCase
 
         $rli = ReportLogItem::success(
             Source::SOURCE_MAILBOX,
-            $this->getReportMock([ 'domain' => 'example.org', 'external_id' => 'xxvvbb' ]),
+            new Report([ 'domain' => 'example.org', 'report_id' => 'xxvvbb' ], $this->getDbMapperNever()),
             'filename.xml',
             'Success!',
             $this->getDbMapperOnce('save', $callback1)
@@ -132,15 +133,6 @@ class ReportLogItemTest extends \PHPUnit\Framework\TestCase
             $this->getDbMapperOnce('save', $callback2)
         );
         $rli->save();
-    }
-
-    private function getReportMock($data): object
-    {
-        $mock = $this->createMock(Report::class);
-        $mock->method('get')
-             ->willReturn($data);
-
-        return $mock;
     }
 
     private function getDbMapperOnce(string $method, $callback): object

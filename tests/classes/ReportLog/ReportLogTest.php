@@ -136,7 +136,7 @@ class ReportLogTest extends \PHPUnit\Framework\TestCase
                 [
                     'id'          => 1,
                     'domain'      => null,
-                    'external_id' => null,
+                    'report_id'   => null,
                     'event_time'  => null,
                     'filename'    => null,
                     'source'      => 0,
@@ -146,7 +146,7 @@ class ReportLogTest extends \PHPUnit\Framework\TestCase
                 [
                     'id'          => 2,
                     'domain'      => null,
-                    'external_id' => null,
+                    'report_id'   => null,
                     'event_time'  => null,
                     'filename'    => null,
                     'source'      => 0,

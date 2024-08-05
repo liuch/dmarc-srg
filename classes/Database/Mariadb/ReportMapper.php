@@ -34,6 +34,7 @@ namespace Liuch\DmarcSrg\Database\Mariadb;
 use Liuch\DmarcSrg\Core;
 use Liuch\DmarcSrg\Common;
 use Liuch\DmarcSrg\DateTime;
+use Liuch\DmarcSrg\Report\ReportData;
 use Liuch\DmarcSrg\Settings\SettingsList;
 use Liuch\DmarcSrg\Database\ReportMapperInterface;
 use Liuch\DmarcSrg\Exception\SoftException;
@@ -64,14 +65,16 @@ class ReportMapper implements ReportMapperInterface
     /**
      * Fetches report data from the database and stores it in the passed array
      *
-     * @param array $data Array with report data. To identify the report,
-     *                    the array must contain at least two fields:
-     *                    `report_id` - External report id from the xml file
-     *                    `domain`    - Fully Qualified Domain Name without a trailing dot
+     * @param ReportData $data Report data class.
+     *                         To identify the report it must contain at least these fields:
+     *                         `report_id`   - External report id from the xml file
+     *                         `domain`      - Fully Qualified Domain Name without a trailing dot
+     *                         `org_name`    - Organization name
+     *                         `date=>begin` - Begin timestamp of the report time range
      *
      * @return void
      */
-    public function fetch(array &$data): void
+    public function fetch($data): void
     {
         $db = $this->connector->dbh();
         try {
@@ -84,25 +87,21 @@ class ReportMapper implements ReportMapperInterface
                     . '` AS `dom` ON `dom`.`id` = `rp`.`domain_id`'
                 . ' WHERE `fqdn` = ? AND `begin_time` = ? AND `org` = ? AND `external_id` = ?'
             );
-            $st->bindValue(1, $data['domain'], \PDO::PARAM_STR);
-            $st->bindValue(2, $data['begin_time']->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
-            $st->bindValue(3, $data['org'], \PDO::PARAM_STR);
-            $st->bindValue(4, $data['report_id'], \PDO::PARAM_STR);
+            $st->bindValue(1, $data->domain, \PDO::PARAM_STR);
+            $st->bindValue(2, $data->date['begin']->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
+            $st->bindValue(3, $data->org_name, \PDO::PARAM_STR);
+            $st->bindValue(4, $data->report_id, \PDO::PARAM_STR);
             $st->execute();
             if (!($res = $st->fetch(\PDO::FETCH_NUM))) {
                 throw new DatabaseNotFoundException('The report is not found');
             }
             $id = intval($res[0]);
-            $data['date'] = [
-                'begin' => $data['begin_time'],
-                'end'   => new DateTime($res[1])
-            ];
-            $data['loaded_time']  = new DateTime($res[2]);
-            $data['org_name']     = $data['org'];
-            $data['email']        = $res[3];
-            $data['extra_contact_info'] = $res[4];
-            $data['error_string'] = json_decode($res[5] ?? '', true);
-            $data['policy']       = [
+            $data->date['end']  = new DateTime($res[1]);
+            $data->loaded_time  = new DateTime($res[2]);
+            $data->email        = $res[3];
+            $data->extra_contact_info = $res[4];
+            $data->error_string = json_decode($res[5] ?? '', true);
+            $data->policy       = [
                 'adkim' => $res[6],
                 'aspf'  => $res[7],
                 'p'     => $res[8],
@@ -120,9 +119,9 @@ class ReportMapper implements ReportMapperInterface
             );
             $st->bindValue(1, $id, \PDO::PARAM_INT);
             $st->execute();
-            $data['records'] = [];
+            $data->records = [];
             while ($res = $st->fetch(\PDO::FETCH_NUM)) {
-                $data['records'][] = [
+                $data->records[] = [
                     'ip'            => inet_ntop($res[1]),
                     'count'         => intval($res[2]),
                     'disposition'   => Common::$disposition[$res[3]],
@@ -140,22 +139,21 @@ class ReportMapper implements ReportMapperInterface
         } catch (\PDOException $e) {
             throw new DatabaseFatalException('Failed to get the report from DB', -1, $e);
         }
-        unset($data['begin_time'], $data['org']);
     }
 
     /**
      * Inserts report data into the database.
      *
-     * @param array $data Report data
+     * @param ReportData $data Report data
      *
      * @return void
      */
-    public function save(array &$data): void
+    public function save($data): void
     {
         $db = $this->connector->dbh();
         $db->beginTransaction();
         try {
-            $domain_data = [ 'fqdn' => strtolower($data['domain']) ];
+            $domain_data = [ 'fqdn' => strtolower($data->domain) ];
             $domain_mapper = $this->connector->getMapper('domain');
             try {
                 $domain_mapper->fetch($domain_data);
@@ -184,21 +182,21 @@ class ReportMapper implements ReportMapperInterface
                 . ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)'
             );
             $st->bindValue(1, $domain_data['id'], \PDO::PARAM_INT);
-            $st->bindValue(2, $data['begin_time']->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
-            $st->bindValue(3, $data['end_time']->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
+            $st->bindValue(2, $data->date['begin']->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
+            $st->bindValue(3, $data->date['end']->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
             $st->bindValue(4, $ct->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
-            $st->bindValue(5, $data['org'], \PDO::PARAM_STR);
-            $st->bindValue(6, $data['external_id'], \PDO::PARAM_STR);
-            $st->bindValue(7, $data['email'] ?? '', \PDO::PARAM_STR);
-            $st->bindValue(8, $data['extra_contact_info'], \PDO::PARAM_STR);
-            self::sqlBindJson($st, 9, $data['error_string']);
-            $st->bindValue(10, $data['policy_adkim'], \PDO::PARAM_STR);
-            $st->bindValue(11, $data['policy_aspf'], \PDO::PARAM_STR);
-            $st->bindValue(12, $data['policy_p'], \PDO::PARAM_STR);
-            $st->bindValue(13, $data['policy_sp'], \PDO::PARAM_STR);
-            $st->bindValue(14, $data['policy_np'], \PDO::PARAM_STR);
-            $st->bindValue(15, $data['policy_pct'], \PDO::PARAM_STR);
-            $st->bindValue(16, $data['policy_fo'], \PDO::PARAM_STR);
+            $st->bindValue(5, $data->org_name, \PDO::PARAM_STR);
+            $st->bindValue(6, $data->report_id, \PDO::PARAM_STR);
+            $st->bindValue(7, $data->email ?? '', \PDO::PARAM_STR);
+            $st->bindValue(8, $data->extra_contact_info, \PDO::PARAM_STR);
+            self::sqlBindJson($st, 9, $data->error_string);
+            $st->bindValue(10, $data->policy['adkim'], \PDO::PARAM_STR);
+            $st->bindValue(11, $data->policy['aspf'], \PDO::PARAM_STR);
+            $st->bindValue(12, $data->policy['p'], \PDO::PARAM_STR);
+            $st->bindValue(13, $data->policy['sp'], \PDO::PARAM_STR);
+            $st->bindValue(14, $data->policy['np'], \PDO::PARAM_STR);
+            $st->bindValue(15, $data->policy['pct'], \PDO::PARAM_STR);
+            $st->bindValue(16, $data->policy['fo'], \PDO::PARAM_STR);
             $st->execute();
             $new_id = intval($db->lastInsertId());
             $st->closeCursor();
@@ -209,10 +207,10 @@ class ReportMapper implements ReportMapperInterface
                 . ' `spf_align`, `envelope_to`, `envelope_from`, `header_from`)'
                 . ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
             );
-            foreach ($data['records'] as &$rec_data) {
+            foreach ($data->records as &$rec_data) {
                 $st->bindValue(1, $new_id, \PDO::PARAM_INT);
                 $st->bindValue(2, inet_pton($rec_data['ip']), \PDO::PARAM_STR);
-                $st->bindValue(3, $rec_data['rcount'], \PDO::PARAM_INT);
+                $st->bindValue(3, $rec_data['count'], \PDO::PARAM_INT);
                 $st->bindValue(4, array_search($rec_data['disposition'], Common::$disposition), \PDO::PARAM_INT);
                 self::sqlBindJson($st, 5, $rec_data['reason']);
                 self::sqlBindJson($st, 6, $rec_data['dkim_auth']);
@@ -226,7 +224,7 @@ class ReportMapper implements ReportMapperInterface
             }
             unset($rec_data);
             $db->commit();
-            $data['loaded_time'] = $ct;
+            $data->loaded_time = $ct;
         } catch (\PDOException $e) {
             $db->rollBack();
             if ($e->getCode() == '23000') {
@@ -244,13 +242,13 @@ class ReportMapper implements ReportMapperInterface
      *
      * It has nothing to do with the fields of the report itself.
      *
-     * @param array  $data  Report data
-     * @param string $name  Property name. Currently only `seen` is supported.
-     * @param mixed  $value Property value
+     * @param ReportData $data  Report data
+     * @param string     $name  Name of property to change. Currently only `seen` is supported.
+     * @param mixed      $value New property value
      *
      * @return void
      */
-    public function setProperty(array &$data, string $name, $value): void
+    public function setProperty($data, string $name, $value): void
     {
         if ($name !== 'seen' && gettype($value) !== 'boolean') {
             throw new LogicException('Incorrect parameters');
@@ -264,10 +262,10 @@ class ReportMapper implements ReportMapperInterface
                 . ' WHERE `fqdn` = ? AND `begin_time` = ? AND `org` = ? AND `external_id` = ?'
             );
             $st->bindValue(1, $value, \PDO::PARAM_BOOL);
-            $st->bindValue(2, $data['domain'], \PDO::PARAM_STR);
-            $st->bindValue(3, $data['begin_time']->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
-            $st->bindValue(4, $data['org'], \PDO::PARAM_STR);
-            $st->bindValue(5, $data['report_id'], \PDO::PARAM_STR);
+            $st->bindValue(2, $data->domain, \PDO::PARAM_STR);
+            $st->bindValue(3, $data->date['begin']->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
+            $st->bindValue(4, $data->org_name, \PDO::PARAM_STR);
+            $st->bindValue(5, $data->report_id, \PDO::PARAM_STR);
             $st->execute();
             $st->closeCursor();
         } catch (\PDOException $e) {

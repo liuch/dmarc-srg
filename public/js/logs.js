@@ -295,7 +295,7 @@ class LogItemDialog extends ModalDialog {
 		this._res_el  = null;
 		this._dom_el  = null;
 		this._time_el = null; // event_time
-		this._rid_el  = null; // external_id
+		this._rid_el  = null; // report_id
 		this._file_el = null; // filename
 		this._sou_el  = null; // source
 		this._msg_el  = null; // message
