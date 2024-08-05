@@ -39,6 +39,13 @@ if (!empty($_GET['org']) && !empty($_GET['time']) && !empty($_GET['domain']) && 
             $domain = new Domain($_GET['domain']);
             $dom_ex = $domain->isAssigned($core->user()) ? null : new SoftException('Report not found');
 
+            $ts = null;
+            try {
+                $ts = new DateTime($_GET['time']);
+            } catch (\Exception $e) {
+                throw new SoftException('Incorrect timestamp');
+            }
+
             if (Core::method() == 'GET') {
                 if ($dom_ex) {
                     throw $dom_ex;
@@ -47,7 +54,7 @@ if (!empty($_GET['org']) && !empty($_GET['time']) && !empty($_GET['domain']) && 
                     [
                         'domain'     => $domain,
                         'org'        => $_GET['org'],
-                        'begin_time' => new DateTime($_GET['time']),
+                        'begin_time' => $ts,
                         'report_id'  => $_GET['report_id']
                     ]
                 );
@@ -65,7 +72,7 @@ if (!empty($_GET['org']) && !empty($_GET['time']) && !empty($_GET['domain']) && 
                             [
                                 'domain'     => $domain,
                                 'org'        => $_GET['org'],
-                                'begin_time' => new DateTime($_GET['time']),
+                                'begin_time' => $ts,
                                 'report_id'  => $_GET['report_id']
                             ]
                         );
