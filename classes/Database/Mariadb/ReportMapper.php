@@ -436,7 +436,7 @@ class ReportMapper implements ReportMapperInterface
      */
     public function delete(array &$filter, array &$order, array &$limit): void
     {
-        if ($this->user->id()) {
+        if (Core::instance()->user()->id()) {
             throw new LogicException('Attempted deletion of reports by non-admin user');
         }
         $f_data = $this->prepareFilterData($filter);
