@@ -241,8 +241,8 @@ class ReportData
                     }
                 }
                 unset($tag_data);
-                $b_ts = intval($this->rep_data['date']['begin']);
-                $e_ts = intval($this->rep_data['date']['end']);
+                $b_ts = intval($this->rep_data['date']['begin'] ?? 0);
+                $e_ts = intval($this->rep_data['date']['end'] ?? 0);
                 $this->rep_data['date']['begin'] = new DateTime('@' . ($b_ts < 0 ? 0 : $b_ts));
                 $this->rep_data['date']['end']   = new DateTime('@' . ($e_ts < 0 ? 0 : $e_ts));
                 foreach ($this->rep_data['records'] as &$rec_data) {
