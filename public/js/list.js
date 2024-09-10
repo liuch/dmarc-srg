@@ -283,7 +283,7 @@ class ReportList {
 			label: "Date"
 		});
 		rd.cells.push({ content: d.org_name, label: "Reporting Organization" });
-		rd.cells.push({ content: d.report_id, class: "report-id" });
+		rd.cells.push({ content: d.report_id, label: "Report ID", class: "report-id" });
 		rd.cells.push({ content: Common.abbrNumber(d.messages, 1e6), label: "Messages" });
 		rd.cells.push(new ResultColumn({ dkim_align: d.dkim_align, spf_align: d.spf_align }, { label: "Result" }));
 		rd.cells.push(new DispositionColumn({
