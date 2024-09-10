@@ -84,6 +84,9 @@
 	flex-direction: column;
 	row-gap: .2em;
 }
+.titled-input > label > select {
+	width: 100%;
+}
 .dialog-buttons {
 	display: flex;
 	flex-flow: column;
@@ -94,6 +97,7 @@
 @media screen and (min-width:35em) {
 	.dialog {
 		position: static;
+		max-width: min(45em, 98%);
 	}
 	.dialog .container {
 		border: 1px solid #888;
@@ -112,9 +116,6 @@
 	.titled-input > label > * {
 		display: table-cell;
 		vertical-align: middle;
-	}
-	.titled-input select {
-		width: 100%;
 	}
 	fieldset.titled-input {
 		margin-bottom: 0;
@@ -216,12 +217,17 @@ multi-select.active .multiselect-wrapper {
 	display: none;
 }
 .multiselect-tag {
-	border-radius: 5px;
+	display: flex;
+	max-width: 15em;
 	color: #fff;
 	background-color: var(--color-bg-selected2);
+	border-radius: 5px;
 }
 .multiselect-tag>span {
 	padding: 0 .25em 0 .5em;
+	flex: 1;
+	overflow-x: hidden;
+	text-overflow: ellipsis;
 }
 .multiselect-tag>i {
 	display: inline-block;

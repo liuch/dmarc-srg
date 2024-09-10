@@ -77,11 +77,14 @@ class Summary {
 		main.appendChild(document.createElement("h2")).textContent = "Report options:";
 
 		const list = main.appendChild(document.createElement("ul"));
-		[ "period", "format", "domains" ].forEach(name => {
+		[ [ "period" ], [ "format" ], [ "domains", "fqdn" ] ].forEach(it => {
+			const name = it[0];
 			const li = list.appendChild(document.createElement("li"));
 			li.appendChild(document.createElement("span")).textContent = `${name}: `;
-			li.appendChild(document.createElement("span")).textContent = "none";
-			this._options_block[name] = li.children[1];
+			const val = document.createElement("span");
+			li.appendChild(val).textContent = "none";
+			if (it[1]) val.classList.add(it[1]);
+			this._options_block[name] = val;
 		});
 
 		const bb = main.appendChild(document.createElement("div"));

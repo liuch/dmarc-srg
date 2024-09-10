@@ -208,9 +208,6 @@ label>input:first-child {
 .main-table.focused .table-body .table-row.selected {
 	background-color: var(--color-bg-focused);
 }
-.domains.table .table-cell.fqdn {
-	overflow-wrap: anywhere;
-}
 .unseen, .custom-value .setting-value {
 	font-weight: bold;
 	color: var(--color-fg-custom);
@@ -393,7 +390,7 @@ label>input:first-child {
 }
 .table-wrapper {
 	flex: 1;
-	overflow: hidden auto;
+	overflow: auto;
 }
 .main-table {
 	color: var(--color-fg-muted);
@@ -705,11 +702,17 @@ label>input:first-child {
 	flex-direction: column;
 	row-gap: .3em;
 }
+.report-item .value {
+	overflow-x: hidden;
+}
+.report-item .fqdn, .options-block .fqdn {
+	word-wrap: anywhere;
+}
 .report-item .title, .report-item .value {
 	text-align: left;
 	margin: auto 0;
 }
-.table-cell.report-id, .table-cell.setting-value {
+.table-cell.fqdn, .table-cell.orgname, .table-cell.report-id, .table-cell.setting-value {
 	max-width: 15em;
 	overflow: hidden;
 	text-overflow: ellipsis;

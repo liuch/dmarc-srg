@@ -33,9 +33,9 @@ class ReportList {
 		this._cnt_updated = 0;
 		this._settings_dlg = null;
 		this._column_list = [
-			{ name: "domain", content: "Domain" },
+			{ name: "domain", content: "Domain", class: "fqdn" },
 			{ name: "begin_time", content: "Date", sortable: true },
-			{ name: "organization", content: "Reporting Organization" },
+			{ name: "organization", content: "Reporting Organization", class: "orgname" },
 			{ name: "report_id", content: "Report ID", class: "report-id" },
 			{ name: "messages", content: "Messages" },
 			{ name: "result", content: "Result" },
@@ -274,7 +274,7 @@ class ReportList {
 			userdata: { domain: d.domain, time: d.date.begin, org: d.org_name, report_id: d.report_id },
 			seen: d.seen && true || false
 		};
-		rd.cells.push({ content: d.domain, label: "Domain" });
+		rd.cells.push({ content: d.domain, label: "Domain", class: "fqdn" });
 		let d1 = new Date(d.date.begin);
 		let d2 = new Date(d.date.end);
 		rd.cells.push({
@@ -282,7 +282,7 @@ class ReportList {
 			title: d1.toUIString(true) + " - " + d2.toUIString(true),
 			label: "Date"
 		});
-		rd.cells.push({ content: d.org_name, label: "Reporting Organization" });
+		rd.cells.push({ content: d.org_name, label: "Reporting Organization", class: "orgname" });
 		rd.cells.push({ content: d.report_id, label: "Report ID", class: "report-id" });
 		rd.cells.push({ content: Common.abbrNumber(d.messages, 1e6), label: "Messages" });
 		rd.cells.push(new ResultColumn({ dkim_align: d.dkim_align, spf_align: d.spf_align }, { label: "Result" }));

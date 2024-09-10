@@ -291,11 +291,11 @@ class Report {
 		md.setAttribute("class", "report-metadata");
 		md.appendChild(this._create_data_item("Report Id", this._data.report_id));
 		md.appendChild(this._create_data_item("Reporting organization", this._data.org_name));
-		md.appendChild(this._create_data_item("Domain", this._data.domain));
+		md.appendChild(this._create_data_item("Domain", this._data.domain, "fqdn"));
 		let d1 = new Date(this._data.date.begin);
 		let d2 = new Date(this._data.date.end);
 		md.appendChild(this._create_data_item("Date range", d1.toUIString(true) + " - " + d2.toUIString(true)));
-		md.appendChild(this._create_data_item("Email", this._data.email || "n/a"));
+		md.appendChild(this._create_data_item("Email", this._data.email || "n/a", "fqdn"));
 		if (this._data.extra_contact_info)
 			md.appendChild(this._create_data_item("Extra contact info", this._data.extra_contact_info));
 		md.appendChild(this._create_data_item("Published policy", this._create_pub_policy_fragment(this._data.policy)));
@@ -346,14 +346,14 @@ class Report {
 		return div;
 	}
 
-	_create_data_item(title, data) {
+	_create_data_item(title, data, cname) {
 		let el = document.createElement("div");
 		el.setAttribute("class", "report-item");
-		el.appendChild(this._create_data_fragment(title, data));
+		el.appendChild(this._create_data_fragment(title, data, cname));
 		return el;
 	}
 
-	_create_data_fragment(title, data) {
+	_create_data_fragment(title, data, cname) {
 		let fr = document.createDocumentFragment();
 		let tl = document.createElement("span");
 		tl.appendChild(document.createTextNode(title + ": "));
@@ -367,11 +367,12 @@ class Report {
 		if (Array.from(dt.children).find(function(ch) {
 			return ch.tagName === "DIV";
 		})) dt.classList.add("rows");
+		if (cname) dt.classList.add(cname);
 		fr.appendChild(dt);
 		return fr;
 	}
 
-	_create_values_fragment(values, keys) {
+	_create_values_fragment(values, keys, clist) {
 		if (!Array.isArray(values)) values = [ values ];
 		const params = keys.map(key => {
 			let r = false;
@@ -384,13 +385,17 @@ class Report {
 
 		});
 		const fr = document.createDocumentFragment();
+		const ca = Array.isArray(clist);
 		const lcnt = values.length;
 		values.forEach(val => {
-			const elist = params.reduce((res, param) => {
+			const elist = params.reduce((res, param, idx) => {
 				let v = val[param.name];
 				if (v) {
 					const r = param.result && v || null;
-					res.push(Common.createReportResultElement(param.title, r, v));
+					const el = Common.createReportResultElement(param.title, r, v);
+					const cl = ca ? clist[idx] : clist;
+					if (cl) el.classList.add(cl);
+					res.push(el);
 				}
 				return res;
 			}, []);
@@ -413,17 +418,17 @@ class Report {
 	}
 
 	_create_identifiers_fragment(data) {
-		return this._create_values_fragment(data, [ "header_from", "envelope_from", "envelope_to" ]);
+		return this._create_values_fragment(data, [ "header_from", "envelope_from", "envelope_to" ], "fqdn");
 	}
 
 	_create_dkim_auth_fragment(data) {
 		if (!data) return "n/a";
-		return this._create_values_fragment(data, [ "domain", "selector", "!result" ]);
+		return this._create_values_fragment(data, [ "domain", "selector", "!result" ], [ "fqdn" ]);
 	}
 
 	_create_spf_auth_fragment(data) {
 		if (!data) return "n/a";
-		return this._create_values_fragment(data, [ "domain", "!result" ]);
+		return this._create_values_fragment(data, [ "domain", "!result" ], [ "fqdn" ]);
 	}
 
 	_get_filter_button() {
