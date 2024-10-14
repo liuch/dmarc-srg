@@ -42,7 +42,7 @@ use Liuch\DmarcSrg\RemoteFilesystems\RemoteFilesystemList;
 
 require realpath(__DIR__ . '/..') . '/init.php';
 
-if (php_sapi_name() !== 'cli') {
+if (php_sapi_name() !== 'cli' && php_sapi_name() !== 'cgi-fcgi') {
     echo 'Forbidden';
     exit(1);
 }
