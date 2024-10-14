@@ -90,6 +90,10 @@ For example, if you want to get a summary report for the last week, you should r
 
 `$ php /usr/local/share/dmarc-srg/utils/summary_report.php domain=example.com period=lastweek`
 
+If you receive an error message suggesting register_argc_argv is disabled, you can enable it like this:
+
+`$ php /usr/local/share/dmarc-srg/utils/summary_report.php domain=example.com period=lastweek`
+
 # Web interface
 Use the public/ directory to access the web interface. You will see the basic Report List view, allowing you to navigate through the reports that have been parsed. Using the menu go to the Admin section and create tables in the database and check the accessibility of the mailboxes if necessary.
 
