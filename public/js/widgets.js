@@ -759,6 +759,10 @@ class ToolbarButton {
 		return svg;
 	}
 
+	static infoIcon() {
+		return this.svgIcon('0 0 16 16', '<path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>');
+	}
+
 	static filterIcon() {
 		return this.svgIcon('0 1 15 15', '<path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2z"/>');
 	}
@@ -1517,3 +1521,46 @@ class Multiselect extends HTMLElement {
 	}
 }
 customElements.define("multi-select", Multiselect);
+
+class HintButton {
+	constructor(params) {
+		this._params = params || {};
+		this._element = null;
+		this._content = null;
+	}
+
+	element() {
+		if (!this._element) {
+			const el = document.createElement("div");
+			el.classList.add("hint-block");
+			const bt = el.appendChild((new ToolbarButton({ content: ToolbarButton.infoIcon() })).element());
+			const ct = el.appendChild(document.createElement("div"));
+			ct.classList.add("hint-content");
+			bt.addEventListener("focus", event => {
+				if (!this._content) {
+					switch (typeof(this._params.content)) {
+						case "function":
+							this._content = this._params.content();
+							break;
+						case "object":
+						case "string":
+							this._content = this._params.content;
+							break;
+					}
+					if (this._content) {
+						ct.append(this._content);
+					}
+				}
+			});
+			this._element = el;
+		}
+		return this._element;
+	}
+
+	reset() {
+		if (this._content) {
+			this._content.remove();
+			this._content = null;
+		}
+	}
+}

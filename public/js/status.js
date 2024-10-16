@@ -21,6 +21,7 @@
 class Status {
 	constructor() {
 		this._data = {};
+		this._hint = null;
 		this._use_filter = null;
 	}
 
@@ -121,6 +122,7 @@ class Status {
 	}
 
 	_update_block() {
+		if (this._hint) this._hint.reset();
 		this._ensure_element_created();
 		if (this._data.error_code) {
 			let p = { text: "[" + this._data.error_code + "] " + this._data.message, type: "error" };
@@ -137,39 +139,20 @@ class Status {
 				dkim_spf_aligned: 0
 			};
 		}
-		let days = this._data.emails.days;
-		let total = this._data.emails.total;
-		let passed = this._data.emails.dkim_spf_aligned;
-		let forwarded = this._data.emails.dkim_aligned + this._data.emails.spf_aligned;
-		let failed = total - passed - forwarded;
-		this._set_element_data(
-			"processed",
-			(total === -1 || total === undefined) && "?" || Common.abbrNumber(total, 10000),
-			total !== -1 && "state-blue" || null
-		);
-		this._set_element_data(
-			"passed",
-			this._formatted_statistic(passed, total),
-			total !== -1 && "state-green" || null
-		);
-		this._set_element_data(
-			"forwarded",
-			this._formatted_statistic(forwarded, total),
-			total !== -1 && "state-green" || null
-		);
-		this._set_element_data(
-			"failed",
-			this._formatted_statistic(failed, total),
-			total !== -1 && "state-red" || null
-		);
-		{
-			let el = document.getElementById("stat-block");
-			if (typeof(days) === "string") {
-				el.setAttribute("title", "Statistics for " + days);
-			}
-			else {
-				el.removeAttribute("title");
-			}
+
+		const data = this._data.emails;
+		const tf = (data.total !== undefined && data.total !== -1);
+		const vals = this._format_statistic_values();
+		Status._element_list.forEach((id, pos) => {
+			this._set_element_value(id, null, vals[pos], tf && Status._element_data[id].color || null);
+		});
+
+		const el = document.getElementById("stat-block");
+		if (typeof(data.days) === "string") {
+			el.setAttribute("title", "Statistics for " + data.days);
+		}
+		else {
+			el.removeAttribute("title");
 		}
 	}
 
@@ -184,20 +167,32 @@ class Status {
 		return (val > 0 && rval === 0 && "+" || "" ) + rval + "%";
 	}
 
-	_set_element_data(id, data, c_name) {
-		let el1 = document.getElementById("stat-" + id);
-		if (c_name)
-			el1.setAttribute("class", c_name);
-		else
-			el1.removeAttribute("class");
-		let el2 = el1.querySelector(".stat-val")
-		el2.childNodes[0].nodeValue = data;
+	_set_element_value(c_el, v_el, value, cname) {
+		if (typeof(c_el) == "string") c_el = document.getElementById("stat-" + c_el);
+		if (cname) {
+			c_el.setAttribute("class", "state-" + cname);
+		} else {
+			c_el.removeAttribute("class");
+		}
+		(v_el || c_el.querySelector(".stat-val")).textContent = value;
+	}
+
+	_format_statistic_values() {
+		const de = this._data.emails;
+		const total = de.total;
+		const vals = [ (total === -1 || total === undefined) && "?" || Common.abbrNumber(total, 10000) ];
+		[
+			de.dkim_spf_aligned,
+			de.dkim_aligned + de.spf_aligned,
+			(total || 0) - de.dkim_spf_aligned - de.dkim_aligned - de.spf_aligned
+		].forEach(v => vals.push(this._formatted_statistic(v, total)));
+		return vals;
 	}
 
 	_ensure_element_created() {
 		let block = document.getElementById("stat-block");
 		if (block && block.children.length === 0) {
-			let ul = document.createElement("ul");
+			const ul = block.appendChild(document.createElement("ul"));
 			Status._element_list.forEach(function(id) {
 				let li = document.createElement("li");
 				let div = document.createElement("div");
@@ -213,8 +208,29 @@ class Status {
 				li.appendChild(div);
 				ul.appendChild(li);
 			});
-			block.appendChild(ul);
+			const hli = ul.appendChild(document.createElement("li"));
+			hli.classList.add("hint");
+			if (!this._hint) this._hint = new HintButton({ content: this._make_hint_content.bind(this) });
+			hli.append(this._hint.element());
 		}
+	}
+
+	_make_hint_content() {
+		const data = this._data.emails;
+		const el = document.createElement("div");
+		const hd = el.appendChild(document.createElement("h4"));
+		const tf = (data.total !== undefined && data.total !== -1);
+		hd.textContent = tf && ("Statistics for " + data.days) || "n/a";
+		const ul = el.appendChild(document.createElement("ul"));
+		const vals = this._format_statistic_values();
+		Status._element_list.forEach((id, pos) => {
+			const li = ul.appendChild(document.createElement("li"));
+			li.appendChild(document.createElement("span")).textContent = Status._element_data[id].text + ": ";
+			const vl = li.appendChild(document.createElement("span"));
+			vl.classList.add("stat-val", "state-text");
+			this._set_element_value(li, vl, vals[pos], tf && Status._element_data[id].color || null);
+		});
+		return el;
 	}
 }
 
@@ -228,15 +244,19 @@ Status._element_list = [ "processed", "passed", "forwarded", "failed" ];
 
 Status._element_data = {
 	processed: {
-		text:  "Emails processed"
+		text:  "Emails processed",
+		color: "blue"
 	},
 	passed: {
-		text: "Fully aligned"
+		text: "Fully aligned",
+		color: "green"
 	},
 	forwarded: {
-		text: "Partially aligned"
+		text: "Partially aligned",
+		color: "green"
 	},
 	failed:	{
-		text: "Not aligned"
+		text: "Not aligned",
+		color: "red"
 	}
 };

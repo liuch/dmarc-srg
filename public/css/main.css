@@ -185,7 +185,7 @@ label>input:first-child {
 .text {
 	line-height: 1.6;
 }
-#stat-block ul {
+#stat-block>ul {
 	display: flex;
 	justify-content: center;
 	column-gap: 1em;
@@ -250,6 +250,9 @@ label>input:first-child {
 	#stat-block .stat-msg {
 		display: inline;
 		margin: 0 1px;
+	}
+	#stat-block .hint {
+		display: none;
 	}
 	.stat-val {
 		display: block;
@@ -336,7 +339,7 @@ label>input:first-child {
 	padding: 0;
 	list-style-type: none;
 }
-#stat-block li {
+#stat-block > ul > li {
 	margin: 0;
 	padding: 0;
 	display: inline-flex;
