@@ -71,12 +71,11 @@ class ErrorHandler implements LoggerAwareInterface
             $this->logger->error(strval($e));
         }
 
-        if (php_sapi_name() === 'cli') {
+        if (!Core::isWEB()) {
             echo self::getText($e, $debug);
             exit(1);
-        } else {
-            Core::sendJson(self::getResult($e, $debug));
         }
+        Core::sendJson(self::getResult($e, $debug));
     }
 
     /**

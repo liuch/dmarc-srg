@@ -85,6 +85,16 @@ class Core
     }
 
     /**
+     * Determines whether the current invocation is being run via a web server
+     *
+     * @return bool
+     */
+    public static function isWEB(): bool
+    {
+        return isset($_SERVER['REQUEST_METHOD']);
+    }
+
+    /**
      * Sets or gets the current user instance
      *
      * In case $user is null, the method returns the current user instance or null.
@@ -97,9 +107,9 @@ class Core
      */
     public function user($user = null)
     {
-        $cli = (php_sapi_name() === 'cli');
+        $web = self::isWEB();
         $start_f = false;
-        if (!$cli) {
+        if ($web) {
             if ((self::cookie(self::SESSION_NAME) !== '' || !is_null($user)) &&
                 session_status() !== PHP_SESSION_ACTIVE
             ) {
@@ -149,7 +159,7 @@ class Core
                 $user = UserList::getUserByName($user, $this);
             }
             $this->user = $user;
-            if (!$cli) {
+            if ($web) {
                 $_SESSION['user'] = [
                     'id'    => $user->id(),
                     'name'  => $user->name(),
@@ -172,7 +182,7 @@ class Core
      */
     public function destroySession(): void
     {
-        if (php_sapi_name() !== 'cli') {
+        if (self::isWEB()) {
             if (self::cookie(self::SESSION_NAME)) {
                 if (session_status() !== PHP_SESSION_ACTIVE) {
                     self::startSession();
