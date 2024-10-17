@@ -74,8 +74,8 @@ use Liuch\DmarcSrg\Exception\RuntimeException;
 
 require realpath(__DIR__ . '/..') . '/init.php';
 
-if (php_sapi_name() !== 'cli') {
-    echo 'Forbidden' . PHP_EOL;
+if (Core::isWEB()) {
+    echo 'Forbidden';
     exit(1);
 }
 
