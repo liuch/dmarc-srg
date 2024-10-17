@@ -19,6 +19,9 @@ class CoreTest extends \PHPUnit\Framework\TestCase
         $this->assertSame($this->core, Core::instance());
     }
 
+    /**
+     * @runInSeparateProcess
+     */
     public function testRequestMethod(): void
     {
         $_SERVER['REQUEST_METHOD'] = 'some_method';
