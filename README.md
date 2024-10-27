@@ -58,7 +58,7 @@ CREATE database dmarc;
 
 Create a new user called `dmarc_user` for the new database (you can specify a different user name):
 
-```
+```sql
 GRANT all on dmarc.* to dmarc_user@localhost identified by 'new_user_password';
 ```
 
