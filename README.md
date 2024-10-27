@@ -44,17 +44,23 @@ Ensure that all the files are in their own sub-folder.
 ### Create the database
 Login as mysql root user to the MariaDB/MySQL server using the shell, run:
 
-`# mysql -u root -p`
+```
+# mysql -u root -p
+```
 
 and type the password.
 
 Once you have a MariaDB or MySQL prompt, create a new database, where `dmarc` is a new database name (you can specify a different database name):
 
-`CREATE database dmarc;`
+```
+CREATE database dmarc;
+```
 
 Create a new user called `dmarc_user` for the new database (you can specify a different user name):
 
-`GRANT all on dmarc.* to dmarc_user@localhost identified by 'new_user_password';`
+```
+GRANT all on dmarc.* to dmarc_user@localhost identified by 'new_user_password';
+```
 
 **Remember** to replace `new_user_password` with a more secure one!
 
@@ -66,7 +72,9 @@ Copy `conf/conf.sample.php` to `conf/conf.php` and configure it. Learn more by r
 ### Database initialization
 There are two ways to do that: by using the web interface or by running the follow command:
 
-`$ php utils/database_admin.php init`
+```
+php utils/database_admin.php init
+```
 
 ## Usage
 In general, DmarcSrg is designed to automatically receive incoming DMARC reports, process them and send summary reports to the specified e-mail address, so a web interface as well as a web-server is optional. Most of the work is done by periodically running php scripts, which are located in the utils directory.
@@ -88,11 +96,16 @@ You can find more detailed information about each script in the comments to it.
 
 For example, if you want to get a summary report for the last week, you should run a command like this:
 
-`$ php /usr/local/share/dmarc-srg/utils/summary_report.php domain=example.com period=lastweek`
+```
+php /usr/local/share/dmarc-srg/utils/summary_report.php domain=example.com period=lastweek
+```
 
 If you receive an error message suggesting register_argc_argv is disabled, you can enable it like this:
 
-`$ php -d register_argc_argv=1 /usr/local/share/dmarc-srg/utils/summary_report.php domain=example.com period=lastweek`
+```
+php /usr/local/share/dmarc-srg/utils/summary_report.php domain=example.com period=lastweek
+```
+
 
 # Web interface
 Use the public/ directory to access the web interface. You will see the basic Report List view, allowing you to navigate through the reports that have been parsed. Using the menu go to the Admin section and create tables in the database and check the accessibility of the mailboxes if necessary.
@@ -105,7 +118,11 @@ If Content Security Policy (CSP) is used on your web server, it is enough to add
 - media-src 'self';
 - form-action 'self';
 
-That is, this rather strict policy will work well with the current web interface: `Content-Security-Policy: default-src 'none'; style-src 'self'; img-src 'self'; script-src 'self'; connect-src 'self'; media-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'`
+That is, this rather strict policy will work well with the current web interface:
+
+```
+Content-Security-Policy: default-src 'none'; style-src 'self'; img-src 'self'; script-src 'self'; connect-src 'self'; media-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'
+```
 
 # How the report file processing works
 
