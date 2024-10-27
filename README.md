@@ -96,7 +96,7 @@ You can find more detailed information about each script in the comments to it.
 
 For example, if you want to get a summary report for the last week, you should run a command like this:
 
-```
+```sh
 php /usr/local/share/dmarc-srg/utils/summary_report.php domain=example.com period=lastweek
 ```
 
