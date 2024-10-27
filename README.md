@@ -44,7 +44,7 @@ Ensure that all the files are in their own sub-folder.
 ### Create the database
 Login as mysql root user to the MariaDB/MySQL server using the shell, run:
 
-```
+```sh
 # mysql -u root -p
 ```
 
