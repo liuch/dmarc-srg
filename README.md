@@ -102,7 +102,7 @@ php /usr/local/share/dmarc-srg/utils/summary_report.php domain=example.com perio
 
 If you receive an error message suggesting register_argc_argv is disabled, you can enable it like this:
 
-```
+```sh
 php /usr/local/share/dmarc-srg/utils/summary_report.php domain=example.com period=lastweek
 ```
 
