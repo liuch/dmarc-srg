@@ -52,7 +52,7 @@ and type the password.
 
 Once you have a MariaDB or MySQL prompt, create a new database, where `dmarc` is a new database name (you can specify a different database name):
 
-```
+```sql
 CREATE database dmarc;
 ```
 
