@@ -72,7 +72,7 @@ Copy `conf/conf.sample.php` to `conf/conf.php` and configure it. Learn more by r
 ### Database initialization
 There are two ways to do that: by using the web interface or by running the follow command:
 
-```
+```sh
 php utils/database_admin.php init
 ```
 
