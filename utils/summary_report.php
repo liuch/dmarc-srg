@@ -24,7 +24,7 @@
  * This script creates a summary report and sends it by email.
  * The email addresses must be specified in the configuration file.
  * The script have two required parameters: `domain` and `period`,
- *   and four optional: `offset`, `emailto`, `format`, `user`.
+ *   and five optional: `offset`, `emailto`, `format`, `user`, `subject`.
  * The `domain` parameter must contain a domain name, a comma-separated list of domains, or `all`.
  * The `period` parameter must have one of these values:
  *   `lastmonth`   - to make a report for the last month;
@@ -39,6 +39,8 @@
  * The `user` parameter is optional. It can be useful for specifying a list of assigned domains for a single user
  *   when the `domain` options is set to `all`. Only makes sense if the user_management mode is active.
  *   The default value is `admin`.
+ * The `subject` parameter is optional. It allows you to specify the subject line of the summary report message
+ *   instead of the default subject line. Remember to escape spaces and special characters!
  *
  * Some examples:
  *
@@ -48,8 +50,8 @@
  * $ php utils/summary_report.php domain=example.com period=lastweek offset=1
  * will send a summary report for the week before last week for the domain example.com via email
  *
- * $ php utils/summary_report.php domain=example.com period=lastndays:10
- * will send a summary report for last 10 days for the domain example.com via email
+ * $ php utils/summary_report.php domain=example.com period=lastndays:10 "subject:My cool summary report"
+ * will send a summary report for last 10 days for the domain example.com via email with the specified subject line
  *
  * $ php utils/summary_report.php domain=all user=frederick1 period=lastmonth emailto=frederick@example.com
  * will send a summary report for the last month for all domains assigned to user frederick1 to frederick@example.com.
@@ -85,12 +87,14 @@ if (!isset($argv)) {
 }
 
 $domain  = null;
+$all_dom = false;
 $period  = null;
 $offset  = '0';
 $emailto = null;
 $format  = 'text';
-$uname   = 'admin';
+$uname   = null;
 $acount  = count($argv);
+$subject = '';
 if ($acount <= 1) {
     echo "Usage: {$argv[0]} domain=<domains>|all", PHP_EOL;
     echo '           period=lastmonth|lastweek|lastndays:<days>', PHP_EOL;
@@ -120,13 +124,16 @@ for ($i = 1; $i < $acount; ++$i) {
             case 'user':
                 $uname = $av[1];
                 break;
+            case 'subject':
+                $subject = $av[1];
+                break;
         }
     }
 }
 
 $core = Core::instance();
 try {
-    $core->user($uname);
+    $core->user($uname ?? 'admin');
     if (!$domain) {
         throw new SoftException('Parameter "domain" is not specified');
     }
@@ -145,6 +152,7 @@ try {
 
     if ($domain === 'all') {
         $domains = (new DomainList($core->user()))->getList()['domains'];
+        $all_dom = true;
     } else {
         $domains = array_map(function ($d) {
             return new Domain($d);
@@ -217,8 +225,12 @@ try {
     $mailer = Mailer::get($core->config('mailer', []));
     $mailer->setFrom($core->config('mailer/from', ''));
     $mailer->addAddress($emailto);
-    if ($dom_cnt === 1) {
+    if (!empty($subject)) {
+        $mailer->setSubject($subject);
+    } elseif ($dom_cnt === 1) {
         $mailer->setSubject("{$rep->subject()} for {$domain->fqdn()}");
+    } elseif ($uname && $all_dom) {
+        $mailer->setSubject("{$rep->subject()} for {$uname}'s domains");
     } else {
         $mailer->setSubject("{$rep->subject()} for {$dom_cnt} domains");
     }
