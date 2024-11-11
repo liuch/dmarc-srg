@@ -104,7 +104,7 @@ class Admin {
 			body: JSON.stringify(cmd)
 		}).then(function(resp) {
 			if (!resp.ok)
-				throw new Error("Failed");
+				throw new Error(`Failed to send command (${resp.status})`);
 			return resp.json();
 		}).finally(function() {
 			t._get_admin_state();
@@ -401,7 +401,7 @@ class SourceListBox extends DropdownListBox {
 			body: JSON.stringify({ cmd: "checksource", id: id, type: type })
 		}).then(function(resp) {
 			if (!resp.ok)
-				throw new Error("Failed");
+				throw new Error(`Failed to send checking request (${resp.status})`);
 			return resp.json();
 		}).then(function(data) {
 			Common.checkResult(data);
