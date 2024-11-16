@@ -50,7 +50,8 @@ class SummaryReport
     private $offset  = 0;
     private $range   = null;
     private $domain  = null;
-    private $stat    = null;
+    private $overall = [];
+    private $stat    = [];
     private $subject = '';
 
     /**
@@ -101,7 +102,7 @@ class SummaryReport
                                     throw new SoftException('Incorrect date range');
                                 }
                                 $period  = self::DATE_RANGE;
-                                $subject = ' report ' . $this->rangeToString($range);
+                                $subject = ' report ' . Common::rangeToString($range);
                                 $range[1]->modify('next day');
                                 $this->range = $range;
                             }
@@ -131,7 +132,22 @@ class SummaryReport
     public function setDomain($domain)
     {
         $this->domain = $domain;
-        $this->stat   = null;
+        $this->stat   = [];
+        return $this;
+    }
+
+    /**
+     * Binds a report section
+     *
+     * @param mixed Report section
+     *
+     * @return self
+     */
+    public function bindSection($section)
+    {
+        if ($section instanceof OverallReport) {
+            $this->overall[] = $section;
+        }
         return $this;
     }
 
@@ -142,16 +158,13 @@ class SummaryReport
      */
     public function toArray(): array
     {
-        $this->ensureData();
-
-        $res = [];
-        $stat = $this->stat;
-        $range = $stat->range();
-        $res['date_range'] = [ 'begin' => $range[0], 'end' => $range[1] ];
-        $res['summary'] = $stat->summary();
-        $res['sources'] = $stat->ips();
-        $res['organizations'] = $stat->organizations();
-        return $res;
+        $range = $this->getData('range');
+        return [
+            'date_range'    => [ 'begin' => $range[0], 'end' => $range[1] ],
+            'summary'       => $this->getData('summary'),
+            'sources'       => $this->getData('ips'),
+            'organizations' => $this->getData('organizations')
+        ];
     }
 
     /**
@@ -182,11 +195,11 @@ class SummaryReport
         $res[] = '## Summary';
         $total = $rdata['summary']['total'];
         $res[] = sprintf(' Total: %d', $total);
-        $res[] = sprintf(' Fully aligned: %s', self::num2percent($rdata['summary']['f_aligned'], $total, true));
-        $res[] = sprintf(' Partial aligned: %s', self::num2percent($rdata['summary']['p_aligned'], $total, true));
-        $res[] = sprintf(' Not aligned: %s', self::num2percent($rdata['summary']['n_aligned'], $total, true));
-        $res[] = sprintf(' Quarantined: %s', self::num2percent($rdata['summary']['quarantined'], $total, true));
-        $res[] = sprintf(' Rejected: %s', self::num2percent($rdata['summary']['rejected'], $total, true));
+        $res[] = sprintf(' Fully aligned: %s', Common::num2percent($rdata['summary']['f_aligned'], $total, true));
+        $res[] = sprintf(' Partial aligned: %s', Common::num2percent($rdata['summary']['p_aligned'], $total, true));
+        $res[] = sprintf(' Not aligned: %s', Common::num2percent($rdata['summary']['n_aligned'], $total, true));
+        $res[] = sprintf(' Quarantined: %s', Common::num2percent($rdata['summary']['quarantined'], $total, true));
+        $res[] = sprintf(' Rejected: %s', Common::num2percent($rdata['summary']['rejected'], $total, true));
         $res[] = '';
 
         if (count($rdata['sources']) > 0) {
@@ -201,14 +214,14 @@ class SummaryReport
                 $q_dis = $it['quarantined'];
                 $r_dis = $it['rejected'];
                 if ($q_dis || $r_dis) {
-                    $s_dis = self::num2percent($q_dis + $r_dis, $total, false) . "({$q_dis}+{$r_dis})";
+                    $s_dis = Common::num2percent($q_dis + $r_dis, $total, false) . "({$q_dis}+{$r_dis})";
                 } else {
                     $s_dis = '0';
                 }
                 // Fill row data
                 $row = [
                     $it['ip'], strval($total), strval($s_aln), strval($d_aln),
-                    self::num2percent($n_aln, $total, true), $s_dis
+                    Common::num2percent($n_aln, $total, true), $s_dis
                 ];
                 // Calculate column width
                 for ($i = 0; $i < count($row); ++$i) {
@@ -244,14 +257,14 @@ class SummaryReport
                 $q_dis = $it['quarantined'];
                 $r_dis = $it['rejected'];
                 if ($q_dis || $r_dis) {
-                    $s_dis = self::num2percent($q_dis + $r_dis, $total, false) . "({$q_dis}+{$r_dis})";
+                    $s_dis = Common::num2percent($q_dis + $r_dis, $total, false) . "({$q_dis}+{$r_dis})";
                 } else {
                     $s_dis = '0';
                 }
                 // Fill row data
                 $row = [
                     $it['name'], strval($it['reports']), strval($total), strval($s_aln), strval($d_aln),
-                    self::num2percent($n_aln, $total, true), $s_dis
+                    Common::num2percent($n_aln, $total, true), $s_dis
                 ];
                 // Calculate column width
                 for ($i = 0; $i < count($row); ++$i) {
@@ -328,7 +341,7 @@ class SummaryReport
             [ 'Rejected', $rdata['summary']['rejected'], 'red' ]
         ] as &$rd) {
             $color = $get_color($rd[2], $rd[1]);
-            $s_data = self::num2percent($rd[1], $total, true);
+            $s_data = Common::num2percent($rd[1], $total, true);
             $res[] = " <tr><td>{$rd[0]}: </td><td style=\"{$d1s}{$color}\">{$s_data}</td></tr>";
         }
         unset($rd);
@@ -364,7 +377,7 @@ class SummaryReport
                          "<td {$style}{$d4s}\">{$s_aln}</td><td {$style}{$d4s}\">{$d_aln}</td>" .
                          "<td {$style}{$d4s}{$get_color('red', $n_aln)}\">{$n_aln}</td>" .
                          "<td {$style}{$d4s}{$get_color('red', $q_dis + $r_dis)}\">{$s_dis}</td>" .
-                         "<td {$style}{$d4s}\">" . self::num2percent($q_dis + $r_dis, $total, false) .
+                         "<td {$style}{$d4s}\">" . Common::num2percent($q_dis + $r_dis, $total, false) .
                          '</td></tr>';
             }
             unset($row);
@@ -403,7 +416,7 @@ class SummaryReport
                          "<td {$style}{$d4s}\">{$s_aln}</td><td {$style}{$d4s}\">{$d_aln}</td>" .
                          "<td {$style}{$d4s}{$get_color('red', $n_aln)}\">{$n_aln}</td>" .
                          "<td {$style}{$d4s}{$get_color('red', $q_dis + $r_dis)}\">{$s_dis}</td>" .
-                         "<td {$style}{$d4s}\">" . self::num2percent($q_dis + $r_dis, $total, false) .
+                         "<td {$style}{$d4s}\">" . Common::num2percent($q_dis + $r_dis, $total, false) .
                          '</td></tr>';
             }
             unset($row);
@@ -432,11 +445,11 @@ class SummaryReport
         $res[] = 'Summary';
         $total = $rdata['summary']['total'];
         $res[] = sprintf('Total: %d', $total);
-        $res[] = sprintf('Fully aligned: %s', self::num2percent($rdata['summary']['f_aligned'], $total, true));
-        $res[] = sprintf('Partial aligned: %s', self::num2percent($rdata['summary']['p_aligned'], $total, true));
-        $res[] = sprintf('Not aligned: %s', self::num2percent($rdata['summary']['n_aligned'], $total, true));
-        $res[] = sprintf('Quarantined: %s', self::num2percent($rdata['summary']['quarantined'], $total, true));
-        $res[] = sprintf('Rejected: %s', self::num2percent($rdata['summary']['rejected'], $total, true));
+        $res[] = sprintf('Fully aligned: %s', Common::num2percent($rdata['summary']['f_aligned'], $total, true));
+        $res[] = sprintf('Partial aligned: %s', Common::num2percent($rdata['summary']['p_aligned'], $total, true));
+        $res[] = sprintf('Not aligned: %s', Common::num2percent($rdata['summary']['n_aligned'], $total, true));
+        $res[] = sprintf('Quarantined: %s', Common::num2percent($rdata['summary']['quarantined'], $total, true));
+        $res[] = sprintf('Rejected: %s', Common::num2percent($rdata['summary']['rejected'], $total, true));
         $res[] = '';
 
         if (count($rdata['sources']) > 0) {
@@ -451,11 +464,11 @@ class SummaryReport
                 $q_dis = $it['quarantined'];
                 $r_dis = $it['rejected'];
                 if ($q_dis || $r_dis) {
-                    $s_dis = self::num2percent($q_dis + $r_dis, $total, false) . "({$q_dis}+{$r_dis})";
+                    $s_dis = Common::num2percent($q_dis + $r_dis, $total, false) . "({$q_dis}+{$r_dis})";
                 } else {
                     $s_dis = '0';
                 }
-                $res[] = [ $it['ip'], $total, $s_aln, $d_aln, self::num2percent($n_aln, $total, true), $s_dis ];
+                $res[] = [ $it['ip'], $total, $s_aln, $d_aln, Common::num2percent($n_aln, $total, true), $s_dis ];
             }
             unset($it);
             $res[] = '';
@@ -473,13 +486,13 @@ class SummaryReport
                 $q_dis = $it['quarantined'];
                 $r_dis = $it['rejected'];
                 if ($q_dis || $r_dis) {
-                    $s_dis = self::num2percent($q_dis + $r_dis, $total, false) . "({$q_dis}+{$r_dis})";
+                    $s_dis = Common::num2percent($q_dis + $r_dis, $total, false) . "({$q_dis}+{$r_dis})";
                 } else {
                     $s_dis = '0';
                 }
                 $res[] = [
                     trim($it['name']), $it['reports'], $total, $s_aln, $d_aln,
-                    self::num2percent($n_aln, $total, true), $s_dis
+                    Common::num2percent($n_aln, $total, true), $s_dis
                 ];
             }
             unset($it);
@@ -489,53 +502,58 @@ class SummaryReport
     }
 
     /**
-     * Returns the percentage with the original number. If $per is 0 then '0' is returned.
+     * Caches and returns statistics for the specified section
      *
-     * @param int  $per      Value
-     * @param int  $cent     Divisor for percentage calculation
-     * @param bool $with_num Whether to add the numeric value to the result
+     * @param string $section Section name
      *
-     * @return string
+     * @return array
      */
-    private static function num2percent(int $per, int $cent, bool $with_num): string
-    {
-        if (!$per) {
-            return '0';
-        }
-        $res = sprintf('%.0f%%', $per / $cent * 100);
-        if ($with_num) {
-            $res .= "({$per})";
-        }
-        return $res;
-    }
-
-    /**
-     * Generates the report if it has not already been done
-     *
-     * @return void
-     */
-    private function ensureData(): void
+    private function getData(string $section): array
     {
         if (!$this->domain) {
             throw new LogicException('No one domain was specified');
         }
 
-        if (!$this->stat) {
+        $instance = $this->stat['instance'] ?? null;
+        if (!$instance) {
             switch ($this->period) {
                 case self::LAST_WEEK:
-                    $this->stat = Statistics::lastWeek($this->domain, $this->offset);
+                    $instance = Statistics::lastWeek($this->domain, $this->offset);
                     break;
                 case self::LAST_MONTH:
-                    $this->stat = Statistics::lastMonth($this->domain, $this->offset);
+                    $instance = Statistics::lastMonth($this->domain, $this->offset);
                     break;
                 case self::DATE_RANGE:
-                    $this->stat = Statistics::fromTo($this->domain, $this->range[0], $this->range[1]);
+                    $instance = Statistics::fromTo($this->domain, $this->range[0], $this->range[1]);
                     break;
                 default:
-                    $this->stat = Statistics::lastNDays($this->domain, $this->period, $this->offset);
+                    $instance = Statistics::lastNDays($this->domain, $this->period, $this->offset);
                     break;
             }
+            $this->stat['instance'] = $instance;
+            foreach ($this->overall as $o) {
+                if ($o instanceof OverallReport) {
+                    $o->appendData(
+                        array_merge([ 'fqdn'  => $this->domain->fqdn() ], $this->getData('summary')['emails'])
+                    );
+                }
+            }
         }
+        switch ($section) {
+            case 'range':
+            case 'summary':
+            case 'ips':
+            case 'organizations':
+                $res = $this->stat[$section] ?? null;
+                break;
+            default:
+                new LogicException('Unknown section name');
+        }
+        if (!$res) {
+            $res = $instance->$section();
+            $this->stat[$section] = &$res;
+        }
+        return $res;
     }
 
     /**
@@ -545,13 +563,10 @@ class SummaryReport
      */
     private function reportData(): array
     {
-        $this->ensureData();
-
-        $stat  = $this->stat;
         $rdata = [];
-        $rdata['range'] = $this->rangeToString($stat->range());
+        $rdata['range'] = Common::rangeToString($this->getData('range'));
 
-        $summ      = $stat->summary();
+        $summ      = $this->getData('summary');
         $total     = $summ['emails']['total'];
         $f_aligned = $summ['emails']['dkim_spf_aligned'];
         $p_aligned = $summ['emails']['dkim_aligned'] + $summ['emails']['spf_aligned'];
@@ -567,28 +582,10 @@ class SummaryReport
         $rdata['summary']['rejected']    = $summ['emails']['rejected'];
         $rdata['summary']['quarantined'] = $summ['emails']['quarantined'];
 
-        $rdata['sources'] = $stat->ips();
+        $rdata['sources'] = $this->getData('ips');
 
-        $rdata['organizations'] = $stat->organizations();
+        $rdata['organizations'] = $this->getData('organizations');
 
         return $rdata;
-    }
-
-    /**
-     * Returns the range string in short format (without the current year)
-     *
-     * @param array $range Array with two dates
-     *
-     * @return string
-     */
-    private function rangeToString(array $range): string
-    {
-        $cyear = (new \Datetime())->format('Y');
-        $dform = ($range[0]->format('Y') !== $cyear || $range[1]->format('Y') !== $cyear) ? 'M d Y' : 'M d';
-        $res = $range[0]->format($dform);
-        if ($range[0] != $range[1]) {
-            $res .= ' - ' . $range[1]->format($dform);
-        }
-        return $res;
     }
 }

@@ -71,6 +71,7 @@ use Liuch\DmarcSrg\Mail\MailBody;
 use Liuch\DmarcSrg\Domains\Domain;
 use Liuch\DmarcSrg\Domains\DomainList;
 use Liuch\DmarcSrg\Report\SummaryReport;
+use Liuch\DmarcSrg\Report\OverallReport;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\RuntimeException;
 
@@ -178,6 +179,11 @@ try {
     if ($dom_cnt == 0) {
         throw new SoftException('The user has no assigned domains');
     }
+    $overall = null;
+    if ($dom_cnt > 1) {
+        $overall = new OverallReport();
+        $rep->bindSection($overall);
+    }
     for ($i = 0; $i < $dom_cnt; ++$i) {
         if ($i > 0) {
             if (!is_null($text)) {
@@ -216,6 +222,14 @@ try {
             if (!is_null($html)) {
                 $html[] = '<h2>' . htmlspecialchars($nf_message) . '</h2>';
             }
+        }
+    }
+    if ($overall) {
+        if (!is_null($text)) {
+            $text = array_merge($overall->text(), [ '-----------------------------------', '' ], $text);
+        }
+        if (!is_null($html)) {
+            $html = array_merge($overall->html(), [ '<hr style="margin:2em 0;" />' ], $html);
         }
     }
     $mbody = new MailBody();

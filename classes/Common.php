@@ -102,6 +102,45 @@ class Common
     }
 
     /**
+     * Returns the range string in short format (without the current year)
+     *
+     * @param array $range Array with two dates
+     *
+     * @return string
+     */
+    public static function rangeToString(array $range): string
+    {
+        $cyear = (new \Datetime())->format('Y');
+        $dform = ($range[0]->format('Y') !== $cyear || $range[1]->format('Y') !== $cyear) ? 'M d Y' : 'M d';
+        $res = $range[0]->format($dform);
+        if ($range[0] != $range[1]) {
+            $res .= ' - ' . $range[1]->format($dform);
+        }
+        return $res;
+    }
+
+    /**
+     * Returns the percentage with the original number. If $per is 0 then '0' is returned.
+     *
+     * @param int  $per      Value
+     * @param int  $cent     Divisor for percentage calculation
+     * @param bool $with_num Whether to add the numeric value to the result
+     *
+     * @return string
+     */
+    public static function num2percent(int $per, int $cent, bool $with_num): string
+    {
+        if (!$per) {
+            return '0';
+        }
+        $res = sprintf('%.0f%%', $per / $cent * 100);
+        if ($with_num) {
+            $res .= "({$per})";
+        }
+        return $res;
+    }
+
+    /**
      * Converts array to CSV string
      *
      * @param array $data Array of data to be converted

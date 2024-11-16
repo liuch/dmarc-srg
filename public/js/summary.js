@@ -204,7 +204,8 @@ class Summary {
 			return resp.json();
 		}).then(data => {
 			Common.checkResult(data);
-			this._display_report(data.reports.map(rep => new SummaryReport(format, rep)));
+			const overall = data.overall && (new OverallReport(data.overall)) || null;
+			this._display_report(data.reports.map(rep => new SummaryReport(format, rep)), overall);
 		}).catch(err => {
 			Common.displayError(err);
 			set_error_status(this._report_block, 'Error: ' + err.message);
@@ -214,17 +215,21 @@ class Summary {
 		});
 	}
 
-	_display_report(reports) {
+	_display_report(reports, overall) {
 		function noDataElement() {
 			const el = document.createElement("p");
 			el.append("No data");
 			return el;
 		}
-		function sepElement(html) {
-			if (html) return document.createElement("hr");
-			const el = document.createElement("pre");
-			el.textContent = "==========\n";
-			return el;
+		function appendText(el, text) {
+			el.appendChild(document.createElement("pre")).textContent = text;
+		}
+		function appendSeparator(el, html) {
+			if (html) {
+				el.append(document.createElement("hr"));
+			} else {
+				appendText(el, "==========\n");
+			}
 		}
 
 		let el = null;
@@ -233,22 +238,37 @@ class Summary {
 			reports.forEach((report, index) => {
 				switch (report.format) {
 					case "raw":
-						if (index) el.append(sepElement(true));
+						if (!index) {
+							if (overall) {
+								el.append(overall.html());
+								appendSeparator(el, true);
+							}
+						} else {
+							appendSeparator(el, true);
+						}
 						el.append(report.html() || noDataElement());
 						break;
 					case "text":
 						{
-							if (index) el.append(sepElement(false));
+							if (!index) {
+								if (overall) {
+									appendText(el, overall.text());
+									appendSeparator(el, false);
+								}
+							} else {
+								appendSeparator(el, false);
+							}
 							const text = report.text();
 							if (text) {
-								el.appendChild(document.createElement("pre")).textContent = text;
+								appendText(el, text);
 							} else {
 								el.append(noDataElement());
 							}
 						}
 						break;
 					case "csv":
-						el.appendChild(document.createElement("pre")).textContent = report.csv();
+						if (!index && overall) appendText(el, overall.csv());
+						appendText(el, report.csv());
 						break;
 				}
 			});
@@ -609,5 +629,42 @@ class SummaryReport {
 		if (value && type) el.classList.add("report-result-" + type);
 		el.append(typeof(value) === "number" ? value.toLocaleString() : value);
 		return el;
+	}
+}
+
+class OverallReport extends SummaryReport {
+	constructor(data) {
+		super("overall", data);
+	}
+
+	html() {
+		const html = document.createDocumentFragment();
+		html.appendChild(document.createElement("h2")).textContent = "Overall by domains";
+		const table = html.appendChild(document.createElement("table"));
+		table.classList.add("report-table");
+		table.appendChild(document.createElement("caption")).textContent = "Total records: " + this._report.data.length;
+		const thead = table.appendChild(document.createElement("thead"));
+		thead.append(SummaryReport.makeHeaderRow([
+			[ "Name", 0, 2 ], [ "Emails", 0, 2 ], [ "Partial aligned", 2, 0 ],
+			[ "Not aligned", 0, 2 ], [ "Disposition", 2, 0 ]
+		]));
+		thead.append(SummaryReport.makeHeaderRow([
+			[ "SPF only" ], [ "DKIM only" ], [ "quar+rej" ], [ "fail rate" ]
+		]));
+		const tbody = table.appendChild(document.createElement("tbody"));
+		this._report.data.forEach(d => {
+			const tr = tbody.appendChild(document.createElement("tr"));
+			[
+				d.fqdn, d.total, d.spf_aligned, d.dkim_aligned
+			].forEach(v => tr.append(SummaryReport.makeResultElement("td", v)));
+			const dq = d.quarantined;
+			const dr = d.rejected;
+			const ds = (dq || dr) ? `${dq.toLocaleString()}+${dr.toLocaleString()}` : 0;
+			[
+				d.total - d.dkim_aligned - d.spf_aligned - d.dkim_spf_aligned, ds
+			].forEach(v => tr.append(SummaryReport.makeResultElement("td", v, "fail")));
+			tr.append(SummaryReport.makeResultElement("td", SummaryReport.num2percent(dq + dr, d.total, false)));
+		});
+		return html;
 	}
 }

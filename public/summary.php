@@ -46,6 +46,7 @@ use Liuch\DmarcSrg\Users\User;
 use Liuch\DmarcSrg\Domains\Domain;
 use Liuch\DmarcSrg\Domains\DomainList;
 use Liuch\DmarcSrg\Report\SummaryReport;
+use Liuch\DmarcSrg\Report\OverallReport;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\RuntimeException;
 
@@ -78,7 +79,12 @@ if (Core::isJson() && isset($_GET['mode'])) {
                 throw new SoftException('The `format` parameter can only be `raw`, `text` or `csv`');
             }
 
+            $ovr = null;
             $rep = new SummaryReport($_GET['period']);
+            if (true) { // TODO this optionally using GET paramenter
+                $ovr = new OverallReport();
+                $rep->bindSection($ovr);
+            }
             $reports = [];
             foreach (explode(',', $_GET['domain']) as $d) {
                 $dom = new Domain($d);
@@ -99,6 +105,21 @@ if (Core::isJson() && isset($_GET['mode'])) {
                 $reports[] = $r;
             }
             $res['reports'] = $reports;
+            if ($ovr) {
+                $r = [];
+                switch ($format) {
+                    case 'raw':
+                        $r['data'] = $ovr->toArray();
+                        break;
+                    case 'text':
+                        $r['text'] = $ovr->text();
+                        break;
+                    case 'csv':
+                        $r['csv'] = $ovr->csv();
+                        break;
+                }
+                $res['overall'] = $r;
+            }
 
             Core::sendJson($res);
             return;

@@ -44,12 +44,14 @@ namespace Liuch\DmarcSrg;
  */
 class TextTable
 {
-    private $columns  = null;
-    private $sort_by  = null;
-    private $row_list = [];
-    private $widths   = null;
-    private $minimals = [];
-    private $skeleton = [ 'border' => null, 'header' => null, 'data' => null ];
+    private $columns   = null;
+    private $sort_by   = null;
+    private $row_list  = [];
+    private $widths    = null;
+    private $minimals  = [];
+    private $alignment = [];
+    private $skeleton  = [ 'border' => null, 'header' => null, 'data' => null ];
+    private $borders   = [ 'horizontal' => '-', 'vertical' => '|', 'intersection' => '+' ];
 
     /**
      * Constructor
@@ -91,6 +93,43 @@ class TextTable
     }
 
     /**
+     * Adjusts data alignment in columns
+     *
+     * @param int    $col   Zero-based index of the column
+     * @param string $align Alignment value. Can be either `left` or `right`.
+     *
+     * @return self
+     */
+    public function setColumnAlignment(int $col, string $align)
+    {
+        if ($col >= 0 && $col < count($this->columns)) {
+            switch ($align) {
+                case 'left':
+                case 'right':
+                    $this->alignment[$col] = $align;
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * Sets the characters for the table borders
+     *
+     * @param string $horzontal    Horizontal border
+     * @param string $vertical     Vertical border
+     * @param string $intersection Border at intersections
+     *
+     * @return self
+     */
+    public function setBorders(string $horizontal, string $vertical, string $intersection)
+    {
+        $this->borders['horizontal'] = $horizontal;
+        $this->borders['vertical'] = $vertical;
+        $this->borders['intersection'] = $intersection;
+        return $this;
+    }
+
+    /**
      * Specifies by which column the rows in the table should be sorted
      *
      * @param int $col Zero-based index of the column
@@ -112,29 +151,48 @@ class TextTable
      */
     public function output(): void
     {
-        $cc = count($this->columns);
-        if (!$cc) {
-            return;
+        foreach ($this->toArray() as $s) {
+            echo $s, PHP_EOL;
         }
+    }
 
-        $this->calculateWidths();
-        $this->makeSkeleton();
-        echo $this->skeleton['border'], PHP_EOL;
-        echo $this->generateHeader(), PHP_EOL;
-        echo $this->skeleton['border'], PHP_EOL;
-        if (count($this->row_list)) {
-            $sort_by = $this->sort_by;
-            if (!is_null($sort_by) && isset($this->columns[$sort_by])) {
-                usort($this->row_list, static function ($a, $b) use ($sort_by) {
-                    return $a[$sort_by] <=> $b[$sort_by];
-                });
+    /**
+     * Returns the table as an array of text strings
+     *
+     * @return array
+     */
+    public function toArray(): array
+    {
+        $res = [];
+        $cc = count($this->columns);
+        if ($cc) {
+            $this->calculateWidths();
+            $this->makeSkeleton();
+            $bf = !empty($this->skeleton['border']);
+            if ($bf) {
+                $res[] = $this->skeleton['border'];
             }
-            foreach ($this->row_list as &$row) {
-                echo $this->generateRow($row), PHP_EOL;
+            $res[] = $this->generateHeader();
+            if ($bf) {
+                $res[] = $this->skeleton['border'];
             }
-            unset($row);
+            if (count($this->row_list)) {
+                $sort_by = $this->sort_by;
+                if (!is_null($sort_by) && isset($this->columns[$sort_by])) {
+                    usort($this->row_list, static function ($a, $b) use ($sort_by) {
+                        return $a[$sort_by] <=> $b[$sort_by];
+                    });
+                }
+                foreach ($this->row_list as &$row) {
+                    $res[] = $this->generateRow($row);
+                }
+                unset($row);
+            }
+            if ($bf) {
+                $res[] = $this->skeleton['border'];
+            }
         }
-        echo $this->skeleton['border'], PHP_EOL;
+        return $res;
     }
 
     /**
@@ -161,23 +219,32 @@ class TextTable
      */
     private function makeSkeleton(): void
     {
-        $border = '+';
-        $header = '|';
-        $data   = '|';
+        $vborder = $this->borders['vertical'];
+        $hborder = $this->borders['horizontal'];
+        $iborder = $this->borders['intersection'];
+
+        $border = $iborder;
+        $header = $vborder;
+        $data   = $vborder;
         for ($i = 0; $i < count($this->widths); ++$i) {
             $w = $this->widths[$i];
-            $border .= str_repeat('-', $w + 2) . '+';
-            $header .= " %-{$w}s |";
+            $border .= str_repeat($hborder, $w + 2) . $iborder;
             $d = $this->row_list[0][$i] ?? '';
-            if (is_int($d)) {
-                $data .= " %{$w}s |";
-            } else {
-                $data .= " %-{$w}s |";
+            switch ($this->alignment[$i] ?? (is_int($d) ? 'right' : 'left')) {
+                case 'right':
+                    $header .= " %{$w}s {$vborder}";
+                    $data   .= " %{$w}s {$vborder}";
+                    break;
+                case 'left':
+                default:
+                    $header .= " %-{$w}s {$vborder}";
+                    $data   .= " %-{$w}s {$vborder}";
+                    break;
             }
         }
-        $this->skeleton['border'] = $border;
-        $this->skeleton['header'] = $header;
-        $this->skeleton['data']   = $data;
+        $this->skeleton['border'] = trim($border);
+        $this->skeleton['header'] = trim($header);
+        $this->skeleton['data']   = trim($data);
     }
 
     /**
