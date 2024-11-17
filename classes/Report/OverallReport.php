@@ -73,10 +73,8 @@ class OverallReport
         $res = [ '# Overall by domains', '' ];
 
         $table = new TextTable([ '', 'Emails', 'SPF only', 'DKIM only', 'Not aligned', 'Quar+Rej' ]);
-        $table->setMinColumnWidth(0, 15)->setMinColumnWidth(1, 6)->setMinColumnWidth(2, 8)
-            ->setMinColumnWidth(3, 9)->setMinColumnWidth(4, 11)->setMinColumnWidth(5, 8)
-            ->setColumnAlignment(4, 'right')->setColumnAlignment(5, 'right')
-            ->setBorders('', '', '');
+        $table->setMinColumnsWidth([ 15, 6, 8, 9, 11, 8 ])->setBorders('', '', '')
+            ->setColumnAlignment(4, 'right')->setColumnAlignment(5, 'right');
         foreach ($this->rows as &$row) {
             $total = $row['total'];
             $d_aln = $row['dkim_aligned'];

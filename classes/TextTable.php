@@ -93,6 +93,26 @@ class TextTable
     }
 
     /**
+     * Sets the minimal width for in characters for the all columns at once
+     *
+     * If the array size is not the same as the number of columns, the extra or missing coulumns are ignored.
+     *
+     * @param array $widths
+     *
+     * @return self
+     */
+    public function setMinColumnsWidth(array $widths)
+    {
+        $c = min(count($widths), count($this->columns));
+        for ($i = 0; $i < $c; ++$i) {
+            if (is_int($widths[$i])) {
+                $this->minimals[$i] = $widths[$i];
+            }
+        }
+        return $this;
+    }
+
+    /**
      * Adjusts data alignment in columns
      *
      * @param int    $col   Zero-based index of the column

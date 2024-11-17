@@ -33,6 +33,7 @@ namespace Liuch\DmarcSrg\Report;
 
 use Liuch\DmarcSrg\Common;
 use Liuch\DmarcSrg\DateTime;
+use Liuch\DmarcSrg\TextTable;
 use Liuch\DmarcSrg\Statistics;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\LogicException;
@@ -186,9 +187,7 @@ class SummaryReport
     {
         $rdata = $this->reportData();
 
-        $res = [];
-        $res[] = '# Domain: ' . $this->domain->fqdn();
-
+        $res = [ '# Domain: ' . $this->domain->fqdn() ];
         $res[] = ' Range: ' . $rdata['range'];
         $res[] = '';
 
@@ -203,8 +202,10 @@ class SummaryReport
         $res[] = '';
 
         if (count($rdata['sources']) > 0) {
-            $rows = [ [ '', 'Total', 'SPF only', 'DKIM only', 'Not aligned', 'Quar+Rej' ] ];
-            $lens = [ 15, 5, 8, 9, 11, 8 ];
+            $res[] = '## Sources';
+            $table = new TextTable([ '', 'Total', 'SPF only', 'DKIM only', 'Not aligned', 'Quar+Rej' ]);
+            $table->setMinColumnsWidth([ 15, 5, 8, 9, 11, 8 ])->setBorders('', '', '')
+                ->setColumnAlignment(4, 'right')->setColumnAlignment(5, 'right');
             foreach ($rdata['sources'] as &$it) {
                 $total = $it['emails'];
                 $f_aln = $it['dkim_spf_aligned'];
@@ -218,36 +219,20 @@ class SummaryReport
                 } else {
                     $s_dis = '0';
                 }
-                // Fill row data
-                $row = [
-                    $it['ip'], strval($total), strval($s_aln), strval($d_aln),
-                    Common::num2percent($n_aln, $total, true), $s_dis
-                ];
-                // Calculate column width
-                for ($i = 0; $i < count($row); ++$i) {
-                    $lens[$i] = max(mb_strlen($row[$i]), $lens[$i]);
-                }
-                //--
-                $rows[] = $row;
+                $table->appendRow([
+                    $it['ip'], $total, $s_aln, $d_aln, Common::num2percent($n_aln, $total, true), $s_dis
+                ]);
             }
             unset($it);
-
-            $lens[0] = min($lens[0], 55);
-            $f_str = " %-{$lens[0]}s";
-            for ($i = 1; $i < count($lens); ++$i) {
-                $f_str .= "  %{$lens[$i]}s";
-            }
-            $res[] = '## Sources';
-            foreach ($rows as &$rd) {
-                $res[] = sprintf($f_str, ...$rd);
-            }
-            unset($rd);
+            $res = array_merge($res, $table->toArray());
             $res[] = '';
         }
 
         if (count($rdata['organizations']) > 0) {
-            $rows = [ [ '', 'Reports', 'Emails', 'SPF only', 'DKIM only', 'Not aligned', 'Quar+Rej' ] ];
-            $lens = [ 15, 7, 6, 8, 9, 11, 8 ];
+            $res[] = '## Reporting organizations';
+            $table = new TextTable([ '', 'Reports', 'Emails', 'SPF only', 'DKIM only', 'Not aligned', 'Quar+Rej' ]);
+            $table->setMinColumnsWidth([ 15, 7, 6, 8, 9, 11, 8 ])->setBorders('', '', '')
+                ->setColumnAlignment(5, 'right')->setColumnAlignment(6, 'right');
             foreach ($rdata['organizations'] as &$it) {
                 $total = $it['emails'];
                 $f_aln = $it['dkim_spf_aligned'];
@@ -261,30 +246,13 @@ class SummaryReport
                 } else {
                     $s_dis = '0';
                 }
-                // Fill row data
-                $row = [
-                    $it['name'], strval($it['reports']), strval($total), strval($s_aln), strval($d_aln),
+                $table->appendRow([
+                    $it['name'], $it['reports'], $total, $s_aln, $d_aln,
                     Common::num2percent($n_aln, $total, true), $s_dis
-                ];
-                // Calculate column width
-                for ($i = 0; $i < count($row); ++$i) {
-                    $lens[$i] = max(mb_strlen($row[$i]), $lens[$i]);
-                }
-                //--
-                $rows[] = $row;
+                ]);
             }
             unset($it);
-
-            $lens[0] = min($lens[0], 50);
-            $f_str = " %-{$lens[0]}s";
-            for ($i = 1; $i < count($lens); ++$i) {
-                $f_str .= "  %{$lens[$i]}s";
-            }
-            $res[] = '## Reporting organizations';
-            foreach ($rows as &$rd) {
-                $res[] = sprintf($f_str, ...$rd);
-            }
-            unset($rd);
+            $res = array_merge($res, $table->toArray());
             $res[] = '';
         }
 

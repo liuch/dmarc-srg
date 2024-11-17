@@ -60,6 +60,18 @@ class TextTableTest extends \PHPUnit\Framework\TestCase
     /**
      * @runInSeparateProcess
      */
+    public function testMimColumnsWidth(): void
+    {
+        ob_start();
+        $this->table->setMinColumnsWidth([ 1, 10, 2 ])->output();
+        $output = ob_get_contents();
+        ob_end_clean();
+        $this->assertEquals($this->genResultText(4, 5, 4, 6, 7, 4), $output);
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
     public function testSortByString(): void
     {
         ob_start();
