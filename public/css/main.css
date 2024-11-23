@@ -293,6 +293,9 @@ label>input:first-child {
 	.small-cards .table-body .table-row {
 		border-left: 3px solid #0000;
 	}
+	.domains .table-body .table-cell {
+		max-width: none;
+	}
 	.small-cards .table-body .table-cell {
 		text-align: right;
 		max-width: none;
