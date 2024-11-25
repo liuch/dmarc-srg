@@ -40,7 +40,7 @@
  *   when the `domain` options is set to `all`. Only makes sense if the user_management mode is active.
  *   The default value is `admin`.
  * The `subject` parameter is optional. It allows you to specify the subject line of the summary report message
- *   instead of the default subject line. Remember to escape spaces and special characters!
+ *   instead of the default subject line. Remember to escape spaces and special characters using HTML entities!
  *
  * Some examples:
  *
