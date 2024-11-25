@@ -101,6 +101,7 @@ if ($acount <= 1) {
     echo '           period=lastmonth|lastweek|lastndays:<days>', PHP_EOL;
     echo '           [offset=<days>] [format=text|html|text+html]', PHP_EOL;
     echo '           [emailto=<email address>] [user=<username>]', PHP_EOL;
+    echo '           [subject="<subject line>"]', PHP_EOL;
     exit(1);
 }
 for ($i = 1; $i < $acount; ++$i) {
