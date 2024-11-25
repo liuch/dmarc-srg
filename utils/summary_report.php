@@ -50,7 +50,7 @@
  * $ php utils/summary_report.php domain=example.com period=lastweek offset=1
  * will send a summary report for the week before last week for the domain example.com via email
  *
- * $ php utils/summary_report.php domain=example.com period=lastndays:10 "subject:My cool summary report"
+ * $ php utils/summary_report.php domain=example.com period=lastndays:10 "subject=My cool summary report"
  * will send a summary report for last 10 days for the domain example.com via email with the specified subject line
  *
  * $ php utils/summary_report.php domain=all user=frederick1 period=lastmonth emailto=frederick@example.com
