@@ -27,37 +27,37 @@
 	<script src="js/notification.js"></script>
 </head>
 <body>
-	<div id="main-menu-button">
-		<input id="main-menu-toggle" type="checkbox" />
+	<nav id="main-menu-block" aria-label="Main">
+		<input id="main-menu-toggle" type="checkbox" aria-controls="main-menu" aria-haspopup="true" aria-expanded="false" />
 		<div class="button-decor"></div>
-		<label class="toggle-button" for="main-menu-toggle"></label>
-		<ul id="main-menu" class="menu-box">
-			<li class="closed">
-				<span>Reports</span>
-				<ul class="submenu">
-					<li><a href="./">Incoming reports</a></li>
-					<li class="level-manager"><a href="files.php">Files</a></li>
-					<li><a href="summary.php">Summary reports</a></li>
+		<label class="toggle-button" for="main-menu-toggle" tabindex="0" aria-label="Display the menu"></label>
+		<ul role="menubar" id="main-menu" class="menu-box" aria-label="Main menu">
+			<li role="none" class="about"><a role="menuitem" href="#">About</a></li>
+			<li role="none">
+				<span role="menuitem" aria-haspopup="true" aria-expanded="false">Reports</span>
+				<ul role="menu" aria-label="Reports">
+					<li role="none"><a role="menuitem" href="./">Incoming reports</a></li>
+					<li role="none" class="level-manager"><a role="menuitem" href="files.php">Files</a></li>
+					<li role="none"><a role="menuitem" href="summary.php">Summary reports</a></li>
 				</ul>
 			</li>
-			<li class="closed level-admin">
-				<span>Administration</span>
-				<ul class="submenu">
-					<li><a href="admin.php">Admin panel</a></li>
-					<li class="users"><a href="users.php">Users</a></li>
-					<li><a href="logs.php">Logs</a></li>
+			<li role="none" class="level-admin">
+				<span role="menuitem" aria-haspopup="true" aria-expanded="false">Administration</span>
+				<ul role="menu" aria-label="Administration">
+					<li role="none"><a role="menuitem" href="admin.php">Admin panel</a></li>
+					<li role="none" class="users"><a role="menuitem" href="users.php">Users</a></li>
+					<li role="none"><a role="menuitem" href="logs.php">Logs</a></li>
 				</ul>
 			</li>
-			<li class="about"><a href="">About</a></li>
-			<li class="closed">
-				<span>Settings</span>
-				<ul class="submenu">
-					<li><a href="domains.php">Domains</a></li>
-					<li><a href="settings.php">Advanced</a></li>
+			<li role="none">
+				<span role="menuitem" aria-haspopup="true" aria-expanded="false">Settings</span>
+				<ul role="menu" aria-label="Settings">
+					<li role="none"><a role="menuitem" href="domains.php">Domains</a></li>
+					<li role="none"><a role="menuitem" href="settings.php">Advanced</a></li>
 				</ul>
 			</li>
 		</ul>
-	</div>
+	</nav>
 	<h1>DMARC Reports</h1>
 	<div id="stat-block"></div>
 	<div id="main-block"></div>

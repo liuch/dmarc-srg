@@ -1564,3 +1564,237 @@ class HintButton {
 		}
 	}
 }
+
+class MenuBar {
+	constructor(element) {
+		this._element = element;
+		this._tbtn    = null;
+		this._mbar    = null;
+		this._focused = false;
+	}
+
+	static instance() {
+		if (!this._instance) this._instance = new MenuBar(document.getElementById("main-menu-block"));
+		return this._instance;
+	}
+
+	init() {
+		this._tbtn = this._element.querySelector(".toggle-button");
+		this._tggl = this._element.querySelector('#main-menu-toggle');
+		this._mbar = this._element.querySelector('ul[role="menubar"]');
+		this._updateMenu();
+
+		function delayedFocus() {
+			this._mbar.addEventListener("transitionend", event => this.focus(), { once: true });
+		}
+
+		this._element.addEventListener("focusin", event => {
+			this._focused = true;
+		});
+		this._element.addEventListener("focusout", event => {
+			this._focused = false;
+			setTimeout(() => {
+				if (!this._focused) this._tggl.checked = false;
+			}, 0);
+		});
+		this._tbtn.addEventListener("keydown", event => {
+			switch (event.key) {
+				case " ":
+				case "Enter":
+					this._tggl.checked = !this._tggl.checked;
+					if (this._tggl.checked) delayedFocus.call(this);
+					break;
+			}
+		});
+		this._tbtn.addEventListener("click", delayedFocus.bind(this));
+		this._mbar.addEventListener("click", event => {
+			const target = event.target;
+			switch (target.role) {
+				case "menuitem":
+					if (target.ariaHasPopup === "true") {
+						this._toggleMenu(target);
+					} else {
+						this._tggl.checked = false;
+					}
+					break;
+			}
+		});
+		this._mbar.addEventListener("keydown", this._onKeydown.bind(this));
+		return this;
+	}
+
+	element(selector) {
+		if (typeof(selector) !== "string") return this._element;
+		return this._element.querySelector(selector);
+	}
+
+	focus() {
+		const that = this;
+		function findOldFocus(ul) {
+			for (const li of ul.children) {
+				if (window.getComputedStyle(li).display !== "none" && !li.classList.contains("disabled")) {
+					let item = that._getMenuItem(li);
+					if (item.tabIndex === 0) return item;
+					if (item.ariaHasPopup) {
+						item = findOldFocus(li.children[1]);
+						if (item) return item;
+					}
+				}
+			}
+		}
+		let m = findOldFocus(this._mbar);
+		if (!m) m = this._getFirstMenuItem();
+		this._focusItem(m);
+	}
+
+	updateCurrent() {
+		this._mbar.querySelectorAll('[role="menuitem"][aria-current]').forEach(el => {
+			el.ariaCurrent = null;
+		});
+		if (!this._focused) {
+			this._mbar.querySelectorAll('[role="menuitem"][aria-expanded="true"]').forEach(el => {
+				el.ariaExpanded = false;
+			});
+		}
+
+		const url = new URL(document.location);
+		url.search = "";
+		const href = url.toString();
+		for (const el of this._mbar.querySelectorAll('a[role="menuitem"]')) {
+			if (el.href === href) {
+				el.ariaCurrent = "page";
+				const pi = this._getMenuItem(el.parentNode.parentNode.parentNode);
+				if (pi) pi.ariaExpanded = true;
+			}
+		}
+		this._mbar.tabIndex = -1;
+	}
+
+	insertItem(title, href, position) {
+		const li = document.createElement("li");
+		li.role = "none";
+		const ae = li.appendChild(document.createElement("a"));
+		ae.role = "menuitem";
+		ae.tabIndex = -1;
+		ae.href = href;
+		ae.textContent = title;
+		if (position < 0 || position >= this._mbar.children.length) {
+			this._mbar.append(li);
+		} else {
+			this._mbar.insertBefore(li, this._mbar.children[position]);
+		}
+		return li;
+	}
+
+	_focusItem(item) {
+		if (item && item.role !== "menuitem") item = this._getMenuItem(item);
+		if (!item) return;
+
+		this._mbar.querySelectorAll('[role="menuitem"][tabindex="0"]').forEach(el => {
+			if (el !== item) el.tabIndex = -1;
+		});
+		item.tabIndex = 0;
+		item.focus();
+	}
+
+	_focusNextItem(cItem) {
+		this._focusItem(this._getNextMenuItem(cItem.parentNode));
+	}
+
+	_focusPreviousItem(cItem) {
+		this._focusItem(this._getPreviousMenuItem(cItem.parentNode));
+	}
+
+	_getMenuItem(li) {
+		return li.querySelector('[role="menuitem"]');
+	}
+
+	_isItemAvailable(li) {
+		return (window.getComputedStyle(li).display !== "none" && !li.classList.contains("disabled"));
+	}
+
+	_getFirstMenuItem() {
+		for (const li of this._mbar.children) {
+			if (this._isItemAvailable(li)) return li;
+		}
+	}
+
+	_getLastMenuItem() {
+		let li = this._mbar.lastElementChild;
+		while (li) {
+			if (!this._isItemAvailable(li)) return this._getPreviousMenuItem(li);
+			if (this._getMenuItem(li).ariaExpanded !== "true") return li;
+			li = li.children[1].lastElementChild;
+		}
+	}
+
+	_getNextMenuItem(li) {
+		const ci = this._getMenuItem(li);
+		if (ci.ariaExpanded === "true") {
+			const first = ci.nextElementSibling.firstElementChild;
+			if (this._isItemAvailable(first)) return first;
+			return this._getNextMenuItem(first);
+		}
+
+		while (true) {
+			let next = li.nextElementSibling;
+			while (next) {
+				if (this._isItemAvailable(next)) return next;
+				next = next.nextElementSibling;
+			}
+
+			if (li.parentNode === this._mbar) return this._getFirstMenuItem();
+			li = li.parentNode.parentNode;
+		}
+	}
+
+	_getPreviousMenuItem(li) {
+		let prev = li.previousElementSibling;
+		while (prev) {
+			if (!this._isItemAvailable(prev)) return this._getPreviousMenuItem(prev);
+			if (this._getMenuItem(prev).ariaExpanded !== "true") return prev;
+			prev = prev.children[1].lastElementChild;
+		}
+		if (li.parentNode === this._mbar) return this._getLastMenuItem();
+		return li.parentNode.parentNode;
+	}
+
+	_updateMenu() {
+		this._mbar.querySelectorAll('[role="menuitem"], [role="menu"]').forEach(el => {
+			el.tabIndex = -1;
+		});
+	}
+
+	_toggleMenu(item) {
+		item.ariaExpanded = (item.ariaExpanded !== "true");
+	}
+
+	_onKeydown(event) {
+		const tg = event.target;
+		switch (event.key) {
+			case " ":
+			case "Enter":
+				if (tg.ariaHasPopup === "true") this._toggleMenu(tg);
+				break;
+			case "Esc":
+			case "Escape":
+				this._tggl.checked = false;
+				this._tbtn.focus();
+				break;
+			case "Up":
+			case "ArrowUp":
+				this._focusPreviousItem(tg);
+				break;
+			case "Down":
+			case "ArrowDown":
+				this._focusNextItem(tg);
+				break;
+			case "Home":
+				this._focusItem(this._getFirstMenuItem());
+				break;
+			case "End":
+				this._focusItem(this._getLastMenuItem());
+				break;
+		}
+	}
+}

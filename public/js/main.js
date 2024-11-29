@@ -46,22 +46,17 @@ Router.start = function() {
 				m.classList.add("hidden");
 			});
 		}
-		let mm_toggle = document.getElementById("main-menu-toggle");
-		if (mm_toggle.checked) {
-			if (event.target.tagName == "A" || !event.target.closest("#main-menu-button")) {
-				mm_toggle.checked = false;
-			}
-		}
 	});
 
-	document.getElementById("main-menu-button").addEventListener("click", function(event) {
+	document.getElementById("main-menu-block").addEventListener("click", function(event) {
 		let el = event.target;
 		if (el.tagName === "A") {
 			let href = el.getAttribute("href");
-			if (href !== "") {
+			if (href !== "" && href !== "#") {
 				event.preventDefault();
 				window.history.pushState(null, "", href);
 				Router.go();
+				MenuBar.instance().updateCurrent();
 			}
 		}
 	});
@@ -77,14 +72,8 @@ Router.start = function() {
 				p.onpopstate(event.state);
 			} else {
 				Router.go();
+				MenuBar.instance().updateCurrent();
 			}
-		}
-	});
-
-	document.getElementById("main-menu").addEventListener("click", function(event) {
-		let el = event.target.closest("ul>li");
-		if (el) {
-			el.classList.toggle("closed");
 		}
 	});
 
@@ -109,7 +98,9 @@ Router.start = function() {
 		}, 0);
 	});
 
+	const menu = MenuBar.instance().init();
 	Router.go();
+	menu.updateCurrent();
 };
 
 Router.go = function(url) {
@@ -189,94 +180,52 @@ Router.update_title = function(str) {
 };
 
 Router._update_menu = function(authenticated) {
-	let m_el = document.getElementById("main-menu");
-	let l_el = m_el.querySelector("#auth-action");
-	if (l_el) {
-		l_el.remove();
-	}
-	{
-		let subs = m_el.querySelectorAll(".submenu .selected")
-		for (let i = 0; i < subs.length; ++i) {
-			subs[i].classList.remove("selected");
-		}
-		let href = document.location.origin + document.location.pathname;
-		let f1 = false;
-		for (let i = 0; i < m_el.children.length; ++i) {
-			let smenu = m_el.children[i];
-			if (smenu !== l_el) {
-				let f2 = false;
-				if (!f1) {
-					let a_ls = smenu.querySelectorAll("ul>li>a");
-					for (let k = 0; k < a_ls.length; ++k) {
-						let a = a_ls[k];
-						if (a.href === href) {
-							f1 = true;
-							f2 = true;
-							a.parentElement.classList.add("selected")
-							break;
-						}
-					}
-				}
-				if (f2) {
-					smenu.classList.remove("closed");
-				}
-				else {
-					smenu.classList.add("closed");
-				}
-			}
-		}
-	}
+	let aa = document.getElementById("auth-action");
+	if (aa) aa.remove();
+
 	if (User && User.auth_type !== "base") {
-		m_el.querySelector(".users").classList.add("hidden");
+		MenuBar.instance().element(".users").classList.add("hidden");
 	}
-	if (authenticated !== "disabled") {
-		l_el = document.createElement("li");
-		l_el.setAttribute("id", "auth-action");
-		let a_el = document.createElement("a");
-		a_el.setAttribute("href", "");
-		if (authenticated == "yes") {
-			a_el.appendChild(document.createTextNode("Log out"));
-			a_el.addEventListener("click", function(event) {
-				event.preventDefault();
-				if (!this.classList.contains("disabled")) {
-					let m_el = this;
-					m_el.classList.add("disabled");
-					window.fetch("logout.php", {
-						method: "POST",
-						cache: "no-store",
-						headers: Object.assign(HTTP_HEADERS, HTTP_HEADERS_POST),
-						credentials: "same-origin",
-						body: JSON.stringify({})
-					}).then(function(resp) {
-						if (!resp.ok)
-							throw new Error("Failed to log out");
-						return resp.json();
-					}).then(function(data) {
-						Common.checkResult(data);
-						User.name = null;
-						User.level = null;
-						Status.instance().reset();
-						Router._clear_data();
-						Router._update_menu("no");
-						Router._update_user();
-						Router.update_title("");
-					}).catch(function(err) {
-						Common.displayError(err);
-						m_el.classList.remove("disabled");
-						Notification.add({ type: "error", text: err.message, name: "auth" });
-					});
-				}
-			});
-		}
-		else if (authenticated == "no") {
-			a_el.appendChild(document.createTextNode("Log in"));
-			a_el.addEventListener("click", function(event) {
-				event.preventDefault();
-				LoginDialog.start();
-			});
-		}
-		l_el.appendChild(a_el);
-		m_el.appendChild(l_el);
+
+	if (authenticated === "yes") {
+		aa = MenuBar.instance().insertItem("Log out", "#", -1);
+		aa.id = "auth-action";
+		aa.addEventListener("click", event => {
+			event.preventDefault();
+			if (!aa.classList.contains("disabled")) {
+				aa.classList.add("disabled");
+				window.fetch("logout.php", {
+					method: "POST",
+					cache: "no-store",
+					headers: Object.assign(HTTP_HEADERS, HTTP_HEADERS_POST),
+					credentials: "same-origin",
+					body: JSON.stringify({})
+				}).then(resp => {
+					if (!resp.ok) throw new Error("Failed to log out");
+					return resp.json();
+				}).then(data => {
+					Common.checkResult(data);
+					User.name = null;
+					User.level = null;
+					Status.instance().reset();
+					Router._clear_data();
+					Router._update_menu("no");
+					Router._update_user();
+					Router.update_title("");
+				}).catch(err => {
+					Common.displayError(err);
+					aa.classList.remove("disabled");
+					Notification.add({ type: "error", text: err.message, name: "auth" });
+				});
+			}
+		});
+	} else if (authenticated === "no") {
+		aa = MenuBar.instance().insertItem("Log in", "#", -1);
+		aa.id = "auth-action";
+		aa.addEventListener("click", event => {
+			event.preventDefault();
+			LoginDialog.start();
+		});
 	}
 };
 

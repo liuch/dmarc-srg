@@ -23,7 +23,8 @@
 		--color-br-default:   #ccc;
 		--color-br-weak:      #eee;
 		--color-br-strong:    #777;
-		--color-br-focused:   #66f;
+		--color-br-focused:   #16d;
+		--color-br-selected:  #66f;
 		--color-br-input:     rgba(0,0,0,0.5);
 		--color-br-disabled:  #e0e0e0;
 		--color-br-menu:      #ccc;
@@ -65,7 +66,8 @@
 		--color-br-default:   #30363d;
 		--color-br-weak:      #21262b;
 		--color-br-strong:    #40464d;
-		--color-br-focused:   #f78166;
+		--color-br-focused:   #1f6feb;
+		--color-br-selected:  #f78166;
 		--color-br-input:     rgba(240,246,252,0.1);
 		--color-br-disabled:  #30363d;
 		--color-br-menu:      #505860;
@@ -288,7 +290,7 @@ label>input:first-child {
 		border-left: 3px solid #0000;
 	}
 	.domains .table-body .table-row.focused .table-cell.descr, .small-cards .table-body .table-row.focused {
-		border-left: 3px solid var(--color-br-focused);
+		border-left: 3px solid var(--color-br-selected);
 	}
 	.small-cards .table-body .table-row {
 		border-left: 3px solid #0000;
@@ -440,7 +442,7 @@ label>input:first-child {
 	border-left: 3px solid #0000;
 }
 .main-table .table-body .table-row.focused .table-cell:first-child {
-	border-left: 3px solid var(--color-br-focused);
+	border-left: 3px solid var(--color-br-selected);
 }
 .summary-report {
 	overflow-y: auto;
