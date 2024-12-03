@@ -113,6 +113,7 @@ class ReportList {
 
 	_make_scroll_container() {
 		const el = document.createElement("div");
+		el.tabIndex = -1;
 		el.classList.add("table-wrapper");
 		el.addEventListener("scroll", event => {
 			if (!this._fetching && el.scrollTop + el.clientHeight >= el.scrollHeight * 0.95) {

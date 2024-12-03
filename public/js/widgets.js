@@ -1613,6 +1613,7 @@ class MenuBar {
 				case "menuitem":
 					if (target.ariaHasPopup === "true") {
 						this._toggleMenu(target);
+						this._focusItem(target);
 					} else {
 						this._tggl.checked = false;
 					}

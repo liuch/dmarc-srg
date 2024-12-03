@@ -31,7 +31,7 @@
 		<input id="main-menu-toggle" type="checkbox" aria-controls="main-menu" aria-haspopup="true" aria-expanded="false" />
 		<div class="button-decor"></div>
 		<label class="toggle-button" for="main-menu-toggle" tabindex="0" aria-label="Display the menu"></label>
-		<ul role="menubar" id="main-menu" class="menu-box" aria-label="Main menu">
+		<ul role="menubar" id="main-menu" class="menu-box" aria-orientation="vertical" aria-label="Main menu">
 			<li role="none" class="about"><a role="menuitem" href="#">About</a></li>
 			<li role="none">
 				<span role="menuitem" aria-haspopup="true" aria-expanded="false">Reports</span>
@@ -58,10 +58,12 @@
 			</li>
 		</ul>
 	</nav>
-	<h1>DMARC Reports</h1>
-	<div id="stat-block"></div>
-	<div id="main-block"></div>
-	<div id="detail-block"></div>
-	<div id="notifications-block"></div>
+	<main>
+		<h1>DMARC Reports</h1>
+		<div id="stat-block"></div>
+		<div id="main-block"></div>
+		<div id="detail-block"></div>
+		<div id="notifications-block"></div>
+	</main>
 </body>
 </html>
