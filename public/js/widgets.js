@@ -688,7 +688,8 @@ class ITableColumn extends ITableCell {
 }
 
 class Toolbar {
-	constructor() {
+	constructor(label) {
+		this._label   = label;
 		this._element = null;
 		this._items   = [];
 		this._spacer  = {}; // Just a unique value
@@ -697,24 +698,44 @@ class Toolbar {
 	element() {
 		if (!this._element) {
 			const el = document.createElement("div");
-			el.classList.add("toolbar");
-			this._element = el;
-			let spacer  = false
+			el.role = "toolbar";
+			el.ariaLabel = this._label;
+			let spacer = false
+			let first  = true;
 			for (const it of this._items) {
 				if (it === this._spacer) {
-					spacer = this._spacer;
+					spacer = true;
 					continue;
 				}
 				if (spacer) {
 					it.classList.add("spacer-left");
 					spacer = false;
 				}
-				if (it instanceof ToolbarButton) {
-					el.append(it.element());
-				} else {
-					el.append(it);
+				let te = (it instanceof ToolbarButton) ? it.element() : it;
+				el.append(te);
+				if (first && te.tabIndex === -1) {
+					first = false;
+					te.tabIndex = 0;
 				}
 			}
+			el.addEventListener("keydown", event => {
+				const target = event.target;
+				switch (event.code) {
+					case "ArrowLeft":
+						this._focusPreviousItem(event.target);
+						break;
+					case "ArrowRight":
+						this._focusNextItem(event.target);
+						break;
+					case "Home":
+						this._focusFirstItem();
+						break;
+					case "End":
+						this._focusLastItem();
+						break;
+				}
+			});
+			this._element = el;
 		}
 		return this._element;
 	}
@@ -727,6 +748,59 @@ class Toolbar {
 	appendSpacer() {
 		this._items.push(this._spacer);
 		return this;
+	}
+
+	_focusFirstItem() {
+		const first = this._element.firstElementChild;
+		if (!first.hasAttribute("tabindex")) {
+			this._focusNextItem(first);
+			return;
+		}
+		this._resetTabindexValues();
+		first.tabIndex = 0;
+		first.focus();
+	}
+
+	_focusLastItem() {
+		const last = this._element.lastElementChild;
+		if (!last.hasAttribute("tabindex")) {
+			this._focusPreviousItem(last);
+			return;
+		}
+		this._resetTabindexValues();
+		last.tabIndex = 0;
+		last.focus();
+	}
+
+	_focusNextItem(cItem) {
+		let next = cItem;
+		while ((next = next.nextElementSibling)) {
+			if (next.hasAttribute("tabindex")) {
+				this._resetTabindexValues();
+				next.tabIndex = 0;
+				next.focus();
+				break;
+			}
+		}
+	}
+
+	_focusPreviousItem(cItem) {
+		let prev = cItem;
+		while ((prev = prev.previousElementSibling)) {
+			if (prev.hasAttribute("tabindex")) {
+				this._resetTabindexValues();
+				prev.tabIndex = 0;
+				prev.focus();
+				break;
+			}
+		}
+
+	}
+
+	_resetTabindexValues() {
+		this._element.querySelectorAll('[tabindex="0"]').forEach(el => {
+			el.tabIndex = -1;
+		});
 	}
 }
 
@@ -741,34 +815,51 @@ class ToolbarButton {
 	element() {
 		if (!this._element) {
 			const el = document.createElement("button");
+			el.type = "button";
 			el.tabIndex = -1;
-			if (this._content) el.append(this._content);
-			if (this._title) el.title = this._title;
+			let ce = null
+			if (this._content) {
+				ce = el.appendChild((typeof(this._content) === "string") && this._getSVG() || this._content);
+			}
+			if (this._title) {
+				const popup = document.createElement("span");
+				popup.classList.add("popup-label");
+				el.appendChild(popup).textContent = this._title;
+				if (ce && ce.nodeName.toUpperCase() === "SVG") ce.setAttribute("aria-hidden", true);
+			}
 			if (this._onclick) el.addEventListener("click", this._onclick);
 			this._element = el;
 		}
 		return this._element;
 	}
 
-	static svgIcon(view_box, html) {
+	_getSVG() {
+		switch (this._content) {
+			case "info_icon":
+				return this._svgIcon(
+					'0 0 16 16',
+					'<path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>'
+				);
+			case "filter_icon":
+				return this._svgIcon(
+					'0 1 15 15',
+					'<path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2z"/>'
+				);
+			case "columns_icon":
+				return this._svgIcon(
+					'0 0 17 17',
+					'<path d="M0 1.5A1.5 1.5 0 0 1 1.5 0h13A1.5 1.5 0 0 1 16 1.5v13a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 14.5zM1.5 1a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 .5.5H5V1zM10 15V1H6v14zm1 0h3.5a.5.5 0 0 0 .5-.5v-13a.5.5 0 0 0-.5-.5H11z"/>'
+				);
+		}
+	}
+
+	_svgIcon(view_box, html) {
 		const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 		svg.setAttribute("focusable", "false");
 		svg.setAttribute("fill", "currentColor");
 		svg.setAttribute("viewBox", view_box);
 		svg.innerHTML = html;
 		return svg;
-	}
-
-	static infoIcon() {
-		return this.svgIcon('0 0 16 16', '<path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>');
-	}
-
-	static filterIcon() {
-		return this.svgIcon('0 1 15 15', '<path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2z"/>');
-	}
-
-	static columnsIcon() {
-		return this.svgIcon('0 0 17 17', '<path d="M0 1.5A1.5 1.5 0 0 1 1.5 0h13A1.5 1.5 0 0 1 16 1.5v13a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 14.5zM1.5 1a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 .5.5H5V1zM10 15V1H6v14zm1 0h3.5a.5.5 0 0 0 .5-.5v-13a.5.5 0 0 0-.5-.5H11z"/>');
 	}
 }
 
@@ -1533,7 +1624,7 @@ class HintButton {
 		if (!this._element) {
 			const el = document.createElement("div");
 			el.classList.add("hint-block");
-			const bt = el.appendChild((new ToolbarButton({ content: ToolbarButton.infoIcon() })).element());
+			const bt = el.appendChild((new ToolbarButton({ content: "info_icon", title: "Details" })).element());
 			const ct = el.appendChild(document.createElement("div"));
 			ct.classList.add("hint-content");
 			bt.addEventListener("focus", event => {

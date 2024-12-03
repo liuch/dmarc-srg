@@ -81,6 +81,21 @@ function bytes2size(bytes) {
 }
 
 class Common {
+	static initAriaMethods() {
+		if (HTMLElement.idSequenceValue === undefined) HTMLElement.idSequenceValue = 0;
+		if (!HTMLElement.prototype.getId) {
+			HTMLElement.prototype.getId = function() {
+				if (!this.id) this.id = `id-${++HTMLElement.idSequenceValue}`;
+				return this.id;
+			};
+		}
+		if (!HTMLElement.prototype.setAriaControls) {
+			HTMLElement.prototype.setAriaControls = function(element) {
+				this.setAttribute("aria-controls", element.getId());
+			};
+		}
+	}
+
 	static tuneDateTimeOutput(mode) {
 		Date.prototype.outputMode = mode;
 		if (!Date.prototype.toUIString) {
@@ -216,4 +231,5 @@ class Common {
 	}
 }
 
+Common.initAriaMethods();
 Common.tuneDateTimeOutput("auto");

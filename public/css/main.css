@@ -413,13 +413,13 @@ label>input:first-child {
 	position: sticky;
 	top: 0;
 }
-.toolbar {
+[role="toolbar"] {
 	background-color: var(--color-bg-toolbar);
 }
-.toolbar, .toolbar button {
+[role="toolbar"], [role="toolbar"] button {
 	color: var(--color-fg-muted);
 }
-.toolbar span {
+[role="toolbar"] span {
 	font-size: 85%;
 }
 .main-table .table-header .table-cell {
@@ -738,7 +738,7 @@ label>input:first-child {
 button.options-button {
 	color: inherit;
 }
-.options-button:hover, .options-button.active, .toolbar button.active {
+.options-button:hover, .options-button.active, [role="toolbar"] button.active {
 	color: #080;
 }
 .options-block h2 {

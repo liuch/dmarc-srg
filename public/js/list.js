@@ -49,8 +49,11 @@ class ReportList {
 		this._make_page_container();
 		this._make_scroll_container();
 		this._make_table();
-		this._scroll.append(this._table.element());
-		this._page.append(this._make_toolbar().element(), this._scroll);
+		const t_el = this._table.element();
+		const b_el = this._make_toolbar().element();
+		b_el.setAriaControls(t_el);
+		this._scroll.append(t_el);
+		this._page.append(b_el, this._scroll);
 		this._element.append(this._page);
 		this._ensure_report_widget();
 		this._element2.appendChild(ReportWidget.instance().element());
@@ -126,15 +129,15 @@ class ReportList {
 	}
 
 	_make_toolbar() {
-		const tb = new Toolbar();
+		const tb = new Toolbar("Report list toolbar");
 		this._filter_btn = new ToolbarButton({
 			title:   "Filter",
-			content: ToolbarButton.filterIcon(),
+			content: "filter_icon",
 			onclick: () => this._display_settings_dialog()
 		});
 		const cb = new ToolbarButton({
 			title:   "Columns",
-			content: ToolbarButton.columnsIcon(),
+			content: "columns_icon",
 			onclick: () => this._display_columns_dialog()
 		});
 		this._rep_counter = new ReportCounter();

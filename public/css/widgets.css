@@ -1,4 +1,4 @@
-.toolbar {
+[role="toolbar"] {
 	display: flex;
 	flex-direction: row;
 	position: sticky;
@@ -7,7 +7,7 @@
 	padding: 0 1em;
 	align-items: center;
 }
-.toolbar button {
+[role="toolbar"] button {
 	height: 1.75em;
 	width: 1.75em;
 	padding: 2px;
@@ -15,15 +15,19 @@
 	background-color: transparent;
 	cursor: pointer;
 }
-.toolbar-btn:hover, .toolbar button:hover {
+.toolbar-btn:hover, [role="toolbar"] button:hover {
 	color: var(--color-fg-accent);
 	background-color: var(--color-bg-hover);
 }
-.toolbar button svg {
+[role="toolbar"] button svg {
 	display: block;
 	width: 70%;
 	height: 70%;
 	margin: auto;
+}
+[role="toolbar"] button .popup-label, .hint-block button .popup-label {
+	position: absolute;
+	left: -200vw;
 }
 .spacer-left {
 	margin-left: auto;
