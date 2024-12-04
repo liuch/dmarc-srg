@@ -73,7 +73,7 @@ Copy `conf/conf.sample.php` to `conf/conf.php` and configure it. Learn more by r
 There are two ways to do that: by using the web interface or by running the follow command:
 
 ```sh
-php utils/database_admin.php init
+php -f utils/database_admin.php init
 ```
 
 ## Usage
@@ -97,13 +97,13 @@ You can find more detailed information about each script in the comments to it.
 For example, if you want to get a summary report for the last week, you should run a command like this:
 
 ```sh
-php /usr/local/share/dmarc-srg/utils/summary_report.php domain=example.com period=lastweek
+php -f /usr/local/share/dmarc-srg/utils/summary_report.php domain=example.com period=lastweek
 ```
 
 If you receive an error message suggesting register_argc_argv is disabled, you can enable it like this:
 
 ```sh
-php /usr/local/share/dmarc-srg/utils/summary_report.php domain=example.com period=lastweek
+php -d register_argc_argv=1 -f /usr/local/share/dmarc-srg/utils/summary_report.php domain=example.com period=lastweek
 ```
 
 
