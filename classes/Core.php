@@ -295,6 +295,53 @@ class Core
     }
 
     /**
+     * Checks if the dependencies passed in the parameter are installed
+     *
+     * @param string $deps Comma-separated string of dependency names to be checked
+     *
+     * @return void
+     */
+    public function checkDependencies(string $deps): void
+    {
+        $adeps = explode(',', $deps);
+        $no_deps = [];
+        foreach ($adeps as $ext) {
+            $no_f = false;
+            switch ($ext) {
+                case 'flyfs':
+                    if (!class_exists('League\Flysystem\Filesystem')) {
+                        $no_f = true;
+                    }
+                    break;
+                default:
+                    if (!extension_loaded($ext)) {
+                        $no_f = true;
+                    }
+                    break;
+            }
+            if ($no_f) {
+                $no_deps[] = strtoupper($ext);
+            }
+        }
+        if (count($no_deps)) {
+            if (count($no_deps) === 1) {
+                $s1 = '';
+                $s2 = 'is';
+            } else {
+                $s1 = 's';
+                $s2 = 'are';
+            }
+            $msg = "Required extension$s1 $s2 missing";
+            if ($this->user() && $this->user()->level() === User::LEVEL_ADMIN) {
+                $msg .= ': ' . implode(', ', $no_deps) . '.';
+            } else {
+                $msg .= '. Contact the administrator.';
+            }
+            throw new SoftException($msg);
+        }
+    }
+
+    /**
      * Returns an instance of the class Auth.
      *
      * @return Auth

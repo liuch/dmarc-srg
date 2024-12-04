@@ -51,6 +51,7 @@ use Liuch\DmarcSrg\Sources\MailboxSource;
 use Liuch\DmarcSrg\Sources\DirectorySource;
 use Liuch\DmarcSrg\Sources\RemoteFilesystemSource;
 use Liuch\DmarcSrg\Directories\DirectoryList;
+use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\RuntimeException;
 use Liuch\DmarcSrg\RemoteFilesystems\RemoteFilesystemList;
 
@@ -129,7 +130,8 @@ if (!$source || $source === 'email') {
     $mb_cnt = $mb_list->count();
     if ($mb_cnt > 0) {
         $errors  = [ 'messages' => [], 'debug_info' => null ];
-        if (extension_loaded('imap')) {
+        try {
+            $core->checkDependencies('imap,xml,zip');
             for ($mb_num = 1; $mb_num <= $mb_cnt; ++$mb_num) {
                 try {
                     $sou_list[] = new MailboxSource($mb_list->mailbox($mb_num));
@@ -137,8 +139,8 @@ if (!$source || $source === 'email') {
                     $addError($e, $errors);
                 }
             }
-        } else {
-            $errors['messages'][] = 'The IMAP extension has not beeen loaded';
+        } catch (SoftException $e) {
+            $errors['messages'][] = $e->getMessage();
         }
         $updateProblems($errors, $problems);
     }
@@ -147,12 +149,17 @@ if (!$source || $source === 'email') {
 $state = DIRECTORY_LIST;
 if (!$source || $source === 'directory') {
     $errors = [ 'messages' => [], 'debug_info' => null ];
-    foreach ((new DirectoryList())->list() as $dir) {
-        try {
-            $sou_list[] = new DirectorySource($dir);
-        } catch (RuntimeException $e) {
-            $addError($e, $errors);
+    try {
+        $core->checkDependencies('xml,zip');
+        foreach ((new DirectoryList())->list() as $dir) {
+            try {
+                $sou_list[] = new DirectorySource($dir);
+            } catch (RuntimeException $e) {
+                $addError($e, $errors);
+            }
         }
+    } catch (SoftException $e) {
+        $errors['messages'][] = $e->getMessage();
     }
     $updateProblems($errors, $problems);
 }
@@ -160,12 +167,17 @@ if (!$source || $source === 'directory') {
 $state = REMOTEFS_LIST;
 if (!$source || $source === 'remotefs') {
     $errors = [ 'messages' => [], 'debug_info' => null ];
-    foreach ((new RemoteFilesystemList(true))->list() as $fs) {
-        try {
-            $sou_list[] = new RemoteFilesystemSource($fs);
-        } catch (RuntimeException $e) {
-            $addError($e, $errors);
+    try {
+        $core->checkDependencies('flyfs,xml,zip');
+        foreach ((new RemoteFilesystemList(true))->list() as $fs) {
+            try {
+                $sou_list[] = new RemoteFilesystemSource($fs);
+            } catch (RuntimeException $e) {
+                $addError($e, $errors);
+            }
         }
+    } catch (SoftException $e) {
+        $errors['messages'][] = $e->getMessage();
     }
     $updateProblems($errors, $problems);
 }

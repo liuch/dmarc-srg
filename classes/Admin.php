@@ -95,10 +95,13 @@ class Admin
     {
         switch ($type) {
             case 'mailbox':
+                $this->core->checkDependencies('imap,xml,zip');
                 return (new MailBoxes())->check($id);
             case 'directory':
+                $this->core->checkDependencies('xml,zip');
                 return (new DirectoryList())->check($id);
             case 'remotefs':
+                $this->core->checkDependencies('flyfs,xml,zip');
                 return (new RemoteFilesystemList(true))->check($id);
         }
         throw new LogicException('Unknown resource type');

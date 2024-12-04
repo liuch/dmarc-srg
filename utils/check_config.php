@@ -112,9 +112,10 @@ try {
     echo PHP_EOL, '=== EXTENSIONS ===', PHP_EOL;
     foreach ([ 'pdo_mysql', 'xmlreader', 'zip', 'json' ] as $ext) {
         $startChecking($ext);
-        if (extension_loaded($ext)) {
+        try {
+            $core->checkDependencies($ext);
             $endChecking();
-        } else {
+        } catch (SoftException $e) {
             $endChecking('The extension is not loaded');
         }
     }
@@ -185,7 +186,8 @@ try {
         } else {
             $endChecking("{$mb_lcnt} mailbox" . ($mb_lcnt > 1 ? 'ex' : '') . ' found', RESULT_SUCCESS);
             $startChecking('Imap extension');
-            if (extension_loaded('imap')) {
+            try {
+                $core->checkDependencies('imap');
                 $endChecking();
                 echo "  * Checking mailboxes ({$mb_lcnt})", PHP_EOL;
                 for ($mb_num = 1; $mb_num <= $mb_lcnt; ++$mb_num) {
@@ -199,7 +201,7 @@ try {
                         $endChecking($res['message'] ?? null);
                     }
                 }
-            } else {
+            } catch (SoftException $e) {
                 $endChecking('The extension is not loaded');
             }
         }
@@ -258,7 +260,9 @@ try {
         $endChecking();
         try {
             $startChecking('Checking installed packages');
-            if (!class_exists('League\Flysystem\Filesystem')) {
+            try {
+                $core->checkDependencies('flyfs');
+            } catch (SoftException $e) {
                 throw new SoftException('Flysystem package is not installed');
             }
             $endChecking();

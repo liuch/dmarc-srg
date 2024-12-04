@@ -109,9 +109,10 @@ if (Core::method() == 'GET') {
 
 if (Core::method() == 'POST') {
     try {
+        $core = Core::instance();
         $data = Core::getJsonData();
         if ($data) {
-            Core::instance()->auth()->isAllowed(User::LEVEL_ADMIN);
+            $core->auth()->isAllowed(User::LEVEL_ADMIN);
 
             if (isset($data['cmd'])) {
                 $cmd_id = array_search($data['cmd'], [ 'load-mailbox', 'load-directory', 'load-remotefs' ]);
@@ -121,12 +122,15 @@ if (Core::method() == 'POST') {
                         $slst = [];
                         switch ($cmd_id) {
                             case 0:
+                                $core->checkDependencies('imap,xml,zip');
                                 $list = new MailBoxes();
                                 break;
                             case 1:
+                                $core->checkDependencies('xml,zip');
                                 $list = new DirectoryList();
                                 break;
                             case 2:
+                                $core->checkDependencies('flyfs,xml,zip');
                                 $list = new RemoteFilesystemList(true);
                                 break;
                             default:
@@ -161,7 +165,8 @@ if (Core::method() == 'POST') {
                 }
             }
         } elseif (isset($_FILES['report_file']) && isset($_POST['cmd']) && $_POST['cmd'] === 'upload-report') {
-            Core::instance()->auth()->isAllowed(User::LEVEL_MANAGER);
+            $core->auth()->isAllowed(User::LEVEL_MANAGER);
+            $core->checkDependencies('xml,zip');
 
             $results = (new ReportFetcher(new UploadedFilesSource($_FILES['report_file'])))->fetch();
             Core::sendJson(ReportFetcher::makeSummaryResult($results));

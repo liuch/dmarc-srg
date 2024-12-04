@@ -3,6 +3,7 @@
 namespace Liuch\DmarcSrg;
 
 use Liuch\DmarcSrg\Users\AdminUser;
+use Liuch\DmarcSrg\Exception\SoftException;
 
 class CoreTest extends \PHPUnit\Framework\TestCase
 {
@@ -101,6 +102,17 @@ class CoreTest extends \PHPUnit\Framework\TestCase
     public function testLoggerInstance(): void
     {
         $this->assertSame($this->core->logger(), $this->core->logger());
+    }
+
+    public function testCheckingDependencies(): void
+    {
+        $this->core->auth();
+        if (extension_loaded('zip')) {
+            $this->core->checkDependencies('zip');
+        }
+        $this->expectException(SoftException::class);
+        $this->expectExceptionMessage('Required extension is missing: FAKE_EXTENSION.');
+        $this->core->checkDependencies('fake_extension');
     }
 
     public function testConfigExistingParameters(): void
