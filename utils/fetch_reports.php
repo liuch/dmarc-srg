@@ -106,7 +106,7 @@ $addError = function (\Throwable $e, array &$errors): void {
         $errors['debug_info'] = $err_r['debug_info']['content'];
     }
 };
-$updateProblems = function (array &$errors, array &$problems): void {
+$updateProblems = function (int $state, array &$errors, array &$problems): void {
     if (count($errors['messages']) > 0) {
         $problems[] = [
             'state'      => $state,
@@ -142,7 +142,7 @@ if (!$source || $source === 'email') {
         } catch (SoftException $e) {
             $errors['messages'][] = $e->getMessage();
         }
-        $updateProblems($errors, $problems);
+        $updateProblems($state, $errors, $problems);
     }
 }
 
@@ -161,7 +161,7 @@ if (!$source || $source === 'directory') {
     } catch (SoftException $e) {
         $errors['messages'][] = $e->getMessage();
     }
-    $updateProblems($errors, $problems);
+    $updateProblems($state, $errors, $problems);
 }
 
 $state = REMOTEFS_LIST;
@@ -179,7 +179,7 @@ if (!$source || $source === 'remotefs') {
     } catch (SoftException $e) {
         $errors['messages'][] = $e->getMessage();
     }
-    $updateProblems($errors, $problems);
+    $updateProblems($state, $errors, $problems);
 }
 
 
