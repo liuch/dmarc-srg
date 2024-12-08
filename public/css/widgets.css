@@ -102,7 +102,7 @@
 }
 .hint-content {
 	position: absolute;
-	display: none;
+	display: block;
 	top: 150%;
 	left: 50%;
 	font-family: "Noto Sans", "Open Sans", sans-serif;
@@ -153,9 +153,6 @@
 }
 .hint-content li span:first-child {
 	flex: 1;
-}
-.hint-block button:focus + .hint-content, .hint-block .hint-content:hover {
-	display: block;
 }
 .titled-input {
 	display: flex;

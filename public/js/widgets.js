@@ -1625,9 +1625,12 @@ class HintButton {
 			const el = document.createElement("div");
 			el.classList.add("hint-block");
 			const bt = el.appendChild((new ToolbarButton({ content: "info_icon", title: "Details" })).element());
+			bt.tabIndex = 0;
 			const ct = el.appendChild(document.createElement("div"));
-			ct.classList.add("hint-content");
-			bt.addEventListener("focus", event => {
+			ct.tabIndex = -1;
+			ct.classList.add("hint-content", "hidden");
+			bt.setAriaControls(ct);
+			bt.addEventListener("click", event => {
 				if (!this._content) {
 					switch (typeof(this._params.content)) {
 						case "function":
@@ -1638,9 +1641,21 @@ class HintButton {
 							this._content = this._params.content;
 							break;
 					}
-					if (this._content) {
-						ct.append(this._content);
-					}
+					if (this._content) ct.append(this._content);
+				}
+				if (this._content) {
+					ct.classList.remove("hidden");
+					ct.focus();
+				}
+			});
+			ct.addEventListener("blur", event => ct.classList.add("hidden"));
+			ct.addEventListener("keydown", event => {
+				switch (event.code) {
+					case "Esc":
+					case "Escape":
+						event.preventDefault();
+						bt.focus();
+						break;
 				}
 			});
 			this._element = el;
