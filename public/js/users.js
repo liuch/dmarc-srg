@@ -283,6 +283,7 @@ class UserEditDialog extends VerticalDialog {
 			// Domains
 			const dm = document.createElement("multi-select");
 			dm.setAttribute("placeholder", "No domains");
+			dm.setLabel("Domains");
 			this._insert_input_row("Domains", dm);
 			this._doms_el = dm;
 		}

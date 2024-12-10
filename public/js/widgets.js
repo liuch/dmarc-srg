@@ -1277,23 +1277,28 @@ class Multiselect extends HTMLElement {
 		this._items    = [];
 		this._aitems   = [];
 		this._values   = new Set();
-		this._input    = null;
+		this._label    = null;
 		this._tags     = null;
 		this._more     = null;
 		this._search   = null;
 		this._select   = null;
-		this._listEl   = null;
+		this._listBox  = null;
 		this._active   = false;
 		this._disabled = false;
 		this._focused  = { index: -1, item: null };
 	}
 
 	connectedCallback() {
-		this._makeInputElement();
 		this._makeSelectButton();
 		const iw = document.createElement("div");
 		iw.classList.add("multiselect-wrapper");
-		this.appendChild(iw).append(this._input, this._select);
+		this.appendChild(iw).append(this._makeInputElement(), this._select);
+		this._makeListbox();
+
+		this._select.setAriaControls(this._listBox);
+		this._search.setAriaControls(this._listBox);
+		this._select.setAriaLabelledBy(this._listBox);
+
 		this.addEventListener("focusin", event => {
 			const rt = event.relatedTarget;
 			if (event.target === this._search) {
@@ -1332,6 +1337,8 @@ class Multiselect extends HTMLElement {
 		if (!this._active && !this._disabled) {
 			this.classList.add("active");
 			this._active = true;
+			this._select.ariaExpanded = true;
+			this._search.ariaExpanded = true;
 			this._search.classList.add("active");
 			this._displayList(true);
 		}
@@ -1341,6 +1348,8 @@ class Multiselect extends HTMLElement {
 		if (this._active) {
 			this.classList.remove("active");
 			this._active = false;
+			this._select.ariaExpanded = false;
+			this._search.ariaExpanded = false;
 			if (this._values.size) this._search.classList.remove("active");
 			this._search.blur();
 			this._search.value = "";
@@ -1372,6 +1381,11 @@ class Multiselect extends HTMLElement {
 		}
 	}
 
+	setLabel(str) {
+		this._label = str;
+		if (this._listBox) this._listBox.ariaLabel = str;
+	}
+
 	getValues() {
 		const res = [];
 		for (const item of this._values) {
@@ -1397,18 +1411,23 @@ class Multiselect extends HTMLElement {
 	}
 
 	_makeInputElement() {
-		this._input = document.createElement("div");
-		this._input.classList.add("multiselect-input");
+		const inputEl = document.createElement("div");
+		inputEl.classList.add("multiselect-input");
 		this._tags = document.createElement("div");
+		this._tags.ariaHidden = true;
 		this._tags.classList.add("multiselect-tags");
 		this._makeSearchBar()
-		this._input.append(this._tags, this._search);
+		inputEl.append(this._tags, this._search);
+		return inputEl;
 	}
 
 	_makeSearchBar() {
 		this._search = document.createElement("input");
 		this._search.type = "text";
+		this._search.role = "textbox";
 		this._search.tabIndex = 0;
+		this._search.ariaHasPopup = "listbox";
+		this._search.ariaExpanded = false;
 		this._search.disabled = this._disabled;
 		this._search.classList.add("multiselect-search");
 		this._search.setAttribute("spellcheck", "false");
@@ -1419,24 +1438,32 @@ class Multiselect extends HTMLElement {
 		this._search.addEventListener("keydown", event => {
 			let idx = this._focused.index;
 			switch (event.code) {
+				case "Down":
 				case "ArrowDown":
 					event.preventDefault();
 					if (++idx < this._aitems.length) this._focusItem(idx, true);
 					break;
+				case "Up":
 				case "ArrowUp":
 					event.preventDefault();
 					if (--idx >= 0) this._focusItem(idx, true);
+					break;
+				case "Home":
+					event.preventDefault();
+					if (idx > 0) this._focusItem(0, true);
+					break;
+				case "End":
+					event.preventDefault();
+					if (++idx > 0 && idx < this._aitems.length) this._focusItem(this._aitems.length - 1, true);
 					break;
 				case "Enter":
 				case "NumpadEnter":
 					if (this._active) {
 						event.preventDefault();
-						if (this._focused.item) {
-							this._updateResult(this._focused.item);
-							this.deactivate();
-						}
+						if (this._focused.item) this._updateResult(this._focused.item);
 					}
 					break;
+				case "Esc":
 				case "Escape":
 					if (this._active) {
 						event.preventDefault();
@@ -1450,7 +1477,11 @@ class Multiselect extends HTMLElement {
 
 	_makeSelectButton() {
 		this._select = document.createElement("div");
+		this._select.role = "button";
 		this._select.tabIndex = -1;
+		this._select.ariaExpanded = false;
+		this._select.ariaHasPopup = "listbox";
+		if (this._disabled) this._select.ariaDisabled = true;
 		this._select.classList.add("multiselect-select");
 		this._select.addEventListener("click", event => {
 			if (this._active) {
@@ -1460,33 +1491,36 @@ class Multiselect extends HTMLElement {
 		});
 	}
 
+	_makeListbox() {
+		this._listBox = document.createElement("ul");
+		this._listBox.role = "listbox";
+		this._listBox.tabIndex = -1;
+		if (this._label) this._listBox.ariaLabel = this._label;
+		this._listBox.ariaMultiSelectable = true;
+		this._listBox.classList.add("multiselect-options", "hidden");
+		this.append(this._listBox);
+		this._listBox.addEventListener("click", event => {
+			if (event.target.role === "option") {
+				event.preventDefault();
+				this._updateResult(this._aitems.find(item => event.target === item.element));
+				this.deactivate();
+			}
+		});
+	}
+
 	_displayList(visible) {
 		if (!visible) {
-			this._listEl && this._listEl.classList.add("hidden");
+			this._listBox && this._listBox.classList.add("hidden");
 			return;
 		}
 
-		if (!this._listEl) {
-			this._listEl = document.createElement("ul");
-			this._listEl.tabIndex = -1;
-			this._listEl.classList.add("multiselect-options");
-			this.append(this._listEl);
-			this._listEl.addEventListener("click", event => {
-				if (event.target.tagName === "LI" && !event.target.classList.contains("nodata")) {
-					this._updateResult(this._aitems.find(item => event.target === item.element));
-					this.deactivate();
-					event.preventDefault();
-				}
-			});
-		} else {
-			this._listEl.classList.remove("hidden");
-			this._listEl.scrollTop = 0;
-		}
+		this._listBox.classList.remove("hidden");
+		this._listBox.scrollTop = 0;
 		this._updateList();
 	}
 
 	_updateList() {
-		while (this._listEl.firstChild) this._listEl.lastChild.remove();
+		this._listBox.replaceChildren();
 		this._aitems = [];
 
 		let cnt = 0;
@@ -1494,7 +1528,7 @@ class Multiselect extends HTMLElement {
 		this._items.forEach(item => {
 			if (!item.element) item.element = this._makeOption(item.text, this._values.has(item), false);
 			if (item.text.includes(txt)) {
-				this._listEl.appendChild(item.element);
+				this._listBox.appendChild(item.element);
 				this._aitems.push(item);
 				++cnt;
 			}
@@ -1505,26 +1539,24 @@ class Multiselect extends HTMLElement {
 		} else {
 			this._focused.index = -1;
 			this._focused.item = null;
-			this._listEl.append(this._makeOption("No items found", false, true));
+			this._listBox.append(this._makeOption("No items found", null, true));
 		}
 	}
 
 	_makeTag(item) {
 		const tb = document.createElement("i");
-		if (!this._disabled) tb.tabIndex = 0;
 		tb.addEventListener("click", event => {
 			event.preventDefault();
-			if (!this._disabled) this._updateResult(item)
-		});
-		tb.addEventListener("keydown", event => {
-			if (event.code === "Space") {
-				event.preventDefault();
-				if (!this._disabled) this._updateResult(item);
+			if (!this._disabled) {
+				this._updateResult(item)
+				this._search.focus();
 			}
 		});
 		const el = document.createElement("div");
 		el.classList.add("multiselect-tag");
-		el.appendChild(document.createElement("span")).textContent = item.text;
+		const sp = el.appendChild(document.createElement("span"));
+		sp.tabIndex = -1;
+		sp.textContent = item.text
 		el.append(tb);
 		item.tag = el;
 		return el;
@@ -1532,11 +1564,12 @@ class Multiselect extends HTMLElement {
 
 	_makeOption(text, selected, nodata) {
 		const el = document.createElement("li");
+		el.role = "option";
 		el.textContent = text;
-		if (selected) el.classList.add("selected");
 		if (nodata) {
 			el.classList.add("nodata");
 		} else {
+			el.ariaSelected = selected;
 			el.addEventListener("pointerenter", event => this._focusItem(event.target));
 		}
 		return el;
@@ -1558,14 +1591,15 @@ class Multiselect extends HTMLElement {
 		this._focused.item && this._focused.item.element.classList.remove("focused");
 		item.element.classList.add("focused");
 		this._focused = { index: idx, item: item };
-		if (scroll) scroll_to_element(item.element, this._listEl);
+		this._search.setAttribute("aria-activedescendant", item.element.getId());
+		if (scroll) scroll_to_element(item.element, this._listBox);
 	}
 
 	_clearResults() {
 		this._values.clear();
 		this._items.forEach(item => {
 			item.tag && item.tag.remove();
-			item.element && item.element.classList.remove("selected");
+			if (item.element) item.element.ariaSelected = false;
 		});
 		this._more && this._more.remove();
 		this.dispatchEvent(new Event("change"));
@@ -1576,13 +1610,13 @@ class Multiselect extends HTMLElement {
 		if (!Array.isArray(items)) items = [ items ];
 		items.forEach(item => {
 			if (this._values.delete(item)) {
-				item.element && item.element.classList.remove("selected");
+				if (item.element) item.element.ariaSelected = false;
 			} else {
 				this._values.add(item);
-				item.element && item.element.classList.add("selected");
+				if (item.element) item.element.ariaSelected = true;
 			}
 		});
-		while (this._tags.firstChild) this._tags.lastChild.remove();
+		this._tags.replaceChildren();
 		let cnt = 0;
 		for (const vi of this._values) {
 			this._tags.append(vi.tag || this._makeTag(vi));
@@ -1602,13 +1636,8 @@ class Multiselect extends HTMLElement {
 
 	_disableChanged() {
 		if (this._disabled) this.deactivate();
-		for (const item of this._values) {
-			if (item.tag) {
-				const el = item.tag.querySelector("i");
-				if (this._disabled) el.removeAttribute("tabindex"); else el.tabIndex = 0;
-			}
-		}
 		if (this._search) this._search.disabled = this._disabled;
+		if (this._select) this._select.ariaDisabled = this._disabled;
 	}
 }
 customElements.define("multi-select", Multiselect);

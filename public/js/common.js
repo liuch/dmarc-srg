@@ -94,6 +94,11 @@ class Common {
 				this.setAttribute("aria-controls", element.getId());
 			};
 		}
+		if (!HTMLElement.prototype.setAriaLabelledBy) {
+			HTMLElement.prototype.setAriaLabelledBy = function(element) {
+				this.setAttribute("aria-labelledby", element.getId());
+			};
+		}
 	}
 
 	static tuneDateTimeOutput(mode) {

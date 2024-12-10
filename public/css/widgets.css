@@ -355,7 +355,7 @@ multi-select[disabled] .multiselect-tags *, multi-select[disabled] .multiselect-
 	text-align: center;
 	transition: transform .2s ease;
 }
-multi-select.active .multiselect-select {
+.multiselect-select[aria-expanded="true"] {
 	transform: rotate(180deg);
 }
 .multiselect-select::before {
@@ -383,12 +383,12 @@ multi-select.active .multiselect-select {
 	padding: .3em .5em;
 	user-select: none;
 }
-.multiselect-options li.selected {
+.multiselect-options li[aria-selected="true"] {
 	font-weight: bold;
 }
 .multiselect-options li.focused {
 	background-color: var(--color-bg-selected2);
 }
-.multiselect-options li.focused.selected {
+.multiselect-options li[aria-selected="true"].focused {
 	background-color: var(--color-bg-deleted);
 }

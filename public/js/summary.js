@@ -303,7 +303,9 @@ class OptionsDialog extends VerticalDialog {
 		this._ui_data.forEach(row => {
 			const i_el = this._insert_input_row(row.title, row.name, row.type);
 			const name = row.name;
-			if (name === "days") {
+			if (name === "domains") {
+				i_el.setLabel("Domains");
+			} else if (name === "days") {
 				i_el.setAttribute("type", "number");
 				i_el.setAttribute("min", "1");
 				i_el.setAttribute("max", "9999");

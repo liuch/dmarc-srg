@@ -203,7 +203,7 @@ label>input:first-child {
 .main-table .table-body .table-cell {
 	border-top: 1px solid var(--color-br-weak);
 }
-.main-table .table-body .table-row.selected, .multiselect-options li.selected {
+.main-table .table-body .table-row.selected, .multiselect-options li[aria-selected="true"] {
 	background-color: var(--color-bg-selected);
 	color: var(--color-fg-default);
 }
