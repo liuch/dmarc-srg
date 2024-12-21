@@ -327,32 +327,30 @@ class DomainEditDialog extends VerticalDialog {
 
 	_fetch_data() {
 		this._enable_ui(false);
-		this._content.appendChild(set_wait_status());
-		let uparams = new URLSearchParams();
-		uparams.set("domain", this._data.fqdn || "");
+		this.display_status("wait", "Getting data...");
 
-		let that = this;
-		window.fetch("domains.php?" + uparams.toString(), {
+		const url = new URL("domains.php", document.location);
+		url.searchParams.set("domain", this._data.fqdn || "");
+		window.fetch(url, {
 			method: "GET",
 			cache: "no-store",
 			headers: HTTP_HEADERS,
 			credentials: "same-origin"
-		}).then(function(resp) {
-			if (!resp.ok)
-				throw new Error("Failed to fetch the domain data");
+		}).then(resp => {
+			if (!resp.ok) throw new Error("Failed to fetch the domain data");
 			return resp.json();
-		}).then(function(data) {
-			that._fetched = true;
+		}).then(data => {
+			this._fetched = true;
 			Common.checkResult(data);
 			if (data.created_time) data.created_time = new Date(data.created_time);
 			if (data.updated_time) data.updated_time = new Date(data.updated_time);
-			that._update_ui(data);
-			that._enable_ui(true);
-		}).catch(function(err) {
+			this._update_ui(data);
+			this._enable_ui(true);
+		}).catch(err => {
 			Common.displayError(err);
-			that._content.appendChild(set_error_status(null, err.message));
-		}).finally(function() {
-			that._content.querySelector(".wait-message").remove();
+			this.display_status("error", err.message);
+		}).finally(() => {
+			this.display_status("wait", null);
 		});
 	}
 
@@ -428,40 +426,37 @@ class DomainEditDialog extends VerticalDialog {
 
 	_save() {
 		this._enable_ui(false);
-		let em = this._content.querySelector(".error-message");
-		em && em.remove();
-		this._content.appendChild(set_wait_status(null, "Sending data to the server..."));
+		this.display_status("wait", "Sending data to the server...");
 
-		let body = {};
+		const body = {};
 		body.fqdn        = this._data["new"] && this._fqdn_el.value || this._data.fqdn;
 		body.action      = this._data["new"] && "add" || "update";
 		body.active      = this._actv_el.value === "yes";
 		body.description = this._desc_el.value;
 
-		let that = this;
 		window.fetch("domains.php", {
 			method: "POST",
 			cache: "no-store",
 			headers: Object.assign(HTTP_HEADERS, HTTP_HEADERS_POST),
 			credentials: "same-origin",
 			body: JSON.stringify(body)
-		}).then(function(resp) {
+		}).then(resp => {
 			if (!resp.ok)
 				throw new Error("Failed to " + (body.new && "add" || "update") + " the domain data");
 			return resp.json();
-		}).then(function(data) {
+		}).then(data => {
 			Common.checkResult(data);
-			that._result = body;
-			that.hide();
+			this._result = body;
+			this.hide();
 			Notification.add({
 				text: "The domain " + body.fqdn + " was " + (body.action === "add" && "added" || "updated")
 			});
-		}).catch(function(err) {
+		}).catch(err => {
 			Common.displayError(err);
-			that._content.appendChild(set_error_status(null, err.message));
-		}).finally(function() {
-			that._content.querySelector(".wait-message").remove();
-			that._enable_ui(true);
+			this.display_status("error", err.message);
+		}).finally(() => {
+			this.display_status("wait", null);
+			this._enable_ui(true);
 		});
 	}
 
@@ -473,36 +468,32 @@ class DomainEditDialog extends VerticalDialog {
 
 	_delete() {
 		this._enable_ui(false);
-		let em = this._content.querySelector(".error-message");
-		em && em.remove();
-		this._content.appendChild(set_wait_status(null, "Sending a request to the server..."))
+		this.display_status("wait", "Sending a request to the server...");
 
-		let body = {};
+		const body = {};
 		body.fqdn   = this._data.fqdn;
 		body.action = "delete";
 
-		let that = this;
 		window.fetch("domains.php", {
 			method: "POST",
 			cache: "no-store",
 			headers: Object.assign(HTTP_HEADERS, HTTP_HEADERS_POST),
 			credentials: "same-origin",
 			body: JSON.stringify(body)
-		}).then(function(resp) {
-			if (!resp.ok)
-				throw new Error("Failed to delete the domain");
+		}).then(resp => {
+			if (!resp.ok) throw new Error("Failed to delete the domain");
 			return resp.json();
-		}).then(function(data) {
+		}).then(data => {
 			Common.checkResult(data);
-			that._result = data;
-			that.hide();
+			this._result = data;
+			this.hide();
 			Notification.add({ text: "The domain " + body.fqdn + " was removed" });
-		}).catch(function(err) {
+		}).catch(err => {
 			Common.displayError(err);
-			that._content.appendChild(set_error_status(null, err.message));
-		}).finally(function() {
-			that._content.querySelector(".wait-message").remove();
-			that._enable_ui(true);
+			this.display_status("error", err.message);
+		}).finally(() => {
+			this.display_status("wait", null);
+			this._enable_ui(true);
 		});
 	}
 

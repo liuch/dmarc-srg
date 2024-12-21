@@ -376,7 +376,7 @@ class UserEditDialog extends VerticalDialog {
 
 	_fetch_data() {
 		this._enable_ui(false);
-		this._content.appendChild(set_wait_status());
+		this.display_status("wait", "Getting data...");
 		const url = new URL("users.php", document.location);
 		url.searchParams.set("user", this._data.name || "");
 
@@ -386,7 +386,7 @@ class UserEditDialog extends VerticalDialog {
 			headers: HTTP_HEADERS,
 			credentials: "same-origin"
 		}).then(resp => {
-			if (!resp.ok) throw new Error("Failed to fetch the user data");
+			if (!resp.ok) throw new Error("Failed to fetch data");
 			return resp.json();
 		}).then(data => {
 			this._fetched = true;
@@ -398,9 +398,9 @@ class UserEditDialog extends VerticalDialog {
 			this._enable_ui(true);
 		}).catch(err => {
 			Common.displayError(err);
-			this._content.appendChild(set_error_status(null, err.message))
+			this.display_status("error", err.message);
 		}).finally(() => {
-			this._content.querySelector(".wait-message").remove();
+			this.display_status("wait", null);
 		});
 	}
 
@@ -451,9 +451,7 @@ class UserEditDialog extends VerticalDialog {
 
 	_save() {
 		this._enable_ui(false);
-		const em = this._content.querySelector(".error-message");
-		em && em.remove();
-		this._content.appendChild(set_wait_status(null, "Sending data to the server..."));
+		this.display_status("wait", "Sending data to the server...");
 
 		const body = {};
 		body.name    = this._data["new"] && this._name_el.value || this._data.name;
@@ -486,9 +484,9 @@ class UserEditDialog extends VerticalDialog {
 			});
 		}).catch(err => {
 			Common.displayError(err);
-			this._content.appendChild(set_error_status(null, err.message));
+			this.display_status("error", err.message);
 		}).finally(() => {
-			this._content.querySelector(".wait-message").remove();
+			this.display_status("wait", null);
 			this._enable_ui(true);
 		});
 	}
@@ -499,9 +497,7 @@ class UserEditDialog extends VerticalDialog {
 
 	_delete() {
 		this._enable_ui(false);
-		const em = this._content.querySelector(".error-message");
-		em && em.remove();
-		this._content.appendChild(set_wait_status(null, "Sending a request to the server..."));
+		this.display_status("wait", "Sending a request to the server...");
 
 		const body = { name: this._data.name, action: "delete" };
 		window.fetch("users.php", {
@@ -520,9 +516,9 @@ class UserEditDialog extends VerticalDialog {
 			Notification.add({ text: `The user ${body.name} successfully removed` });
 		}).catch(err => {
 			Common.displayError(err);
-			this._content.appendChild(set_error_status(null, err.message));
+			this.display_status("error", err.message);
 		}).finally(() => {
-			this._content.querySelector(".wait-message").remove();
+			this.display_status("wait", null);
 			this._enable_ui(true);
 		});
 	}
@@ -591,15 +587,13 @@ class PasswordDialog extends VerticalDialog {
 	}
 
 	_submit() {
-		const em = this._content.querySelector(".error-message");
-		em && em.remove();
 		if (this._pw_nw1.value !== this._pw_nw2.value) {
-			this._content.appendChild(set_error_status(null, "New password and confirm password don't match"));
+			this.display_status("error", "New password and confirm password don't match");
 			this._pw_nw1.focus();
 			return;
 		}
 
-		this._content.appendChild(set_wait_status(null, "Updating the password..."));
+		this.display_status("wait", "Updating the password...");
 		this._enable_ui(false);
 
 		const body = {
@@ -625,9 +619,9 @@ class PasswordDialog extends VerticalDialog {
 			Notification.add({ text: "The password has been successfully updated" });
 		}).catch(err => {
 			Common.displayError(err);
-			this._content.appendChild(set_error_status(null, err.message));
+			this.display_status("error", err.message);
 		}).finally(() => {
-			this._content.querySelector(".wait-message").remove();
+			this.display_status("wait", null);
 			this._enable_ui(true);
 		});
 	}

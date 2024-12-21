@@ -27,7 +27,6 @@ class LoginDialog extends VerticalDialog {
 		this._params.overlay_click = "ignore";
 		this._user   = null;
 		this._pass   = null;
-		this._msg_el = null;
 	}
 
 	remove() {
@@ -42,8 +41,7 @@ class LoginDialog extends VerticalDialog {
 			this._user = this._insert_input_row("User name", "text", "Enter your user name");
 		}
 		this._pass = this._insert_input_row("Password", "password", "Enter your password");
-		this._msg_el = set_wait_status(null, "Enter your credentials");
-		this._content.appendChild(this._msg_el);
+		this.display_status("wait", "Enter your credentials");
 	}
 
 	_insert_input_row(text, type, placeholder) {
@@ -57,9 +55,8 @@ class LoginDialog extends VerticalDialog {
 
 	_enable_elements(enable) {
 		this._buttons[0].disabled = !enable;
-		let elements = this._element.querySelector("form").elements;
-		for (let i = 0; i < elements.length; ++i) {
-			elements[i].disabled = !enable;
+		for (const el of this._element.querySelector("form").elements) {
+			el.disabled = !enable;
 		}
 	}
 
@@ -76,40 +73,31 @@ class LoginDialog extends VerticalDialog {
 			this.hide();
 			return;
 		}
-		let that = this;
 		let hide = false;
-		this._set_message("Sending credentials to the server...", false);
+		this.display_status("wait", "Sending credentials to the server...");
 		window.fetch("login.php", {
 			method: "POST",
 			cache: "no-store",
 			headers: Object.assign(HTTP_HEADERS, HTTP_HEADERS_POST),
 			credentials: "same-origin",
 			body: JSON.stringify(body)
-		}).then(function(resp) {
-			if (!resp.ok)
-				throw new Error("Failed to log in");
+		}).then(resp => {
+			if (!resp.ok) throw new Error("Failed to log in");
 			return resp.json();
-		}).then(function(data) {
+		}).then(data => {
 			Common.checkResult(data);
-			that._result = data;
+			this._result = data;
 			Notification.add({ type: "info", text: data.message || "Successfully!", name: "auth" });
 			hide = true;
-		}).catch(function(err) {
-			that._pass.value = "";
+		}).catch(err => {
+			this._pass.value = "";
 			Common.displayError(err);
-			that._set_message(err.message, true);
-		}).finally(function() {
-			that._enable_elements(true);
-			that._first.focus();
-			if (hide)
-				that.hide();
+			this.display_status("error", err.message);
+		}).finally(() => {
+			this._enable_elements(true);
+			this._first.focus();
+			if (hide) this.hide();
 		});
-	}
-
-	_set_message(text, error) {
-		let el = error && set_error_status(null, text) || set_wait_status(null, text);
-		this._msg_el.replaceWith(el);
-		this._msg_el = el;
 	}
 }
 

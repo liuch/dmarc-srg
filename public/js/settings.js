@@ -234,31 +234,29 @@ class SettingEditDialog extends VerticalDialog {
 
 	_fetch_data() {
 		this._enable_ui(false);
-		this._content.appendChild(set_wait_status());
+		this.display_status("wait", "Getting data...");
 		let uparams = new URLSearchParams();
 		uparams.set("name", this._data.name);
 
-		let that = this;
 		window.fetch("settings.php?" + uparams.toString(), {
 			method: "GET",
 			cache: "no-store",
 			headers: HTTP_HEADERS,
 			credentials: "same-origin"
-		}).then(function(resp) {
-			if (!resp.ok)
-				throw new Error("Failed to fetch setting data for " + that._data.name);
+		}).then(resp => {
+			if (!resp.ok) throw new Error("Failed to fetch setting data for " + this._data.name);
 			return resp.json();
-		}).then(function(data) {
+		}).then(data => {
 			Common.checkResult(data);
-			that._data.value = data.value;
-			that._update_ui(data);
-			that._enable_ui(true);
-			that._fetched = true;
-		}).catch(function(err) {
+			this._data.value = data.value;
+			this._update_ui(data);
+			this._enable_ui(true);
+			this._fetched = true;
+		}).catch(err => {
 			Common.displayError(err);
-			that._content.appendChild(set_error_status(null, err.message));
-		}).finally(function() {
-			that._content.querySelector(".wait-message").remove();
+			this.display_status("error", err.message);
+		}).finally(() => {
+			this.display_status("wait", null);
 		});
 	}
 
@@ -307,47 +305,39 @@ class SettingEditDialog extends VerticalDialog {
 	_submit() {
 		this._save_bt.disabled = true;
 		this._enable_ui(false);
-		let em = this._content.querySelector(".error-message");
-		if (em) {
-			em.remove();
-		}
-		this._content.appendChild(set_wait_status());
+		this.display_status("wait", "Getting data...");
 
-		let body = {};
+		const body = {};
 		body.name = this._data.name;
 		if (this._val_tp == "integer") {
 			body.value = this._val_el.valueAsNumber;
-		}
-		else {
+		} else {
 			body.value = this._val_el.value;
 		}
 		body.action = "update";
 
-		let that = this;
 		window.fetch("settings.php", {
 			method: "POST",
 			cache: "no-store",
 			headers: Object.assign(HTTP_HEADERS, HTTP_HEADERS_POST),
 			credentials: "same-origin",
 			body: JSON.stringify(body)
-		}).then(function(resp) {
-			if (!resp.ok)
-				throw new Error("Failed to update the setting");
+		}).then(resp => {
+			if (!resp.ok) throw new Error("Failed to update the setting");
 			return resp.json();
-		}).then(function(data) {
+		}).then(data => {
 			Common.checkResult(data);
-			that._data.value = that._val_el.value;
-			that._result = body;
-			that.hide();
+			this._data.value = this._val_el.value;
+			this._result = body;
+			this.hide();
 			Notification.add({ type: "info", text: (data.message || "Updated successfully!") });
-		}).catch(function(err) {
+		}).catch(err => {
 			Common.displayError(err);
-			that._content.appendChild(set_error_status(null, err.message));
-			Notification.add({ type: "error", text: err.message });
-		}).finally(function() {
-			that._content.querySelector(".wait-message").remove();
-			that._save_bt.disabled = false;
-			that._enable_ui(true);
+			this.display_status("error", err.message);
+		}).finally(() => {
+			this.display_status("wait", null);
+			this._save_bt.disabled = false;
+			this._enable_ui(true);
 		});
 	}
 }

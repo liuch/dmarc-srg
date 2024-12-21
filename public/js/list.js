@@ -515,28 +515,26 @@ class ReportListFilterDialog extends ReportFilterDialog {
 	}
 
 	_fetch_data() {
-		let that = this;
 		this._enable_ui(false);
-		this._content.appendChild(set_wait_status());
+		this.display_status("wait", "Getting data...");
 		window.fetch("list.php?list=filters", {
 			method: "GET",
 			cache: "no-store",
 			headers: HTTP_HEADERS,
 			credentials: "same-origin"
-		}).then(function(resp) {
-			if (!resp.ok)
-				throw new Error("Failed to fetch the filter list");
+		}).then(resp => {
+			if (!resp.ok) throw new Error("Failed to fetch the filter list");
 			return resp.json();
-		}).then(function(data) {
+		}).then(data => {
 			Common.checkResult(data);
-			that._data.loaded_filters = data.filters;
-			that._update_ui();
-			that._enable_ui(true);
-		}).catch(function(err) {
+			this._data.loaded_filters = data.filters;
+			this._update_ui();
+			this._enable_ui(true);
+		}).catch(err => {
 			Common.displayError(err);
-			that._content.appendChild(set_error_status());
-		}).finally(function() {
-			that._content.querySelector(".wait-message").remove();
+			this.display_status("error", err.message);
+		}).finally(() => {
+			this.display_status("wait", null);
 		});
 	}
 }

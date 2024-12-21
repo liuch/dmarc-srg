@@ -467,7 +467,7 @@ class OptionsDialog extends VerticalDialog {
 
 	_fetch_data() {
 		this._enable_ui(false);
-		this._content.appendChild(set_wait_status());
+		this.display_status("wait", "Getting data...");
 		window.fetch("summary.php?mode=options", {
 			method: "GET",
 			cache: "no-store",
@@ -483,9 +483,9 @@ class OptionsDialog extends VerticalDialog {
 			this._enable_ui(true);
 		}).catch(err => {
 			Common.displayError(err);
-			this._content.appendChild(set_error_status());
+			this.display_status("error", err.message);
 		}).finally(() => {
-			this._content.querySelector(".wait-message").remove();
+			this.display_status("wait", null);
 		});
 	}
 }

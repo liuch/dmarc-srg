@@ -175,6 +175,9 @@
 	gap: 1em;
 	margin: 1em 0 0 0;
 }
+form.vertical-content .dialog-buttons {
+	margin: 0;
+}
 @media screen and (min-width:35em) {
 	.dialog {
 		position: static;

@@ -361,6 +361,9 @@ label>input:first-child {
 .wait-message {
 	margin: 0.3em;
 }
+p.wait-message, p.error-message {
+	margin: 0;
+}
 .panel-container .wait-message, .panel-container .error-message, .report-records .nodata {
 	margin: 1em;
 }

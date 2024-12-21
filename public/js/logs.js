@@ -328,35 +328,33 @@ class LogItemDialog extends ModalDialog {
 	}
 
 	_fetch_data() {
-		this._content.appendChild(set_wait_status());
+		this.display_status("wait", "Getting data...");
 		let uparams = new URLSearchParams();
 		uparams.set("id", this._data.id);
 
-		let that = this;
 		window.fetch("logs.php?" + uparams.toString(), {
 			method: "GET",
 			cache: "no-store",
 			headers: HTTP_HEADERS,
 			credentials: "same-origin"
-		}).then(function(resp) {
-			if (!resp.ok)
-				throw new Error("Failed to fetch the log item");
+		}).then(resp => {
+			if (!resp.ok) throw new Error("Failed to fetch the log item");
 			return resp.json();
-		}).then(function(data) {
+		}).then(data => {
 			Common.checkResult(data);
-			that._data.domain     = data.domain;
-			that._data.report_id  = data.report_id;
-			that._data.event_time = new Date(data.event_time);
-			that._data.filename   = data.filename;
-			that._data.source     = data.source;
-			that._data.success    = data.success;
-			that._data.message    = data.message;
-			that._update_ui();
-		}).catch(function(err) {
+			this._data.domain     = data.domain;
+			this._data.report_id  = data.report_id;
+			this._data.event_time = new Date(data.event_time);
+			this._data.filename   = data.filename;
+			this._data.source     = data.source;
+			this._data.success    = data.success;
+			this._data.message    = data.message;
+			this._update_ui();
+		}).catch(err => {
 			Common.displayError(err);
-			that._content.appendChild(set_error_status(null, err.message));
-		}).finally(function() {
-			that._content.querySelector(".wait-message").remove();
+			this.display_status("error", err.message);
+		}).finally(() => {
+			this.display_status("wait", null);
 		});
 	}
 

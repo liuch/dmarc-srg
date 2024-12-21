@@ -868,6 +868,9 @@ class ModalDialog {
 		this._params   = params;
 		this._element  = null;
 		this._title    = null;
+		this._messages = null;
+		this._alert    = null;
+		this._wait     = null;
 		this._buttons  = [];
 		this._content  = null;
 		this._first    = null;
@@ -878,74 +881,65 @@ class ModalDialog {
 
 	element() {
 		if (!this._element) {
-			let ovl = document.createElement("div");
-			ovl.setAttribute("class", "dialog-overlay hidden");
-			let dlg = document.createElement("div");
-			dlg.setAttribute("class", "dialog");
-			let con = document.createElement("div");
-			con.setAttribute("class", "container");
-			this._title = document.createElement("div");
-			this._title.setAttribute("class", "title");
-			{
-				let tt = document.createElement("div");
-				tt.setAttribute("class", "title-text");
-				tt.appendChild(document.createTextNode(this._params.title || ""));
-				this._title.appendChild(tt);
-			}
-			let that = this;
-			{
-				let cbt = document.createElement("button");
-				cbt.setAttribute("type", "button");
-				cbt.setAttribute("class", "close-btn");
-				cbt.appendChild(document.createTextNode("x"));
-				this._title.appendChild(cbt);
-				this._buttons = [ cbt ];
-				cbt.addEventListener("click", function(event) {
-					that.hide();
-				});
-			}
-			con.appendChild(this._title);
-			let frm = document.createElement("form");
-			this._content = document.createElement("div");
-			frm.appendChild(this._content);
-			let bdv = document.createElement("div");
-			bdv.setAttribute("class", "dialog-buttons");
-			this._add_buttons(bdv);
-			frm.appendChild(bdv);
-			con.appendChild(frm);
-			dlg.appendChild(con);
-			ovl.appendChild(dlg);
+			const ovl = document.createElement("div");
+			ovl.classList.add("dialog-overlay", "hidden");
 			this._element = ovl;
+			const dlg = ovl.appendChild(document.createElement("div"));
+			dlg.role = "dialog";
+			dlg.ariaModal = true;
+			dlg.classList.add("dialog");
+			const con = dlg.appendChild(document.createElement("div"));
+			con.classList.add("container");
+			this._title = con.appendChild(document.createElement("div"));
+			this._title.classList.add("title");
+			{
+				const tt = this._title.appendChild(document.createElement("div"));
+				tt.classList.add("title-text");
+				tt.textContent = this._params.title || "";
+				if (this._params.title) dlg.setAriaLabelledBy(tt);
+			}
+			{
+				const cbt = this._title.appendChild(document.createElement("button"));
+				cbt.type = "button";
+				cbt.ariaLabel = "Close";
+				cbt.classList.add("close-btn");
+				cbt.textContent = "x";
+				this._buttons = [ cbt ];
+				cbt.addEventListener("click", event => this.hide());
+			}
+			const frm = con.appendChild(document.createElement("form"));
+			frm.classList.add("vertical-content");
+			this._content = frm.appendChild(document.createElement("div"));
+			const bdv = frm.appendChild(document.createElement("div"));
+			bdv.classList.add("dialog-buttons");
+			this._add_buttons(bdv);
 			this._gen_content();
 			this._update_first_last();
-			this._element.addEventListener("click", function(event) {
-				if (event.target === this && that._params.overlay_click !== "ignore") {
-					that.hide();
+			this._element.addEventListener("click", event => {
+				if (event.target === event.currentTarget && this._params.overlay_click !== "ignore") {
+					this.hide();
 				}
 			});
-			frm.addEventListener("keydown", function(event) {
+			frm.addEventListener("keydown", event => {
 				if (event.key == "Tab") {
 					if (!event.shiftKey) {
-						if (event.target == that._last) {
-							that._first.focus();
+						if (event.target == this._last) {
+							this._first.focus();
 							event.preventDefault();
 						}
-					}
-					else {
-						if (event.target == that._first) {
-							that._last.focus();
+					} else {
+						if (event.target == this._first) {
+							this._last.focus();
 							event.preventDefault();
 						}
 					}
 				}
 			});
-			frm.addEventListener("submit", function(event) {
+			frm.addEventListener("submit", event => {
 				event.preventDefault();
-				that._submit();
+				this._submit();
 			});
-			frm.addEventListener("reset", function(event) {
-				that._reset();
-			});
+			frm.addEventListener("reset", event => this._reset());
 		}
 		return this._element;
 	}
@@ -971,6 +965,43 @@ class ModalDialog {
 			this._element.classList.add("hidden");
 		}
 		this._callback && this._callback(this._result);
+	}
+
+	display_status(type, text) {
+		if (type && !text) {
+			type == "error" && this._alert && this._alert.replaceChildren();
+			type == "wait" && this._wait && this._wait.replaceChildren();
+		} else {
+			this._alert && this._alert.replaceChildren();
+			this._wait && this._wait.replaceChildren();
+		}
+		if (!text) return;
+
+		const t_el = document.createElement("p");
+		t_el.textContent = text;
+		if (type == "error") {
+			if (!this._alert) {
+				this._alert = this._make_msg_container();
+				this._alert.role = "alert";
+			}
+			t_el.classList.add("error-message");
+			this._alert.append(t_el);
+		} else if (type == "wait") {
+			if (!this._wait) {
+				this._wait = this._make_msg_container();
+			}
+			t_el.classList.add("wait-message");
+			this._wait.append(t_el);
+		}
+	}
+
+	_make_msg_container() {
+		if (!this._messages) {
+			this._messages = document.createElement("div");
+			const btns = this.element().querySelector("form .dialog-buttons");
+			btns.parentElement.insertBefore(this._messages, btns);
+		}
+		return this._messages.appendChild(document.createElement("div"));
 	}
 
 	_add_buttons(container) {
