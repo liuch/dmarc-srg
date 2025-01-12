@@ -654,6 +654,11 @@ p.wait-message, p.error-message {
 	cursor: auto;
 }
 .report-record > .header {
+	position: relative;
+	display: flex;
+	flex-flow: row wrap;
+	gap: .5em;
+	justify-content: center;
 	padding: 0.4em 0;
 	border-bottom: 1px solid var(--color-br-default);
 	border-radius: 7px 7px 0 0;
@@ -723,7 +728,7 @@ p.wait-message, p.error-message {
 	text-align: left;
 	margin: auto 0;
 }
-.table-cell.fqdn, .table-cell.orgname, .table-cell.report-id, .table-cell.setting-value {
+.table-cell.fqdn, .table-cell.orgname, .table-cell.report-id, .table-cell.setting-value, .hint-content li>span:nth-child(2) {
 	max-width: 15em;
 	overflow: hidden;
 	text-overflow: ellipsis;

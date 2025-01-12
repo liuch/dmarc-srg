@@ -25,6 +25,7 @@ Router.start = function() {
 	Router._initial_header = document.querySelector("h1").textContent;
 
 	document.getElementsByTagName("body")[0].addEventListener("keydown", function(event) {
+		if (event.defaultPrevented) return;
 		if (event.code == "Escape" && !event.shiftKey && !event.ctrlKey && !event.altKey) {
 			let cbs = document.querySelectorAll(".close-btn.active");
 			for (let i = cbs.length - 1; i >= 0; --i) {

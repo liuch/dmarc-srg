@@ -37,6 +37,7 @@ abstract class DatabaseConnector
 {
     protected static $names = [
         'domain'     => 'DomainMapper',
+        'host'       => 'HostMapper',
         'report'     => 'ReportMapper',
         'report-log' => 'ReportLogMapper',
         'setting'    => 'SettingMapper',

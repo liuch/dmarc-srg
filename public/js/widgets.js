@@ -1693,7 +1693,7 @@ class HintButton {
 				if (!this._content) {
 					switch (typeof(this._params.content)) {
 						case "function":
-							this._content = this._params.content();
+							this._content = this._params.content(this._params.data);
 							break;
 						case "object":
 						case "string":

@@ -312,23 +312,28 @@ class Report {
 		hd.appendChild(document.createTextNode("Records"));
 		hd.appendChild(document.createElement("span"));
 		rs.appendChild(hd);
-		this._data.records.forEach(function(rec) {
-			let tl = document.createElement("div");
-			tl.setAttribute("class", "report-record round-border");
-			let hd = document.createElement("div");
-			hd.setAttribute("class", "header");
-			hd.appendChild(this._create_data_fragment("IP-address", Common.makeIpElement(rec.ip)));
-			tl.appendChild(hd);
-			tl.appendChild(this._create_data_item("Message count", rec.count));
-			tl.appendChild(this._create_data_item("Policy evaluated", this._create_ev_policy_fragment(rec)));
+		this._data.records.forEach(rec => {
+			const tl = rs.appendChild(document.createElement("div"));
+			tl.classList.add("report-record", "round-border");
+			const hd = tl.appendChild(document.createElement("div"));
+			hd.classList.add("header");
+			hd.append(
+				this._create_data_fragment("IP-address", rec.ip),
+				(new HintButton({ data: rec.ip, content: this._make_ip_info_element.bind(this) })).element()
+			);
+			tl.append(
+				this._create_data_item("Message count", rec.count),
+				this._create_data_item("Policy evaluated", this._create_ev_policy_fragment(rec))
+			);
 			if (rec.reason)
-				tl.appendChild(this._create_data_item("Evaluated reason", this._create_reason_fragment(rec.reason)));
-			tl.appendChild(this._create_data_item("Identifiers", this._create_identifiers_fragment(rec)));
-			tl.appendChild(this._create_data_item("DKIM auth", this._create_dkim_auth_fragment(rec.dkim_auth)));
-			tl.appendChild(this._create_data_item("SPF auth", this._create_spf_auth_fragment(rec.spf_auth)));
-			rs.appendChild(tl);
+				tl.append(this._create_data_item("Evaluated reason", this._create_reason_fragment(rec.reason)));
+			tl.append(
+				this._create_data_item("Identifiers", this._create_identifiers_fragment(rec)),
+				this._create_data_item("DKIM auth", this._create_dkim_auth_fragment(rec.dkim_auth)),
+				this._create_data_item("SPF auth", this._create_spf_auth_fragment(rec.spf_auth))
+			);
 
-		}, this);
+		});
 		let nd = document.createElement("div");
 		nd.classList.add("nodata", "hidden");
 		nd.textContent = "There are no records to display. Try changing the filter options.";
@@ -544,6 +549,143 @@ class Report {
 			});
 		}
 		return res;
+	}
+
+	_make_ip_info_element(ip) {
+		function makeList(items, name) {
+			const ul = document.createElement("ul");
+			ul.dataset.name = name;
+			items.forEach(it => {
+				const li = ul.appendChild(document.createElement("li"));
+				li.appendChild(document.createElement("span")).textContent = it[1] + ": ";
+				const val = li.appendChild(document.createElement("span"));
+				val.dataset.id = it[0];
+				val.textContet = "-";
+			});
+			return ul;
+		}
+		const el = document.createElement("div");
+		el.appendChild(document.createElement("h4")).textContent = "Host information";
+		el.append(makeList([ [ "ip", "IP address" ], [ "rdns", "rDNS name" ], [ "rip", "Reverse IP" ] ], "main"));
+		el.appendChild(document.createElement("h5")).textContent = "Statistics";
+		el.append(makeList([ [ "reports", "Total reports" ], [ "messages", "Total messages" ], [ "last_report", "Last report" ] ], "stats"));
+		this._update_ip_info(ip, el);
+		return el;
+	}
+
+	_update_ip_info(ip, el) {
+		const that = this;
+		function setWait(el, fin) {
+			for (const e of el.querySelectorAll("li>span[data-id]")) {
+				if (fin) {
+					e.textContent = "-";
+					e.removeAttribute("data-id");
+				} else {
+					const we = e.appendChild(document.createElement("div"));
+					we.ariaLabel = "waiting";
+					we.classList.add("spinner");
+					we.innerHTML = '<div></div><div></div><div></div><div></div><div></div>';
+				}
+			}
+		}
+		function setData(data, el) {
+			for (const ge of el.querySelectorAll("ul[data-name]")) {
+				const gdata = data[ge.dataset.name];
+				if (!gdata) continue;
+
+				const map = Array.from(el.querySelectorAll("li>span[data-id]")).reduce((m, e) => {
+					m.set(e.dataset.id, e);
+					return m;
+				}, new Map());
+				for (const id in gdata) {
+					const e = map.get(id);
+					if (!e) continue;
+
+					let d = gdata[id];
+					switch(id) {
+						case "rdns":
+							if (d) e.title = d;
+							break;
+						case "rip":
+							if (d) {
+								d = "match";
+								e.classList.add("report-result-pass");
+							} else {
+								d = "not match";
+								e.classList.add("report-result-fail");
+							}
+							break;
+						case "ip":
+							break;
+						case "reports":
+						case "messages":
+							d = d.toLocaleString();
+							break;
+						case "last_report":
+							if (d[0]) {
+								const rt = new Date(that._data.date.begin);
+								let lt = new Date(d[0]);
+								if (lt.getTime() === rt.getTime() && d[1]) {
+									lt = new Date(d[1]);
+								}
+								d = lt.toUIDateString(true);
+							} else {
+								d = null;
+							}
+							break;
+						default:
+							continue;
+					}
+					if (d) {
+						e.replaceChildren(d);
+						e.removeAttribute("data-id");
+					}
+				}
+			}
+		}
+
+		const excl_fields = {};
+		const s = window.sessionStorage && window.sessionStorage.getItem("ReportView.Cache.ip-" + ip);
+		if (s) {
+			try {
+				const d = JSON.parse(s);
+				const t = new Date(d.time);
+				t.setHours(t.getHours() + 24);
+				if (t > new Date()) {
+					excl_fields.main = true;
+					setData(d, el);
+				}
+			} catch (err) {
+			}
+		}
+
+		setData({ main: { ip: Common.makeIpElement(ip) } }, el);
+		setWait(el, false);
+
+		const url = new URL("hosts.php", document.location);
+		url.searchParams.set("host", ip);
+		url.searchParams.set("fields", [ "main", "stats" ].filter(it => !excl_fields[it]).join(","));
+		return window.fetch(url, {
+			method: "GET",
+			cache: "no-store",
+			headers: HTTP_HEADERS,
+			credentials: "same-origin"
+		}).then(resp => {
+			if (!resp.ok) throw new Error("Failed to fetch host information");
+			return resp.json();
+		}).then(data => {
+			Common.checkResult(data);
+			setData(data, el);
+			if (data.main !== undefined) {
+				const d = { main: { rdns: data.main.rdns, rip: data.main.rip }, time: Date.now() };
+				window.sessionStorage && window.sessionStorage.setItem("ReportView.Cache.ip-" + ip, JSON.stringify(d));
+			}
+		}).catch(err => {
+			Common.displayError(err);
+			Notification.add({ type: "error", text: err.message });
+		}).finally(() => {
+			setWait(el, true);
+		});
 	}
 }
 
