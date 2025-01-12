@@ -148,11 +148,13 @@
 }
 .hint-block .hint-content li {
 	display: flex;
-	gap: .5em;
+	gap: 1em;
 	align-items: end;
 }
 .hint-content li span:first-child {
 	flex: 1;
+	text-align: left;
+	white-space: nowrap;
 }
 .titled-input {
 	display: flex;
