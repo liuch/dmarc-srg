@@ -1300,7 +1300,6 @@ class Multiselect extends HTMLElement {
 		this._select.setAriaLabelledBy(this._listBox);
 
 		this.addEventListener("focusin", event => {
-			const rt = event.relatedTarget;
 			if (event.target === this._search) {
 				this.activate();
 			}
