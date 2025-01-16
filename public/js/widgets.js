@@ -1677,7 +1677,11 @@ class HintButton {
 					ct.focus();
 				}
 			});
-			ct.addEventListener("blur", event => ct.classList.add("hidden"));
+			ct.addEventListener("focusout", event => {
+				if (!event.relatedTarget || !ct.contains(event.relatedTarget)) {
+					ct.classList.add("hidden");
+				}
+			});
 			ct.addEventListener("keydown", event => {
 				switch (event.code) {
 					case "Esc":
