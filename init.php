@@ -37,8 +37,6 @@ if (is_readable($va)) {
     require_once($va);
 }
 
-unset($vc, $va);
-
 spl_autoload_register(function ($class) {
     $prefix     = 'Liuch\\DmarcSrg\\';
     $prefix_len = 15;
@@ -76,3 +74,5 @@ set_error_handler(function (int $severity, string $message, string $file, int $l
     }
     throw new \ErrorException($message, -1, $severity, $file, $line);
 });
+
+unset($vc, $va);
