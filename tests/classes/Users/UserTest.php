@@ -54,7 +54,7 @@ class UserTest extends \PHPUnit\Framework\TestCase
         User::stringToLevel('wrong_level');
     }
 
-    public function dataProvider1(): array
+    public static function dataProvider1(): array
     {
         return [
             [ User::LEVEL_ADMIN,   'admin'   ],
