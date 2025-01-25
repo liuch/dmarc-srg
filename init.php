@@ -20,19 +20,33 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-$va = __DIR__ . '/vendor/autoload.php';
+if (!defined('ROOT_PATH')) {
+    define('ROOT_PATH', __DIR__ . (__DIR__ === DIRECTORY_SEPARATOR ? '' : DIRECTORY_SEPARATOR));
+}
+
+$vc = require_once(ROOT_PATH . 'config' . DIRECTORY_SEPARATOR . 'vendor_config.php');
+if (!is_array($vc) || !isset($vc['autoload_file'], $vc['config_file'], $vc['version_suffix'])) {
+    echo 'Error: Incorrect vendor config file';
+    exit;
+}
+
+define('APP_VERSION', '2.2.1' . strval($vc['version_suffix']));
+
+$va = strval($vc['autoload_file']);
 if (is_readable($va)) {
     require_once($va);
 }
 
+unset($vc, $va);
+
 spl_autoload_register(function ($class) {
     $prefix     = 'Liuch\\DmarcSrg\\';
     $prefix_len = 15;
-    $base_dir   = __DIR__ . '/classes/';
+    $base_dir   = ROOT_PATH . 'classes' . DIRECTORY_SEPARATOR;
 
     if (strncmp($prefix, $class, $prefix_len) === 0) {
         $relative_class = substr($class, $prefix_len);
-        $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
+        $file = $base_dir . str_replace('\\', DIRECTORY_SEPARATOR, $relative_class) . '.php';
         if (file_exists($file)) {
             require_once($file);
         }
@@ -45,10 +59,10 @@ $core = new Liuch\DmarcSrg\Core([
     'auth'     => [ 'Liuch\DmarcSrg\Auth' ],
     'admin'    => [ 'Liuch\DmarcSrg\Admin' ],
     'ehandler' => [ 'Liuch\DmarcSrg\ErrorHandler' ],
-    'config'   => [ 'Liuch\DmarcSrg\Config', [ __DIR__ . '/config/conf.php' ] ],
+    'config'   => [ 'Liuch\DmarcSrg\Config', [ strval($vc['config_file']) ] ],
     'status'   => [ 'Liuch\DmarcSrg\Status' ],
     'database' => [ 'Liuch\DmarcSrg\Database\DatabaseController' ],
-    'template' => __DIR__ . '/template.html'
+    'template' => ROOT_PATH . 'template.html'
 ]);
 $core->errorHandler()->setLogger(new Liuch\DmarcSrg\Log\PhpSystemLogger());
 

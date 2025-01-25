@@ -95,7 +95,7 @@ class Status
             $res['authenticated'] = 'disabled';
         }
         $res['auth_type'] = $this->core->auth()->authenticationType();
-        $res['version'] = Core::APP_VERSION;
+        $res['version'] = APP_VERSION;
         $res['php_version'] = phpversion();
 
         return $res;
