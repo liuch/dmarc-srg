@@ -31,6 +31,7 @@ if (!is_array($vc) || !isset($vc['autoload_file'], $vc['config_file'], $vc['vers
 }
 
 define('APP_VERSION', '2.2.1' . strval($vc['version_suffix']));
+define('CONFIG_FILE', strval($vc['config_file']));
 
 $va = strval($vc['autoload_file']);
 if (is_readable($va)) {
@@ -57,7 +58,7 @@ $core = new Liuch\DmarcSrg\Core([
     'auth'     => [ 'Liuch\DmarcSrg\Auth' ],
     'admin'    => [ 'Liuch\DmarcSrg\Admin' ],
     'ehandler' => [ 'Liuch\DmarcSrg\ErrorHandler' ],
-    'config'   => [ 'Liuch\DmarcSrg\Config', [ strval($vc['config_file']) ] ],
+    'config'   => [ 'Liuch\DmarcSrg\Config', [ CONFIG_FILE ] ],
     'status'   => [ 'Liuch\DmarcSrg\Status' ],
     'database' => [ 'Liuch\DmarcSrg\Database\DatabaseController' ],
     'template' => ROOT_PATH . 'template.html'

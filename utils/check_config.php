@@ -53,8 +53,6 @@ const RESULT_SKIPPED = 3;
 const RESULT_ERROR   = 4;
 const RESULT_FATAL   = 5;
 
-const CONFIG_FILE = 'config/conf.php';
-
 $e_cnt = 0;
 $w_cnt = 0;
 $m_str = '';
@@ -122,26 +120,25 @@ try {
 
     echo PHP_EOL, '=== CONFIG FILE ===', PHP_EOL;
     $startChecking('Checking if the file exists');
-    $config_file_path = realpath(__DIR__ . '/..') . '/' . CONFIG_FILE;
-    if (is_file($config_file_path)) {
+    if (is_file(CONFIG_FILE)) {
         $endChecking();
     } else {
-        $endChecking('The configuration file `config/conf.php` not found', RESULT_FATAL);
+        $endChecking('The configuration file `' . CONFIG_FILE . '` not found', RESULT_FATAL);
     }
     $startChecking('Checking read permission');
-    if (is_readable($config_file_path)) {
+    if (is_readable(CONFIG_FILE)) {
         $endChecking();
     } else {
         $endChecking('The configuration file is not readable', RESULT_FATAL);
     }
     $startChecking('Checking write permission');
-    if (!is_writable($config_file_path)) {
+    if (!is_writable(CONFIG_FILE)) {
         $endChecking();
     } else {
         $endChecking('The configuration file is writable', RESULT_WARNING);
     }
     $startChecking('Checking access by other users');
-    $r = fileperms($config_file_path);
+    $r = fileperms(CONFIG_FILE);
     if ($r !== false) {
         if (($r & 0x6) !== 0) {
             $endChecking('The configuration file is accessible to other users', RESULT_WARNING);
