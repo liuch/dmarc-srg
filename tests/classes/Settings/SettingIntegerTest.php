@@ -6,7 +6,6 @@ use Liuch\DmarcSrg\Users\AdminUser;
 use Liuch\DmarcSrg\Settings\SettingsList;
 use Liuch\DmarcSrg\Settings\SettingInteger;
 use Liuch\DmarcSrg\Exception\SoftException;
-use Liuch\DmarcSrg\Database\DatabaseController;
 
 class SettingIntegerTest extends \PHPUnit\Framework\TestCase
 {
@@ -50,7 +49,7 @@ class SettingIntegerTest extends \PHPUnit\Framework\TestCase
         $this->assertSame(333, (new SettingInteger(
             'status.emails-for-last-n-days',
             false,
-            $this->getCoreWithDatabaseOnce('value', 'status.emails-for-last-n-days', 333, $user)
+            $this->getCoreWithDatabaseOnce('value', 'status.emails-for-last-n-days', '333', $user)
         ))->value());
     }
 
@@ -58,7 +57,7 @@ class SettingIntegerTest extends \PHPUnit\Framework\TestCase
     {
         return $this->getMockBuilder(Core::class)
                     ->disableOriginalConstructor()
-                    ->setMethods([ 'user', 'database' ])
+                    ->onlyMethods([ 'user', 'database' ])
                     ->getMock();
     }
 
@@ -71,17 +70,16 @@ class SettingIntegerTest extends \PHPUnit\Framework\TestCase
 
     private function getCoreWithDatabaseOnce(string $method, $parameter, $value, $user): object
     {
-        $mapper = $this->getMockBuilder(StdClass::class)
-                       ->disableOriginalConstructor()
-                       ->setMethods([ $method ])
+        $mapper = $this->getMockBuilder(Database\SettingMapperInterface::class)
+                       ->onlyMethods([ 'value', 'list', 'save' ])
                        ->getMock();
         $mapper->expects($this->once())
                ->method($method)
                ->with($this->equalTo($parameter))
                ->willReturn($value);
-        $db = $this->getMockBuilder(DatabaseController::class)
+        $db = $this->getMockBuilder(Database\DatabaseController::class)
                    ->disableOriginalConstructor()
-                   ->setMethods([ 'getMapper' ])
+                   ->onlyMethods([ 'getMapper' ])
                    ->getMock();
         $db->expects($this->once())
            ->method('getMapper')

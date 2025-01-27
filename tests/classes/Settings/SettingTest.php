@@ -7,7 +7,6 @@ use Liuch\DmarcSrg\Settings\SettingsList;
 use Liuch\DmarcSrg\Settings\SettingString;
 use Liuch\DmarcSrg\Settings\SettingInteger;
 use Liuch\DmarcSrg\Exception\SoftException;
-use Liuch\DmarcSrg\Database\DatabaseController;
 
 class SettingTest extends \PHPUnit\Framework\TestCase
 {
@@ -77,7 +76,7 @@ class SettingTest extends \PHPUnit\Framework\TestCase
     {
         return $this->getMockBuilder(Core::class)
                     ->disableOriginalConstructor()
-                    ->setMethods([ 'database' ])
+                    ->onlyMethods([ 'database' ])
                     ->getMock();
     }
 
@@ -90,16 +89,15 @@ class SettingTest extends \PHPUnit\Framework\TestCase
 
     private function getCoreWithDatabaseMapperOnce(string $method, string $param1, string $param2, int $param3): object
     {
-        $mapper = $this->getMockBuilder(StdClass::class)
-                       ->disableOriginalConstructor()
-                       ->setMethods([ $method ])
+        $mapper = $this->getMockBuilder(Database\SettingMapperInterface::class)
+                       ->onlyMethods([ 'value', 'list', 'save' ])
                        ->getMock();
         $mapper->expects($this->once())
                ->method($method)
                ->with($this->equalTo($param1), $this->equalTo($param2), $this->equalTo($param3));
-        $db = $this->getMockBuilder(DatabaseController::class)
+        $db = $this->getMockBuilder(Database\DatabaseController::class)
                    ->disableOriginalConstructor()
-                   ->setMethods([ 'getMapper' ])
+                   ->onlyMethods([ 'getMapper' ])
                    ->getMock();
         $db->expects($this->once())
            ->method('getMapper')

@@ -2,6 +2,8 @@
 
 namespace Liuch\DmarcSrg;
 
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
+
 class TextTableTest extends \PHPUnit\Framework\TestCase
 {
     private $table  = null;
@@ -36,6 +38,7 @@ class TextTableTest extends \PHPUnit\Framework\TestCase
     /**
      * @runInSeparateProcess
      */
+    #[RunInSeparateProcess]
     public function testSimple(): void
     {
         ob_start();
@@ -48,6 +51,7 @@ class TextTableTest extends \PHPUnit\Framework\TestCase
     /**
      * @runInSeparateProcess
      */
+    #[RunInSeparateProcess]
     public function testMinColumnWidth(): void
     {
         ob_start();
@@ -60,6 +64,7 @@ class TextTableTest extends \PHPUnit\Framework\TestCase
     /**
      * @runInSeparateProcess
      */
+    #[RunInSeparateProcess]
     public function testMimColumnsWidth(): void
     {
         ob_start();
@@ -72,6 +77,7 @@ class TextTableTest extends \PHPUnit\Framework\TestCase
     /**
      * @runInSeparateProcess
      */
+    #[RunInSeparateProcess]
     public function testSortByString(): void
     {
         ob_start();
@@ -84,6 +90,7 @@ class TextTableTest extends \PHPUnit\Framework\TestCase
     /**
      * @runInSeparateProcess
      */
+    #[RunInSeparateProcess]
     public function testSortByInt(): void
     {
         ob_start();
@@ -96,6 +103,7 @@ class TextTableTest extends \PHPUnit\Framework\TestCase
     /**
      * @runInSeparateProcess
      */
+    #[RunInSeparateProcess]
     public function testMinColumnWidthAndSortBy(): void
     {
         ob_start();
@@ -108,6 +116,7 @@ class TextTableTest extends \PHPUnit\Framework\TestCase
     /**
      * @runInSeparateProcess
      */
+    #[RunInSeparateProcess]
     public function testSetColumnAlignment(): void
     {
         ob_start();
@@ -121,6 +130,7 @@ class TextTableTest extends \PHPUnit\Framework\TestCase
     /**
      * @runInSeparateProcess
      */
+    #[RunInSeparateProcess]
     public function testToArray(): void
     {
         $this->assertEquals($this->genResultArray(0, 1, 0, 2, 3, 0), $this->table->toArray());
@@ -129,6 +139,7 @@ class TextTableTest extends \PHPUnit\Framework\TestCase
     /**
      * @runInSeparateProcess
      */
+    #[RunInSeparateProcess]
     public function testSetBorders(): void
     {
         ob_start();

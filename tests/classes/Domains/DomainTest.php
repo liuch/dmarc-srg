@@ -142,7 +142,7 @@ class DomainTest extends \PHPUnit\Framework\TestCase
     {
         $db = $this->getMockBuilder(DatabaseController::class)
                    ->disableOriginalConstructor()
-                   ->setMethods([ 'getMapper' ])
+                   ->onlyMethods([ 'getMapper' ])
                    ->getMock();
         $db->expects($this->never())
            ->method('getMapper');
@@ -153,8 +153,7 @@ class DomainTest extends \PHPUnit\Framework\TestCase
     {
         $mapper = $this->getMockBuilder(DomainMapperInterface::class)
                        ->disableOriginalConstructor()
-                       ->setMethods([ $method ])
-                       ->getMockForAbstractClass();
+                       ->getMock();
         $mr = $mapper->expects($this->once())->method($method);
         if (empty($key)) {
             if (!is_null($value)) {
@@ -168,7 +167,7 @@ class DomainTest extends \PHPUnit\Framework\TestCase
 
         $db = $this->getMockBuilder(DatabaseController::class)
                    ->disableOriginalConstructor()
-                   ->setMethods([ 'getMapper' ])
+                   ->onlyMethods([ 'getMapper' ])
                    ->getMock();
         $db->method('getMapper')
            ->with('domain')

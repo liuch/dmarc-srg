@@ -7,7 +7,6 @@ use Liuch\DmarcSrg\Sources\Source;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
 use Liuch\DmarcSrg\ReportLog\ReportLogItem;
-use Liuch\DmarcSrg\Database\ReportLogMapperInterface;
 
 class ReportLogItemTest extends \PHPUnit\Framework\TestCase
 {
@@ -137,16 +136,15 @@ class ReportLogItemTest extends \PHPUnit\Framework\TestCase
 
     private function getDbMapperOnce(string $method, $callback): object
     {
-        $mapper = $this->getMockBuilder(ReportLogMapperInterface::class)
+        $mapper = $this->getMockBuilder(Database\ReportLogMapperInterface::class)
                        ->disableOriginalConstructor()
-                       ->setMethods([ $method ])
-                       ->getMockForAbstractClass();
+                       ->getMock();
         $mapper->expects($this->once())
                ->method($method)
                ->willReturnCallback($callback);
 
-        $db = $this->getMockBuilder(\StdClass::class)
-                   ->setMethods([ 'getMapper' ])
+        $db = $this->getMockBuilder(Database\DatabaseConnector::class)
+                   ->disableOriginalConstructor()
                    ->getMock();
         $db->method('getMapper')
            ->with('report-log')
@@ -157,8 +155,8 @@ class ReportLogItemTest extends \PHPUnit\Framework\TestCase
 
     private function getDbMapperNever(): object
     {
-        $db = $this->getMockBuilder(\StdClass::class)
-                   ->setMethods([ 'getMapper' ])
+        $db = $this->getMockBuilder(Database\DatabaseConnector::class)
+                   ->disableOriginalConstructor()
                    ->getMock();
         $db->expects($this->never())
            ->method('getMapper');

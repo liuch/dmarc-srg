@@ -122,8 +122,8 @@ class DatabaseControllerTest extends \PHPUnit\Framework\TestCase
 
     private function getConnector(string $method, $callback): object
     {
-        $con = $this->getMockBuilder(\StdClass::class)
-                    ->setMethods([ $method ])
+        $con = $this->getMockBuilder(Database\DatabaseConnector::class)
+                    ->disableOriginalConstructor()
                     ->getMock();
         $con->expects($this->once())
             ->method($this->equalTo($method))

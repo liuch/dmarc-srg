@@ -5,7 +5,6 @@ namespace Liuch\DmarcSrg;
 use Liuch\DmarcSrg\Users\UserList;
 use Liuch\DmarcSrg\Domains\Domain;
 use Liuch\DmarcSrg\Domains\DomainList;
-use Liuch\DmarcSrg\Database\DomainMapperInterface;
 
 class DomainListTest extends \PHPUnit\Framework\TestCase
 {
@@ -38,18 +37,17 @@ class DomainListTest extends \PHPUnit\Framework\TestCase
 
     private function getDbMapperOnce(string $method, $value): object
     {
-        $mapper = $this->getMockBuilder(DomainMapperInterface::class)
+        $mapper = $this->getMockBuilder(Database\DomainMapperInterface::class)
                        ->disableOriginalConstructor()
-                       ->setMethods([ $method ])
-                       ->getMockForAbstractClass();
+                       ->getMock();
         $mapper->expects($this->once())
                ->method($method)
                ->willReturnCallback(function () use ($value) {
                 return $value;
                });
 
-        $db = $this->getMockBuilder(\StdClass::class)
-                   ->setMethods([ 'getMapper' ])
+        $db = $this->getMockBuilder(Database\DatabaseConnector::class)
+                   ->disableOriginalConstructor()
                    ->getMock();
         $db->method('getMapper')
            ->with('domain')

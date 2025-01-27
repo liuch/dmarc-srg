@@ -4,6 +4,7 @@ namespace Liuch\DmarcSrg;
 
 use Liuch\DmarcSrg\Users\AdminUser;
 use Liuch\DmarcSrg\Exception\SoftException;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 
 class CoreTest extends \PHPUnit\Framework\TestCase
 {
@@ -23,10 +24,11 @@ class CoreTest extends \PHPUnit\Framework\TestCase
     /**
      * @runInSeparateProcess
      */
+    #[RunInSeparateProcess]
     public function testRequestMethod(): void
     {
         $_SERVER['REQUEST_METHOD'] = 'some_method';
-        $this->assertSame('some_method', $this->core->method());
+        $this->assertSame('some_method', $this->core->requestMethod());
     }
 
     public function testAdminUser(): void
@@ -41,6 +43,7 @@ class CoreTest extends \PHPUnit\Framework\TestCase
     /**
      * @runInSeparateProcess
      */
+    #[RunInSeparateProcess]
     public function testSendHtml(): void
     {
         foreach ([
@@ -69,6 +72,7 @@ class CoreTest extends \PHPUnit\Framework\TestCase
     /**
      * @runInSeparateProcess
      */
+    #[RunInSeparateProcess]
     public function testSendJson(): void
     {
         $data = [ 'key1' => 'value1', [ 'key2' => 'value2' ] ];
@@ -133,7 +137,7 @@ class CoreTest extends \PHPUnit\Framework\TestCase
     {
         $config = $this->getMockBuilder(Config::class)
                        ->disableOriginalConstructor()
-                       ->setMethods([ 'get' ])
+                       ->onlyMethods([ 'get' ])
                        ->getMock();
         $config->expects($this->once())
                ->method('get')

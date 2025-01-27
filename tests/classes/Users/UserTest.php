@@ -4,6 +4,7 @@ namespace Liuch\DmarcSrg;
 
 use Liuch\DmarcSrg\Users\User;
 use Liuch\DmarcSrg\Exception\SoftException;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class UserTest extends \PHPUnit\Framework\TestCase
 {
@@ -23,6 +24,7 @@ class UserTest extends \PHPUnit\Framework\TestCase
     /**
      * @dataProvider dataProvider1
      */
+    #[DataProvider('dataProvider1')]
     public function testLevelToStringCorrectValue(int $ilevel, string $slevel): void
     {
         $this->assertSame(User::levelToString($ilevel), $slevel);
@@ -31,6 +33,7 @@ class UserTest extends \PHPUnit\Framework\TestCase
     /**
      * @dataProvider dataProvider1
      */
+    #[DataProvider('dataProvider1')]
     public function testLevelToStringIncorrectValue(int $ilevel, string $slevel): void
     {
         if ($ilevel === User::LEVEL_USER) {
@@ -43,6 +46,7 @@ class UserTest extends \PHPUnit\Framework\TestCase
     /**
      * @dataProvider dataProvider1
      */
+    #[DataProvider('dataProvider1')]
     public function testStringToLevelCorrectValue(int $ilevel, string $slevel): void
     {
         $this->assertSame(User::stringToLevel($slevel), $ilevel);

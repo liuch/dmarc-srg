@@ -58,15 +58,14 @@ class UserListTest extends \PHPUnit\Framework\TestCase
     {
         $mapper = $this->getMockBuilder(UserMapperInterface::class)
                        ->disableOriginalConstructor()
-                       ->setMethods([ $method ])
-                       ->getMockForAbstractClass();
+                       ->getMock();
         $mapper->expects($this->once())
                ->method($method)
                ->willReturn($value);
 
         $db = $this->getMockBuilder(DatabaseController::class)
                     ->disableOriginalConstructor()
-                    ->setMethods([ 'getMapper' ])
+                    ->onlyMethods([ 'getMapper' ])
                     ->getMock();
         $db->expects($this->once())
            ->method('getMapper')

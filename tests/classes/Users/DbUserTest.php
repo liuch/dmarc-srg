@@ -156,8 +156,7 @@ class DbUserTest extends \PHPUnit\Framework\TestCase
     {
         $mp = $this->getMockBuilder(UserMapperInterface::class)
                    ->disableOriginalConstructor()
-                   ->setMethods([ 'fetch', 'delete' ])
-                   ->getMockForAbstractClass();
+                   ->getMock();
         $mp->expects($this->once())->method('fetch');
         $mp->expects($this->once())->method('delete');
         $db = $this->getDatabase();
@@ -171,8 +170,7 @@ class DbUserTest extends \PHPUnit\Framework\TestCase
 
         $mp = $this->getMockBuilder(UserMapperInterface::class)
                    ->disableOriginalConstructor()
-                   ->setMethods([ 'fetch', 'delete' ])
-                   ->getMockForAbstractClass();
+                   ->getMock();
         $mp->expects($this->never())->method('fetch');
         $mp->expects($this->once())->method('delete');
         $db = $this->getDatabase();
@@ -230,8 +228,7 @@ class DbUserTest extends \PHPUnit\Framework\TestCase
     {
         $mp = $this->getMockBuilder(UserMapperInterface::class)
                    ->disableOriginalConstructor()
-                   ->setMethods([ 'savePasswordHash' ])
-                   ->getMockForAbstractClass();
+                   ->getMock();
         $mp->expects($this->once())
            ->method('savePasswordHash')
            ->willReturnCallback(function (&$data, $hash) {
@@ -249,7 +246,7 @@ class DbUserTest extends \PHPUnit\Framework\TestCase
     {
         return $this->getMockBuilder(DatabaseController::class)
                     ->disableOriginalConstructor()
-                    ->setMethods([ 'getMapper' ])
+                    ->onlyMethods([ 'getMapper' ])
                     ->getMock();
     }
 
@@ -264,8 +261,7 @@ class DbUserTest extends \PHPUnit\Framework\TestCase
     {
         $mapper = $this->getMockBuilder(UserMapperInterface::class)
                        ->disableOriginalConstructor()
-                       ->setMethods([ $method ])
-                       ->getMockForAbstractClass();
+                       ->getMock();
         $mapper->expects($this->once())
                ->method($method)
                ->willReturnCallback(function (&$data) use ($key, $value) {
@@ -287,8 +283,7 @@ class DbUserTest extends \PHPUnit\Framework\TestCase
     {
         $mapper = $this->getMockBuilder(UserMapperInterface::class)
                        ->disableOriginalConstructor()
-                       ->setMethods([ $method ])
-                       ->getMockForAbstractClass();
+                       ->getMock();
         $mapper->expects($this->once())
                ->method($method)
                ->willThrowException(new DatabaseNotFoundException('Not found'));

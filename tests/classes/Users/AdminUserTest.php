@@ -73,7 +73,7 @@ class AdminUserTest extends \PHPUnit\Framework\TestCase
 
     private function getCore(): object
     {
-        return $this->getMockBuilder(Core::class)->disableOriginalConstructor()->setMethods([ 'config' ])->getMock();
+        return $this->getMockBuilder(Core::class)->disableOriginalConstructor()->onlyMethods([ 'config' ])->getMock();
     }
 
     private function getCoreWithConfigValue(string $key, $value)

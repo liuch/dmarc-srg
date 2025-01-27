@@ -4,7 +4,6 @@ namespace Liuch\DmarcSrg;
 
 use Liuch\DmarcSrg\Sources\Source;
 use Liuch\DmarcSrg\ReportLog\ReportLog;
-use Liuch\DmarcSrg\Database\ReportLogMapperInterface;
 
 class ReportLogTest extends \PHPUnit\Framework\TestCase
 {
@@ -186,16 +185,14 @@ class ReportLogTest extends \PHPUnit\Framework\TestCase
 
     private function getDbMapperOnce(string $method, $callback): object
     {
-        $mapper = $this->getMockBuilder(ReportLogMapperInterface::class)
-                       ->disableOriginalConstructor()
-                       ->setMethods([ $method ])
-                       ->getMockForAbstractClass();
+        $mapper = $this->getMockBuilder(Database\ReportLogMapperInterface::class)
+                       ->getMock();
         $mapper->expects($this->once())
                ->method($method)
                ->willReturnCallback($callback);
 
-        $db = $this->getMockBuilder(\StdClass::class)
-                   ->setMethods([ 'getMapper' ])
+        $db = $this->getMockBuilder(Database\DatabaseConnector::class)
+                   ->disableOriginalConstructor()
                    ->getMock();
         $db->method('getMapper')
            ->with('report-log')

@@ -7,7 +7,6 @@ use Liuch\DmarcSrg\Settings\SettingInteger;
 use Liuch\DmarcSrg\Settings\SettingString;
 use Liuch\DmarcSrg\Settings\SettingStringSelect;
 use Liuch\DmarcSrg\Settings\SettingsList;
-use Liuch\DmarcSrg\Database\DatabaseController;
 use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
 
 class SettingDefaultValueTest extends \PHPUnit\Framework\TestCase
@@ -75,7 +74,7 @@ class SettingDefaultValueTest extends \PHPUnit\Framework\TestCase
     {
         return $this->getMockBuilder(Core::class)
                     ->disableOriginalConstructor()
-                    ->setMethods([ 'user', 'database' ])
+                    ->onlyMethods([ 'user', 'database' ])
                     ->getMock();
     }
 
@@ -89,18 +88,17 @@ class SettingDefaultValueTest extends \PHPUnit\Framework\TestCase
 
     private function getCoreWithDatabaseMapperOnce($key, $user, $value): object
     {
-        $mapper = $this->getMockBuilder(StdClass::class)
-                       ->disableOriginalConstructor()
-                       ->setMethods([ 'value' ])
+        $mapper = $this->getMockBuilder(Database\SettingMapperInterface::class)
+                       ->onlyMethods([ 'value', 'list', 'save' ])
                        ->getMock();
         $mapper->expects($this->once())
                ->method('value')
                ->with($key, $user->id())
                ->willReturn($value);
 
-        $db = $this->getMockBuilder(DatabaseController::class)
+        $db = $this->getMockBuilder(Database\DatabaseController::class)
                    ->disableOriginalConstructor()
-                   ->setMethods([ 'getMapper' ])
+                   ->onlyMethods([ 'getMapper' ])
                    ->getMock();
         $db->expects($this->once())
            ->method('getMapper')
@@ -114,18 +112,18 @@ class SettingDefaultValueTest extends \PHPUnit\Framework\TestCase
 
     private function getCoreWithDatabaseMapperNotFound($parameter, $user): object
     {
-        $mapper = $this->getMockBuilder(StdClass::class)
+        $mapper = $this->getMockBuilder(Database\SettingMapperInterface::class)
                        ->disableOriginalConstructor()
-                       ->setMethods([ 'value' ])
+                       ->onlyMethods([ 'value', 'list', 'save' ])
                        ->getMock();
         $mapper->expects($this->once())
                ->method('value')
                ->with($this->equalTo($parameter))
                ->willThrowException(new DatabaseNotFoundException());
 
-        $db = $this->getMockBuilder(DatabaseController::class)
+        $db = $this->getMockBuilder(Database\DatabaseController::class)
                    ->disableOriginalConstructor()
-                   ->setMethods([ 'getMapper' ])
+                   ->onlyMethods([ 'getMapper' ])
                    ->getMock();
         $db->expects($this->once())
            ->method('getMapper')
