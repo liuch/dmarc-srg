@@ -28,7 +28,7 @@ use Liuch\DmarcSrg\Exception\RuntimeException;
 
 require realpath(__DIR__ . '/..') . '/init.php';
 
-if (Core::method() == 'GET') {
+if (Core::requestMethod() == 'GET') {
     if (Core::isJson() && isset($_GET['list'])) {
         try {
             $core = Core::instance();

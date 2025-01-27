@@ -30,7 +30,7 @@ use Liuch\DmarcSrg\Exception\RuntimeException;
 require realpath(__DIR__ . '/..') . '/init.php';
 
 if (Core::isJson()) {
-    if (Core::method() == 'GET') {
+    if (Core::requestMethod() == 'GET') {
         try {
             $core = Core::instance();
             $core->auth()->isAllowed(User::LEVEL_USER);

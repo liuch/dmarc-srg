@@ -64,7 +64,7 @@ if (Core::isJson()) {
     try {
         $core = Core::instance();
 
-        if (Core::method() == 'GET') {
+        if (Core::requestMethod() == 'GET') {
             if (!isset($_GET['user'])) {
                 // Retrieving a list of all users
                 $core->auth()->isAllowed(User::LEVEL_ADMIN);
@@ -118,7 +118,7 @@ if (Core::isJson()) {
             ];
             Core::sendJson($res);
             return;
-        } elseif (Core::method() == 'POST') {
+        } elseif (Core::requestMethod() == 'POST') {
             $data = Core::getJsonData();
             if ($data) {
                 $uname = $data['name'] ?? null;
@@ -211,7 +211,7 @@ if (Core::isJson()) {
         Core::sendJson(ErrorHandler::exceptionResult($e));
         return;
     }
-} elseif (Core::method() == 'GET') {
+} elseif (Core::requestMethod() == 'GET') {
     Core::instance()->sendHtml();
     return;
 }

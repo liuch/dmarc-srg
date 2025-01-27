@@ -53,7 +53,7 @@ if (Core::isJson()) {
     try {
         $core = Core::instance();
 
-        if (Core::method() == 'GET') {
+        if (Core::requestMethod() == 'GET') {
             $core->auth()->isAllowed(User::LEVEL_USER);
 
             if (isset($_GET['host']) && isset($_GET['fields'])) {

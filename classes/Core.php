@@ -77,7 +77,7 @@ class Core
      *
      * @return string http method
      */
-    public static function method(): string
+    public static function requestMethod(): string
     {
         return $_SERVER['REQUEST_METHOD'];
     }

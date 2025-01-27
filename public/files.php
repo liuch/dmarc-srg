@@ -37,7 +37,7 @@ use Liuch\DmarcSrg\RemoteFilesystems\RemoteFilesystemList;
 
 require realpath(__DIR__ . '/..') . '/init.php';
 
-if (Core::method() == 'GET') {
+if (Core::requestMethod() == 'GET') {
     if (!Core::isJson()) {
         Core::instance()->sendHtml();
         return;
@@ -107,7 +107,7 @@ if (Core::method() == 'GET') {
     return;
 }
 
-if (Core::method() == 'POST') {
+if (Core::requestMethod() == 'POST') {
     try {
         $core = Core::instance();
         $data = Core::getJsonData();

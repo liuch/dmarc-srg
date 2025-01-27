@@ -34,10 +34,10 @@ if (Core::isJson()) {
     try {
         $core->auth()->isAllowed(User::LEVEL_ADMIN);
 
-        if (Core::method() == 'GET') {
+        if (Core::requestMethod() == 'GET') {
             Core::sendJson($core->admin()->state());
             return;
-        } elseif (Core::method() == 'POST') {
+        } elseif (Core::requestMethod() == 'POST') {
             $data = Core::getJsonData();
             if ($data) {
                 $cmd = $data['cmd'];
@@ -84,7 +84,7 @@ if (Core::isJson()) {
         Core::sendJson(ErrorHandler::exceptionResult($e));
     }
     return;
-} elseif (Core::method() == 'GET') {
+} elseif (Core::requestMethod() == 'GET') {
     $core->sendHtml();
     return;
 }

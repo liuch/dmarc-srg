@@ -63,7 +63,7 @@ if (Core::isJson()) {
     try {
         Core::instance()->auth()->isAllowed(User::LEVEL_USER);
 
-        if (Core::method() == 'GET') {
+        if (Core::requestMethod() == 'GET') {
             if (isset($_GET['name'])) {
                 Core::sendJson(SettingsList::getSettingByName($_GET['name'])->toArray());
                 return;
@@ -83,7 +83,7 @@ if (Core::isJson()) {
             return;
         }
 
-        if (Core::method() == 'POST' && Core::isJson()) {
+        if (Core::requestMethod() == 'POST' && Core::isJson()) {
             $data = Core::getJsonData();
             if ($data) {
                 $sett = SettingsList::getSettingByName($data['name'] ?? '');
@@ -107,7 +107,7 @@ if (Core::isJson()) {
         Core::sendJson(ErrorHandler::exceptionResult($e));
         return;
     }
-} elseif (Core::method() == 'GET') {
+} elseif (Core::requestMethod() == 'GET') {
     Core::instance()->sendHtml();
     return;
 }

@@ -130,7 +130,7 @@ if (Core::isJson() && isset($_GET['mode'])) {
         Core::sendJson(ErrorHandler::exceptionResult($e));
         return;
     }
-} elseif (Core::method() == 'GET') {
+} elseif (Core::requestMethod() == 'GET') {
     Core::instance()->sendHtml();
     return;
 }

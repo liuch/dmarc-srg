@@ -60,7 +60,7 @@ require realpath(__DIR__ . '/..') . '/init.php';
 
 if (Core::isJson()) {
     try {
-        if (Core::method() == 'GET') {
+        if (Core::requestMethod() == 'GET') {
             $core = Core::instance();
             $core->auth()->isAllowed(User::LEVEL_USER);
 
@@ -93,7 +93,7 @@ if (Core::isJson()) {
                 'more'    => $res['more']
             ]);
             return;
-        } elseif (Core::method() == 'POST') {
+        } elseif (Core::requestMethod() == 'POST') {
             Core::instance()->auth()->isAllowed(User::LEVEL_MANAGER);
 
             $data = Core::getJsonData();
@@ -152,7 +152,7 @@ if (Core::isJson()) {
         Core::sendJson(ErrorHandler::exceptionResult($e));
         return;
     }
-} elseif (Core::method() == 'GET') {
+} elseif (Core::requestMethod() == 'GET') {
     Core::instance()->sendHtml();
     return;
 }

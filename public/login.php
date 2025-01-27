@@ -27,7 +27,7 @@ use Liuch\DmarcSrg\Exception\RuntimeException;
 
 require realpath(__DIR__ . '/..') . '/init.php';
 
-if (Core::method() == 'POST' && Core::isJson()) {
+if (Core::requestMethod() == 'POST' && Core::isJson()) {
     $jdata = Core::getJsonData();
     if ($jdata && isset($jdata['password'])) {
         try {

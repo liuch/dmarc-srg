@@ -46,7 +46,7 @@ if (!empty($_GET['org']) && !empty($_GET['time']) && !empty($_GET['domain']) && 
                 throw new SoftException('Incorrect timestamp');
             }
 
-            if (Core::method() == 'GET') {
+            if (Core::requestMethod() == 'GET') {
                 if ($dom_ex) {
                     throw $dom_ex;
                 }
@@ -63,7 +63,7 @@ if (!empty($_GET['org']) && !empty($_GET['time']) && !empty($_GET['domain']) && 
                 $rep->fetch();
                 Core::sendJson([ 'report' => $rep->toArray() ]);
                 return;
-            } elseif (Core::method() == 'POST') {
+            } elseif (Core::requestMethod() == 'POST') {
                 if ($_GET['action'] === 'set') {
                     $jdata = Core::getJsonData();
                     if ($jdata && isset($jdata['name']) && isset($jdata['value'])) {
@@ -89,7 +89,7 @@ if (!empty($_GET['org']) && !empty($_GET['time']) && !empty($_GET['domain']) && 
             Core::sendJson(ErrorHandler::exceptionResult($e));
             return;
         }
-    } elseif (Core::method() == 'GET') {
+    } elseif (Core::requestMethod() == 'GET') {
         Core::instance()->sendHtml();
         return;
     }

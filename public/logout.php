@@ -27,7 +27,7 @@ use Liuch\DmarcSrg\Exception\RuntimeException;
 
 require realpath(__DIR__ . '/..') . '/init.php';
 
-if (Core::method() == 'POST' && Core::isJson()) {
+if (Core::requestMethod() == 'POST' && Core::isJson()) {
     try {
         Core::sendJson(Core::instance()->auth()->logout());
     } catch (RuntimeException $e) {
