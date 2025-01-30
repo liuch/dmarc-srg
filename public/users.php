@@ -93,10 +93,9 @@ if (Core::isJson()) {
                 return;
             }
 
+            $core->auth()->isAllowed(User::LEVEL_USER);
             if ($core->user()->name() === $uname && $core->user()->level() < User::LEVEL_ADMIN) {
                 // Current user and not Admin
-                $core->auth()->isAllowed(User::LEVEL_USER);
-
                 $udata = (new DbUser($uname))->toArray();
                 Core::sendJson([
                     'name'     => $udata['name'],
