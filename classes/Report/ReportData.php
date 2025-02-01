@@ -64,9 +64,8 @@ class ReportData
         $rdata->rep_data = [ 'date' => [], 'policy' => [], 'records' => [] ];
 
         $parser = xml_parser_create();
-        xml_set_object($parser, $rdata);
-        xml_set_element_handler($parser, 'xmlStartTag', 'xmlEndTag');
-        xml_set_character_data_handler($parser, 'xmlTagData');
+        xml_set_element_handler($parser, [ $rdata, 'xmlStartTag' ], [ $rdata, 'xmlEndTag' ]);
+        xml_set_character_data_handler($parser, [ $rdata, 'xmlTagData' ]);
         xml_set_external_entity_ref_handler($parser, function () {
             throw new RuntimeException('The XML document has an external entity!');
         });
