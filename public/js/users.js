@@ -412,8 +412,7 @@ class UserEditDialog extends VerticalDialog {
 		for (let i = 2; i < this._buttons.length - 1; ++i) {
 			this._buttons[i].disabled = !en;
 		}
-		this._update_first_last();
-		if (this._first) this._first.focus();
+		this.focus();
 	}
 
 	_update_ui(data) {
@@ -630,7 +629,6 @@ class PasswordDialog extends VerticalDialog {
 		if (this._pw_cur) this._pw_cur.disabled = !en;
 		this._pw_nw1.disabled = !en;
 		this._pw_nw2.disabled = !en;
-		this._update_first_last();
-		if (this._first) this._first.focus();
+		this.focus();
 	}
 }

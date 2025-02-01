@@ -262,10 +262,7 @@ class SettingEditDialog extends VerticalDialog {
 
 	_enable_ui(en) {
 		this._val_el.disabled = !en;
-		this._update_first_last();
-		if (this._first) {
-			this._first.focus();
-		}
+		this.focus();
 	}
 
 	_update_ui(data) {

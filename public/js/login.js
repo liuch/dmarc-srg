@@ -95,8 +95,11 @@ class LoginDialog extends VerticalDialog {
 			this.display_status("error", err.message);
 		}).finally(() => {
 			this._enable_elements(true);
-			this._first.focus();
-			if (hide) this.hide();
+			if (hide) {
+				this.hide();
+			} else {
+				this.focus();
+			}
 		});
 	}
 }

@@ -417,11 +417,7 @@ class DomainEditDialog extends VerticalDialog {
 		for (let i = 2; i < this._buttons.length - 1; ++i) {
 			this._buttons[i].disabled = !en;
 		}
-
-		this._update_first_last();
-		if (this._first) {
-			this._first.focus();
-		}
+		this.focus();
 	}
 
 	_save() {

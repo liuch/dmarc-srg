@@ -873,8 +873,6 @@ class ModalDialog {
 		this._wait     = null;
 		this._buttons  = [];
 		this._content  = null;
-		this._first    = null;
-		this._last     = null;
 		this._result   = null;
 		this._callback = null;
 	}
@@ -887,6 +885,7 @@ class ModalDialog {
 			const dlg = ovl.appendChild(document.createElement("div"));
 			dlg.role = "dialog";
 			dlg.ariaModal = true;
+			dlg.tabIndex = -1; // To catch keydown events
 			dlg.classList.add("dialog");
 			const con = dlg.appendChild(document.createElement("div"));
 			con.classList.add("container");
@@ -914,25 +913,37 @@ class ModalDialog {
 			bdv.classList.add("dialog-buttons");
 			this._add_buttons(bdv);
 			this._gen_content();
-			this._update_first_last();
 			this._element.addEventListener("click", event => {
 				if (event.target === event.currentTarget && this._params.overlay_click !== "ignore") {
 					this.hide();
 				}
 			});
-			frm.addEventListener("keydown", event => {
-				if (event.key == "Tab") {
-					if (!event.shiftKey) {
-						if (event.target == this._last) {
-							this._first.focus();
+			this._element.addEventListener("keydown", event => {
+				switch (event.code) {
+					case "Tab":
+						{
+							const els = this._get_focusable_elements();
+							const lfe = [ els[0], els[els.length - 1] ];
+							switch (lfe.indexOf(event.target)) {
+								case -1:
+									return;
+								case 0:
+									if (!event.shiftKey) return;
+									lfe[1].focus();
+									break;
+								case 1:
+									if (event.shiftKey) return;
+									lfe[0].focus();
+									break;
+							}
 							event.preventDefault();
 						}
-					} else {
-						if (event.target == this._first) {
-							this._last.focus();
-							event.preventDefault();
-						}
-					}
+						break;
+					case "Esc":
+					case "Escape":
+						event.preventDefault();
+						this.hide();
+						break;
 				}
 			});
 			frm.addEventListener("submit", event => {
@@ -947,24 +958,35 @@ class ModalDialog {
 	show() {
 		this.element();
 		this._result = null;
-		this._title.querySelector("button.close-btn").classList.add("active");
 		this._element.classList.remove("hidden");
-		if (this._first) {
-			this._first.focus();
-		}
+		this.focus();
 
-		let that = this;
-		return new Promise(function(resolve, reject) {
-			that._callback = resolve;
+		return new Promise((resolve, reject) => {
+			this._callback = resolve;
 		});
 	}
 
 	hide() {
-		if (this._element) {
-			this._title.querySelector("button.close-btn").classList.remove("active");
-			this._element.classList.add("hidden");
-		}
+		if (this._element) this._element.classList.add("hidden");
 		this._callback && this._callback(this._result);
+	}
+
+	focus() {
+		this.element();
+		const els = this._get_focusable_elements(2);
+		switch (els.length) {
+			case 2:
+				if (els[0].classList.contains("close-btn")) {
+					els[1].focus();
+					break;
+				}
+			case 1:
+				els[0].focus();
+				break;
+			default:
+				this._element.querySelector('[role="dialog"]').focus();
+				break;
+		}
 	}
 
 	display_status(type, text) {
@@ -1058,18 +1080,19 @@ class ModalDialog {
 	_gen_content() {
 	}
 
-	_update_first_last() {
-		this._first = null;
-		this._last  = null;
-		for (const el of this._element.querySelector("form").querySelectorAll("input, select, button, a[href], [tabindex]")) {
+	_get_focusable_elements(max) {
+		const res = [];
+		if (!max) max = -1;
+		for (const el of this._element.querySelectorAll("input, select, button, a[href], [tabindex]")) {
 			const ti = el.tabIndex;
 			if (!isNaN(ti) && ti >= 0 && !el.disabled) {
 				if (window.getComputedStyle(el, null).display !== "none") {
-					if (!this._first) this._first = el;
-					this._last = el;
+					res.push(el);
+					if (!(--max)) break;
 				}
 			}
 		}
+		return res;
 	}
 
 	_submit() {
@@ -1246,8 +1269,7 @@ class ReportFilterDialog extends ModalDialog {
 		for (let i = 0; i < list.length; ++i) {
 			list[i].disabled = !enable;
 		}
-		this._update_first_last();
-		if (this._first) this._first.focus();
+		this.focus();
 	}
 
 	_update_ui() {
@@ -1381,7 +1403,6 @@ class Multiselect extends HTMLElement {
 			this._select.ariaExpanded = false;
 			this._search.ariaExpanded = false;
 			if (this._values.size) this._search.classList.remove("active");
-			this._search.blur();
 			this._search.value = "";
 			this._displayList(false);
 		}

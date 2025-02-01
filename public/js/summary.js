@@ -324,7 +324,6 @@ class OptionsDialog extends VerticalDialog {
 		this._ui_data[0].element.setAttribute("placeholder", "Pick domains");
 		this._ui_data[0].element.addEventListener("change", event => {
 			this._buttons[1].disabled = this._ui_data[0].element.isEmpty();
-			this._update_first_last();
 		});
 		this._ui_data[1].element.addEventListener("change", event => {
 			const day_el = this._ui_data[2].element;
@@ -461,8 +460,7 @@ class OptionsDialog extends VerticalDialog {
 				el.disabled = !enable || el.dataset.disabled;
 			}
 		}
-		this._update_first_last();
-		if (this._first) this._first.focus();
+		this.focus();
 	}
 
 	_fetch_data() {
