@@ -140,13 +140,19 @@ class Common {
 		}
 		let tn = document.createTextNode(ip);
 		if (url) {
-			url = url.replace("{$ip}", ip).replace("{$eip}", encodeURIComponent(ip));
-			let el = document.createElement("a");
-			el.setAttribute("href", url);
-			el.setAttribute("target", "_blank");
-			el.setAttribute("title", "IP address information");
-			el.appendChild(tn);
-			return el;
+			const r = /^(!*)(.+)$/.exec(url);
+			if (r && r[1].length <= 2) {
+				url = r[2].replace("{$ip}", ip).replace("{$eip}", encodeURIComponent(ip));
+				let el = document.createElement("a");
+				el.setAttribute("href", url);
+				if (r[1].length == 1) {
+					el.target = "ip-info";
+				} else if (r[1].length == 2) {
+					el.target = "_blank";
+				}
+				el.appendChild(tn).title = "IP address information";
+				return el;
+			}
 		}
 		return tn;
 	}

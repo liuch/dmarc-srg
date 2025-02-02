@@ -222,12 +222,12 @@ class SettingsList
         'ui.ipv4.url' => [
             'type'    => 'string',
             'public'  => true,
-            'default' => 'https://who.is/whois-ip/ip-address/{$ip}'
+            'default' => '!https://who.is/whois-ip/ip-address/{$ip}'
         ],
         'ui.ipv6.url' => [
             'type'    => 'string',
             'public'  => true,
-            'default' => 'https://who.is/whois-ip/ip-address/{$ip}'
+            'default' => '!https://who.is/whois-ip/ip-address/{$ip}'
         ]
     ];
 }

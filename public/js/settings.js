@@ -157,8 +157,8 @@ class Settings {
 		"report-view.filter.initial-value": "The initial value of the record filter in the report view dialog. from-list - use current filter value of the report list. last-value - use the previous filter value. last-value-tab - use the previous filter value of the active tab.",
 		"log-view.sort-list-by": "How report log items are sorted by default in the log view dialog.",
 		"ui.datetime.offset": "Time zone offset of displayed dates in UI. Auto means that the report range is in UTC and all other dates are in local.",
-		"ui.ipv4.url": "The URL that will be used as a link when clicking on the IPv4 address. For example: https://somewhoisservice.net/ip/{$ip}, where {$ip} is IP address from the UI. Use {$eip} if you want to insert url encoded IP address. Use an empty string to disable.",
-		"ui.ipv6.url": "The URL that will be used as a link when clicking on the IPv6 address. For example: https://somewhoisservice.net/ip/{$ip}, where {$ip} is IP address from the UI. Use {$eip} if you want to insert url encoded IP address. Use an empty string to disable."
+		"ui.ipv4.url": "The URL that will be used as a link when clicking on the IPv4 address. For example: https://somewhoisservice.net/ip/{$ip}, where {$ip} is IP address from the UI. Use {$eip} if you want to insert url encoded IP address. Use an empty string to disable. Prefix the link template with ! or !! to open such links in one separate tab or each link in a separate tab, respectively. If there is no prefix, the link opens in the current tab.",
+		"ui.ipv6.url": "The URL that will be used as a link when clicking on the IPv6 address. For example: https://somewhoisservice.net/ip/{$ip}, where {$ip} is IP address from the UI. Use {$eip} if you want to insert url encoded IP address. Use an empty string to disable. Prefix the link template with ! or !! to open such links in one separate tab or each link in a separate tab, respectively. If there is no prefix, the link opens in the current tab."
 	};
 
 	static _descriptions_short = {
