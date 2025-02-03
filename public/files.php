@@ -81,9 +81,13 @@ if (Core::requestMethod() == 'GET') {
                 ];
             }, (new MailBoxes())->list());
             $dmap = [
-                [ 'directories', (new DirectoryList())->list() ],
-                [ 'remotefs', (new RemoteFilesystemList(true))->list() ]
+                [ 'directories', (new DirectoryList())->list() ]
             ];
+            try {
+                Core::instance()->checkDependencies('flyfs');
+                $dmap[] = [ 'remotefs', (new RemoteFilesystemList(true))->list() ];
+            } catch (RuntimeException $e) {
+            }
             foreach ($dmap as $it) {
                 $dirs = [];
                 foreach ($it[1] as $dir) {
