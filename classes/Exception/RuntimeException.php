@@ -36,7 +36,7 @@ namespace Liuch\DmarcSrg\Exception;
  */
 class RuntimeException extends \RuntimeException
 {
-    public function __construct(string $message = '', int $code = -1, \Throwable $previous = null)
+    public function __construct(string $message = '', int $code = -1, ?\Throwable $previous = null)
     {
         parent::__construct($message, $code, $previous);
     }
