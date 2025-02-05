@@ -38,8 +38,10 @@ Ensure that all the files are in their own sub-folder.
 ### Requirements
 * MariaDB or MySQL
 * PHP 7.3 or higher
-* Installed php-mbstring, php-mysql, php-xml, php-zip, php-json, and php-imap
+* Installed `php-mbstring`, `php-mysql`, `php-xml`, `php-zip`, and `php-json`
 * A working webserver (not necessary)
+* To process incoming reports in your mailbox, you need the `php-imap` extension
+* To process incoming reports on the S3 filesystem, you need the `flysystem` package. Use composer for this.
 
 ### Create the database
 Login as mysql root user to the MariaDB/MySQL server using the shell, run:
