@@ -73,11 +73,49 @@ class Host
     }
 
     /**
+     * Returns brief information
+     *
+     * @param array &$fields List of fields
+     *
+     * @return array
+     */
+    public function information(array &$fields): array
+    {
+        $res = [];
+        $sts = null;
+        $usr = Core::instance()->user();
+        foreach ($fields as $fld) {
+            switch ($fld) {
+                case 'main.rdns':
+                    $res[] = [ $fld, $this->rdnsName() ];
+                    break;
+                case 'main.rip':
+                    $res[] = [ $fld, $this->checkReverseIp() ];
+                    break;
+                default:
+                    if (!$sts && substr($fld, 0, 6) === 'stats.') {
+                        $sts = $this->statistics($usr);
+                    }
+                    break;
+            }
+        }
+        if ($sts) {
+            foreach ([ 'reports', 'messages', 'last_report' ] as $fld) {
+                $lfld = 'stats.' . $fld;
+                if (in_array($lfld, $fields)) {
+                    $res[] = [ $lfld, $sts[$fld] ];
+                }
+            }
+        }
+        return $res;
+    }
+
+    /**
      * Returns the reverse DNS hostname or an empty string if lookup fails
      *
      * @return string
      */
-    public function rdnsName(): string
+    private function rdnsName(): string
     {
         if (is_null($this->rdns)) {
             $rdns = gethostbyaddr($this->data['ip']);
@@ -97,7 +135,7 @@ class Host
      *
      * @return bool
      */
-    public function checkReverseIP(): bool
+    private function checkReverseIP(): bool
     {
         if (!is_null($this->rip)) {
             return $this->rip;
@@ -137,7 +175,7 @@ class Host
      *
      * @return array
      */
-    public function statistics($user): array
+    private function statistics($user): array
     {
         return $this->db->getMapper('host')->statistics($this->data, $user->id());
     }

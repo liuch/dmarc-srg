@@ -139,7 +139,7 @@
 	border-bottom: 1px dotted var(--color-br-strong);
 }
 .hint-content h5 {
-	margin: .5em 0;
+	margin: 1em 0;
 }
 .hint-content h4, .hint-content h5 {
 	font-size: 85%;
@@ -159,6 +159,9 @@
 	flex: 1;
 	text-align: left;
 	white-space: nowrap;
+}
+.hint-content .spinner {
+	margin-top: 1em;
 }
 .titled-input {
 	display: flex;

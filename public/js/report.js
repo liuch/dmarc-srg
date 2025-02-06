@@ -552,119 +552,142 @@ class Report {
 	}
 
 	_make_ip_info_element(ip) {
-		function makeList(items, name) {
-			const ul = document.createElement("ul");
-			ul.dataset.name = name;
-			items.forEach(it => {
-				const li = ul.appendChild(document.createElement("li"));
-				li.appendChild(document.createElement("span")).textContent = it[1] + ": ";
-				const val = li.appendChild(document.createElement("span"));
-				val.dataset.id = it[0];
-				val.textContet = "-";
-			});
-			return ul;
-		}
 		const el = document.createElement("div");
 		el.appendChild(document.createElement("h4")).textContent = "Host information";
-		el.append(makeList([ [ "ip", "IP address" ], [ "rdns", "rDNS name" ], [ "rip", "Reverse IP" ] ], "main"));
-		el.appendChild(document.createElement("h5")).textContent = "Statistics";
-		el.append(makeList([ [ "reports", "Total reports" ], [ "messages", "Total messages" ], [ "last_report", "Last report" ] ], "stats"));
+		this._make_ip_info_items(el, { id: "main" }, [ { title: "IP address", value: Common.makeIpElement(ip) } ]);
 		this._update_ip_info(ip, el);
 		return el;
 	}
 
+	_make_ip_info_items(el, group, items) {
+		let ul = Array.from(el.querySelectorAll("ul[data-group]")).find(e => {
+			return e.dataset.group === group.id;
+		});
+		if (!ul) {
+			if (group.id !== "main") {
+				el.appendChild(document.createElement("h5")).textContent = group.title;
+			}
+			ul = el.appendChild(document.createElement("ul"));
+			ul.dataset.group = group.id;
+		}
+		items.forEach(item => {
+			const li = ul.appendChild(document.createElement("li"));
+			li.appendChild(document.createElement("span")).textContent = item.title + ": ";
+			const val = li.appendChild(document.createElement("span"));
+			val.append(item.value);
+			if (item.tvalue) val.title = item.tvalue;
+			if (item.cvalue) val.classList.add(item.cvalue);
+		});
+	}
+
 	_update_ip_info(ip, el) {
+		const cache_keys = [ "main.rdns", "main.rip" ];
+		const dict = {
+			"main.ip": "IP address", "main.rdns": "rDNS name", "main.rip": "Reverse IP",
+			"stats": "Statistics", "stats.reports": "Total reports", "stats.messages": "Total messages",
+			"stats.last_report": "Last report"
+		};
+
 		const that = this;
-		function setWait(el, fin) {
-			for (const e of el.querySelectorAll("li>span[data-id]")) {
-				if (fin) {
-					e.textContent = "-";
-					e.removeAttribute("data-id");
-				} else {
-					const we = e.appendChild(document.createElement("div"));
-					we.ariaLabel = "waiting";
-					we.classList.add("spinner");
-					we.innerHTML = '<div></div><div></div><div></div><div></div><div></div>';
-				}
-			}
-		}
-		function setData(data, el) {
-			for (const ge of el.querySelectorAll("ul[data-name]")) {
-				const gdata = data[ge.dataset.name];
-				if (!gdata) continue;
 
-				const map = Array.from(el.querySelectorAll("li>span[data-id]")).reduce((m, e) => {
-					m.set(e.dataset.id, e);
-					return m;
-				}, new Map());
-				for (const id in gdata) {
-					const e = map.get(id);
-					if (!e) continue;
-
-					let d = gdata[id];
-					switch(id) {
-						case "rdns":
-							if (d) e.title = d;
-							break;
-						case "rip":
-							if (d) {
-								d = "match";
-								e.classList.add("report-result-pass");
-							} else {
-								d = "not match";
-								e.classList.add("report-result-fail");
-							}
-							break;
-						case "ip":
-							break;
-						case "reports":
-						case "messages":
-							d = d.toLocaleString();
-							break;
-						case "last_report":
-							if (d[0]) {
+		function convertItem(name, item) {
+			switch (name) {
+				case "main.rip":
+					if (typeof(item.value) == "boolean") {
+						if (item.value) {
+							item.value = "match";
+							item.cvalue = "report-result-pass";
+						} else {
+							item.value = "not match";
+							item.cvalue = "report-result-fail";
+						}
+					}
+					break;
+				case "stats.last_report":
+					if (Array.isArray(item.value)) {
+						try {
+							if (item.value[0]) {
 								const rt = new Date(that._data.date.begin);
-								let lt = new Date(d[0]);
-								if (lt.getTime() === rt.getTime() && d[1]) {
-									lt = new Date(d[1]);
+								let lt = new Date(item.value[0]);
+								if (lt.getTime() === rt.getTime() && item.value[1]) {
+									lt = new Date(item.value[1]);
 								}
-								d = lt.toUIDateString(true);
-							} else {
-								d = null;
+								item.value = lt.toUIDateString(true);
 							}
-							break;
-						default:
-							continue;
+						} catch (err) {
+						}
 					}
-					if (d) {
-						e.replaceChildren(d);
-						e.removeAttribute("data-id");
+					break;
+			}
+			switch (typeof(item.value)) {
+				case "number":
+					item.value = item.value.toLocaleString();
+					break;
+				default:
+					try {
+						item.value = "" + item.value;
+					} catch (err) {
+						item.value = "";
 					}
-				}
+					//break is not needed
+				case "string":
+					if (item.value.length >= 15) item.tvalue = item.value;
+					break;
 			}
 		}
+
+		function setData(result, el) {
+			const m = new Map();
+			const groups = [];
+			for (const d of result.data) {
+				if (!Array.isArray(d) || typeof(d[0]) != "string") continue;
+				const nm = d[0].split(".");
+				if (nm.length != 2) continue;
+				let gr_data = m.get(nm[0]);
+				if (!gr_data) {
+					gr_data = [];
+					m.set(nm[0], gr_data);
+					groups.push(nm[0]);
+				}
+				const item = { title: dict[d[0]] || nm[1], value: d[1] };
+				convertItem(d[0], item);
+				gr_data.push(item);
+			}
+			for (let gr of groups) {
+				gr = { id: gr, title: dict[gr] || gr };
+				that._make_ip_info_items(el, gr, m.get(gr.id));
+			}
+		}
+
+		const we = el.appendChild(document.createElement("div"));
+		we.ariaLabel = "Wait please";
+		we.classList.add("spinner");
+		we.innerHTML = "<div></div><div></div><div></div><div></div><div></div>";
 
 		const excl_fields = {};
-		const s = window.sessionStorage && window.sessionStorage.getItem("ReportView.Cache.ip-" + ip);
-		if (s) {
-			try {
-				const d = JSON.parse(s);
-				const t = new Date(d.time);
-				t.setHours(t.getHours() + 24);
-				if (t > new Date()) {
-					excl_fields.main = true;
-					setData(d, el);
+		const cache_data = [];
+		try {
+			const s = window.sessionStorage && window.sessionStorage.getItem("ReportView.Cache.ip-" + ip);
+			if (s) {
+				const jdata = JSON.parse(s);
+				const expire = jdata.expire || 0;
+				if (Date.now() < expire) {
+					const edata = [];
+					cache_keys.forEach(n => {
+						excl_fields[n] = true;
+						cache_data.push([ n, jdata[n] ]);
+					});
 				}
-			} catch (err) {
 			}
+		} catch (err) {
 		}
-
-		setData({ main: { ip: Common.makeIpElement(ip) } }, el);
-		setWait(el, false);
 
 		const url = new URL("hosts.php", document.location);
 		url.searchParams.set("host", ip);
-		url.searchParams.set("fields", [ "main", "stats" ].filter(it => !excl_fields[it]).join(","));
+		url.searchParams.set(
+			"fields",
+			Object.keys(dict).filter(it => (it.includes(".") && it !== "main.ip" && !excl_fields[it])).join(",")
+		);
 		return window.fetch(url, {
 			method: "GET",
 			cache: "no-store",
@@ -673,18 +696,37 @@ class Report {
 		}).then(resp => {
 			if (!resp.ok) throw new Error("Failed to fetch host information");
 			return resp.json();
-		}).then(data => {
-			Common.checkResult(data);
-			setData(data, el);
-			if (data.main !== undefined) {
-				const d = { main: { rdns: data.main.rdns, rip: data.main.rip }, time: Date.now() };
-				window.sessionStorage && window.sessionStorage.setItem("ReportView.Cache.ip-" + ip, JSON.stringify(d));
+		}).then(result => {
+			Common.checkResult(result);
+			// Extracting data for caching
+			let cc = 0;
+			const cache = {};
+			for (const it of result.data) {
+				if (cache_keys.includes(it[0])) {
+					cache[it[0]] = it[1];
+					++cc;
+				}
 			}
+			// Merging the received data with the local cache
+			for (const it of cache_data) {
+				if (cache[it[0]] === undefined) result.data.push(it);
+			}
+			// Updating the local cache
+			if (cc) {
+				const expire = new Date();
+				expire.setHours(expire.getHours() + 24);
+				cache.expire = expire.valueOf();
+				window.sessionStorage && window.sessionStorage.setItem("ReportView.Cache.ip-" + ip, JSON.stringify(cache));
+			}
+			// Merge dictionaries
+			if (result.dictionary) Object.assign(dict, result.dictionary);
+			// Set data
+			setData(result, el);
 		}).catch(err => {
 			Common.displayError(err);
 			Notification.add({ type: "error", text: err.message });
 		}).finally(() => {
-			setWait(el, true);
+			we.remove();
 		});
 	}
 }

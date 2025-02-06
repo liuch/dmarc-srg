@@ -44,6 +44,7 @@ namespace Liuch\DmarcSrg;
 
 use Liuch\DmarcSrg\Hosts\Host;
 use Liuch\DmarcSrg\Users\User;
+use Liuch\DmarcSrg\Plugins\PluginManager;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\RuntimeException;
 
@@ -59,21 +60,27 @@ if (Core::isJson()) {
             if (isset($_GET['host']) && isset($_GET['fields'])) {
                 $host = new Host($_GET['host']);
                 $fields = explode(',', trim($_GET['fields']));
-                if (count(array_diff($fields, [ 'main', 'stats' ]))) {
+                if (!count($fields) || count(array_diff(
+                    $fields,
+                    [ 'main.rdns', 'main.rip', 'stats.reports', 'stats.messages', 'stats.last_report' ]
+                ))) {
                     throw new SoftException('Incorrect field list');
                 }
 
-                $res  = [];
-                if (in_array('main', $fields)) {
-                    $main = [ 'rdns' => $host->rdnsName() ];
-                    if (!empty($main['rdns'])) {
-                        $main['rip'] = $host->checkReverseIp();
+                $res = [];
+                if (count($fields)) {
+                    $data = [ 'ip' => $host, 'fields' => $fields ];
+                    PluginManager::dispatchEvent('Host', 'hostInformationStart', $data);
+                    if (isset($data['fields'])) {
+                        $data['result'] = $host->information($data['fields']);
+                        PluginManager::dispatchEvent('Host', 'hostInformationFinish', $data);
+                        $res['data'] = $data['result'] ?? [];
+                        if (isset($data['dictionary'])) {
+                            $res['dictionary'] = $data['dictionary'];
+                        }
                     }
-                    $res['main'] = $main;
                 }
-                if (in_array('stats', $fields)) {
-                    $res['stats'] = $host->statistics($core->user());
-                }
+
                 Core::sendJson($res);
                 return;
             }
