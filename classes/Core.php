@@ -304,32 +304,33 @@ class Core
         $adeps = explode(',', $deps);
         $no_deps = [];
         foreach ($adeps as $ext) {
-            $no_f = false;
+            $no_dep = null;
             switch ($ext) {
                 case 'flyfs':
                     if (!class_exists('League\Flysystem\Filesystem')) {
-                        $no_f = true;
+                        $no_dep = 'Flysystem';
                     }
                     break;
                 default:
                     if (!extension_loaded($ext)) {
-                        $no_f = true;
+                        $no_dep = 'ext-' . $ext;
                     }
                     break;
             }
-            if ($no_f) {
-                $no_deps[] = strtoupper($ext);
+            if ($no_dep) {
+                $no_deps[] = $no_dep;
+                $no_dep = null;
             }
         }
         if (count($no_deps)) {
             if (count($no_deps) === 1) {
-                $s1 = '';
+                $s1 = 'y';
                 $s2 = 'is';
             } else {
-                $s1 = 's';
+                $s1 = 'ies';
                 $s2 = 'are';
             }
-            $msg = "Required extension$s1 $s2 missing";
+            $msg = "Required dependenc$s1 $s2 missing";
             if ($this->user() && $this->user()->level() === User::LEVEL_ADMIN) {
                 $msg .= ': ' . implode(', ', $no_deps) . '.';
             } else {

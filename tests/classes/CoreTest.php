@@ -115,8 +115,8 @@ class CoreTest extends \PHPUnit\Framework\TestCase
             $this->core->checkDependencies('zip');
         }
         $this->expectException(SoftException::class);
-        $this->expectExceptionMessage('Required extension is missing: FAKE_EXTENSION.');
-        $this->core->checkDependencies('fake_extension');
+        $this->expectExceptionMessage('Required dependency is missing: ext-fake.');
+        $this->core->checkDependencies('fake');
     }
 
     public function testConfigExistingParameters(): void
