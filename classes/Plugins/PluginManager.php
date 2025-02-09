@@ -90,28 +90,27 @@ class PluginManager
             return $this->plugins[$group];
         }
 
+        $group_path = ROOT_PATH . 'plugins/' . $group;
+        if (!is_dir($group_path) || !is_readable($group_path)) {
+            return [];
+        }
+
         $res = [];
         try {
-            $groups_it = new \FilesystemIterator(ROOT_PATH . 'plugins/');
-            foreach ($groups_it as $group_fi) {
-                if ($group_fi->isDir() && $group_fi->getFilename() === $group) {
-                    $plugins_it = new \FileSystemIterator($group_fi->getPathname());
-                    foreach ($plugins_it as $plugin_fi) {
-                        if ($plugin_fi->isDir()) {
-                            $plugin_name = $plugin_fi->getFileName();
-                            $plugin_path = $plugin_fi->getPathname() . "/{$plugin_name}.php";
-                            if (is_file($plugin_path) && is_readable($plugin_path)) {
-                                include_once($plugin_path);
-                                $plugin_ns_name = __NAMESPACE__ . '\\' . $plugin_name;
-                                $plugin = new $plugin_ns_name();
-                                if ($plugin instanceof PluginInterface) {
-                                    $res[] = [
-                                        'plugin'   => $plugin,
-                                        'name'     => $plugin_name,
-                                        'handlers' => $plugin->subscribedEvents()
-                                    ];
-                                }
-                            }
+            foreach (new \FilesystemIterator($group_path) as $plugin_fi) {
+                if ($plugin_fi->isDir() && $plugin_fi->isReadable()) {
+                    $plugin_name = $plugin_fi->getFilename();
+                    $plugin_path = $plugin_fi->getPathname() . "/{$plugin_name}.php";
+                    if (is_file($plugin_path) && is_readable($plugin_path)) {
+                        include_once($plugin_path);
+                        $plugin_ns_name = __NAMESPACE__ . '\\' . $plugin_name;
+                        $plugin = new $plugin_ns_name();
+                        if ($plugin instanceof PluginInterface) {
+                            $res[] = [
+                                'plugin'   => $plugin,
+                                'name'     => $plugin_name,
+                                'handlers' => $plugin->subscribedEvents()
+                            ];
                         }
                     }
                 }
@@ -119,9 +118,11 @@ class PluginManager
         } catch (\Exception $e) {
             throw new RuntimeException('Plugin loading error', -1, $e);
         }
+
         usort($res, function ($a, $b) {
             return strcmp($a['name'], $b['name']);
         });
+
         $this->plugins[$group] = $res;
         return $res;
     }
