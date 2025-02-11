@@ -1,6 +1,6 @@
 /**
  * dmarc-srg - A php parser, viewer and summary report generator for incoming DMARC reports.
- * Copyright (C) 2020 Aleksey Andreev (liuch)
+ * Copyright (C) 2020-2025 Aleksey Andreev (liuch)
  *
  * Available at:
  * https://github.com/liuch/dmarc-srg
@@ -83,7 +83,7 @@ Router.start = function() {
 		setTimeout(function() {
 			let dlg = new AboutDialog({
 				authors: [
-					{ name:  "Aleksey Andreev", url:   "https://github.com/liuch", years: "2021-2024" }
+					{ name: "Aleksey Andreev", url: "https://github.com/liuch", years: "2020-2025" }
 				],
 				documentation: [
 					{ ancor: "README on GitHub", url: "https://github.com/liuch/dmarc-srg/blob/master/README.md" }
