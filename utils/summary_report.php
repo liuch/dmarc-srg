@@ -184,33 +184,45 @@ try {
         $overall = new OverallReport();
         $rep->bindSection($overall);
     }
-    for ($i = 0; $i < $dom_cnt; ++$i) {
-        if ($i > 0) {
-            if (!is_null($text)) {
-                $text[] = '-----------------------------------';
-                $text[] = '';
-            }
-            if (!is_null($html)) {
-                $html[] = '<hr style="margin:2em 0;" />';
-            }
+    $add_sep = function () use (&$text, &$html) {
+        if (!is_null($text)) {
+            $text[] = '-----------------------------------';
+            $text[] = '';
         }
-
+        if (!is_null($html)) {
+            $html[] = '<hr style="margin:2em 0;" />';
+        }
+    };
+    $rep_cnt = 0;
+    $err_cnt = 0;
+    for ($i = 0; $i < $dom_cnt; ++$i) {
         $domain = $domains[$i];
         if ($domain->isAssigned($core->user())) {
             $rep->setDomain($domain);
-            if (!is_null($text)) {
-                foreach ($rep->text() as &$row) {
-                    $text[] = $row;
+            if (!$all_dom || $domain->active() || !$rep->isEmpty()) {
+                if ($rep_cnt || $err_cnt) {
+                    $add_sep();
                 }
-                unset($row);
-            }
-            if (!is_null($html)) {
-                foreach ($rep->html() as &$row) {
-                    $html[] = $row;
+                if (!is_null($text)) {
+                    foreach ($rep->text() as &$row) {
+                        $text[] = $row;
+                    }
+                    unset($row);
                 }
-                unset($row);
+                if (!is_null($html)) {
+                    foreach ($rep->html() as &$row) {
+                        $html[] = $row;
+                    }
+                    unset($row);
+                }
+                ++$rep_cnt;
+            } else {
+                $overall->removeRow($domain);
             }
         } else {
+            if ($rep_cnt || $err_cnt) {
+                $add_sep();
+            }
             $nf_message = "Domain \"{$domain->fqdn()}\" does not exist";
             if ($dom_cnt === 1) {
                 throw new SoftException($nf_message);
@@ -222,13 +234,20 @@ try {
             if (!is_null($html)) {
                 $html[] = '<h2>' . htmlspecialchars($nf_message) . '</h2>';
             }
+            ++$err_cnt;
         }
     }
-    if ($overall) {
-        if (!is_null($text)) {
+    if (!is_null($text)) {
+        if (!$rep_cnt && !$err_cnt) {
+            $text[] = 'There are no active domains';
+        } elseif ($overall) {
             $text = array_merge($overall->text(), [ '-----------------------------------', '' ], $text);
         }
-        if (!is_null($html)) {
+    }
+    if (!is_null($html)) {
+        if (!$rep_cnt && !$err_cnt) {
+            $html[] = '<p>There are no active domains</p>';
+        } elseif ($overall) {
             $html = array_merge($overall->html(), [ '<hr style="margin:2em 0;" />' ], $html);
         }
     }
@@ -246,6 +265,7 @@ try {
     } elseif ($uname && $all_dom) {
         $mailer->setSubject("{$rep->subject()} for {$uname}'s domains");
     } else {
+        $dom_cnt = $rep_cnt + $err_cnt;
         $mailer->setSubject("{$rep->subject()} for {$dom_cnt} domains");
     }
     $mailer->setBody($mbody);

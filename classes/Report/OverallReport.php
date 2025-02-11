@@ -54,6 +54,25 @@ class OverallReport
     }
 
     /**
+     * Removes data for the specified domain from the report
+     *
+     * @param \Liuch\DmarcSrg\Domains\Domain $domain Domain to remove data for
+     *
+     * @return void
+     */
+    public function removeRow($domain): void
+    {
+        $fqdn = $domain->fqdn();
+        foreach ($this->rows as $i => &$row) {
+            if ($row['fqdn'] === $fqdn) {
+                unset($this->rows[$i]);
+                break;
+            }
+        }
+        unset($row);
+    }
+
+    /**
      * Returns the report data as an array
      *
      * @return array

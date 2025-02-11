@@ -138,6 +138,16 @@ class SummaryReport
     }
 
     /**
+     * Checks if the report is empty
+     *
+     * @return bool
+     */
+    public function isEmpty(): bool
+    {
+        return ($this->getData('summary')['emails']['total'] === 0);
+    }
+
+    /**
      * Binds a report section
      *
      * @param mixed Report section
