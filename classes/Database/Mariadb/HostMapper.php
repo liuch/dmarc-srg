@@ -77,9 +77,9 @@ class HostMapper implements HostMapperInterface
         try {
             $st = $db->prepare(
                 'SELECT COUNT(*), SUM(`rc`) FROM (SELECT COUNT(`report_id`), SUM(`rcount`) AS `rc` FROM `'
-                . $this->connector->tablePrefix('rptrecords') . '` AS `rr`'
-                . ' INNER JOIN `reports` AS `rp` ON `rr`.`report_id` = `rp`.`id`' . $user_domains1
-                . ' WHERE `rr`.`ip` = ?' . $user_domains2 . ' GROUP BY `report_id`) as t'
+                . $this->connector->tablePrefix('rptrecords') . '` AS `rr` INNER JOIN `'
+                . $this->connector->tablePrefix('reports') . '` AS `rp` ON `rr`.`report_id` = `rp`.`id`'
+                . $user_domains1 . ' WHERE `rr`.`ip` = ?' . $user_domains2 . ' GROUP BY `report_id`) as t'
             );
             $st->bindValue(1, inet_pton($data['ip']), \PDO::PARAM_STR);
             $st->execute();
