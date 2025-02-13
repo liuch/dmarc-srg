@@ -88,8 +88,9 @@ class HostMapper implements HostMapperInterface
             $res['messages'] = intval($row[1]);
             $st->closeCursor();
             $st = $db->prepare(
-                'SELECT `rp`.`id`, `begin_time` FROM `' . $this->connector->tablePrefix('rptrecords') . '` AS `rr`'
-                . ' INNER JOIN `reports` AS `rp` ON `rr`.`report_id` = `rp`.`id`' . $user_domains1
+                'SELECT `rp`.`id`, `begin_time` FROM `' . $this->connector->tablePrefix('rptrecords')
+                . '` AS `rr` INNER JOIN `' . $this->connector->tablePrefix('reports')
+                . '` AS `rp` ON `rr`.`report_id` = `rp`.`id`' . $user_domains1
                 . ' WHERE `rr`.`ip` = ?' . $user_domains2 . ' GROUP BY `report_id` ORDER BY `begin_time` DESC LIMIT 2'
             );
             $st->bindValue(1, inet_pton($data['ip']), \PDO::PARAM_STR);
