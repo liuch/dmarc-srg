@@ -2,7 +2,7 @@
 
 /**
  * dmarc-srg - A php parser, viewer and summary report generator for incoming DMARC reports.
- * Copyright (C) 2022-2024 Aleksey Andreev (liuch)
+ * Copyright (C) 2022-2025 Aleksey Andreev (liuch)
  *
  * Available at:
  * https://github.com/liuch/dmarc-srg
@@ -32,6 +32,7 @@
 namespace Liuch\DmarcSrg\Database\Mariadb;
 
 use Liuch\DmarcSrg\DateTime;
+use Liuch\DmarcSrg\ErrorCodes;
 use Liuch\DmarcSrg\Database\DomainMapperInterface;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\LogicException;
@@ -209,32 +210,41 @@ class DomainMapper implements DomainMapperInterface
      *
      * Deletes the domain if there are no reports for this domain in the database.
      *
-     * @param int $id Domain ID
+     * @param int  $id    Domain ID
+     * @param bool $force If there are incoming reports for this domain.
+     *                    True: Remove the incoming report with the domain
+     *                    False: Cancel domain deletion
      *
      * @return void
      */
-    public function delete(int $id): void
+    public function delete(int $id, bool $force): void
     {
         $db = $this->connector->dbh();
         $db->beginTransaction();
         try {
             $filter = [ 'domain' => $id ];
             $limit  = [ 'offset' => 0, 'count' => 0 ];
-            $r_count = $this->connector->getMapper('report')->count($filter, $limit, 0);
-            if ($r_count > 0) {
-                switch ($r_count) {
-                    case 1:
-                        $s1 = 'is';
-                        $s2 = '';
-                        break;
-                    default:
-                        $s1 = 'are';
-                        $s2 = 's';
-                        break;
+            if ($force) {
+                $order = [];
+                $this->connector->getMapper('report')->delete($filter, $order, $limit);
+            } else {
+                $r_count = $this->connector->getMapper('report')->count($filter, $limit, 0);
+                if ($r_count > 0) {
+                    switch ($r_count) {
+                        case 1:
+                            $s1 = 'is';
+                            $s2 = '';
+                            break;
+                        default:
+                            $s1 = 'are';
+                            $s2 = 's';
+                            break;
+                    }
+                    throw new SoftException(
+                        "Failed to delete: there {$s1} {$r_count} incoming report{$s2} for this domain",
+                        ErrorCodes::DOMAIN_HAS_REPORTS
+                    );
                 }
-                throw new SoftException(
-                    "Failed to delete: there {$s1} {$r_count} incoming report{$s2} for this domain"
-                );
             }
             $st = $db->prepare(
                 'DELETE FROM `' . $this->connector->tablePrefix('userdomains') . '` WHERE `domain_id` = ?'

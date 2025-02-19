@@ -2,7 +2,7 @@
 
 /**
  * dmarc-srg - A php parser, viewer and summary report generator for incoming DMARC reports.
- * Copyright (C) 2022-2024 Aleksey Andreev (liuch)
+ * Copyright (C) 2022-2025 Aleksey Andreev (liuch)
  *
  * Available at:
  * https://github.com/liuch/dmarc-srg
@@ -75,11 +75,14 @@ interface DomainMapperInterface
      *
      * Deletes the domain if there are no reports for this domain in the database.
      *
-     * @param int $id Domain ID
+     * @param int  $id    Domain ID
+     * @param bool $force If there are incoming reports for this domain.
+     *                    True: Remove the incoming report with the domain
+     *                    False: Cancel domain deletion
      *
      * @return void
      */
-    public function delete(int $id): void;
+    public function delete(int $id, bool $force): void;
 
     /**
      * Returns a list of domains data from the database

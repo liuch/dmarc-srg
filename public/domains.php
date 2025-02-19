@@ -127,7 +127,7 @@ if (Core::isJson()) {
                         break;
                     case 'delete':
                         if ($user->id() === 0) {
-                            $domain->delete();
+                            $domain->delete($data['force'] ?? false);
                         } else {
                             $domain->unassignUser($user);
                         }

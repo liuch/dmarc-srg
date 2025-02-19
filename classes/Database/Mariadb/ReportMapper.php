@@ -291,7 +291,7 @@ class ReportMapper implements ReportMapperInterface
     {
         $db = $this->connector->dbh();
         $list = [];
-        $f_data = $this->prepareFilterData($filter);
+        $f_data = $this->prepareFilterData($filter, 'rp');
         $user_doms = $this->sqlUserRestriction($user_id, '`d`.`id`');
         $order_str = $this->sqlOrderList($order, '`rp`.`id`');
         $cond_str0 = $this->sqlConditionList($f_data, ' AND ', 0);
@@ -365,7 +365,7 @@ class ReportMapper implements ReportMapperInterface
     public function count(array &$filter, array &$limit, int $user_id): int
     {
         $cnt = 0;
-        $f_data = $this->prepareFilterData($filter);
+        $f_data = $this->prepareFilterData($filter, 'rp');
         try {
             if (isset($filter['dkim']) || isset($filter['spf']) || isset($filter['disposition'])) {
                 $st = $this->connector->dbh()->prepare(
@@ -439,12 +439,17 @@ class ReportMapper implements ReportMapperInterface
         if (Core::instance()->user()->id()) {
             throw new LogicException('Attempted deletion of reports by non-admin user');
         }
-        $f_data = $this->prepareFilterData($filter);
+        $f_data = $this->prepareFilterData($filter, '');
         $cond_str = $this->sqlConditionList($f_data, ' WHERE ', 0);
         $order_str = $this->sqlOrderList($order, '`id`');
         $limit_str = $this->sqlLimit($limit);
         $db = $this->connector->dbh();
-        $db->beginTransaction();
+        if (!$db->inTransaction()) {
+            $db->beginTransaction();
+            $nested = false;
+        } else {
+            $nested = true;
+        }
         try {
             $st = $db->prepare(
                 'DELETE `rr` FROM `' . $this->connector->tablePrefix('rptrecords')
@@ -462,12 +467,18 @@ class ReportMapper implements ReportMapperInterface
             $st->execute();
             $st->closeCursor();
 
-            $db->commit();
+            if (!$nested) {
+                $db->commit();
+            }
         } catch (\PDOException $e) {
-            $db->rollBack();
+            if (!$nested) {
+                $db->rollBack();
+            }
             throw new DatabaseFatalException('Failed to delete reports', -1, $e);
         } catch (\Exception $e) {
-            $db->rollBack();
+            if (!$nested) {
+                $db->rollBack();
+            }
             throw $e;
         }
     }
@@ -661,6 +672,9 @@ class ReportMapper implements ReportMapperInterface
      */
     private function sqlOrderList(array &$order, string $tail_field): string
     {
+        if (count($order) == 0) {
+            return '';
+        }
 
         $dir = $order['direction'] === 'ascent' ? 'ASC' : 'DESC';
         $res = " ORDER BY `{$order['field']}` {$dir}";
@@ -680,11 +694,12 @@ class ReportMapper implements ReportMapperInterface
     /**
      * Returns prepared filter data for sql queries
      *
-     * @param array $filter Key-value array with filter options
+     * @param array  $filter Key-value array with filter options
+     * @param string $tname  Table name prefix for the domain_id field
      *
      * @return array
      */
-    private function prepareFilterData(array &$filter): array
+    private function prepareFilterData(array &$filter, string $tname = ''): array
     {
         $filters = [];
         for ($i = 0; $i < 2; ++$i) {
@@ -693,6 +708,9 @@ class ReportMapper implements ReportMapperInterface
                 'bindings' => []
             ];
         }
+        if (!empty($tname)) {
+            $tname = "`{$tname}`.";
+        }
         foreach (self::$filters_available as $fn) {
             if (isset($filter[$fn])) {
                 $fv = $filter[$fn];
@@ -700,7 +718,7 @@ class ReportMapper implements ReportMapperInterface
                     case 'string':
                         if (!empty($fv)) {
                             if ($fn == 'domain') {
-                                $filters[0]['a_str'][] = '`rp`.`domain_id` = ?';
+                                $filters[0]['a_str'][] = $tname . '`domain_id` = ?';
                                 $d_data = [ 'fqdn' => $fv ];
                                 $this->connector->getMapper('domain')->fetch($d_data);
                                 $filters[0]['bindings'][] = [ $d_data['id'], \PDO::PARAM_INT ];
@@ -772,7 +790,7 @@ class ReportMapper implements ReportMapperInterface
                         break;
                     case 'object':
                         if ($fn == 'domain') {
-                            $filters[0]['a_str'][] = '`rp`.`domain_id` = ?';
+                            $filters[0]['a_str'][] = $tname . '`domain_id` = ?';
                             $filters[0]['bindings'][] = [ $fv->id(), \PDO::PARAM_INT ];
                         } elseif ($fn == 'before_time') {
                             $filters[0]['a_str'][] = '`begin_time` < ?';
@@ -781,7 +799,7 @@ class ReportMapper implements ReportMapperInterface
                         break;
                     case 'integer':
                         if ($fn == 'domain') {
-                            $filters[0]['a_str'][] = '`rp`.`domain_id` = ?';
+                            $filters[0]['a_str'][] = $tname . '`domain_id` = ?';
                             $filters[0]['bindings'][] = [ $fv, \PDO::PARAM_INT ];
                         }
                         break;

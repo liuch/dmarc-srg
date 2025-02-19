@@ -2,7 +2,7 @@
 
 /**
  * dmarc-srg - A php parser, viewer and summary report generator for incoming DMARC reports.
- * Copyright (C) 2020-2024 Aleksey Andreev (liuch)
+ * Copyright (C) 2020-2025 Aleksey Andreev (liuch)
  *
  * Available at:
  * https://github.com/liuch/dmarc-srg
@@ -31,6 +31,7 @@
 
 namespace Liuch\DmarcSrg;
 
+use Liuch\DmarcSrg\ErrorCodes;
 use Liuch\DmarcSrg\Users\UserList;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\AuthException;
@@ -134,7 +135,7 @@ class Auth
         if ($this->isEnabled()) {
             $user = $this->core->user();
             if (!$user) {
-                throw new AuthException('Authentication needed', -2, $this->authenticationType());
+                throw new AuthException('Authentication needed', ErrorCodes::AUTH_NEEDED, $this->authenticationType());
             }
             if ($user->level() < $level) {
                 throw new ForbiddenException('Forbidden');

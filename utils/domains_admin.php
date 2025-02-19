@@ -39,6 +39,8 @@
  *               Note: The command changes only the specified domain data. The rest of the data remains unchanged.
  *   `delete`  - Deletes a domain from the database. Parameters:
  *               id=<domain ID>|name=<domain name> Required.
+ *               force=<true|false>                Optional. The default value is false. The valid values are:
+ *                                                 true, false, 1, 0, yes, no. The value is case insensitive.
  *
  * Some examples:
  *
@@ -68,6 +70,7 @@
 
 namespace Liuch\DmarcSrg;
 
+use Liuch\DmarcSrg\ErrorCodes;
 use Liuch\DmarcSrg\Domains\Domain;
 use Liuch\DmarcSrg\Domains\DomainList;
 use Liuch\DmarcSrg\Exception\SoftException;
@@ -98,10 +101,10 @@ $parseArguments = function (array $allowed) use (&$argv): array {
     }
     return $res;
 };
-$getActiveParameter = function (array $args) {
-    $ac = array_search(strtolower($args['active']), [ '', '0', 'false', 'no', '1', 'true', 'yes' ], true);
+$getBoolParameter = function (string $name, array $args) {
+    $ac = array_search(strtolower($args[$name]), [ '', '0', 'false', 'no', '1', 'true', 'yes' ], true);
     if ($ac === false) {
-        throw new SoftException('Incorrect value of the "active" paramenter');
+        throw new SoftException('Incorrect value of the "' . $name . '" parameter');
     }
     return $ac > 3;
 };
@@ -149,7 +152,7 @@ try {
                 throw new SoftException('Parameter "name" must be specified');
             }
             $dd = [ 'fqdn' => $args['name'] ];
-            $dd['active'] = isset($args['active']) ? $getActiveParameter($args) : false;
+            $dd['active'] = isset($args['active']) ? $getBoolParameter('active', $args) : false;
             if (!empty($args['description'])) {
                 $dd['description'] = $args['description'];
             }
@@ -177,7 +180,7 @@ try {
             $mf = false;
             $dd = $domain->toArray();
             if (isset($args['active'])) {
-                $ac = $getActiveParameter($args);
+                $ac = $getBoolParameter('active', $args);
                 if ($dd['active'] != $ac) {
                     $dd['active'] = $ac;
                     $mf = true;
@@ -198,9 +201,10 @@ try {
             }
             break;
         case 'delete':
-            $domain = $getDomain($parseArguments([ 'id', 'name' ]));
+            $args = $parseArguments([ 'id', 'name', 'force' ]);
+            $domain = $getDomain($args);
             $domain->ensure('exist');
-            $domain->delete();
+            $domain->delete(isset($args['force']) ? $getBoolParameter('force', $args) : false);
             echo 'Done.', PHP_EOL;
             break;
         default:
@@ -219,7 +223,8 @@ try {
             echo '               Required parameters: id or name.', PHP_EOL;
             echo '               Optional parameters: active, description.', PHP_EOL;
             echo '  delete       Deletes a domain record from the database.', PHP_EOL;
-            echo '               Required parameters: id or name.', PHP_EOL, PHP_EOL;
+            echo '               Required parameters: id or name.', PHP_EOL;
+            echo '               Optional parameter: force.', PHP_EOL, PHP_EOL;
             echo 'Parameters:', PHP_EOL;
             echo '  id           Domain internal ID. Cannot be changed.', PHP_EOL;
             echo '               Used for domain identification only.', PHP_EOL;
@@ -228,10 +233,15 @@ try {
             echo '  active       Whether the domain is active or not. ', PHP_EOL;
             echo '               Incoming reports for inactive domains are not processed.', PHP_EOL;
             echo '  description  Domain description.', PHP_EOL;
+            echo '  force        If true, allows you to delete a domains', PHP_EOL;
+            echo '               when there are incoming reports for it.', PHP_EOL;
             exit(1);
     }
 } catch (SoftException $e) {
     echo 'Error: ' . $e->getMessage() . PHP_EOL;
+    if ($e->getCode() === ErrorCodes::DOMAIN_HAS_REPORTS) {
+        echo 'If you want to delete the domain with its reports, use force=true parameter.', PHP_EOL;
+    }
     exit(1);
 } catch (RuntimeException $e) {
     echo ErrorHandler::exceptionText($e);

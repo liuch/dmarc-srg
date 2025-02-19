@@ -397,7 +397,7 @@ class DomainEditDialog extends VerticalDialog {
 		else if (type === "delete") {
 			text = "Delete";
 			btn = document.createElement("button");
-			btn.addEventListener("click", this._confirm_delete.bind(this));
+			btn.addEventListener("click", () => this._confirm_delete(false));
 		}
 		else {
 			super._add_button(container, text, type);
@@ -456,19 +456,28 @@ class DomainEditDialog extends VerticalDialog {
 		});
 	}
 
-	_confirm_delete() {
-		if (confirm("Are sure you want to delete this domain?")) {
-			this._delete();
+	_confirm_delete(with_reports) {
+		let msg;
+		if (with_reports) {
+			msg = "There are incoming reports for the domain. Do you want to delete the domain with its reports?";
+		} else {
+			msg = "Are sure you want to delete this domain?";
+		}
+		if (confirm(msg)) {
+			this._delete(with_reports);
+			return true;
 		}
 	}
 
-	_delete() {
+	_delete(with_reports) {
 		this._enable_ui(false);
 		this.display_status("wait", "Sending a request to the server...");
 
-		const body = {};
-		body.fqdn   = this._data.fqdn;
-		body.action = "delete";
+		const body = {
+			fqdn:   this._data.fqdn,
+			force:  with_reports,
+			action: "delete"
+		};
 
 		window.fetch("domains.php", {
 			method: "POST",
@@ -485,6 +494,7 @@ class DomainEditDialog extends VerticalDialog {
 			this.hide();
 			Notification.add({ text: "The domain " + body.fqdn + " was removed" });
 		}).catch(err => {
+			if (err.error_code === -10 && this._confirm_delete(true)) return;
 			Common.displayError(err);
 			this.display_status("error", err.message);
 		}).finally(() => {

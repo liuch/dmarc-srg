@@ -2,7 +2,7 @@
 
 /**
  * dmarc-srg - A php parser, viewer and summary report generator for incoming DMARC reports.
- * Copyright (C) 2022-2024 Aleksey Andreev (liuch)
+ * Copyright (C) 2022-2025 Aleksey Andreev (liuch)
  *
  * Available at:
  * https://github.com/liuch/dmarc-srg
@@ -31,6 +31,7 @@
 
 namespace Liuch\DmarcSrg\Database\Mariadb;
 
+use Liuch\DmarcSrg\ErrorCodes;
 use Liuch\DmarcSrg\ErrorHandler;
 use Liuch\DmarcSrg\Database\DatabaseConnector;
 use Liuch\DmarcSrg\Exception\SoftException;
@@ -135,7 +136,7 @@ class Connector extends DatabaseConnector
                     $res['error_code'] = -1;
                     $res['message'] = 'The database schema is not initiated';
                 } else {
-                    $res['error_code'] = -4;
+                    $res['error_code'] = ErrorCodes::INCORRECT_TABLE_SET;
                     $res['message'] = 'Incomplete set of the tables';
                 }
             }
@@ -173,9 +174,12 @@ class Connector extends DatabaseConnector
             try {
                 if ($st->fetch()) {
                     if (empty($this->tablePrefix())) {
-                        throw new SoftException('The database is not empty', -4);
+                        throw new SoftException('The database is not empty', ErrorCodes::DB_NOT_EMPTY);
                     } else {
-                        throw new SoftException('Database tables already exist with the given prefix', -4);
+                        throw new SoftException(
+                            'Database tables already exist with the given prefix',
+                            ErrorCodes::DB_NOT_EMPTY
+                        );
                     }
                 }
                 foreach (self::$schema as $t_name => &$t_schema) {
