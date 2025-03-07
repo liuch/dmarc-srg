@@ -127,12 +127,12 @@ $getDomain = function (array $args) {
 };
 
 try {
-    Core::instance()->user('admin');
+    Core::instance()->setCurrentUser('admin');
     $action = $argv[1] ?? '';
     switch ($action) {
         case 'list':
             $parseArguments([]);
-            $list = (new DomainList($core->user()))->getList()['domains'];
+            $list = (new DomainList($core->getCurrentUser()))->getList()['domains'];
             $table = new TextTable([ 'ID', 'FQDN', 'Active', 'Updated', 'Description' ]);
             foreach ($list as $dom) {
                 $da = $dom->toArray();

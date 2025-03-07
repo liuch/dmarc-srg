@@ -57,7 +57,7 @@ if (!isset($argv)) {
 $res  = null;
 $core = Core::instance();
 try {
-    $core->user('admin');
+    $core->setCurrentUser('admin');
     $action = $argv[1] ?? '';
     switch ($action) {
         case 'status':

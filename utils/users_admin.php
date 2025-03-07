@@ -147,7 +147,7 @@ $getUser = function (array $args) {
 };
 
 try {
-    Core::instance()->user('admin');
+    Core::instance()->setCurrentUser('admin');
     $action = $argv[1] ?? '';
     switch ($action) {
         case 'list':

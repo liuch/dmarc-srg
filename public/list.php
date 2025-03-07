@@ -42,7 +42,7 @@ if (Core::requestMethod() == 'GET') {
                 $dir = isset($_GET['direction']) ? $_GET['direction'] : 'ascent';
                 $order = isset($_GET['order']) ? $_GET['order'] : 'begin_time';
                 $filter = Common::getFilter();
-                $list = new ReportList($core->user());
+                $list = new ReportList($core->getCurrentUser());
                 if ($filter) {
                     $list->setFilter($filter);
                 }
@@ -65,7 +65,7 @@ if (Core::requestMethod() == 'GET') {
                         ++$tc;
                     }
                 } else {
-                    $list = new ReportList($core->user());
+                    $list = new ReportList($core->getCurrentUser());
                     $filter = Common::getFilter();
                     if ($filter) {
                         $list->setFilter($filter);
@@ -87,7 +87,7 @@ if (Core::requestMethod() == 'GET') {
                 $res['count'] = [ 'total' => $tc, 'unread' => $uc ];
             }
             if (array_search('filters', $lst) !== false) {
-                $res['filters'] = (new ReportList($core->user()))->getFilterList();
+                $res['filters'] = (new ReportList($core->getCurrentUser()))->getFilterList();
             }
             Core::sendJson($res);
         } catch (RuntimeException $e) {

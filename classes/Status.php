@@ -90,7 +90,7 @@ class Status
 
         $auth = null;
         if ($this->core->auth()->isEnabled()) {
-            $res['authenticated'] = $this->core->user() ? 'yes' : 'no';
+            $res['authenticated'] = $this->core->getCurrentUser() ? 'yes' : 'no';
         } else {
             $res['authenticated'] = 'disabled';
         }

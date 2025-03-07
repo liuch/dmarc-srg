@@ -26,7 +26,7 @@ class AuthTest extends \PHPUnit\Framework\TestCase
     {
         $core = $this->getMockBuilder(Core::class)
                      ->disableOriginalConstructor()
-                     ->onlyMethods([ 'config', 'user' ])
+                     ->onlyMethods([ 'config', 'setCurrentUser' ])
                      ->getMock();
         $core->expects($this->exactly(3))
              ->method('config')
@@ -38,7 +38,7 @@ class AuthTest extends \PHPUnit\Framework\TestCase
                  return $param === 'admin/password' ? 'some' : false;
              });
         $core->expects($this->once())
-             ->method('user')
+             ->method('setCurrentUser')
              ->with($this->callback(function ($param) {
                  return $param instanceof User;
              }));
@@ -90,11 +90,11 @@ class AuthTest extends \PHPUnit\Framework\TestCase
     public function testLogout(): void
     {
         $core = $this->getMockBuilder(Core::class)
+                     ->onlyMethods([ 'setCurrentUser' ])
                      ->disableOriginalConstructor()
-                     ->onlyMethods([ 'destroySession' ])
                      ->getMock();
-        $core->expects($this->once())
-             ->method('destroySession');
+        $core->expects($this->once())->method('setCurrentUser')->with(null);
+
         $result = (new Auth($core))->logout();
         $this->assertArrayHasKey('error_code', $result);
         $this->assertArrayHasKey('message', $result);
@@ -106,14 +106,14 @@ class AuthTest extends \PHPUnit\Framework\TestCase
     {
         $core = $this->getMockBuilder(Core::class)
                      ->disableOriginalConstructor()
-                     ->onlyMethods([ 'config', 'user' ])
+                     ->onlyMethods([ 'config', 'getCurrentUser' ])
                      ->getMock();
         $core->expects($this->once())
              ->method('config')
              ->with($this->equalTo('admin/password'))
              ->willReturn(null);
         $core->expects($this->never())
-             ->method('user');
+             ->method('getCurrentUser');
         $this->assertNull((new Auth($core))->isAllowed(User::LEVEL_ADMIN));
     }
 
@@ -121,14 +121,14 @@ class AuthTest extends \PHPUnit\Framework\TestCase
     {
         $core = $this->getMockBuilder(Core::class)
                      ->disableOriginalConstructor()
-                     ->onlyMethods([ 'config', 'user' ])
+                     ->onlyMethods([ 'config', 'getCurrentUser' ])
                      ->getMock();
         $core->expects($this->once())
              ->method('config')
              ->with($this->equalTo('admin/password'))
              ->willReturn('some');
         $core->expects($this->once())
-             ->method('user')
+             ->method('getCurrentUser')
              ->willReturn(new AdminUser($core));
         $this->assertNull((new Auth($core))->isAllowed(User::LEVEL_ADMIN));
     }
@@ -137,7 +137,7 @@ class AuthTest extends \PHPUnit\Framework\TestCase
     {
         $core = $this->getMockBuilder(Core::class)
                      ->disableOriginalConstructor()
-                     ->onlyMethods([ 'config', 'user' ])
+                     ->onlyMethods([ 'config', 'getCurrentUser' ])
                      ->getMock();
         $core->expects($this->exactly(3))
              ->method('config')
@@ -149,7 +149,7 @@ class AuthTest extends \PHPUnit\Framework\TestCase
                  return $param === 'admin/password' ? 'some' : false;
              });
         $core->expects($this->once())
-             ->method('user')
+             ->method('getCurrentUser')
              ->willReturn(null);
         $this->expectException(AuthException::class);
         $this->expectExceptionCode(-2);

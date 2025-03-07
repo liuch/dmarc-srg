@@ -64,7 +64,7 @@ if (Core::isJson()) {
             $core = Core::instance();
             $core->auth()->isAllowed(User::LEVEL_USER);
 
-            $user = $core->user();
+            $user = $core->getCurrentUser();
             if (isset($_GET['domain'])) {
                 $fqdn = trim($_GET['domain']);
                 if (empty($fqdn)) {
@@ -103,7 +103,7 @@ if (Core::isJson()) {
                     'active'      => $data['active'] ?? null,
                     'description' => $data['description'] ?? null
                 ]);
-                $user   = Core::instance()->user();
+                $user   = Core::instance()->getCurrentUser();
                 $action = $data['action'] ?? '';
                 switch ($action) {
                     case 'add':

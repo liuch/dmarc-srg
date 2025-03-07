@@ -47,7 +47,7 @@ if (Core::isWEB()) {
 }
 
 $core = Core::instance();
-$core->user('admin');
+$core->setCurrentUser('admin');
 
 $days = $core->config('cleaner/mailboxes/days_old', -1);
 if (gettype($days) !== 'integer' || $days < 0) {

@@ -67,7 +67,7 @@ class SettingsList
     public function getList(): array
     {
         $list   = [];
-        $user   = $this->core->user();
+        $user   = $this->core->getCurrentUser();
         $db_map = $this->core->database()->getMapper('setting')->list($user->id());
         foreach (static::$schema as $name => &$sch_data) {
             if ($sch_data['public'] ?? false) {
@@ -159,7 +159,7 @@ class SettingsList
 
         $data = [
             'name' => $name,
-            'user' => is_null($user) ? Core::instance()->user() : $user
+            'user' => is_null($user) ? Core::instance()->getCurrentUser() : $user
         ];
 
         switch (self::$schema[$name]['type']) {

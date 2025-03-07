@@ -41,12 +41,10 @@ use Liuch\DmarcSrg\Exception\ForbiddenException;
 
 /**
  * It's class for accessing to most methods for working with http, json data,
- * the user session, getting instances of some classes
+ * getting instances of some classes
  */
 class Core
 {
-    private const SESSION_NAME = 'session';
-
     private $user     = null;
     private $modules  = [];
     private $template = null;
@@ -61,7 +59,7 @@ class Core
      */
     public function __construct($params)
     {
-        foreach ([ 'admin', 'auth', 'config', 'database', 'ehandler', 'status' ] as $key) {
+        foreach ([ 'admin', 'auth', 'config', 'database', 'ehandler', 'session', 'status' ] as $key) {
             if (isset($params[$key])) {
                 $this->modules[$key] = $params[$key];
             }
@@ -95,115 +93,92 @@ class Core
     }
 
     /**
-     * Sets or gets the current user instance
+     * Returns an instance of the current user
      *
-     * In case $user is null, the method returns the current user instance or null.
-     * In case $user is User, the method sets this instance as the current user.
-     * In case $user is string, the method treats it as a username to set as the current user.
-     *
-     * @param User|string|null $user Instance of User to set
-     *
-     * @return User|null
+     * @return User
      */
-    public function user($user = null)
+    public function getCurrentUser()
     {
-        $web = self::isWEB();
-        $start_f = false;
-        if ($web) {
-            if ((self::cookie(self::SESSION_NAME) !== '' || !is_null($user)) &&
-                session_status() !== PHP_SESSION_ACTIVE
-            ) {
-                $start_f = true;
-                self::startSession();
-            }
+        $session = $this->session();
+        if (!$this->auth()->isEnabled()) {
+            return $this->user = new AdminUser($this);
         }
-        if (is_null($user)) {
-            if (!$this->auth()->isEnabled()) {
-                return $this->user(new AdminUser($this));
-            }
-            if (!$this->user && isset($_SESSION['user']) && gettype($_SESSION['user']) === 'array') {
-                $nm = $_SESSION['user']['name'] ?? '';
-                if ($nm === 'admin') {
-                    if (($_SESSION['user']['level'] ?? -1) !== User::LEVEL_ADMIN) {
-                        throw new ForbiddenException('The user session has been broken!');
+
+        if (!$this->user) {
+            $data = $session->getData();
+            if (isset($data['user']) && gettype($data['user']) == 'array') {
+                if ($data['user']['name'] === 'admin') {
+                    if (($data['user']['id'] ?? -1) !== 0 || ($data['user']['level'] ?? -1) !== User::LEVEL_ADMIN) {
+                            throw new ForbiddenException('The user session has been broken!');
                     }
                     $this->user = new AdminUser($this);
+                    $session->commit();
                 } elseif ($this->config('users/user_management', false)) {
-                    $this->user = new DbUser($_SESSION['user']);
                     try {
+                        $this->user = new DbUser($data['user'], $this->database());
                         $cts = (new DateTime())->getTimestamp();
-                        if (!isset($_SESSION['s_time']) || $_SESSION['s_time'] + 5 <= $cts) {
-                            if (isset($_SESSION['s_id']) &&
-                                $this->user->session() === $_SESSION['s_id'] &&
+                        if (($data['s_time'] ?? 0) + 5 <= $cts) {
+                            if (isset($data['s_id']) &&
+                                $this->user->session() === $data['s_id'] &&
                                 $this->user->isEnabled()
                             ) {
-                                $_SESSION['s_time'] = $cts;
-                                $_SESSION['user']['level'] = $this->user->level();
+                                $data['s_time'] = $cts;
+                                $data['user']['level'] = $this->user->level();
+                                $session->setData($data);
+                                $session->commit();
                             } else {
-                                $this->destroySession();
+                                $this->user = null;
+                                $session->destroy();
                             }
+                        } else {
+                            $session->commit();
                         }
                     } catch (SoftException $e) {
                         if (!$this->user->exists()) {
                             $this->user = null;
-                            $this->destroySession();
+                            $session->destroy();
                         }
                         throw $e;
                     }
                 } else {
-                    $this->destroySession();
+                    $session->destroy();
                 }
             }
-        } else {
-            if (gettype($user) === 'string') {
-                $user = UserList::getUserByName($user, $this);
-            }
-            $this->user = $user;
-            if ($web) {
-                $_SESSION['user'] = [
-                    'id'    => $user->id(),
-                    'name'  => $user->name(),
-                    'level' => $user->level()
-                ];
-                $_SESSION['s_id']   = $user->session();
-                $_SESSION['s_time'] = (new DateTime())->getTimestamp();
-            }
-        }
-        if ($start_f) {
-            session_write_close();
         }
         return $this->user;
     }
 
     /**
-     * Deletes the session of the current user, corresponding cookie and instance.
+     * Sets the passed user as the current user
+     *
+     * @param User|string|null $user User (instance, name or none) to set
      *
      * @return void
      */
-    public function destroySession(): void
+    public function setCurrentUser($user): void
     {
+        if (gettype($user) == 'string') {
+            $user = UserList::getUserByName($user, $this);
+        } elseif (!is_null($user) && !($user instanceof User)) {
+            throw LogicException('Wrong user object was passed');
+        }
+        $this->user = $user;
         if (self::isWEB()) {
-            if (self::cookie(self::SESSION_NAME)) {
-                if (session_status() !== PHP_SESSION_ACTIVE) {
-                    self::startSession();
-                }
-                $_SESSION = [];
-                if (ini_get('session.use_cookies')) {
-                    $scp = session_get_cookie_params();
-                    $cep = [
-                        'expires'  => time() - 42000,
-                        'path'     => $scp['path'],
-                        'domain'   => $scp['domain'],
-                        'secure'   => $scp['secure'],
-                        'httponly' => $scp['httponly'],
-                        'samesite' => $scp['samesite']
-                    ];
-                    setcookie(self::SESSION_NAME, '', $cep);
-                    session_write_close();
-                }
+            $session = $this->session();
+            $session->destroy();
+            if ($user) {
+                $session->setData([
+                    'user' => [
+                        'id'    => $user->id(),
+                        'name'  => $user->name(),
+                        'level' => $user->level()
+                    ],
+                    's_id'   => $user->session(),
+                    's_time' => (new DateTime())->getTimestamp()
+                ]);
+                $session->commit();
             }
         }
-        $this->user = null;
     }
 
     /**
@@ -333,7 +308,8 @@ class Core
                 $s2 = 'are';
             }
             $msg = "Required dependenc$s1 $s2 missing";
-            if ($this->user() && $this->user()->level() === User::LEVEL_ADMIN) {
+            $usr = $this->getCurrentUser();
+            if ($usr && $usr->level() === User::LEVEL_ADMIN) {
                 $msg .= ': ' . implode(', ', $no_deps) . '.';
             } else {
                 $msg .= '. Contact the administrator.';
@@ -360,6 +336,16 @@ class Core
     public function status()
     {
         return $this->getModule('status', true);
+    }
+
+    /**
+     * Returns an instance of the Session class
+     *
+     * @return Session
+     */
+    public function session()
+    {
+        return $this->getModule('session', false);
     }
 
     /**
@@ -424,46 +410,6 @@ class Core
     public function config(string $name, $default = null)
     {
         return $this->getModule('config', false)->get($name, $default);
-    }
-
-    /**
-     * Gets or sets a cookie with the specified name.
-     *
-     * @param string      $name   the cookie name to get or to set
-     * @param string|null $value
-     * @param array|null  $params
-     *
-     * @return string|boolean The cookie value or false if there is an error
-     */
-    private static function cookie($name, $value = null, $params = null)
-    {
-        if (!$value) {
-            return isset($_COOKIE[$name]) ? $_COOKIE[$name] : '';
-        }
-        if (setcookie($name, $value, $params)) {
-            return $value;
-        }
-        return false;
-    }
-
-    /**
-     * Starts the user session
-     *
-     * @return void
-     */
-    private static function startSession(): void
-    {
-        if (!session_start(
-            [
-                'name'            => self::SESSION_NAME,
-                'cookie_path'     => dirname($_SERVER['REQUEST_URI']),
-                'cookie_httponly' => true,
-                'cookie_samesite' => 'Strict'
-            ]
-        )
-        ) {
-            throw new SoftException('Failed to start a user session');
-        }
     }
 
     /**

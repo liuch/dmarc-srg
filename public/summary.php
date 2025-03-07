@@ -56,7 +56,7 @@ if (Core::isJson() && isset($_GET['mode'])) {
     try {
         $core = Core::instance();
         $core->auth()->isAllowed(User::LEVEL_USER);
-        $user = $core->user();
+        $user = $core->getCurrentUser();
 
         $mode = $_GET['mode'];
         if ($mode === 'options') {

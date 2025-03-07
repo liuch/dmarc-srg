@@ -122,7 +122,7 @@ const REMOTEFS_LIST  = 3;
 const FETCHER        = 4;
 
 $core = Core::instance();
-$core->user('admin');
+$core->setCurrentUser('admin');
 
 $state = MAILBOX_LIST;
 if (!$source || $source === 'email') {

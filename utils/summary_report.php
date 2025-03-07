@@ -134,7 +134,7 @@ for ($i = 1; $i < $acount; ++$i) {
 
 $core = Core::instance();
 try {
-    $core->user($uname ?? 'admin');
+    $core->setCurrentUser($uname ?? 'admin');
     if (!$domain) {
         throw new SoftException('Parameter "domain" is not specified');
     }
@@ -152,7 +152,7 @@ try {
     }
 
     if ($domain === 'all') {
-        $domains = (new DomainList($core->user()))->getList()['domains'];
+        $domains = (new DomainList($core->getCurrentUser()))->getList()['domains'];
         $all_dom = true;
     } else {
         $domains = array_map(function ($d) {
@@ -197,7 +197,7 @@ try {
     $err_cnt = 0;
     for ($i = 0; $i < $dom_cnt; ++$i) {
         $domain = $domains[$i];
-        if ($domain->isAssigned($core->user())) {
+        if ($domain->isAssigned($core->getCurrentUser())) {
             $rep->setDomain($domain);
             if (!$all_dom || $domain->active() || !$rep->isEmpty()) {
                 if ($rep_cnt || $err_cnt) {

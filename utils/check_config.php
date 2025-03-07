@@ -93,7 +93,7 @@ $endChecking = function (string $message = '', int $result = 0) use (&$e_cnt, &$
 };
 
 $core = Core::instance();
-$core->user('admin');
+$core->setCurrentUser('admin');
 
 ob_start(null, 0, PHP_OUTPUT_HANDLER_FLUSHABLE | PHP_OUTPUT_HANDLER_REMOVABLE);
 $core->config('debug'); // Just in order to load the config file

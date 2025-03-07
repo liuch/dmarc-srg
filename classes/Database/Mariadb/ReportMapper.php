@@ -160,14 +160,14 @@ class ReportMapper implements ReportMapperInterface
                 if (!$domain_data['active']) {
                     throw new SoftException('Failed to add an incoming report: the domain is inactive');
                 }
-                $user_id = Core::instance()->user()->id();
+                $user_id = Core::instance()->getCurrentUser()->id();
                 if ($user_id !== 0 && !$domain_mapper->isAssigned($domain_data, $user_id)) {
                     // The domain exists but is not assigned to the current user
                     $this->unknownDomain($domain_data);
                 }
             } catch (DatabaseNotFoundException $e) {
                 // The domain is not found. Let's try to add it automatically.
-                if (Core::instance()->user()->id() !== 0) {
+                if (Core::instance()->getCurrentUser()->id() !== 0) {
                     $this->unknownDomain($domain_data);
                 }
                 $this->insertDomain($domain_data, $domain_mapper);
@@ -436,7 +436,7 @@ class ReportMapper implements ReportMapperInterface
      */
     public function delete(array &$filter, array &$order, array &$limit): void
     {
-        if (Core::instance()->user()->id()) {
+        if (Core::instance()->getCurrentUser()->id()) {
             throw new LogicException('Attempted deletion of reports by non-admin user');
         }
         $f_data = $this->prepareFilterData($filter, '');

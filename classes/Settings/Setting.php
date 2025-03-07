@@ -225,7 +225,7 @@ abstract class Setting
         $this->core->database()->getMapper('setting')->save(
             $this->name,
             $this->valueToString(),
-            ($this->user ?? $this->core->user())->id()
+            ($this->user ?? $this->core->getCurrentUser())->id()
         );
     }
 
@@ -239,7 +239,7 @@ abstract class Setting
         try {
             $res = $this->core->database()->getMapper('setting')->value(
                 $this->name,
-                ($this->user ?? $this->core->user())->id()
+                ($this->user ?? $this->core->getCurrentUser())->id()
             );
         } catch (DatabaseNotFoundException $e) {
             $this->resetToDefault();

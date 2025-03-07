@@ -60,6 +60,7 @@ $core = new Liuch\DmarcSrg\Core([
     'ehandler' => [ 'Liuch\DmarcSrg\ErrorHandler' ],
     'config'   => [ 'Liuch\DmarcSrg\Config', [ CONFIG_FILE ] ],
     'status'   => [ 'Liuch\DmarcSrg\Status' ],
+    'session'  => [ 'Liuch\DmarcSrg\Session' ],
     'database' => [ 'Liuch\DmarcSrg\Database\DatabaseController' ],
     'template' => ROOT_PATH . 'template.html'
 ]);

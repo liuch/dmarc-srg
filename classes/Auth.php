@@ -93,7 +93,7 @@ class Auth
                     if (!$user->isEnabled()) {
                         throw new AuthException('The user is disabled. Contact the administrator');
                     }
-                    $this->core->user($user);
+                    $this->core->setCurrentUser($user);
                     return [
                         'error_code' => 0,
                         'message'    => 'Authentication succeeded'
@@ -114,7 +114,7 @@ class Auth
      */
     public function logout(): array
     {
-        $this->core->destroySession();
+        $this->core->setCurrentUser(null);
         return [
             'error_code' => 0,
             'message'    => 'Logged out successfully'
@@ -133,7 +133,7 @@ class Auth
     public function isAllowed(int $level): void
     {
         if ($this->isEnabled()) {
-            $user = $this->core->user();
+            $user = $this->core->getCurrentUser();
             if (!$user) {
                 throw new AuthException('Authentication needed', ErrorCodes::AUTH_NEEDED, $this->authenticationType());
             }

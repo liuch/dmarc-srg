@@ -137,7 +137,7 @@ class ErrorHandler implements LoggerAwareInterface
             $res['auth_type'] = $e->getAuthType();
         }
         if ($debug &&
-            (Core::instance()->user() || php_sapi_name() === 'cli') &&
+            (Core::instance()->getCurrentUser() || php_sapi_name() === 'cli') &&
             !($e instanceof SoftException)
         ) {
             $prev = $e->getPrevious();

@@ -57,7 +57,7 @@ class SettingIntegerTest extends \PHPUnit\Framework\TestCase
     {
         return $this->getMockBuilder(Core::class)
                     ->disableOriginalConstructor()
-                    ->onlyMethods([ 'user', 'database' ])
+                    ->onlyMethods([ 'getCurrentUser', 'database' ])
                     ->getMock();
     }
 
@@ -87,7 +87,7 @@ class SettingIntegerTest extends \PHPUnit\Framework\TestCase
            ->willReturn($mapper);
 
         $core = $this->getCore();
-        $core->expects($this->once())->method('user')->willReturn($user);
+        $core->expects($this->once())->method('getCurrentUser')->willReturn($user);
         $core->expects($this->once())->method('database')->willReturn($db);
         return $core;
     }

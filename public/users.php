@@ -94,8 +94,8 @@ if (Core::isJson()) {
             }
 
             $core->auth()->isAllowed(User::LEVEL_USER);
-            if ($core->user()->name() === $uname && $core->user()->level() < User::LEVEL_ADMIN) {
-                // Current user and not Admin
+            if ($core->getCurrentUser()->name() === $uname && $core->getCurrentUser()->level() < User::LEVEL_ADMIN) {
+                // The current user and not Admin
                 $udata = (new DbUser($uname))->toArray();
                 Core::sendJson([
                     'name'     => $udata['name'],
@@ -126,7 +126,7 @@ if (Core::isJson()) {
                     $core->auth()->isAllowed(User::LEVEL_USER);
 
                     $user = new DbUser($uname);
-                    $c_user = $core->user();
+                    $c_user = $core->getCurrentUser();
                     if ($c_user->name() === $user->name()) {
                         if (!$c_user->verifyPassword($data['password'] ?? '')) {
                             throw new SoftException('The current password is incorrect');
@@ -159,7 +159,7 @@ if (Core::isJson()) {
                     'enabled' => $data['enabled'] ?? null
                 ]);
                 $check_level = function () use ($core, $user, $action) {
-                    if ($core->user()->level() <= $user->level()) {
+                    if ($core->getCurrentUser()->level() <= $user->level()) {
                         throw new SoftException("Insufficient access level to {$action} this user");
                     }
                 };

@@ -45,7 +45,7 @@ if (Core::isWEB()) {
 }
 
 $core = Core::instance();
-$core->user('admin');
+$core->setCurrentUser('admin');
 
 $days = $core->config('cleaner/reports/days_old', -1);
 if (gettype($days) !== 'integer' || $days < 0) {
@@ -64,7 +64,7 @@ if (gettype($leave) !== 'integer' || $leave < 0) {
 }
 
 try {
-    $rl = new ReportList($core->user());
+    $rl = new ReportList($core->getCurrentUser());
     $cnt = $rl->count() - $leave;
     if ($cnt > 0) {
         $rl->setFilter([ 'before_time' => $days_date ]);

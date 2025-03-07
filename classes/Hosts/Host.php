@@ -83,7 +83,7 @@ class Host
     {
         $res = [];
         $sts = null;
-        $usr = Core::instance()->user();
+        $usr = Core::instance()->getCurrentUser();
         foreach ($fields as $fld) {
             switch ($fld) {
                 case 'main.rdns':

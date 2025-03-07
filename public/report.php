@@ -37,7 +37,7 @@ if (!empty($_GET['org']) && !empty($_GET['time']) && !empty($_GET['domain']) && 
             $core->auth()->isAllowed(User::LEVEL_USER);
 
             $domain = new Domain($_GET['domain']);
-            $dom_ex = $domain->isAssigned($core->user()) ? null : new SoftException('Report not found');
+            $dom_ex = $domain->isAssigned($core->getCurrentUser()) ? null : new SoftException('Report not found');
 
             $ts = null;
             try {
