@@ -135,7 +135,7 @@ class DomainTest extends \PHPUnit\Framework\TestCase
 
     public function testDelete(): void
     {
-        (new Domain(1, $this->getDbMapperOnce('delete', '', null)))->delete();
+        (new Domain(1, $this->getDbMapperOnce('delete', '', null)))->delete(false);
     }
 
     private function getDbMapperNever(): object

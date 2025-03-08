@@ -21,14 +21,11 @@ class CoreTest extends \PHPUnit\Framework\TestCase
         $this->assertSame($this->core, Core::instance());
     }
 
-    /**
-     * @runInSeparateProcess
-     */
-    #[RunInSeparateProcess]
     public function testRequestMethod(): void
     {
         $_SERVER['REQUEST_METHOD'] = 'some_method';
         $this->assertSame('some_method', $this->core->requestMethod());
+        unset($_SERVER['REQUEST_METHOD']);
     }
 
     public function testAdminUser(): void
@@ -40,10 +37,6 @@ class CoreTest extends \PHPUnit\Framework\TestCase
         $this->assertInstanceOf(AdminUser::class, $this->core->user());
     }
 
-    /**
-     * @runInSeparateProcess
-     */
-    #[RunInSeparateProcess]
     public function testSendHtml(): void
     {
         foreach ([
@@ -69,10 +62,6 @@ class CoreTest extends \PHPUnit\Framework\TestCase
         }
     }
 
-    /**
-     * @runInSeparateProcess
-     */
-    #[RunInSeparateProcess]
     public function testSendJson(): void
     {
         $data = [ 'key1' => 'value1', [ 'key2' => 'value2' ] ];

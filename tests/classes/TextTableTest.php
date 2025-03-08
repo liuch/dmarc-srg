@@ -2,8 +2,6 @@
 
 namespace Liuch\DmarcSrg;
 
-use PHPUnit\Framework\Attributes\RunInSeparateProcess;
-
 class TextTableTest extends \PHPUnit\Framework\TestCase
 {
     private $table  = null;
@@ -35,10 +33,6 @@ class TextTableTest extends \PHPUnit\Framework\TestCase
         $this->table->appendRow([ '1. Some string', 'ss2', 9 ]);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
-    #[RunInSeparateProcess]
     public function testSimple(): void
     {
         ob_start();
@@ -48,10 +42,6 @@ class TextTableTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($this->genResultText(0, 1, 0, 2, 3, 0), $output);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
-    #[RunInSeparateProcess]
     public function testMinColumnWidth(): void
     {
         ob_start();
@@ -61,10 +51,6 @@ class TextTableTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($this->genResultText(4, 5, 4, 6, 7, 4), $output);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
-    #[RunInSeparateProcess]
     public function testMimColumnsWidth(): void
     {
         ob_start();
@@ -74,10 +60,6 @@ class TextTableTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($this->genResultText(4, 5, 4, 6, 7, 4), $output);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
-    #[RunInSeparateProcess]
     public function testSortByString(): void
     {
         ob_start();
@@ -87,10 +69,6 @@ class TextTableTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($this->genResultText(0, 1, 0, 3, 2, 0), $output);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
-    #[RunInSeparateProcess]
     public function testSortByInt(): void
     {
         ob_start();
@@ -100,10 +78,6 @@ class TextTableTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($this->genResultText(0, 1, 0, 3, 2, 0), $output);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
-    #[RunInSeparateProcess]
     public function testMinColumnWidthAndSortBy(): void
     {
         ob_start();
@@ -113,10 +87,6 @@ class TextTableTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($this->genResultText(4, 5, 4, 7, 6, 4), $output);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
-    #[RunInSeparateProcess]
     public function testSetColumnAlignment(): void
     {
         ob_start();
@@ -127,19 +97,11 @@ class TextTableTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($this->genResultText(0, 15, 0, 16, 17, 0), $output);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
-    #[RunInSeparateProcess]
     public function testToArray(): void
     {
         $this->assertEquals($this->genResultArray(0, 1, 0, 2, 3, 0), $this->table->toArray());
     }
 
-    /**
-     * @runInSeparateProcess
-     */
-    #[RunInSeparateProcess]
     public function testSetBorders(): void
     {
         ob_start();
