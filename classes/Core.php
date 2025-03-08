@@ -69,7 +69,9 @@ class Core
         if (isset($params['template'])) {
             $this->template = $params['template'];
         }
-        self::$instance = $this;
+        if (!self::$instance) {
+            self::$instance = $this;
+        }
     }
 
     /**
