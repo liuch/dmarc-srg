@@ -65,7 +65,7 @@ class ErrorHandler implements LoggerAwareInterface
      */
     public function handleException(\Throwable $e): void
     {
-        $debug = $this->core->config('debug', 0);
+        $debug = intval($this->core->config('debug', 0));
 
         if ($this->logger) {
             $this->logger->error(strval($e));
