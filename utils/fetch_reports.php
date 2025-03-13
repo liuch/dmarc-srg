@@ -165,7 +165,7 @@ if (!$source || $source === 'directory') {
 }
 
 $state = REMOTEFS_LIST;
-if (!$source || $source === 'remotefs') {
+if ((!$source || $source === 'remotefs') && $core->config('remote_filesystems', null)) {
     $errors = [ 'messages' => [], 'debug_info' => null ];
     try {
         $core->checkDependencies('flyfs,xml,zip');
