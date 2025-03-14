@@ -39,9 +39,7 @@ class CoreTest extends \PHPUnit\Framework\TestCase
     {
         $auth = $this->getAuthDisabledMock();
 
-        $sess = $this->getMockBuilder(Session::class)
-                     ->onlyMethods([ 'getData', 'destroy' ])
-                     ->getMock();
+        $sess = $this->getSessionMock([ 'getData', 'destroy' ]);
         $sess->expects($this->never())->method('destroy');
         $sess->expects($this->never())->method('getData');
 
@@ -55,9 +53,7 @@ class CoreTest extends \PHPUnit\Framework\TestCase
     {
         $auth = $this->getAuthEnabledMock();
 
-        $sess = $this->getMockBuilder(Session::class)
-                     ->onlyMethods([ 'getData' ])
-                     ->getMock();
+        $sess = $this->getSessionMock([ 'getData' ]);
         $sess->expects($this->once())->method('getData')->willReturn([]);
 
         $core = new Core([ 'auth' => $auth, 'session' => $sess ]);
@@ -351,15 +347,76 @@ class CoreTest extends \PHPUnit\Framework\TestCase
         $this->assertSame($this->core->logger(), $this->core->logger());
     }
 
-    public function testCheckingDependencies(): void
+    public function testCheckingOneDependencyWithNoCurrentUser(): void
     {
-        $this->core->auth();
-        if (extension_loaded('zip')) {
-            $this->core->checkDependencies('zip');
-        }
+        $sess = $this->getSessionMock([ 'getData' ]);
+        $sess->expects($this->once())->method('getData')->willReturn([]);
+
+        $core = new Core([
+            'auth'    => $this->getAuthEnabledMock(),
+            'session' => $sess
+        ]);
+
+        $this->expectException(SoftException::class);
+        $this->expectExceptionMessage('Required dependency is missing. Contact the administrator.');
+        $core->checkDependencies('fake');
+    }
+
+    public function testCheckingOneDependencyWithNotAdminCurrentUser(): void
+    {
+        $sess = $this->getSessionMock([ 'getData' ]);
+        $sess->expects($this->once())->method('getData')->willReturn([
+            'user' => [ 'id' => 1, 'name' => 'user', 'level' => User::LEVEL_USER ]
+        ]);
+
+        $db = $this->getMockBuilder(DatabaseController::class)
+                   ->disableOriginalConstructor()
+                   ->getMock();
+
+        $core = new Core([
+            'auth'     => $this->getAuthEnabledMock(),
+            'config'   => $this->getConfig('users/user_management', false, true),
+            'database' => $db,
+            'session'  => $sess
+        ]);
+
+        $this->expectException(SoftException::class);
+        $this->expectExceptionMessage('Required dependency is missing. Contact the administrator.');
+        $core->checkDependencies('fake');
+    }
+
+    public function testCheckingOneDependencyWithAdminCurrentUser(): void
+    {
+        $sess = $this->getSessionMock([ 'getData' ]);
+        $sess->expects($this->once())->method('getData')->willReturn([
+            'user' => [ 'id' => 0, 'name' => 'admin', 'level' => User::LEVEL_ADMIN ]
+        ]);
+
+        $core = new Core([
+            'auth'     => $this->getAuthEnabledMock(),
+            'session'  => $sess
+        ]);
+
         $this->expectException(SoftException::class);
         $this->expectExceptionMessage('Required dependency is missing: ext-fake.');
-        $this->core->checkDependencies('fake');
+        $core->checkDependencies('fake');
+    }
+
+    public function testCheckingSeveralDependencies(): void
+    {
+        $sess = $this->getSessionMock([ 'getData' ]);
+        $sess->expects($this->once())->method('getData')->willReturn([
+            'user' => [ 'id' => 0, 'name' => 'admin', 'level' => User::LEVEL_ADMIN ]
+        ]);
+
+        $core = new Core([
+            'auth'     => $this->getAuthEnabledMock(),
+            'session'  => $sess
+        ]);
+
+        $this->expectException(SoftException::class);
+        $this->expectExceptionMessage('Required dependencies are missing: ext-fake1, ext-fake2.');
+        $core->checkDependencies('fake1,fake2');
     }
 
     public function testConfigExistingParameters(): void
