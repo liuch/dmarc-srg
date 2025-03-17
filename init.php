@@ -30,7 +30,7 @@ if (!is_array($vc) || !isset($vc['autoload_file'], $vc['config_file'], $vc['vers
     exit;
 }
 
-define('APP_VERSION', '2.2.1' . strval($vc['version_suffix']));
+define('APP_VERSION', '2.3' . strval($vc['version_suffix']));
 define('CONFIG_FILE', strval($vc['config_file']));
 
 $va = strval($vc['autoload_file']);
