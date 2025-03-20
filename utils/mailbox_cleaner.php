@@ -88,6 +88,8 @@ foreach ([ [ 'done', '', 1 ], [ 'failed', 'failed', 0 ] ] as $it) {
             if ($act->type === SourceAction::ACTION_MOVE) {
                 $dir = $act->param;
                 break;
+            } elseif ($act->type === SourceAction::ACTION_SEEN) {
+                $dir = $def_opt;
             }
         }
         if (is_null($dir)) {
