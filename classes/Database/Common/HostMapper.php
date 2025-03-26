@@ -29,14 +29,14 @@
  * @license  https://www.gnu.org/licenses/gpl-3.0.html GNU/GPLv3
  */
 
-namespace Liuch\DmarcSrg\Database\Mariadb;
+namespace Liuch\DmarcSrg\Database\Common;
 
 use Liuch\DmarcSrg\DateTime;
 use Liuch\DmarcSrg\Database\HostMapperInterface;
 use Liuch\DmarcSrg\Exception\DatabaseFatalException;
 
 /**
- * HostMapper class implementation for MariaDB
+ * Universal implementation of HostMapper class
  */
 class HostMapper implements HostMapperInterface
 {
@@ -68,18 +68,18 @@ class HostMapper implements HostMapperInterface
             $user_domains1 = '';
             $user_domains2 = '';
         } else {
-            $user_domains1 = ' INNER JOIN `' . $this->connector->tablePrefix('userdomains')
-                . '`AS `ud` ON `rp`.`domain_id` = `ud`.`domain_id`';
-            $user_domains2 = ' AND `user_id` = ' . $user_id;
+            $user_domains1 = ' INNER JOIN ' . $this->connector->tablePrefix('userdomains')
+                . ' AS ud ON rp.domain_id = ud.domain_id';
+            $user_domains2 = ' AND user_id = ' . $user_id;
         }
         $db = $this->connector->dbh();
         $db->beginTransaction();
         try {
             $st = $db->prepare(
-                'SELECT COUNT(*), SUM(`rc`) FROM (SELECT COUNT(`report_id`), SUM(`rcount`) AS `rc` FROM `'
-                . $this->connector->tablePrefix('rptrecords') . '` AS `rr` INNER JOIN `'
-                . $this->connector->tablePrefix('reports') . '` AS `rp` ON `rr`.`report_id` = `rp`.`id`'
-                . $user_domains1 . ' WHERE `rr`.`ip` = ?' . $user_domains2 . ' GROUP BY `report_id`) as t'
+                'SELECT COUNT(*), SUM(rc) FROM (SELECT COUNT(report_id), SUM(rcount) AS rc FROM '
+                . $this->connector->tablePrefix('rptrecords') . ' AS rr INNER JOIN '
+                . $this->connector->tablePrefix('reports') . ' AS rp ON rr.report_id = rp.id'
+                . $user_domains1 . ' WHERE rr.ip = ?' . $user_domains2 . ' GROUP BY report_id) as t'
             );
             $st->bindValue(1, inet_pton($data['ip']), \PDO::PARAM_STR);
             $st->execute();
@@ -88,10 +88,10 @@ class HostMapper implements HostMapperInterface
             $res['messages'] = intval($row[1]);
             $st->closeCursor();
             $st = $db->prepare(
-                'SELECT `rp`.`id`, `begin_time` FROM `' . $this->connector->tablePrefix('rptrecords')
-                . '` AS `rr` INNER JOIN `' . $this->connector->tablePrefix('reports')
-                . '` AS `rp` ON `rr`.`report_id` = `rp`.`id`' . $user_domains1
-                . ' WHERE `rr`.`ip` = ?' . $user_domains2 . ' GROUP BY `report_id` ORDER BY `begin_time` DESC LIMIT 2'
+                'SELECT rp.id, begin_time FROM ' . $this->connector->tablePrefix('rptrecords')
+                . ' AS rr INNER JOIN ' . $this->connector->tablePrefix('reports')
+                . ' AS rp ON rr.report_id = rp.id' . $user_domains1
+                . ' WHERE rr.ip = ?' . $user_domains2 . ' GROUP BY report_id ORDER BY begin_time DESC LIMIT 2'
             );
             $st->bindValue(1, inet_pton($data['ip']), \PDO::PARAM_STR);
             $st->execute();

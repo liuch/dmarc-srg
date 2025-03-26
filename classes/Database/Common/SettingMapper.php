@@ -2,7 +2,7 @@
 
 /**
  * dmarc-srg - A php parser, viewer and summary report generator for incoming DMARC reports.
- * Copyright (C) 2022-2023 Aleksey Andreev (liuch)
+ * Copyright (C) 2022-2025 Aleksey Andreev (liuch)
  *
  * Available at:
  * https://github.com/liuch/dmarc-srg
@@ -29,14 +29,14 @@
  * @license  https://www.gnu.org/licenses/gpl-3.0.html GNU/GPLv3
  */
 
-namespace Liuch\DmarcSrg\Database\Mariadb;
+namespace Liuch\DmarcSrg\Database\Common;
 
 use Liuch\DmarcSrg\Database\SettingMapperInterface;
 use Liuch\DmarcSrg\Exception\DatabaseFatalException;
 use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
 
 /**
- * SettingMapper class implementation for MariaDB
+ * Universal implementation of SettingMapper class
  */
 class SettingMapper implements SettingMapperInterface
 {
@@ -58,7 +58,7 @@ class SettingMapper implements SettingMapperInterface
      *
      * The method contains a workaround to update the database structure from v3.2 to v4.0.
      * The method does two attempts to execute the query: with and without the user_id field.
-     * It needs to be fix in the future.
+     * It needs to be fixed in the future.
      *
      * @param string $key
      * @param int    $user_id
@@ -71,11 +71,11 @@ class SettingMapper implements SettingMapperInterface
         $sn = $this->connector->tablePrefix('system');
         $tr = [
             [
-                "SELECT `value` FROM `{$sn}` WHERE `user_id` = ? AND `key` = ?",
+                "SELECT value FROM {$sn} WHERE user_id = ? AND \"key\" = ?",
                 [ [ 1, $user_id, \PDO::PARAM_INT ], [ 2, $key, \PDO::PARAM_STR ] ],
             ],
             [
-                "SELECT `value` FROM `{$sn}` WHERE `key` = ?",
+                "SELECT value FROM {$sn} WHERE \"key\" = ?",
                 [ [ 1, $key, \PDO::PARAM_STR ] ],
             ]
         ];
@@ -118,8 +118,8 @@ class SettingMapper implements SettingMapperInterface
         $res = [];
         try {
             $st = $this->connector->dbh()->prepare(
-                'SELECT `key`, `value` FROM `' . $this->connector->tablePrefix('system')
-                . '` WHERE `user_id` = ? ORDER BY `key`'
+                'SELECT "key", value FROM ' . $this->connector->tablePrefix('system')
+                . ' WHERE user_id = ? ORDER BY "key"'
             );
             $st->bindValue(1, $user_id, \PDO::PARAM_INT);
             $st->execute();
@@ -149,8 +149,8 @@ class SettingMapper implements SettingMapperInterface
         $db = $this->connector->dbh();
         try {
             $st = $db->prepare(
-                'INSERT INTO `' . $this->connector->tablePrefix('system') .
-                '` (`key`, `user_id`, `value`) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE `value` = ?'
+                'INSERT INTO ' . $this->connector->tablePrefix('system') .
+                ' ("key", user_id, value) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE value = ?'
             );
             $st->bindValue(1, $name, \PDO::PARAM_STR);
             $st->bindValue(2, $user_id, \PDO::PARAM_INT);

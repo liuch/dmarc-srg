@@ -42,7 +42,8 @@ use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
 
 class Connector extends DatabaseConnector
 {
-    protected $dbh = null;
+    protected $dbh      = null;
+    protected $ansiMode = true;
 
     /**
      * Returns an instance of PDO class
@@ -78,6 +79,7 @@ class Connector extends DatabaseConnector
         }
 
         try {
+            $this->setANSIMode(false);
             $tables = [];
             $st = $this->dbh->query(
                 'SHOW TABLE STATUS FROM `' . str_replace('`', '', $this->name) . '`' . $like_str
@@ -142,7 +144,9 @@ class Connector extends DatabaseConnector
             }
             if ($system_exs) {
                 try {
+                    $this->setANSIMode(true);
                     $res['version'] = $this->getMapper('setting')->value('version', 0);
+                    $this->setANSIMode(false);
                 } catch (DatabaseNotFoundException $e) {
                 }
             }
@@ -152,6 +156,8 @@ class Connector extends DatabaseConnector
             ));
         } catch (RuntimeException $e) {
             $res = array_replace($res, ErrorHandler::exceptionResult($e));
+        } finally {
+            $this->setANSIMode(true);
         }
         return $res;
     }
@@ -162,7 +168,7 @@ class Connector extends DatabaseConnector
      * This method creates needed tables and indexes in the database.
      * The method will fail if the database already have tables with the table prefix.
      *
-     * @param $version The current version of the database schema
+     * @param string $version The current version of the database schema
      *
      * @return void
      */
@@ -170,6 +176,7 @@ class Connector extends DatabaseConnector
     {
         $this->ensureConnection();
         try {
+            $this->setANSIMode(false);
             $st = $this->dbh->query($this->sqlShowTablesQuery());
             try {
                 if ($st->fetch()) {
@@ -190,14 +197,16 @@ class Connector extends DatabaseConnector
                 $st->closeCursor();
             }
             $st = $this->dbh->prepare(
-                'INSERT INTO `' . $this->tablePrefix('system')
-                . '` (`key`, `user_id`, `value`) VALUES ("version", 0, ?)'
+                'INSERT INTO ' . $this->tablePrefix('system')
+                . ' (`key`, user_id, value) VALUES ("version", 0, ?)'
             );
             $st->bindValue(1, $version, \PDO::PARAM_STR);
             $st->execute();
             $st->closeCursor();
         } catch (\PDOException $e) {
             throw new DatabaseFatalException('Failed to create required tables in the database', -1, $e);
+        } finally {
+            $this->setANSIMode(true);
         }
     }
 
@@ -213,6 +222,7 @@ class Connector extends DatabaseConnector
     {
         $this->ensureConnection();
         try {
+            $this->setANSIMode(false);
             $db = $this->dbh;
             $db->query('SET foreign_key_checks = 0');
             $st = $db->query($this->sqlShowTablesQuery());
@@ -223,6 +233,29 @@ class Connector extends DatabaseConnector
             $db->query('SET foreign_key_checks = 1');
         } catch (\PDOException $e) {
             throw new DatabaseFatalException('Failed to drop the database tables', -1, $e);
+        } finally {
+            $this->setANSIMode(true);
+        }
+    }
+
+    /**
+     * Enables or disables ANSI query mode for the current datatabase connection
+     *
+     * @param bool $on True turns ANSI mode on, False turns it off
+     *
+     * @return void
+     */
+    public function setANSIMode(bool $on): void
+    {
+        if ($on !== $this->ansiMode) {
+            $this->ansiMode = $on;
+            if ($this->dbh) {
+                if ($on) {
+                    $this->dbh->query('SET SESSION sql_mode=\'ANSI\'');
+                } else {
+                    $this->dbh->query('SET SESSION sql_mode=@prev_sql_mode');
+                }
+            }
         }
     }
 
@@ -241,7 +274,11 @@ class Connector extends DatabaseConnector
                     $this->password,
                     [ \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION ]
                 );
-                $this->dbh->query('SET time_zone = "+00:00"');
+                $this->dbh->query('SET @prev_sql_mode=@@sql_mode');
+                if ($this->ansiMode) {
+                    $this->dbh->query('SET SESSION sql_mode=\'ANSI\'');
+                }
+                $this->dbh->query('SET time_zone = \'+00:00\'');
             } catch (\PDOException $e) {
                 throw DatabaseExceptionFactory::fromException($e);
             }
@@ -303,7 +340,7 @@ class Connector extends DatabaseConnector
                     'definition' => 'varchar(255) DEFAULT NULL'
                 ]
             ],
-            'additional' => 'PRIMARY KEY (`user_id`, `key`)',
+            'additional' => 'PRIMARY KEY (user_id, `key`)',
             'table_options' => 'ENGINE=InnoDB DEFAULT CHARSET=utf8'
         ],
         'domains' => [
@@ -333,7 +370,7 @@ class Connector extends DatabaseConnector
                     'definition' => 'datetime NOT NULL'
                 ]
             ],
-            'additional' => 'PRIMARY KEY (`id`), UNIQUE KEY `fqdn` (`fqdn`)',
+            'additional' => 'PRIMARY KEY (id), UNIQUE KEY fqdn (fqdn)',
             'table_options' => 'ENGINE=InnoDB DEFAULT CHARSET=utf8'
         ],
         'users' => [
@@ -379,7 +416,7 @@ class Connector extends DatabaseConnector
                     'definition' => 'datetime NOT NULL'
                 ]
             ],
-            'additional' => 'PRIMARY KEY (`id`), UNIQUE KEY `name` (`name`)',
+            'additional' => 'PRIMARY KEY (id), UNIQUE KEY name (name)',
             'table_options' => 'ENGINE=InnoDB DEFAULT CHARSET=utf8'
         ],
         'userdomains' => [
@@ -393,7 +430,7 @@ class Connector extends DatabaseConnector
                     'definition' => 'int(10) unsigned NOT NULL'
                 ]
             ],
-            'additional' => 'PRIMARY KEY (`domain_id`, `user_id`)',
+            'additional' => 'PRIMARY KEY (domain_id, user_id)',
             'table_options' => 'ENGINE=InnoDB DEFAULT CHARSET=utf8'
         ],
         'reports' => [
@@ -471,10 +508,10 @@ class Connector extends DatabaseConnector
                     'definition' => 'boolean NOT NULL'
                 ]
             ],
-            'additional' => 'PRIMARY KEY (`id`),' .
-                            ' UNIQUE KEY `org_time_id_u` (`domain_id`, `begin_time`, `org`, `external_id`),' .
-                            ' KEY (`begin_time`), KEY (`end_time`),' .
-                            ' KEY `org` (`org`, `begin_time`)',
+            'additional' => 'PRIMARY KEY (id),' .
+                            ' UNIQUE KEY org_time_id_u (domain_id, begin_time, org, external_id),' .
+                            ' KEY (begin_time), KEY (end_time),' .
+                            ' KEY org (org, begin_time)',
             'table_options' => 'ENGINE=InnoDB DEFAULT CHARSET=utf8'
         ],
         'rptrecords' => [
@@ -532,7 +569,7 @@ class Connector extends DatabaseConnector
                     'definition' => 'varchar(255) NULL'
                 ]
             ],
-            'additional' => 'PRIMARY KEY (`id`), KEY (`report_id`), KEY (`ip`)',
+            'additional' => 'PRIMARY KEY (id), KEY (report_id), KEY (ip)',
             'table_options' => 'ENGINE=InnoDB DEFAULT CHARSET=utf8'
         ],
         'reportlog' => [
@@ -574,7 +611,7 @@ class Connector extends DatabaseConnector
                     'definition' => 'text NULL'
                 ]
             ],
-            'additional' => 'PRIMARY KEY (`id`), KEY(`event_time`), KEY `user_id` (`user_id`, `event_time`)',
+            'additional' => 'PRIMARY KEY (id), KEY(event_time), KEY user_id (user_id, event_time)',
             'table_options' => 'ENGINE=InnoDB DEFAULT CHARSET=utf8'
         ]
     ];

@@ -2,7 +2,7 @@
 
 /**
  * dmarc-srg - A php parser, viewer and summary report generator for incoming DMARC reports.
- * Copyright (C) 2022-2024 Aleksey Andreev (liuch)
+ * Copyright (C) 2022-2025 Aleksey Andreev (liuch)
  *
  * Available at:
  * https://github.com/liuch/dmarc-srg
@@ -29,7 +29,7 @@
  * @license  https://www.gnu.org/licenses/gpl-3.0.html GNU/GPLv3
  */
 
-namespace Liuch\DmarcSrg\Database\Mariadb;
+namespace Liuch\DmarcSrg\Database\Common;
 
 use Liuch\DmarcSrg\DateTime;
 use Liuch\DmarcSrg\Database\ReportLogMapperInterface;
@@ -37,7 +37,7 @@ use Liuch\DmarcSrg\Exception\DatabaseFatalException;
 use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
 
 /**
- * ReportLogMapper class implementation for MariaDB
+ * Universal implementation of ReportLogMapper class
  */
 class ReportLogMapper implements ReportLogMapperInterface
 {
@@ -65,8 +65,8 @@ class ReportLogMapper implements ReportLogMapperInterface
     {
         try {
             $st = $this->connector->dbh()->prepare(
-                'SELECT `domain`, `external_id`, `event_time`, `filename`, `source`, `success`, `message` FROM `'
-                . $this->connector->tablePrefix('reportlog') . '` WHERE `id` = ?'
+                'SELECT domain, external_id, event_time, filename, source, success, message FROM '
+                . $this->connector->tablePrefix('reportlog') . ' WHERE id = ?'
             );
             $st->bindValue(1, $data['id'], \PDO::PARAM_INT);
             $st->execute();
@@ -98,15 +98,15 @@ class ReportLogMapper implements ReportLogMapperInterface
             $id = $data['id'];
             if (is_null($id)) {
                 $st = $db->prepare(
-                    'INSERT INTO `' . $this->connector->tablePrefix('reportlog')
-                    . '` (`domain`, `external_id`, `event_time`, `filename`, `source`, `success`, `message`)'
+                    'INSERT INTO ' . $this->connector->tablePrefix('reportlog')
+                    . ' (domain, external_id, event_time, filename, source, success, message)'
                     . ' VALUES (?, ?, ?, ?, ?, ?, ?)'
                 );
             } else {
                 $st = $db->prepare(
-                    'UPDATE `' . $this->connector->tablePrefix('reportlog')
-                    . '` SET `domain` = ?, `external_id` = ?, `event_time` = ?, `filename` = ?,'
-                    . ' `source` = ?, `success` = ?, `message` = ? WHERE `id` = ?'
+                    'UPDATE ' . $this->connector->tablePrefix('reportlog')
+                    . ' SET domain = ?, external_id = ?, event_time = ?, filename = ?,'
+                    . ' source = ?, success = ?, message = ? WHERE id = ?'
                 );
                 $st->bindValue(8, $id, \PDO::PARAM_INT);
             }
@@ -148,8 +148,8 @@ class ReportLogMapper implements ReportLogMapperInterface
         $list = [];
         try {
             $st = $this->connector->dbh()->prepare(
-                'SELECT `id`, `domain`, `event_time`, `source`, `success`, `message` FROM `'
-                . $this->connector->tablePrefix('reportlog') . '`'
+                'SELECT id, domain, event_time, source, success, message FROM '
+                . $this->connector->tablePrefix('reportlog')
                 . $this->sqlCondition($filter)
                 . $this->sqlOrder($order)
                 . $this->sqlLimit($limit)
@@ -186,7 +186,7 @@ class ReportLogMapper implements ReportLogMapperInterface
         $cnt = 0;
         try {
             $st = $this->connector->dbh()->prepare(
-                'SELECT COUNT(*) FROM `' . $this->connector->tablePrefix('reportlog') . '`'
+                'SELECT COUNT(*) FROM ' . $this->connector->tablePrefix('reportlog')
                 . $this->sqlCondition($filter)
                 . $this->sqlLimit($limit)
             );
@@ -214,7 +214,7 @@ class ReportLogMapper implements ReportLogMapperInterface
     {
         try {
             $st = $this->connector->dbh()->prepare(
-                'DELETE FROM `' . $this->connector->tablePrefix('reportlog') . '`'
+                'DELETE FROM ' . $this->connector->tablePrefix('reportlog')
                 . $this->sqlCondition($filter)
                 . $this->sqlOrder($order)
                 . $this->sqlLimit($limit)
@@ -238,16 +238,16 @@ class ReportLogMapper implements ReportLogMapperInterface
     {
         $res = [];
         if (isset($filter['from_time'])) {
-            $res[] = '`event_time` >= ?';
+            $res[] = 'event_time >= ?';
         }
         if (isset($filter['till_time'])) {
-            $res[] = '`event_time` < ?';
+            $res[] = 'event_time < ?';
         }
         if (isset($filter['success'])) {
-            $res[] = '`success` = ?';
+            $res[] = 'success = ?';
         }
         if (isset($filter['source'])) {
-            $res[] = '`source` = ?';
+            $res[] = 'source = ?';
         }
         return count($res) > 0 ? (' WHERE ' . implode(' AND ', $res)) : '';
     }
@@ -261,7 +261,7 @@ class ReportLogMapper implements ReportLogMapperInterface
      */
     private function sqlOrder(array &$order): string
     {
-        return ' ORDER BY `event_time` ' . ($order['direction'] === 'descent' ? 'DESC' : 'ASC');
+        return ' ORDER BY event_time ' . ($order['direction'] === 'descent' ? 'DESC' : 'ASC');
     }
 
     /**
