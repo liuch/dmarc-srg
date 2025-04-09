@@ -101,4 +101,12 @@ class SessionTest extends \PHPUnit\Framework\TestCase
         $this->assertSame([], $this->sess->getData());
         $this->assertNotSame($id, \session_id());
     }
+
+    public function testStrictModeActivated(): void
+    {
+        $fake_id = 'myfakesessionid00000000000000000';
+        \session_id($fake_id);
+        $this->sess->getData();
+        $this->assertNotSame($fake_id, \session_id());
+    }
 }

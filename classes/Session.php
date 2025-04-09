@@ -145,7 +145,7 @@ class Session
      */
     private function start(): void
     {
-        \ini_set('session.use_strict_mode', 1);
+        \ini_set('session.use_strict_mode', '1');
         $this->strictStart();
 
         // Session control
@@ -159,7 +159,7 @@ class Session
                 $s_id = $_SESSION['_new_session_id'];
             } else {
                 $s_id = session_create_id();
-                \ini_set('session.use_strict_mode', 0);
+                \ini_set('session.use_strict_mode', '0');
             }
             \session_id($s_id);
             $this->strictStart();
@@ -203,7 +203,7 @@ class Session
         $_SESSION['_new_session_id'] = $new_id;
         \session_write_close();
 
-        \ini_set('session.use_strict_mode', 0);
+        \ini_set('session.use_strict_mode', '0');
         \session_id($new_id);
         $this->strictStart();
 
