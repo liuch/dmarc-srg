@@ -176,6 +176,9 @@ class DatabaseController
                 case 'mariadb':
                     $type = 'mariadb';
                     break;
+                case 'pgsql':
+                    $type = 'pgsql';
+                    break;
                 default:
                     throw new RuntimeException('Unknown database type: ' . $this->conf_data['type']);
             }
