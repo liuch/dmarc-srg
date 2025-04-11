@@ -29,7 +29,7 @@
  * @license  https://www.gnu.org/licenses/gpl-3.0.html GNU/GPLv3
  */
 
-namespace Liuch\DmarcSrg\Database\Mariadb;
+namespace Liuch\DmarcSrg\Database\Common;
 
 use Liuch\DmarcSrg\DateTime;
 use Liuch\DmarcSrg\ErrorCodes;
@@ -40,7 +40,7 @@ use Liuch\DmarcSrg\Exception\DatabaseFatalException;
 use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
 
 /**
- * DomainMapper class implementation for MariaDB
+ * Universal implementation of DomainMapper class
  */
 class DomainMapper implements DomainMapperInterface
 {
@@ -68,8 +68,8 @@ class DomainMapper implements DomainMapperInterface
     {
         try {
             $st = $this->connector->dbh()->prepare(
-                'SELECT `id` FROM `' . $this->connector->tablePrefix('domains') .
-                '` WHERE ' . $this->sqlCondition($data)
+                'SELECT id FROM ' . $this->connector->tablePrefix('domains') .
+                ' WHERE ' . $this->sqlCondition($data)
             );
             $this->sqlBindValues($st, $data, 1);
             $st->execute();
@@ -98,8 +98,8 @@ class DomainMapper implements DomainMapperInterface
         $res = null;
         try {
             $st = $this->connector->dbh()->prepare(
-                'SELECT 1 FROM `' . $this->connector->tablePrefix('userdomains') . '` INNER JOIN `'
-                . $this->connector->tablePrefix('domains') . '` ON `domain_id` = `id` WHERE `user_id` = ? AND '
+                'SELECT 1 FROM ' . $this->connector->tablePrefix('userdomains') . ' INNER JOIN '
+                . $this->connector->tablePrefix('domains') . ' ON domain_id = id WHERE user_id = ? AND '
                 . $this->sqlCondition($data)
             );
             $st->bindValue(1, $user_id, \PDO::PARAM_INT);
@@ -124,8 +124,8 @@ class DomainMapper implements DomainMapperInterface
     {
         try {
             $st = $this->connector->dbh()->prepare(
-                'SELECT `id`, `fqdn`, `active`, `description`, `created_time`, `updated_time` FROM `'
-                . $this->connector->tablePrefix('domains') . '` WHERE ' . $this->sqlCondition($data)
+                'SELECT id, fqdn, active, description, created_time, updated_time FROM '
+                . $this->connector->tablePrefix('domains') . ' WHERE ' . $this->sqlCondition($data)
             );
             $this->sqlBindValues($st, $data, 1);
             $st->execute();
@@ -159,8 +159,8 @@ class DomainMapper implements DomainMapperInterface
         if ($this->exists($data)) {
             try {
                 $st = $db->prepare(
-                    'UPDATE `' . $this->connector->tablePrefix('domains')
-                    . '` SET `active` = ?, `description` = ?, `updated_time` = ? WHERE `id` = ?'
+                    'UPDATE ' . $this->connector->tablePrefix('domains')
+                    . ' SET active = ?, description = ?, updated_time = ? WHERE id = ?'
                 );
                 $st->bindValue(1, $data['active'], \PDO::PARAM_BOOL);
                 $st->bindValue(2, $data['description'], \PDO::PARAM_STR);
@@ -179,12 +179,12 @@ class DomainMapper implements DomainMapperInterface
                     $sql1 = '';
                     $sql2 = '';
                 } else {
-                    $sql1 = ', `description`';
+                    $sql1 = ', description';
                     $sql2 = ', ?';
                 }
                 $st = $db->prepare(
-                    'INSERT INTO `' . $this->connector->tablePrefix('domains')
-                    . '` (`fqdn`, `active`' . $sql1 . ', `created_time`, `updated_time`)'
+                    'INSERT INTO ' . $this->connector->tablePrefix('domains')
+                    . ' (fqdn, active' . $sql1 . ', created_time, updated_time)'
                     . ' VALUES (?, ?' . $sql2 . ', ?, ?)'
                 );
                 $idx = 0;
@@ -247,12 +247,12 @@ class DomainMapper implements DomainMapperInterface
                 }
             }
             $st = $db->prepare(
-                'DELETE FROM `' . $this->connector->tablePrefix('userdomains') . '` WHERE `domain_id` = ?'
+                'DELETE FROM ' . $this->connector->tablePrefix('userdomains') . ' WHERE domain_id = ?'
             );
             $st->bindValue(1, $id, \PDO::PARAM_INT);
             $st->execute();
             $st->closeCursor();
-            $st = $db->prepare('DELETE FROM `' . $this->connector->tablePrefix('domains') . '` WHERE `id` = ?');
+            $st = $db->prepare('DELETE FROM ' . $this->connector->tablePrefix('domains') . ' WHERE id = ?');
             $st->bindValue(1, $id, \PDO::PARAM_INT);
             $st->execute();
             $st->closeCursor();
@@ -277,13 +277,13 @@ class DomainMapper implements DomainMapperInterface
     {
         $list = [];
         try {
-            $query_str = 'SELECT `id`, `fqdn`, `active`, `description`, `created_time`, `updated_time` FROM `';
+            $query_str = 'SELECT id, fqdn, active, description, created_time, updated_time FROM ';
             if ($user_id) {
-                $query_str .= $this->connector->tablePrefix('userdomains') . '` INNER JOIN `'
-                    . $this->connector->tablePrefix('domains') . '` ON `domain_id` = `id` WHERE `user_id` = '
+                $query_str .= $this->connector->tablePrefix('userdomains') . ' INNER JOIN '
+                    . $this->connector->tablePrefix('domains') . ' ON domain_id = id WHERE user_id = '
                     . $user_id;
             } else {
-                $query_str .= $this->connector->tablePrefix('domains') . '`';
+                $query_str .= $this->connector->tablePrefix('domains');
             }
             $st = $this->connector->dbh()->query($query_str);
             while ($row = $st->fetch(\PDO::FETCH_NUM)) {
@@ -315,11 +315,11 @@ class DomainMapper implements DomainMapperInterface
         $res = [];
         try {
             if ($user_id) {
-                $query_str = 'SELECT `fqdn` FROM `' . $this->connector->tablePrefix('userdomains')
-                    . '` INNER JOIN `' . $this->connector->tablePrefix('domains')
-                    . '` ON `domain_id` = `id` WHERE `user_id` = ' . $user_id . ' ORDER BY `fqdn`';
+                $query_str = 'SELECT fqdn FROM ' . $this->connector->tablePrefix('userdomains')
+                    . ' INNER JOIN ' . $this->connector->tablePrefix('domains')
+                    . ' ON domain_id = id WHERE user_id = ' . $user_id . ' ORDER BY fqdn';
             } else {
-                $query_str = 'SELECT `fqdn` FROM `' . $this->connector->tablePrefix('domains') . '` ORDER BY `fqdn`';
+                $query_str = 'SELECT fqdn FROM ' . $this->connector->tablePrefix('domains') . ' ORDER BY fqdn';
             }
             $st = $this->connector->dbh()->query($query_str, \PDO::FETCH_NUM);
             while ($name = $st->fetchColumn(0)) {
@@ -349,10 +349,10 @@ class DomainMapper implements DomainMapperInterface
                 $wr = '';
             } else {
                 $tn = 'userdomains';
-                $wr = " WHERE `user_id` = {$user_id}";
+                $wr = " WHERE user_id = {$user_id}";
             }
             $tn = $this->connector->tablePrefix($tn);
-            $query_str = "SELECT COUNT(*) FROM `{$tn}`{$wr}";
+            $query_str = "SELECT COUNT(*) FROM {$tn}{$wr}";
             if ($max > 0) {
                 $query_str .= " LIMIT {$max}";
             }
@@ -383,8 +383,8 @@ class DomainMapper implements DomainMapperInterface
         $db->beginTransaction();
         try {
             $st = $db->prepare(
-                'SELECT `id` FROM `' . $this->connector->tablePrefix('domains')
-                . '` WHERE ' . $this->sqlCondition($data)
+                'SELECT id FROM ' . $this->connector->tablePrefix('domains')
+                . ' WHERE ' . $this->sqlCondition($data)
             );
             $this->sqlBindValues($st, $data, 1);
             $st->execute();
@@ -393,7 +393,7 @@ class DomainMapper implements DomainMapperInterface
             if ($id !== false) {
                 $data['id'] = intval($id);
                 $st = $db->prepare(
-                    'SELECT 1 FROM `' . $this->connector->tablePrefix('users') . '` WHERE `id` = ?'
+                    'SELECT 1 FROM ' . $this->connector->tablePrefix('users') . ' WHERE id = ?'
                 );
                 $st->bindValue(1, $user_id, \PDO::PARAM_INT);
                 $st->execute();
@@ -401,14 +401,14 @@ class DomainMapper implements DomainMapperInterface
                 $st->closeCursor();
                 if ($res) {
                     $ud_tn = $this->connector->tablePrefix('userdomains');
-                    $st = $db->prepare('SELECT 1 FROM `' . $ud_tn . '` WHERE `domain_id` = ? AND `user_id` = ?');
+                    $st = $db->prepare('SELECT 1 FROM ' . $ud_tn . ' WHERE domain_id = ? AND user_id = ?');
                     $st->bindValue(1, $data['id'], \PDO::PARAM_INT);
                     $st->bindValue(2, $user_id, \PDO::PARAM_INT);
                     $st->execute();
                     $res = $st->fetchColumn(0);
                     $st->closeCursor();
                     if (!$res) {
-                        $st = $db->prepare('INSERT INTO `' . $ud_tn . '` (`domain_id`, `user_id`) VALUES (?, ?)');
+                        $st = $db->prepare('INSERT INTO ' . $ud_tn . ' (domain_id, user_id) VALUES (?, ?)');
                         $st->bindValue(1, $data['id'], \PDO::PARAM_INT);
                         $st->bindValue(2, $user_id, \PDO::PARAM_INT);
                         $st->execute();
@@ -419,7 +419,7 @@ class DomainMapper implements DomainMapperInterface
             $db->commit();
         } catch (\Exception $e) {
             $db->rollBack();
-            throw $e;
+            throw new DatabaseFatalException('Failed to assign a domain', -1, $e);
         }
     }
 
@@ -441,7 +441,7 @@ class DomainMapper implements DomainMapperInterface
             $dm_tn = $this->connector->tablePrefix('domains');
             $ud_tn = $this->connector->tablePrefix('userdomains');
             $st = $this->connector->dbh()->prepare(
-                "DELETE `{$ud_tn}` FROM `{$ud_tn}` INNER JOIN `{$dm_tn}` ON `domain_id` = `id` WHERE "
+                "DELETE {$ud_tn} FROM {$ud_tn} INNER JOIN {$dm_tn} ON domain_id = id WHERE "
                 . $this->sqlCondition($data)
             );
             $this->sqlBindValues($st, $data, 1);
@@ -470,16 +470,16 @@ class DomainMapper implements DomainMapperInterface
         $db->beginTransaction();
         try {
             $st = $db->prepare(
-                'DELETE FROM `' . $this->connector->tablePrefix('userdomains') . '` WHERE `user_id` = ?'
+                'DELETE FROM ' . $this->connector->tablePrefix('userdomains') . ' WHERE user_id = ?'
             );
             $st->bindValue(1, $user_id, \PDO::PARAM_INT);
             $st->execute();
             $st->closeCursor();
             $cnt = count($domains);
             if ($cnt) {
-                $query_str = 'INSERT INTO `' . $this->connector->tablePrefix('userdomains')
-                    . '` (`domain_id`, `user_id`) SELECT `id`, ' . $user_id . ' FROM `'
-                    . $this->connector->tablePrefix('domains') . '` WHERE `fqdn` IN ('
+                $query_str = 'INSERT INTO ' . $this->connector->tablePrefix('userdomains')
+                    . ' (domain_id, user_id) SELECT id, ' . $user_id . ' FROM '
+                    . $this->connector->tablePrefix('domains') . ' WHERE fqdn IN ('
                     . substr(str_repeat('?,', $cnt), 0, -1) . ')';
                 $st = $db->prepare($query_str);
                 $pos = 0;
@@ -492,7 +492,7 @@ class DomainMapper implements DomainMapperInterface
             $db->commit();
         } catch (\Exception $e) {
             $db->rollBack();
-            throw $e;
+            throw new DatabaseFatalException('Failed to update the user\'s domains', -1, $e);
         }
     }
 
@@ -506,9 +506,9 @@ class DomainMapper implements DomainMapperInterface
     private function sqlCondition(array &$data): string
     {
         if (isset($data['id'])) {
-            return '`id` = ?';
+            return 'id = ?';
         }
-        return '`fqdn` = ?';
+        return 'fqdn = ?';
     }
 
     /**

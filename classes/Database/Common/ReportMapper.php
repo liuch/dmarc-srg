@@ -2,7 +2,7 @@
 
 /**
  * dmarc-srg - A php parser, viewer and summary report generator for incoming DMARC reports.
- * Copyright (C) 2022-2024 Aleksey Andreev (liuch)
+ * Copyright (C) 2022-2025 Aleksey Andreev (liuch)
  *
  * Available at:
  * https://github.com/liuch/dmarc-srg
@@ -29,7 +29,7 @@
  * @license  https://www.gnu.org/licenses/gpl-3.0.html GNU/GPLv3
  */
 
-namespace Liuch\DmarcSrg\Database\Mariadb;
+namespace Liuch\DmarcSrg\Database\Common;
 
 use Liuch\DmarcSrg\Core;
 use Liuch\DmarcSrg\Common;
@@ -43,7 +43,7 @@ use Liuch\DmarcSrg\Exception\DatabaseFatalException;
 use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
 
 /**
- * ReportMapper class implementation for MariaDB
+ * Universal implementation of ReportMapper class
  */
 class ReportMapper implements ReportMapperInterface
 {
@@ -79,13 +79,12 @@ class ReportMapper implements ReportMapperInterface
         $db = $this->connector->dbh();
         try {
             $st = $db->prepare(
-                'SELECT `rp`.`id`, `end_time`, `loaded_time`, `email`, `extra_contact_info`,'
-                . ' `error_string`, `policy_adkim`, `policy_aspf`, `policy_p`, `policy_sp`, `policy_np`,'
-                . ' `policy_pct`, `policy_fo`'
-                . ' FROM `' . $this->connector->tablePrefix('reports') . '` AS `rp`'
-                . ' INNER JOIN `' . $this->connector->tablePrefix('domains')
-                    . '` AS `dom` ON `dom`.`id` = `rp`.`domain_id`'
-                . ' WHERE `fqdn` = ? AND `begin_time` = ? AND `org` = ? AND `external_id` = ?'
+                'SELECT rp.id, end_time, loaded_time, email, extra_contact_info,'
+                . ' error_string, policy_adkim, policy_aspf, policy_p, policy_sp, policy_np,'
+                . ' policy_pct, policy_fo FROM ' . $this->connector->tablePrefix('reports')
+                . ' AS rp INNER JOIN ' . $this->connector->tablePrefix('domains')
+                . ' AS dom ON dom.id = rp.domain_id'
+                . ' WHERE fqdn = ? AND begin_time = ? AND org = ? AND external_id = ?'
             );
             $st->bindValue(1, $data->domain, \PDO::PARAM_STR);
             $st->bindValue(2, $data->date['begin']->format('Y-m-d H:i:s'), \PDO::PARAM_STR);
@@ -113,9 +112,9 @@ class ReportMapper implements ReportMapperInterface
 
             $order_str = $this->sqlOrderRecords();
             $st = $db->prepare(
-                'SELECT `report_id`, `ip`, `rcount`, `disposition`, `reason`, `dkim_auth` , `spf_auth`, `dkim_align`,'
-                . ' `spf_align`, `envelope_to`, `envelope_from`, `header_from`'
-                . ' FROM `' . $this->connector->tablePrefix('rptrecords') . '` WHERE `report_id` = ?' . $order_str
+                'SELECT report_id, ip, rcount, disposition, reason, dkim_auth , spf_auth, dkim_align,'
+                . ' spf_align, envelope_to, envelope_from, header_from FROM '
+                . $this->connector->tablePrefix('rptrecords') . ' WHERE report_id = ?' . $order_str
             );
             $st->bindValue(1, $id, \PDO::PARAM_INT);
             $st->execute();
@@ -175,10 +174,10 @@ class ReportMapper implements ReportMapperInterface
 
             $ct = new DateTime();
             $st = $db->prepare(
-                'INSERT INTO `' . $this->connector->tablePrefix('reports')
-                . '` (`domain_id`, `begin_time`, `end_time`, `loaded_time`, `org`, `external_id`, `email`,'
-                . ' `extra_contact_info`, `error_string`, `policy_adkim`, `policy_aspf`, `policy_p`,'
-                . ' `policy_sp`, `policy_np`, `policy_pct`, `policy_fo`, `seen`)'
+                'INSERT INTO ' . $this->connector->tablePrefix('reports')
+                . ' (domain_id, begin_time, end_time, loaded_time, org, external_id, email,'
+                . ' extra_contact_info, error_string, policy_adkim, policy_aspf, policy_p,'
+                . ' policy_sp, policy_np, policy_pct, policy_fo, seen)'
                 . ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)'
             );
             $st->bindValue(1, $domain_data['id'], \PDO::PARAM_INT);
@@ -202,9 +201,9 @@ class ReportMapper implements ReportMapperInterface
             $st->closeCursor();
 
             $st = $db->prepare(
-                'INSERT INTO `' . $this->connector->tablePrefix('rptrecords')
-                . '` (`report_id`, `ip`, `rcount`, `disposition`, `reason`, `dkim_auth`, `spf_auth`, `dkim_align`,'
-                . ' `spf_align`, `envelope_to`, `envelope_from`, `header_from`)'
+                'INSERT INTO ' . $this->connector->tablePrefix('rptrecords')
+                . ' (report_id, ip, rcount, disposition, reason, dkim_auth, spf_auth, dkim_align,'
+                . ' spf_align, envelope_to, envelope_from, header_from)'
                 . ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
             );
             foreach ($data->records as &$rec_data) {
@@ -256,10 +255,10 @@ class ReportMapper implements ReportMapperInterface
 
         try {
             $st = $this->connector->dbh()->prepare(
-                'UPDATE `' . $this->connector->tablePrefix('reports') . '` AS `rp`'
-                . ' INNER JOIN `' . $this->connector->tablePrefix('domains') . '` AS `dom`'
-                . ' ON `rp`.`domain_id` = `dom`.`id` SET `seen` = ?'
-                . ' WHERE `fqdn` = ? AND `begin_time` = ? AND `org` = ? AND `external_id` = ?'
+                'UPDATE ' . $this->connector->tablePrefix('reports') . ' AS rp'
+                . ' INNER JOIN ' . $this->connector->tablePrefix('domains') . ' AS dom'
+                . ' ON rp.domain_id = dom.id SET seen = ?'
+                . ' WHERE fqdn = ? AND begin_time = ? AND org = ? AND external_id = ?'
             );
             $st->bindValue(1, $value, \PDO::PARAM_BOOL);
             $st->bindValue(2, $data->domain, \PDO::PARAM_STR);
@@ -292,26 +291,26 @@ class ReportMapper implements ReportMapperInterface
         $db = $this->connector->dbh();
         $list = [];
         $f_data = $this->prepareFilterData($filter, 'rp');
-        $user_doms = $this->sqlUserRestriction($user_id, '`d`.`id`');
-        $order_str = $this->sqlOrderList($order, '`rp`.`id`');
+        $user_doms = $this->sqlUserRestriction($user_id, 'd.id');
+        $order_str = $this->sqlOrderList($order, 'rp.id');
         $cond_str0 = $this->sqlConditionList($f_data, ' AND ', 0);
         $cond_str1 = $this->sqlConditionList($f_data, ' HAVING ', 1);
         $limit_str = $this->sqlLimit($limit);
         try {
             $st = $db->prepare(
-                'SELECT `org`, `begin_time`, `end_time`, `fqdn`, `external_id`, `seen`, SUM(`rcount`) AS `rcount`,'
-                . ' SUM(IF(`dkim_align` = 0, `rcount`, 0)) AS `dkim_align_fail`,'
-                . ' SUM(IF(`dkim_align` = 1, `rcount`, 0)) AS `dkim_align_unknown`,'
-                . ' SUM(IF(`spf_align` = 0, `rcount`, 0)) AS `spf_align_fail`,'
-                . ' SUM(IF(`spf_align` = 1, `rcount`, 0)) AS `spf_align_unknown`,'
-                . ' SUM(IF(`disposition` = 0, `rcount`, 0)) AS `rejected`,'
-                . ' SUM(IF(`disposition` = 1, `rcount`, 0)) AS `quarantined`'
-                . ' FROM `' . $this->connector->tablePrefix('rptrecords')
-                . '` AS `rr` RIGHT JOIN (SELECT `rp`.`id`, `org`, `begin_time`, `end_time`, `external_id`,'
-                . ' `fqdn`, `seen` FROM `' . $this->connector->tablePrefix('reports')
-                . '` AS `rp` INNER JOIN `' . $this->connector->tablePrefix('domains')
-                . '` AS `d` ON `d`.`id` = `rp`.`domain_id`' . $user_doms . $cond_str0 . $order_str
-                . ') AS `rp` ON `rp`.`id` = `rr`.`report_id` GROUP BY `rp`.`id`'
+                'SELECT org, begin_time, end_time, fqdn, external_id, seen, SUM(rcount) AS rcount,'
+                . ' SUM(IF(dkim_align = 0, rcount, 0)) AS dkim_align_fail,'
+                . ' SUM(IF(dkim_align = 1, rcount, 0)) AS dkim_align_unknown,'
+                . ' SUM(IF(spf_align = 0, rcount, 0)) AS spf_align_fail,'
+                . ' SUM(IF(spf_align = 1, rcount, 0)) AS spf_align_unknown,'
+                . ' SUM(IF(disposition = 0, rcount, 0)) AS rejected,'
+                . ' SUM(IF(disposition = 1, rcount, 0)) AS quarantined'
+                . ' FROM ' . $this->connector->tablePrefix('rptrecords')
+                . ' AS rr RIGHT JOIN (SELECT rp.id, org, begin_time, end_time, external_id,'
+                . ' fqdn, seen FROM ' . $this->connector->tablePrefix('reports')
+                . ' AS rp INNER JOIN ' . $this->connector->tablePrefix('domains')
+                . ' AS d ON d.id = rp.domain_id' . $user_doms . $cond_str0 . $order_str
+                . ') AS rp ON rp.id = rr.report_id GROUP BY rp.id'
                 . $cond_str1 . $order_str . $limit_str
             );
             $this->sqlBindValues($st, $f_data, $limit);
@@ -370,31 +369,31 @@ class ReportMapper implements ReportMapperInterface
             if (isset($filter['dkim']) || isset($filter['spf']) || isset($filter['disposition'])) {
                 $st = $this->connector->dbh()->prepare(
                     'SELECT COUNT(*) FROM ('
-                    . 'SELECT SUM(IF(`dkim_align` = 0, `rcount`, 0)) AS `dkim_align_fail`,'
-                    . ' SUM(IF(`dkim_align` = 1, `rcount`, 0)) AS `dkim_align_unknown`,'
-                    . ' SUM(IF(`spf_align` = 0, `rcount`, 0)) AS `spf_align_fail`,'
-                    . ' SUM(IF(`spf_align` = 1, `rcount`, 0)) AS `spf_align_unknown`,'
-                    . ' SUM(IF(`disposition` = 0, `rcount`, 0)) AS `rejected`,'
-                    . ' SUM(IF(`disposition` = 1, `rcount`, 0)) AS `quarantined`'
-                    . ' FROM `' . $this->connector->tablePrefix('rptrecords')
-                    . '` AS `rr` RIGHT JOIN (SELECT `rp`.`id` FROM `' . $this->connector->tablePrefix('reports')
-                    . '` AS `rp` INNER JOIN `' . $this->connector->tablePrefix('domains')
-                    . '` AS `d` ON `d`.`id` = `rp`.`domain_id`' . $this->sqlUserRestriction($user_id, '`d`.`id`')
+                    . 'SELECT SUM(IF(dkim_align = 0, rcount, 0)) AS dkim_align_fail,'
+                    . ' SUM(IF(dkim_align = 1, rcount, 0)) AS dkim_align_unknown,'
+                    . ' SUM(IF(spf_align = 0, rcount, 0)) AS spf_align_fail,'
+                    . ' SUM(IF(spf_align = 1, rcount, 0)) AS spf_align_unknown,'
+                    . ' SUM(IF(disposition = 0, rcount, 0)) AS rejected,'
+                    . ' SUM(IF(disposition = 1, rcount, 0)) AS quarantined'
+                    . ' FROM ' . $this->connector->tablePrefix('rptrecords')
+                    . ' AS rr RIGHT JOIN (SELECT rp.id FROM ' . $this->connector->tablePrefix('reports')
+                    . ' AS rp INNER JOIN ' . $this->connector->tablePrefix('domains')
+                    . ' AS d ON d.id = rp.domain_id' . $this->sqlUserRestriction($user_id, 'd.id')
                     . $this->sqlConditionList($f_data, ' AND ', 0)
-                    . ') AS `rp` ON `rp`.`id` = `rr`.`report_id` GROUP BY `rp`.`id`'
+                    . ') AS rp ON rp.id = rr.report_id GROUP BY rp.id'
                     . $this->sqlConditionList($f_data, ' HAVING ', 1)
-                    . ') AS `ct`'
+                    . ') AS ct'
                 );
             } elseif ($user_id) {
                 $st = $this->connector->dbh()->prepare(
-                    'SELECT COUNT(*) FROM `' . $this->connector->tablePrefix('reports') . '` AS `rp`'
-                    . ' INNER JOIN `' . $this->connector->tablePrefix('domains')
-                    . '` AS `d` ON `d`.`id` = `rp`.`domain_id`' . $this->sqlUserRestriction($user_id, '`d`.`id`')
+                    'SELECT COUNT(*) FROM ' . $this->connector->tablePrefix('reports') . ' AS rp'
+                    . ' INNER JOIN ' . $this->connector->tablePrefix('domains')
+                    . ' AS d ON d.id = rp.domain_id' . $this->sqlUserRestriction($user_id, 'd.id')
                     . $this->sqlConditionList($f_data, ' AND ', 0)
                 );
             } else {
                 $st = $this->connector->dbh()->prepare(
-                    'SELECT COUNT(*) FROM `' . $this->connector->tablePrefix('reports') . '` AS `rp`'
+                    'SELECT COUNT(*) FROM ' . $this->connector->tablePrefix('reports') . ' AS rp'
                     . $this->sqlConditionList($f_data, ' WHERE ', 0)
                 );
             }
@@ -441,7 +440,7 @@ class ReportMapper implements ReportMapperInterface
         }
         $f_data = $this->prepareFilterData($filter, '');
         $cond_str = $this->sqlConditionList($f_data, ' WHERE ', 0);
-        $order_str = $this->sqlOrderList($order, '`id`');
+        $order_str = $this->sqlOrderList($order, 'id');
         $limit_str = $this->sqlLimit($limit);
         $db = $this->connector->dbh();
         if (!$db->inTransaction()) {
@@ -452,16 +451,16 @@ class ReportMapper implements ReportMapperInterface
         }
         try {
             $st = $db->prepare(
-                'DELETE `rr` FROM `' . $this->connector->tablePrefix('rptrecords')
-                . '` AS `rr` INNER JOIN (SELECT `id` FROM `' . $this->connector->tablePrefix('reports') . '`'
-                . $cond_str . $order_str . $limit_str . ') AS `rp` ON `rp`.`id` = `rr`.`report_id`'
+                'DELETE rr FROM ' . $this->connector->tablePrefix('rptrecords')
+                . ' AS rr INNER JOIN (SELECT id FROM ' . $this->connector->tablePrefix('reports')
+                . $cond_str . $order_str . $limit_str . ') AS rp ON rp.id = rr.report_id'
             );
             $this->sqlBindValues($st, $f_data, $limit);
             $st->execute();
             $st->closeCursor();
 
             $st = $db->prepare(
-                'DELETE FROM `' . $this->connector->tablePrefix('reports') . "`{$cond_str}{$order_str}{$limit_str}"
+                'DELETE FROM ' . $this->connector->tablePrefix('reports') . "{$cond_str}{$order_str}{$limit_str}"
             );
             $this->sqlBindValues($st, $f_data, $limit);
             $st->execute();
@@ -495,12 +494,12 @@ class ReportMapper implements ReportMapperInterface
         $res = [];
         $rep_tn = $this->connector->tablePrefix('reports');
         try {
-            $ud = $this->sqlUserRestriction($user_id, '`rp`.`domain_id`');
+            $ud = $this->sqlUserRestriction($user_id, 'rp.domain_id');
             $st = $this->connector->dbh()->query(
-                'SELECT DISTINCT DATE_FORMAT(`date`, "%Y-%m") AS `month` FROM'
-                . ' ((SELECT DISTINCT `begin_time` AS `date` FROM `' . $rep_tn
-                . '` AS `rp`' . $ud . ') UNION (SELECT DISTINCT `end_time` AS `date` FROM `' . $rep_tn
-                . '` AS `rp`' . $ud . ')) AS `r` ORDER BY `month` DESC'
+                'SELECT DISTINCT DATE_FORMAT(date, \'%Y-%m\') AS month FROM'
+                . ' ((SELECT DISTINCT begin_time AS date FROM ' . $rep_tn
+                . ' AS rp' . $ud . ') UNION (SELECT DISTINCT end_time AS date FROM ' . $rep_tn
+                . ' AS rp' . $ud . ')) AS r ORDER BY month DESC'
             );
             while ($row = $st->fetch(\PDO::FETCH_NUM)) {
                 $res[] = $row[0];
@@ -524,9 +523,9 @@ class ReportMapper implements ReportMapperInterface
         $res = [];
         $rep_tn = $this->connector->tablePrefix('reports');
         try {
-            $ud = $this->sqlUserRestriction($user_id, '`rp`.`domain_id`');
+            $ud = $this->sqlUserRestriction($user_id, 'rp.domain_id');
             $st = $this->connector->dbh()->query(
-                'SELECT DISTINCT `org` FROM `' . $rep_tn . "` AS `rp`{$ud} ORDER BY `org`"
+                'SELECT DISTINCT org FROM ' . $rep_tn . " AS rp{$ud} ORDER BY org"
             );
             while ($row = $st->fetch(\PDO::FETCH_NUM)) {
                 $res[] = $row[0];
@@ -551,8 +550,8 @@ class ReportMapper implements ReportMapperInterface
         if (!$user_id) {
             return '';
         }
-        return ' INNER JOIN `' . $this->connector->tablePrefix('userdomains') . '` AS `ud` ON '
-            . $column . ' = `ud`.`domain_id` WHERE `user_id` = ' . $user_id;
+        return ' INNER JOIN ' . $this->connector->tablePrefix('userdomains') . ' AS ud ON '
+            . $column . ' = ud.domain_id WHERE user_id = ' . $user_id;
     }
 
     /**
@@ -574,7 +573,7 @@ class ReportMapper implements ReportMapperInterface
         }
         $dir = $o_set[1] === 'descent' ? 'DESC' : 'ASC';
 
-        return " ORDER BY `{$fname}` {$dir}";
+        return " ORDER BY {$fname} {$dir}";
     }
 
     /**
@@ -677,7 +676,7 @@ class ReportMapper implements ReportMapperInterface
         }
 
         $dir = $order['direction'] === 'ascent' ? 'ASC' : 'DESC';
-        $res = " ORDER BY `{$order['field']}` {$dir}";
+        $res = " ORDER BY {$order['field']} {$dir}";
         if (!empty($tail_field)) {
             $res .= ", {$tail_field} {$dir}";
         }
@@ -709,7 +708,7 @@ class ReportMapper implements ReportMapperInterface
             ];
         }
         if (!empty($tname)) {
-            $tname = "`{$tname}`.";
+            $tname = "{$tname}.";
         }
         foreach (self::$filters_available as $fn) {
             if (isset($filter[$fn])) {
@@ -718,7 +717,7 @@ class ReportMapper implements ReportMapperInterface
                     case 'string':
                         if (!empty($fv)) {
                             if ($fn == 'domain') {
-                                $filters[0]['a_str'][] = $tname . '`domain_id` = ?';
+                                $filters[0]['a_str'][] = $tname . 'domain_id = ?';
                                 $d_data = [ 'fqdn' => $fv ];
                                 $this->connector->getMapper('domain')->fetch($d_data);
                                 $filters[0]['bindings'][] = [ $d_data['id'], \PDO::PARAM_INT ];
@@ -732,7 +731,7 @@ class ReportMapper implements ReportMapperInterface
                                 if ($year < 0 || $month < 1 || $month > 12) {
                                     throw new SoftException('Report list filter: Incorrect month or year value');
                                 }
-                                $filters[0]['a_str'][] = '`begin_time` < ? AND `end_time` >= ?';
+                                $filters[0]['a_str'][] = 'begin_time < ? AND end_time >= ?';
                                 $date1 = new DateTime("{$year}-{$month}-01");
                                 $date2 = (clone $date1)->modify('first day of next month');
                                 $date1->add(new \DateInterval('PT10S'));
@@ -740,36 +739,36 @@ class ReportMapper implements ReportMapperInterface
                                 $filters[0]['bindings'][] = [ $date2->format('Y-m-d H:i:s'), \PDO::PARAM_STR ];
                                 $filters[0]['bindings'][] = [ $date1->format('Y-m-d H:i:s'), \PDO::PARAM_STR ];
                             } elseif ($fn == 'organization') {
-                                $filters[0]['a_str'][] = '`org` = ?';
+                                $filters[0]['a_str'][] = 'org = ?';
                                 $filters[0]['bindings'][] = [ $fv, \PDO::PARAM_STR ];
                             } elseif ($fn == 'dkim') {
                                 if (!in_array($fv, Common::$align_res, true)) {
                                     throw new SoftException('Report list filter: Incorrect DKIM value');
                                 }
                                 if ($fv === 'pass') {
-                                    $filters[1]['a_str'][] = '`dkim_align_fail` = 0 AND `dkim_align_unknown` = 0';
+                                    $filters[1]['a_str'][] = 'dkim_align_fail = 0 AND dkim_align_unknown = 0';
                                 } else {
-                                    $filters[1]['a_str'][] = "`dkim_align_{$fv}` > 0";
+                                    $filters[1]['a_str'][] = "dkim_align_{$fv} > 0";
                                 }
                             } elseif ($fn == 'spf') {
                                 if (!in_array($fv, Common::$align_res, true)) {
                                     throw new SoftException('Report list filter: Incorrect SPF value');
                                 }
                                 if ($fv === 'pass') {
-                                    $filters[1]['a_str'][] = '`spf_align_fail` = 0 AND `spf_align_unknown` = 0';
+                                    $filters[1]['a_str'][] = 'spf_align_fail = 0 AND spf_align_unknown = 0';
                                 } else {
-                                    $filters[1]['a_str'][] = "`spf_align_{$fv}` > 0";
+                                    $filters[1]['a_str'][] = "spf_align_{$fv} > 0";
                                 }
                             } elseif ($fn == 'disposition') {
                                 switch ($fv) {
                                     case 'none':
-                                        $str = '`rejected` = 0 AND `quarantined` = 0';
+                                        $str = 'rejected = 0 AND quarantined = 0';
                                         break;
                                     case 'quarantine':
-                                        $str = '`quarantined` > 0';
+                                        $str = 'quarantined > 0';
                                         break;
                                     case 'reject':
-                                        $str = '`rejected` > 0';
+                                        $str = 'rejected > 0';
                                         break;
                                     default:
                                         throw new SoftException('Report list filter: Incorrect value of disposition');
@@ -783,23 +782,23 @@ class ReportMapper implements ReportMapperInterface
                                 } else {
                                     throw new SoftException('Report list filter: Incorrect status value');
                                 }
-                                $filters[0]['a_str'][] = '`seen` = ?';
+                                $filters[0]['a_str'][] = 'seen = ?';
                                 $filters[0]['bindings'][] = [ $val, \PDO::PARAM_BOOL ];
                             }
                         }
                         break;
                     case 'object':
                         if ($fn == 'domain') {
-                            $filters[0]['a_str'][] = $tname . '`domain_id` = ?';
+                            $filters[0]['a_str'][] = $tname . 'domain_id = ?';
                             $filters[0]['bindings'][] = [ $fv->id(), \PDO::PARAM_INT ];
                         } elseif ($fn == 'before_time') {
-                            $filters[0]['a_str'][] = '`begin_time` < ?';
+                            $filters[0]['a_str'][] = 'begin_time < ?';
                             $filters[0]['bindings'][] = [ $fv->format('Y-m-d H:i:s'), \PDO::PARAM_STR ];
                         }
                         break;
                     case 'integer':
                         if ($fn == 'domain') {
-                            $filters[0]['a_str'][] = $tname . '`domain_id` = ?';
+                            $filters[0]['a_str'][] = $tname . 'domain_id = ?';
                             $filters[0]['bindings'][] = [ $fv, \PDO::PARAM_INT ];
                         }
                         break;

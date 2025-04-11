@@ -2,7 +2,7 @@
 
 /**
  * dmarc-srg - A php parser, viewer and summary report generator for incoming DMARC reports.
- * Copyright (C) 2022-2024 Aleksey Andreev (liuch)
+ * Copyright (C) 2022-2025 Aleksey Andreev (liuch)
  *
  * Available at:
  * https://github.com/liuch/dmarc-srg
@@ -29,7 +29,7 @@
  * @license  https://www.gnu.org/licenses/gpl-3.0.html GNU/GPLv3
  */
 
-namespace Liuch\DmarcSrg\Database\Mariadb;
+namespace Liuch\DmarcSrg\Database\Common;
 
 use Liuch\DmarcSrg\Common;
 use Liuch\DmarcSrg\Exception\SoftException;
@@ -37,7 +37,7 @@ use Liuch\DmarcSrg\Exception\DatabaseFatalException;
 use Liuch\DmarcSrg\Database\StatisticsMapperInterface;
 
 /**
- * StatisticsMapper class implementation for MariaDB
+ * Universal implementation of StatisticsMapper class
  */
 class StatisticsMapper implements StatisticsMapperInterface
 {
@@ -81,14 +81,14 @@ class StatisticsMapper implements StatisticsMapperInterface
             $users  = $this->sqlUserRestriction($user_id);
             $f_data = $this->prepareFilterData($domain, $range, $user_id, $filter);
             $st = $db->prepare(
-                'SELECT SUM(`rcount`), SUM(IF(`dkim_align` = 2 AND `spf_align` = 2, `rcount`, 0)),'
-                . ' SUM(IF(`dkim_align` = 2 AND `spf_align` <> 2, `rcount`, 0)),'
-                . ' SUM(IF(`dkim_align` <> 2 AND `spf_align` = 2, `rcount`, 0)),'
-                . ' SUM(IF(`disposition` = 0, `rcount`, 0)),'
-                . ' SUM(IF(`disposition` = 1, `rcount`, 0))'
-                . ' FROM `' . $this->connector->tablePrefix('rptrecords') . '` AS `rr`'
-                . ' INNER JOIN `' . $this->connector->tablePrefix('reports')
-                . '` AS `rp` ON `rr`.`report_id` = `rp`.`id`' . $users
+                'SELECT SUM(rcount), SUM(IF(dkim_align = 2 AND spf_align = 2, rcount, 0)),'
+                . ' SUM(IF(dkim_align = 2 AND spf_align <> 2, rcount, 0)),'
+                . ' SUM(IF(dkim_align <> 2 AND spf_align = 2, rcount, 0)),'
+                . ' SUM(IF(disposition = 0, rcount, 0)),'
+                . ' SUM(IF(disposition = 1, rcount, 0))'
+                . ' FROM ' . $this->connector->tablePrefix('rptrecords') . ' AS rr'
+                . ' INNER JOIN ' . $this->connector->tablePrefix('reports')
+                . ' AS rp ON rr.report_id = rp.id' . $users
                 . $this->sqlCondition($f_data, ' WHERE ', 0) . $this->sqlCondition($f_data, ' AND ', 1)
             );
             $this->sqlBindValues($st, $f_data, [ 0, 1 ]);
@@ -106,19 +106,19 @@ class StatisticsMapper implements StatisticsMapperInterface
 
             if (!isset($filter['dkim']) && !isset($filter['spf']) && !isset($filter['disposition'])) {
                 $st = $db->prepare(
-                    'SELECT COUNT(*) FROM (SELECT `org` FROM `' . $this->connector->tablePrefix('reports') . '` AS `rp`'
-                    . $users . $this->sqlCondition($f_data, ' WHERE ', 0) . ' GROUP BY `org`) AS `orgs`'
+                    'SELECT COUNT(*) FROM (SELECT org FROM ' . $this->connector->tablePrefix('reports') . ' AS rp'
+                    . $users . $this->sqlCondition($f_data, ' WHERE ', 0) . ' GROUP BY org) AS orgs'
                 );
             } else {
                 $st = $db->prepare(
-                    'SELECT COUNT(*) FROM (SELECT `org` FROM ('
-                    . 'SELECT `org`, MIN(`dkim_align`) as `dkim_align`, MIN(`spf_align`) AS `spf_align`,'
-                    . ' MIN(`disposition`) AS `disposition`'
-                    . ' FROM `' . $this->connector->tablePrefix('reports') . '` AS `rp`'
-                    . ' INNER JOIN `' . $this->connector->tablePrefix('rptrecords') . '` AS `rr`'
-                    . ' ON `rp`.`id` = `rr`.`report_id`' . $users . $this->sqlCondition($f_data, ' WHERE ', 0)
-                    . ' GROUP BY `rr`.`report_id`'
-                    . ') AS `sr`' . $this->sqlCondition($f_data, ' WHERE ', 1) . ' GROUP BY `org`) AS `orgs`'
+                    'SELECT COUNT(*) FROM (SELECT org FROM ('
+                    . 'SELECT org, MIN(dkim_align) as dkim_align, MIN(spf_align) AS spf_align,'
+                    . ' MIN(disposition) AS disposition FROM '
+                    . $this->connector->tablePrefix('reports') . ' AS rp'
+                    . ' INNER JOIN ' . $this->connector->tablePrefix('rptrecords') . ' AS rr'
+                    . ' ON rp.id = rr.report_id' . $users . $this->sqlCondition($f_data, ' WHERE ', 0)
+                    . ' GROUP BY rr.report_id'
+                    . ') AS sr' . $this->sqlCondition($f_data, ' WHERE ', 1) . ' GROUP BY org) AS orgs'
                 );
             }
 
@@ -152,17 +152,17 @@ class StatisticsMapper implements StatisticsMapperInterface
         try {
             $f_data = $this->prepareFilterData($domain, $range, $user_id, $filter);
             $st = $this->connector->dbh()->prepare(
-                'SELECT `ip`, SUM(`rcount`) AS `rcount`,'
-                . ' SUM(IF(`dkim_align` = 2 AND `spf_align` = 2, `rcount`, 0)) AS `dkim_spf_aligned`,'
-                . ' SUM(IF(`dkim_align` = 2 AND `spf_align` <> 2, `rcount`, 0)) AS `dkim_aligned`,'
-                . ' SUM(IF(`dkim_align` <> 2 AND `spf_align` = 2, `rcount`, 0)) AS `spf_aligned`,'
-                . ' SUM(IF(`disposition` = 0, `rcount`, 0)),'
-                . ' SUM(IF(`disposition` = 1, `rcount`, 0))'
-                . ' FROM `' . $this->connector->tablePrefix('rptrecords') . '` AS `rr`'
-                . ' INNER JOIN `' . $this->connector->tablePrefix('reports')
-                . '` AS `rp` ON `rr`.`report_id` = `rp`.`id`' . $this->sqlUserRestriction($user_id)
+                'SELECT ip, SUM(rcount) AS rcount,'
+                . ' SUM(IF(dkim_align = 2 AND spf_align = 2, rcount, 0)) AS dkim_spf_aligned,'
+                . ' SUM(IF(dkim_align = 2 AND spf_align <> 2, rcount, 0)) AS dkim_aligned,'
+                . ' SUM(IF(dkim_align <> 2 AND spf_align = 2, rcount, 0)) AS spf_aligned,'
+                . ' SUM(IF(disposition = 0, rcount, 0)),'
+                . ' SUM(IF(disposition = 1, rcount, 0))'
+                . ' FROM ' . $this->connector->tablePrefix('rptrecords') . ' AS rr'
+                . ' INNER JOIN ' . $this->connector->tablePrefix('reports')
+                . ' AS rp ON rr.report_id = rp.id' . $this->sqlUserRestriction($user_id)
                 . $this->sqlCondition($f_data, ' WHERE ', 0) . $this->sqlCondition($f_data, ' AND ', 1)
-                . ' GROUP BY `ip` ORDER BY `rcount` DESC'
+                . ' GROUP BY ip ORDER BY rcount DESC'
             );
             $this->sqlBindValues($st, $f_data, [ 0, 1 ]);
             $st->execute();
@@ -201,21 +201,21 @@ class StatisticsMapper implements StatisticsMapperInterface
         try {
             $f_data = $this->prepareFilterData($domain, $range, $user_id, $filter);
             $st = $this->connector->dbh()->prepare(
-                'SELECT `org`, COUNT(*), SUM(`rr`.`rcount`) AS `rcount`,'
-                . ' SUM(`rr`.`dkim_spf_aligned`), SUM(`rr`.`dkim_aligned`), SUM(`rr`.`spf_aligned`),'
-                . ' SUM(`rr`.`rejected`), SUM(`rr`.`quarantined`)'
-                . ' FROM `' . $this->connector->tablePrefix('reports') . '` AS `rp`'
-                . ' INNER JOIN (SELECT `report_id`, SUM(`rcount`) AS `rcount`,'
-                . ' SUM(IF(`dkim_align` = 2 AND `spf_align` = 2, `rcount`, 0)) AS `dkim_spf_aligned`,'
-                . ' SUM(IF(`dkim_align` = 2 AND `spf_align` <> 2, `rcount`, 0)) AS `dkim_aligned`,'
-                . ' SUM(IF(`dkim_align` <> 2 AND `spf_align` = 2, `rcount`, 0)) AS `spf_aligned`,'
-                . ' SUM(IF(`disposition` = 0, `rcount`, 0)) AS `rejected`,'
-                . ' SUM(IF(`disposition` = 1, `rcount`, 0)) AS `quarantined` FROM `'
-                . $this->connector->tablePrefix('rptrecords') . '`'
+                'SELECT org, COUNT(*), SUM(rr.rcount) AS rcount,'
+                . ' SUM(rr.dkim_spf_aligned), SUM(rr.dkim_aligned), SUM(rr.spf_aligned),'
+                . ' SUM(rr.rejected), SUM(rr.quarantined) FROM '
+                . $this->connector->tablePrefix('reports') . ' AS rp'
+                . ' INNER JOIN (SELECT report_id, SUM(rcount) AS rcount,'
+                . ' SUM(IF(dkim_align = 2 AND spf_align = 2, rcount, 0)) AS dkim_spf_aligned,'
+                . ' SUM(IF(dkim_align = 2 AND spf_align <> 2, rcount, 0)) AS dkim_aligned,'
+                . ' SUM(IF(dkim_align <> 2 AND spf_align = 2, rcount, 0)) AS spf_aligned,'
+                . ' SUM(IF(disposition = 0, rcount, 0)) AS rejected,'
+                . ' SUM(IF(disposition = 1, rcount, 0)) AS quarantined FROM '
+                . $this->connector->tablePrefix('rptrecords')
                 . $this->sqlCondition($f_data, ' WHERE ', 1)
-                . ' GROUP BY `report_id`) AS `rr` ON `rp`.`id` = `rr`.`report_id`'
+                . ' GROUP BY report_id) AS rr ON rp.id = rr.report_id'
                 . $this->sqlUserRestriction($user_id) . $this->sqlCondition($f_data, ' WHERE ', 0)
-                . ' GROUP BY `org` ORDER BY `rcount` DESC'
+                . ' GROUP BY org ORDER BY rcount DESC'
             );
             $this->sqlBindValues($st, $f_data, [ 1, 0 ]);
             $st->execute();
@@ -263,14 +263,14 @@ class StatisticsMapper implements StatisticsMapperInterface
         $bindings1 = [];
         $bindings2 = [];
         if ($user_id) {
-            $sql_cond1[] = '`user_id` = ?';
+            $sql_cond1[] = 'user_id = ?';
             $bindings1[] = [ $user_id, \PDO::PARAM_INT ];
         }
         if ($domain) {
-            $sql_cond1[] = '`rp`.`domain_id` = ?';
+            $sql_cond1[] = 'rp.domain_id = ?';
             $bindings1[] = [ $domain->id(), \PDO::PARAM_INT ];
         }
-        $sql_cond1[] = '`begin_time` < ? AND `end_time` >= ?';
+        $sql_cond1[] = 'begin_time < ? AND end_time >= ?';
         $bindings1[] = [
             (clone $range['date2'])->sub(new \DateInterval('PT10S'))->format('Y-m-d H:i:s'), \PDO::PARAM_STR
         ];
@@ -284,7 +284,7 @@ class StatisticsMapper implements StatisticsMapperInterface
             $fvalue = $filter[$fname];
             switch ($fname) {
                 case 'organization':
-                    $sql_cond1[] = '`org` = ?';
+                    $sql_cond1[] = 'org = ?';
                     $bindings1[] = [ $fvalue, \PDO::PARAM_STR ];
                     break;
                 case 'dkim':
@@ -296,7 +296,7 @@ class StatisticsMapper implements StatisticsMapperInterface
                             throw new SoftException('Filter: Incorrect DKIM value');
                         }
                     }
-                    $sql_cond2[] = '`dkim_align` = ?';
+                    $sql_cond2[] = 'dkim_align = ?';
                     $bindings2[] = [ $val, \PDO::PARAM_INT ];
                     break;
                 case 'spf':
@@ -308,7 +308,7 @@ class StatisticsMapper implements StatisticsMapperInterface
                             throw new SoftException('Filter: Incorrect SPF value');
                         }
                     }
-                    $sql_cond2[] = '`spf_align` = ?';
+                    $sql_cond2[] = 'spf_align = ?';
                     $bindings2[] = [ $val, \PDO::PARAM_INT ];
                     break;
                 case 'disposition':
@@ -316,7 +316,7 @@ class StatisticsMapper implements StatisticsMapperInterface
                     if ($val === false) {
                         throw new SoftException('Filter: Incorrect value of disposition');
                     }
-                    $sql_cond2[] = '`disposition` = ?';
+                    $sql_cond2[] = 'disposition = ?';
                     $bindings2[] = [ $val, \PDO::PARAM_INT ];
                     break;
                 case 'status':
@@ -327,7 +327,7 @@ class StatisticsMapper implements StatisticsMapperInterface
                     } else {
                         throw new SoftException('Filter: Incorrect status value');
                     }
-                    $sql_cond1[] = '`seen` = ?';
+                    $sql_cond1[] = 'seen = ?';
                     $bindings1[] = [ $val, \PDO::PARAM_BOOL ];
                     break;
             }
@@ -350,8 +350,8 @@ class StatisticsMapper implements StatisticsMapperInterface
         if (!$user_id) {
             return '';
         }
-        return ' INNER JOIN `' . $this->connector->tablePrefix('userdomains')
-            . '` AS `ud` ON `rp`.`domain_id` = `ud`.`domain_id`';
+        return ' INNER JOIN ' . $this->connector->tablePrefix('userdomains')
+            . ' AS ud ON rp.domain_id = ud.domain_id';
     }
 
     /**

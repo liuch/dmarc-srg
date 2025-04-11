@@ -98,7 +98,14 @@ abstract class DatabaseConnector
             throw new LogicException('Unknown mapper name: ' . $name);
         }
 
-        $mapper_name = (new \ReflectionClass($this))->getNamespaceName() . '\\' . self::$names[$name];
+        $reflection = new \ReflectionClass($this);
+        $mapper_name = $reflection->getNamespaceName() . '\\' . self::$names[$name];
+        if (!class_exists($mapper_name)) {
+            $reflection = $reflection->getParentClass();
+            if ($reflection) {
+                $mapper_name = $reflection->getNamespaceName() . '\\Common\\' . self::$names[$name];
+            }
+        }
         $mapper = new $mapper_name($this);
         $this->mappers[$name] = $mapper;
         return $mapper;

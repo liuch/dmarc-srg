@@ -2,7 +2,7 @@
 
 /**
  * dmarc-srg - A php parser, viewer and summary report generator for incoming DMARC reports.
- * Copyright (C) 2023-2024 Aleksey Andreev (liuch)
+ * Copyright (C) 2023-2025 Aleksey Andreev (liuch)
  *
  * Available at:
  * https://github.com/liuch/dmarc-srg
@@ -29,7 +29,7 @@
  * @license  https://www.gnu.org/licenses/gpl-3.0.html GNU/GPLv3
  */
 
-namespace Liuch\DmarcSrg\Database\Mariadb;
+namespace Liuch\DmarcSrg\Database\Common;
 
 use Liuch\DmarcSrg\DateTime;
 use Liuch\DmarcSrg\Database\UserMapperInterface;
@@ -37,7 +37,7 @@ use Liuch\DmarcSrg\Exception\DatabaseFatalException;
 use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
 
 /**
- * UserMapper class implementation for MariaDB
+ * Universal implementation of UserMapper class
  */
 class UserMapper implements UserMapperInterface
 {
@@ -65,7 +65,7 @@ class UserMapper implements UserMapperInterface
     {
         try {
             $st = $this->connector->dbh()->prepare(
-                'SELECT `id` FROM `' . $this->connector->tablePrefix('users') . '` WHERE ' . $this->sqlCondition($data)
+                'SELECT id FROM ' . $this->connector->tablePrefix('users') . ' WHERE ' . $this->sqlCondition($data)
             );
             $this->sqlBindValues($st, $data, 1);
             $st->execute();
@@ -92,9 +92,9 @@ class UserMapper implements UserMapperInterface
     {
         try {
             $st = $this->connector->dbh()->prepare(
-                'SELECT `id`, `name`, `level`, `enabled`, IF(`password` IS NULL OR `password` = "", FALSE, TRUE),'
-                . ' `email`, `key`, `session`, `created_time`, `updated_time` FROM `'
-                . $this->connector->tablePrefix('users') . '` WHERE ' . $this->sqlCondition($data)
+                'SELECT id, name, level, enabled, IF(password IS NULL OR password = \'\', FALSE, TRUE),'
+                . ' email, "key", session, created_time, updated_time FROM '
+                . $this->connector->tablePrefix('users') . ' WHERE ' . $this->sqlCondition($data)
             );
             $this->sqlBindValues($st, $data, 1);
             $st->execute();
@@ -137,20 +137,20 @@ class UserMapper implements UserMapperInterface
                 $u_tn = $this->connector->tablePrefix('users');
                 $extra = '';
                 if (!$enabled) {
-                    $st = $db->prepare("SELECT `enabled` FROM `{$u_tn}` WHERE `id` = ?");
+                    $st = $db->prepare("SELECT enabled FROM {$u_tn} WHERE id = ?");
                     $st->bindValue(1, $id, \PDO::PARAM_INT);
                     $st->execute();
                     $res = $st->fetch(\PDO::FETCH_NUM);
                     $st->closeCursor();
                     if ($res && boolval($res[0])) {
                         // The user got deactivated. Reset its active sessions.
-                        $extra = ', `session` = `session` + 1';
+                        $extra = ', session = session + 1';
                     }
                 }
                 $st = $db->prepare(
-                    'UPDATE `' . $u_tn
-                    . '` SET `level` = ?, `enabled` = ?, `email` = ?, `key` = ?, `updated_time` = ?'
-                    . $extra . ' WHERE `id` = ?'
+                    'UPDATE ' . $u_tn
+                    . ' SET level = ?, enabled = ?, email = ?, "key" = ?, updated_time = ?'
+                    . $extra . ' WHERE id = ?'
                 );
                 $st->bindValue(1, $data['level'], \PDO::PARAM_INT);
                 $st->bindValue(2, $enabled, \PDO::PARAM_BOOL);
@@ -180,19 +180,19 @@ class UserMapper implements UserMapperInterface
             try {
                 $data['created_time'] = $data['updated_time'];
                 if (!is_null($data['email'])) {
-                    $ss1 = ', `email`';
+                    $ss1 = ', email';
                     $ss2 = ', ?';
                 } else {
                     $ss1 = '';
                     $ss2 = '';
                 }
                 if (!is_null($data['key'])) {
-                    $ss1 .= ', `key`';
+                    $ss1 .= ', "key"';
                     $ss2 .= ', ?';
                 }
                 $st = $db->prepare(
-                    'INSERT INTO `' . $this->connector->tablePrefix('users')
-                    . '` (`name`, `level`, `enabled`' . $ss1 . ', `session`, `created_time`, `updated_time`)'
+                    'INSERT INTO ' . $this->connector->tablePrefix('users')
+                    . ' (name, level, enabled' . $ss1 . ', session, created_time, updated_time)'
                     . ' VALUES (?, ?, ?' . $ss2 . ', ?, ?, ?)'
                 );
                 $idx = 0;
@@ -232,16 +232,16 @@ class UserMapper implements UserMapperInterface
         $db->beginTransaction();
         try {
             $id = $data['id'];
-            $st = $db->prepare('DELETE FROM `' . $this->connector->tablePrefix('userdomains')
-                . '` WHERE `user_id` = ?');
+            $st = $db->prepare('DELETE FROM ' . $this->connector->tablePrefix('userdomains')
+                . ' WHERE user_id = ?');
             $st->bindValue(1, $id, \PDO::PARAM_INT);
             $st->execute();
             $st->closeCursor();
-            $st = $db->prepare('DELETE FROM `' . $this->connector->tablePrefix('system') . '` WHERE `user_id` = ?');
+            $st = $db->prepare('DELETE FROM ' . $this->connector->tablePrefix('system') . ' WHERE user_id = ?');
             $st->bindValue(1, $id, \PDO::PARAM_INT);
             $st->execute();
             $st->closeCursor();
-            $st = $db->prepare('DELETE FROM `' . $this->connector->tablePrefix('users') . '` WHERE `id` = ?');
+            $st = $db->prepare('DELETE FROM ' . $this->connector->tablePrefix('users') . ' WHERE id = ?');
             $st->bindValue(1, $id, \PDO::PARAM_INT);
             $st->execute();
             $st->closeCursor();
@@ -265,10 +265,9 @@ class UserMapper implements UserMapperInterface
         $list = [];
         try {
             $st = $this->connector->dbh()->query(
-                'SELECT `id`, `name`, `level`, `enabled`, `email`, `key`, `created_time`, `updated_time`, '
-                . '(SELECT COUNT(*) FROM `' . $this->connector->tablePrefix('userdomains')
-                . '` WHERE `user_id` = `id`) AS `domains` FROM `'
-                . $this->connector->tablePrefix('users') . '`'
+                'SELECT id, name, level, enabled, email, "key", created_time, updated_time, '
+                . '(SELECT COUNT(*) FROM ' . $this->connector->tablePrefix('userdomains')
+                . ' WHERE user_id = id) AS domains FROM ' . $this->connector->tablePrefix('users')
             );
             while ($row = $st->fetch(\PDO::FETCH_NUM)) {
                 $list [] = [
@@ -302,8 +301,8 @@ class UserMapper implements UserMapperInterface
         $hash = '';
         try {
             $st = $this->connector->dbh()->prepare(
-                'SELECT `password` FROM `' . $this->connector->tablePrefix('users')
-                . '` WHERE ' . $this->sqlCondition($data)
+                'SELECT password FROM ' . $this->connector->tablePrefix('users')
+                . ' WHERE ' . $this->sqlCondition($data)
             );
             $this->sqlBindValues($st, $data, 1);
             $st->execute();
@@ -329,8 +328,8 @@ class UserMapper implements UserMapperInterface
     {
         try {
             $st = $this->connector->dbh()->prepare(
-                'UPDATE `' . $this->connector->tablePrefix('users')
-                . '` SET `password` = ?, `session` = `session` + 1 WHERE ' . $this->sqlCondition($data)
+                'UPDATE ' . $this->connector->tablePrefix('users')
+                . ' SET password = ?, session = session + 1 WHERE ' . $this->sqlCondition($data)
             );
             $st->bindValue(1, $hash, \PDO::PARAM_STR);
             $this->sqlBindValues($st, $data, 2);
@@ -353,8 +352,8 @@ class UserMapper implements UserMapperInterface
     {
         try {
             $st = $this->connector->dbh()->prepare(
-                'UPDATE `' . $this->connector->tablePrefix('users')
-                . '` SET `key` = ? WHERE ' . $this->sqlCondition($data)
+                'UPDATE ' . $this->connector->tablePrefix('users')
+                . ' SET "key" = ? WHERE ' . $this->sqlCondition($data)
             );
             $st->bindValue(1, $key, \PDO::PARAM_STR);
             $this->sqlBindValues($st, $data, 2);
@@ -376,9 +375,9 @@ class UserMapper implements UserMapperInterface
     private function sqlCondition(array &$data): string
     {
         if (isset($data['id'])) {
-            return '`id` = ?';
+            return 'id = ?';
         }
-        return '`name` = ?';
+        return 'name = ?';
     }
 
     /**

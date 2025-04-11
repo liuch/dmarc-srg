@@ -90,9 +90,10 @@ class UpgraderMapper implements UpgraderMapperInterface
         $db = $this->connector->dbh();
         $db->beginTransaction();
         try {
+            $this->connector->setANSIMode(false);
             $db->query(
-                'INSERT INTO `' . $this->connector->tablePrefix('system')
-                . '` (`key`, `value`) VALUES ("version", "0.1")'
+                'INSERT INTO ' . $this->connector->tablePrefix('system')
+                . ' (`key`, value) VALUES ("version", "0.1")'
             );
             $db->commit();
         } catch (\PDOException $e) {
@@ -101,6 +102,8 @@ class UpgraderMapper implements UpgraderMapperInterface
         } catch (\Exception $e) {
             $db->rollBack();
             throw $e;
+        } finally {
+            $this->connector->setANSIMode(true);
         }
         return '0.1';
     }
@@ -115,30 +118,33 @@ class UpgraderMapper implements UpgraderMapperInterface
         $db = $this->connector->dbh();
         // Transaction would be useful here but it doesn't work with ALTER TABLE in MySQL/MariaDB
         try {
+            $this->connector->setANSIMode(false);
             $dom_tn = $this->connector->tablePrefix('domains');
             if (!$this->columnExists($db, $dom_tn, 'active')) {
                 $db->query(
-                    'ALTER TABLE `' . $dom_tn . '` ADD COLUMN `active` boolean NOT NULL AFTER `fqdn`'
+                    'ALTER TABLE ' . $dom_tn . ' ADD COLUMN active boolean NOT NULL AFTER fqdn'
                 );
             }
             if (!$this->columnExists($db, $dom_tn, 'created_time')) {
                 $db->query(
-                    'ALTER TABLE `' . $dom_tn . '` ADD COLUMN `created_time` datetime NOT NULL'
+                    'ALTER TABLE ' . $dom_tn . ' ADD COLUMN created_time datetime NOT NULL'
                 );
             }
             if (!$this->columnExists($db, $dom_tn, 'updated_time')) {
                 $db->query(
-                    'ALTER TABLE `' . $dom_tn . '` ADD COLUMN `updated_time` datetime NOT NULL'
+                    'ALTER TABLE ' . $dom_tn . ' ADD COLUMN updated_time datetime NOT NULL'
                 );
             }
             $db->query(
-                'UPDATE `' . $dom_tn . '` SET `active` = TRUE, `created_time` = NOW(), `updated_time` = NOW()'
+                'UPDATE ' . $dom_tn . ' SET active = TRUE, created_time = NOW(), updated_time = NOW()'
             );
             $db->query(
-                'UPDATE `' . $this->connector->tablePrefix('system') . '` SET `value` = "1.0" WHERE `key` = "version"'
+                'UPDATE ' . $this->connector->tablePrefix('system') . ' SET value = "1.0" WHERE `key` = "version"'
             );
         } catch (\PDOException $e) {
             throw $this->dbFatalException($e);
+        } finally {
+            $this->connector->setANSIMode(true);
         }
         return '1.0';
     }
@@ -153,15 +159,18 @@ class UpgraderMapper implements UpgraderMapperInterface
         $db = $this->connector->dbh();
         // Transaction would be useful here but it doesn't work with ALTER TABLE in MySQL/MariaDB
         try {
+            $this->connector->setANSIMode(false);
             $sys_tn = $this->connector->tablePrefix('system');
             $db->query(
-                'ALTER TABLE `' . $sys_tn . '` MODIFY COLUMN `key` varchar(64) NOT NULL'
+                'ALTER TABLE ' . $sys_tn . ' MODIFY COLUMN `key` varchar(64) NOT NULL'
             );
             $db->query(
-                'UPDATE `' . $sys_tn . '` SET `value` = "2.0" WHERE `key` = "version"'
+                'UPDATE ' . $sys_tn . ' SET value = "2.0" WHERE `key` = "version"'
             );
         } catch (\PDOException $e) {
             throw $this->dbFatalException($e);
+        } finally {
+            $this->connector->setANSIMode(true);
         }
         return '2.0';
     }
@@ -176,18 +185,21 @@ class UpgraderMapper implements UpgraderMapperInterface
         $db = $this->connector->dbh();
         // Transaction would be useful here but it doesn't work with ALTER TABLE in MySQL/MariaDB
         try {
+            $this->connector->setANSIMode(false);
             $rep_tn = $this->connector->tablePrefix('reports');
             if (!$this->columnExists($db, $rep_tn, 'policy_np')) {
                 $db->query(
-                    'ALTER TABLE `' . $rep_tn . '` ADD COLUMN `policy_np` varchar(20) NULL AFTER `policy_sp`'
+                    'ALTER TABLE ' . $rep_tn . ' ADD COLUMN policy_np varchar(20) NULL AFTER policy_sp'
                 );
             }
             $sys_tn = $this->connector->tablePrefix('system');
             $db->query(
-                'UPDATE `' . $sys_tn . '` SET `value` = "3.0" WHERE `key` = "version"'
+                'UPDATE ' . $sys_tn . ' SET value = "3.0" WHERE `key` = "version"'
             );
         } catch (\PDOException $e) {
             throw $this->dbFatalException($e);
+        } finally {
+            $this->connector->setANSIMode(true);
         }
         return '3.0';
     }
@@ -201,23 +213,26 @@ class UpgraderMapper implements UpgraderMapperInterface
     {
         $db = $this->connector->dbh();
         try {
+            $this->connector->setANSIMode(false);
             $rep_tn = $this->connector->tablePrefix('reports');
             if (!$this->indexExists($db, $rep_tn, 'org_time_id')) {
                 $db->query(
-                    'CREATE INDEX `org_time_id` ON `' . $rep_tn . '` (`domain_id`, `begin_time`, `org`, `external_id`)'
+                    'CREATE INDEX org_time_id ON ' . $rep_tn . ' (domain_id, begin_time, org, external_id)'
                 );
             }
             if ($this->indexExists($db, $rep_tn, 'external_id')) {
                 $db->query(
-                    'DROP INDEX `external_id` ON `' . $rep_tn . '`'
+                    'DROP INDEX external_id ON ' . $rep_tn
                 );
             }
             $sys_tn = $this->connector->tablePrefix('system');
             $db->query(
-                'UPDATE `' . $sys_tn . '` SET `value` = "3.1" WHERE `key` = "version"'
+                'UPDATE ' . $sys_tn . ' SET value = "3.1" WHERE `key` = "version"'
             );
         } catch (\PDOException $e) {
             throw $this->dbFatalException($e);
+        } finally {
+            $this->connector->setANSIMode(true);
         }
         return '3.1';
     }
@@ -231,33 +246,36 @@ class UpgraderMapper implements UpgraderMapperInterface
     {
         $db = $this->connector->dbh();
         try {
+            $this->connector->setANSIMode(false);
             $rep_tn = $this->connector->tablePrefix('reports');
             // Remove duplicates
             $db->query(
-                'CREATE TEMPORARY TABLE `up31_ids` AS (SELECT MIN(`id`) AS `id` FROM `' . $rep_tn
-                . '` GROUP BY `domain_id`, `begin_time`, `org`, `external_id`)'
+                'CREATE TEMPORARY TABLE up31_ids AS (SELECT MIN(id) AS id FROM ' . $rep_tn
+                . ' GROUP BY domain_id, begin_time, org, external_id)'
             );
-            $db->query('DELETE FROM `' . $rep_tn . '` WHERE `id` NOT IN (SELECT `id` FROM `up31_ids`)');
+            $db->query('DELETE FROM ' . $rep_tn . ' WHERE id NOT IN (SELECT id FROM up31_ids)');
             // Create a new unique index
             if (!$this->indexExists($db, $rep_tn, 'org_time_id_u')) {
                 $db->query(
-                    'CREATE UNIQUE INDEX `org_time_id_u` ON `' . $rep_tn
-                    . '` (`domain_id`, `begin_time`, `org`, `external_id`)'
+                    'CREATE UNIQUE INDEX org_time_id_u ON ' . $rep_tn
+                    . ' (domain_id, begin_time, org, external_id)'
                 );
             }
             // Remove the old index
             if ($this->indexExists($db, $rep_tn, 'org_time_id')) {
                 $db->query(
-                    'DROP INDEX `org_time_id` ON `' . $rep_tn . '`'
+                    'DROP INDEX org_time_id ON ' . $rep_tn
                 );
             }
             // Update version
             $sys_tn = $this->connector->tablePrefix('system');
             $db->query(
-                'UPDATE `' . $sys_tn . '` SET `value` = "3.2" WHERE `key` = "version"'
+                'UPDATE ' . $sys_tn . ' SET value = "3.2" WHERE `key` = "version"'
             );
         } catch (\PDOException $e) {
             throw $this->dbFatalException($e);
+        } finally {
+            $this->connector->setANSIMode(true);
         }
         return '3.2';
     }
@@ -271,51 +289,54 @@ class UpgraderMapper implements UpgraderMapperInterface
     {
         $db = $this->connector->dbh();
         try {
+            $this->connector->setANSIMode(false);
             $usr_tn = $this->connector->tablePrefix('users');
             $db->query(
-                'CREATE TABLE IF NOT EXISTS `' . $usr_tn . '` (`id` int(10) unsigned NOT NULL AUTO_INCREMENT,'
-                . ' `name` varchar(32) NOT NULL, `level` smallint unsigned NOT NULL, `enabled` boolean NOT NULL,'
-                . ' `password` varchar(255) NULL, `email` varchar(64) NULL, `key` varchar(64) NULL,'
-                . ' `session` int(10) NOT NULL, `created_time` datetime NOT NULL, `updated_time` datetime NOT NULL,'
-                . ' PRIMARY KEY (`id`), UNIQUE KEY `name` (`name`)) ENGINE=InnoDB DEFAULT CHARSET=utf8'
+                'CREATE TABLE IF NOT EXISTS ' . $usr_tn . ' (id int(10) unsigned NOT NULL AUTO_INCREMENT,'
+                . ' name varchar(32) NOT NULL, level smallint unsigned NOT NULL, enabled boolean NOT NULL,'
+                . ' password varchar(255) NULL, email varchar(64) NULL, `key` varchar(64) NULL,'
+                . ' session int(10) NOT NULL, created_time datetime NOT NULL, updated_time datetime NOT NULL,'
+                . ' PRIMARY KEY (id), UNIQUE KEY name (name)) ENGINE=InnoDB DEFAULT CHARSET=utf8'
             );
 
             $ud_tn = $this->connector->tablePrefix('userdomains');
             $db->query(
-                'CREATE TABLE IF NOT EXISTS `' . $ud_tn . '` (`domain_id` int(10) unsigned NOT NULL,'
-                . ' `user_id` int(10) unsigned NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8'
+                'CREATE TABLE IF NOT EXISTS ' . $ud_tn . ' (domain_id int(10) unsigned NOT NULL,'
+                . ' user_id int(10) unsigned NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8'
             );
             if (!$this->indexExists($db, $ud_tn, 'PRIMARY')) {
-                $db->query('ALTER TABLE `' . $ud_tn . '` ADD PRIMARY KEY (`domain_id`, `user_id`)');
+                $db->query('ALTER TABLE ' . $ud_tn . ' ADD PRIMARY KEY (domain_id, user_id)');
             }
 
             $sys_tn = $this->connector->tablePrefix('system');
             if (!$this->columnExists($db, $sys_tn, 'user_id')) {
                 $db->query(
-                    'ALTER TABLE `' . $sys_tn . '` ADD COLUMN `user_id` int(10) NOT NULL DEFAULT 0 AFTER `key`'
+                    'ALTER TABLE ' . $sys_tn . ' ADD COLUMN user_id int(10) NOT NULL DEFAULT 0 AFTER `key`'
                 );
             }
-            $db->query('UPDATE `' . $sys_tn . '` SET `user_id` = 0');
+            $db->query('UPDATE ' . $sys_tn . ' SET user_id = 0');
             if ($this->indexExists($db, $sys_tn, 'PRIMARY')) {
-                $db->query('ALTER TABLE `' . $sys_tn . '` DROP PRIMARY KEY');
+                $db->query('ALTER TABLE ' . $sys_tn . ' DROP PRIMARY KEY');
             }
-            $db->query('ALTER TABLE `' . $sys_tn . '` ADD PRIMARY KEY (`user_id`, `key`)');
+            $db->query('ALTER TABLE ' . $sys_tn . ' ADD PRIMARY KEY (user_id, `key`)');
 
             $log_tn = $this->connector->tablePrefix('reportlog');
             if (!$this->columnExists($db, $log_tn, 'user_id')) {
                 $db->query(
-                    'ALTER TABLE `' . $log_tn . '` ADD COLUMN `user_id` int(10) NOT NULL DEFAULT 0 AFTER `id`'
+                    'ALTER TABLE ' . $log_tn . ' ADD COLUMN user_id int(10) NOT NULL DEFAULT 0 AFTER id'
                 );
             }
             if (!$this->indexExists($db, $log_tn, 'user_id')) {
-                $db->query('ALTER TABLE `' . $log_tn . '` ADD KEY `user_id` (`user_id`, `event_time`)');
+                $db->query('ALTER TABLE ' . $log_tn . ' ADD KEY user_id (user_id, event_time)');
             }
 
             $db->query(
-                'UPDATE `' . $sys_tn . '` SET `value` = "4.0" WHERE `user_id` = 0 AND `key` = "version"'
+                'UPDATE ' . $sys_tn . ' SET value = "4.0" WHERE user_id = 0 AND `key` = "version"'
             );
         } catch (\PDOException $e) {
             throw $this->dbFatalException($e);
+        } finally {
+            $this->connector->setANSIMode(true);
         }
         return '4.0';
     }
@@ -332,8 +353,8 @@ class UpgraderMapper implements UpgraderMapperInterface
     private function columnExists($db, string $table, string $column): bool
     {
         $st = $db->prepare(
-            'SELECT NULL FROM `INFORMATION_SCHEMA`.`COLUMNS`'
-            . ' WHERE `table_schema` = DATABASE() AND `table_name` = ? AND `column_name` = ?'
+            'SELECT NULL FROM INFORMATION_SCHEMA.COLUMNS'
+            . ' WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?'
         );
         $st->bindValue(1, $table, \PDO::PARAM_STR);
         $st->bindValue(2, $column, \PDO::PARAM_STR);
@@ -355,8 +376,8 @@ class UpgraderMapper implements UpgraderMapperInterface
     private function indexExists($db, string $table, string $index): bool
     {
         $st = $db->prepare(
-            'SELECT 1 FROM `INFORMATION_SCHEMA`.`STATISTICS`'
-            . ' WHERE `table_schema` = DATABASE() AND `table_name` = ? AND `index_name` = ? LIMIT 1'
+            'SELECT 1 FROM INFORMATION_SCHEMA.STATISTICS'
+            . ' WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ? LIMIT 1'
         );
         $st->bindValue(1, $table, \PDO::PARAM_STR);
         $st->bindValue(2, $index, \PDO::PARAM_STR);
