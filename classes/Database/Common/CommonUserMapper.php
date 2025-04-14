@@ -21,7 +21,7 @@
  *
  * =========================
  *
- * This file contains the UserMapper
+ * This file contains the CommonUserMapper class
  *
  * @category API
  * @package  DmarcSrg
@@ -39,7 +39,7 @@ use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
 /**
  * Universal implementation of UserMapper class
  */
-class UserMapper implements UserMapperInterface
+class CommonUserMapper implements UserMapperInterface
 {
     /** @var \Liuch\DmarcSrg\Database\DatabaseConnector */
     private $connector = null;

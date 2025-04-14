@@ -21,7 +21,7 @@
  *
  * =========================
  *
- * This file contains the SettingMapper class
+ * This file contains the CommonSettingMapper class
  *
  * @category API
  * @package  DmarcSrg
@@ -38,7 +38,7 @@ use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
 /**
  * Universal implementation of SettingMapper class
  */
-class SettingMapper implements SettingMapperInterface
+class CommonSettingMapper implements SettingMapperInterface
 {
     /** @var \Liuch\DmarcSrg\Database\DatabaseConnector */
     private $connector = null;

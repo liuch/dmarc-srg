@@ -21,7 +21,7 @@
  *
  * =========================
  *
- * This file contains the DomainMapper class
+ * This file contains the CommonDomainMapper class
  *
  * @category API
  * @package  DmarcSrg
@@ -42,7 +42,7 @@ use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
 /**
  * Universal implementation of DomainMapper class
  */
-class DomainMapper implements DomainMapperInterface
+class CommonDomainMapper implements DomainMapperInterface
 {
     /** @var \Liuch\DmarcSrg\Database\DatabaseConnector */
     private $connector = null;

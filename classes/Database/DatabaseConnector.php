@@ -103,7 +103,7 @@ abstract class DatabaseConnector
         if (!class_exists($mapper_name)) {
             $reflection = $reflection->getParentClass();
             if ($reflection) {
-                $mapper_name = $reflection->getNamespaceName() . '\\Common\\' . self::$names[$name];
+                $mapper_name = $reflection->getNamespaceName() . '\\Common\\' . 'Common' . self::$names[$name];
             }
         }
         $mapper = new $mapper_name($this);

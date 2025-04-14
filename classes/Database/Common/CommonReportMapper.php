@@ -21,7 +21,7 @@
  *
  * =========================
  *
- * This file contains the ReportMapper class
+ * This file contains the CommonReportMapper class
  *
  * @category API
  * @package  DmarcSrg
@@ -45,7 +45,7 @@ use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
 /**
  * Universal implementation of ReportMapper class
  */
-class ReportMapper implements ReportMapperInterface
+class CommonReportMapper implements ReportMapperInterface
 {
     /** @var \Liuch\DmarcSrg\Database\DatabaseConnector */
     private $connector = null;

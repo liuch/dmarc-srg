@@ -21,7 +21,7 @@
  *
  * =========================
  *
- * This file contains the HostMapper
+ * This file contains the CommonHostMapper
  *
  * @category API
  * @package  DmarcSrg
@@ -38,7 +38,7 @@ use Liuch\DmarcSrg\Exception\DatabaseFatalException;
 /**
  * Universal implementation of HostMapper class
  */
-class HostMapper implements HostMapperInterface
+class CommonHostMapper implements HostMapperInterface
 {
     /** @var \Liuch\DmarcSrg\Database\DatabaseConnector */
     private $connector = null;

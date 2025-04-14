@@ -21,7 +21,7 @@
  *
  * =========================
  *
- * This file contains the StatisticsMapper class
+ * This file contains the CommonStatisticsMapper class
  *
  * @category API
  * @package  DmarcSrg
@@ -39,7 +39,7 @@ use Liuch\DmarcSrg\Database\StatisticsMapperInterface;
 /**
  * Universal implementation of StatisticsMapper class
  */
-class StatisticsMapper implements StatisticsMapperInterface
+class CommonStatisticsMapper implements StatisticsMapperInterface
 {
     /** @var \Liuch\DmarcSrg\Database\DatabaseConnector */
     private $connector = null;
