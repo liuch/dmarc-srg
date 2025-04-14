@@ -1553,7 +1553,8 @@ class Multiselect extends HTMLElement {
 		this._listBox.addEventListener("click", event => {
 			if (event.target.role === "option") {
 				event.preventDefault();
-				this._updateResult(this._aitems.find(item => event.target === item.element));
+				const item = this._aitems.find(item => event.target === item.element);
+				if (item) this._updateResult(item);
 				this.deactivate();
 			}
 		});
