@@ -66,10 +66,10 @@ GRANT all on dmarc.* to dmarc_user@localhost identified by 'new_user_password';
 
 **Remember** to replace `new_user_password` with a more secure one!
 
-**Note:** If there is a need to use an existing database with other tables, you can specify the table prefix in the `conf/conf.php` file.
+**Note:** If there is a need to use an existing database with other tables, you can specify the table prefix in the `config/conf.php` file.
 
 ### conf.php
-Copy `conf/conf.sample.php` to `conf/conf.php` and configure it. Learn more by reading the comments in it.
+Copy `config/conf.sample.php` to `config/conf.php` and configure it. Learn more by reading the comments in it.
 
 ### Database initialization
 There are two ways to do that: by using the web interface or by running the follow command:
