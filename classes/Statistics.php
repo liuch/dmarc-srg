@@ -155,6 +155,7 @@ class Statistics
     public function setUser($user)
     {
         $this->user = $user;
+        return $this;
     }
 
     /**

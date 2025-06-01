@@ -127,7 +127,8 @@ $getDomain = function (array $args) {
 };
 
 try {
-    Core::instance()->setCurrentUser('admin');
+    $core = Core::instance();
+    $core->setCurrentUser('admin');
     $action = $argv[1] ?? '';
     switch ($action) {
         case 'list':

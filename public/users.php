@@ -57,6 +57,7 @@ use Liuch\DmarcSrg\Users\UserList;
 use Liuch\DmarcSrg\Domains\DomainList;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\RuntimeException;
+use Liuch\DmarcSrg\Exception\ForbiddenException;
 
 require realpath(__DIR__ . '/..') . '/init.php';
 
@@ -177,7 +178,7 @@ if (Core::isJson()) {
                     case 'delete':
                         $check_level();
                         $user->delete();
-                        unset($user);
+                        $user = null;
                         break;
                     default:
                         throw new SoftException(
@@ -186,7 +187,7 @@ if (Core::isJson()) {
                 }
 
                 $domains = $data['domains'] ?? null;
-                if (is_array($domains)) {
+                if ($user && is_array($domains)) {
                     $domains = array_values(array_unique(array_filter($domains, function ($val) {
                         return is_string($val);
                     })));

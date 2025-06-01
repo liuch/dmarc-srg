@@ -160,7 +160,7 @@ class Core
         if (gettype($user) == 'string') {
             $user = UserList::getUserByName($user, $this);
         } elseif (!is_null($user) && !($user instanceof User)) {
-            throw LogicException('Wrong user object was passed');
+            throw new LogicException('Wrong user object was passed');
         }
         $this->user = $user;
         if (self::isWEB()) {

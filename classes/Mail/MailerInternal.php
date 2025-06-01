@@ -58,6 +58,7 @@ class MailerInternal extends Mailer
             'Content-Type' => $this->body->contentType()
         ];
         $ex = null;
+        $res = null;
         try {
             $res = mail(
                 implode(',', $this->addr),

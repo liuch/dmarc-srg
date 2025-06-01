@@ -94,6 +94,7 @@ if (Core::isJson()) {
             ]);
             return;
         } elseif (Core::requestMethod() == 'POST') {
+            $core = Core::instance();
             Core::instance()->auth()->isAllowed(User::LEVEL_MANAGER);
 
             $data = Core::getJsonData();

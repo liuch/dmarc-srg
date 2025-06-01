@@ -525,7 +525,7 @@ class SummaryReport
                 $res = $this->stat[$section] ?? null;
                 break;
             default:
-                new LogicException('Unknown section name');
+                throw new LogicException('Unknown section name');
         }
         if (!$res) {
             $res = $instance->$section();
