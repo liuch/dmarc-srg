@@ -21,6 +21,9 @@
         "phpmailer/phpmailer": "^6.8.0",
         "league/flysystem-aws-s3-v3": "^2.5 || ^3.25.1"
     },
+    "require-dev": {
+        "phpstan/phpstan": "^2.0"
+    },
     "suggest": {
         "ext-imap": "Needed to process incoming DMARC reports stored in a mailbox"
     },
