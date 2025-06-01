@@ -96,7 +96,7 @@ class AdminUser extends User
     /**
      * Returns the admin's data as an array
      *
-     * @return arrray
+     * @return array
      */
     public function toArray(): array
     {

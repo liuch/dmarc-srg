@@ -135,7 +135,7 @@ class TextTable
     /**
      * Sets the characters for the table borders
      *
-     * @param string $horzontal    Horizontal border
+     * @param string $horizontal   Horizontal border
      * @param string $vertical     Vertical border
      * @param string $intersection Border at intersections
      *

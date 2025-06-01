@@ -165,7 +165,7 @@ class Common
     /**
      * Returns a random string of the specified length
      *
-     * @param int String length
+     * @param int $len String length
      *
      * @return string
      */

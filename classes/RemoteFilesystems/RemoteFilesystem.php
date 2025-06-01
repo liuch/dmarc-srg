@@ -236,7 +236,7 @@ class RemoteFilesystem
      *
      * @param bool $with_credentials Whether to pass credentials to filesystem adapter
      *
-     * @return League\Flysystem\Filesystem
+     * @return League\Flysystem\Filesystem|null
      */
     private function getFilesystem(bool $with_credentials)
     {

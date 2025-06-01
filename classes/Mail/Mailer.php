@@ -105,7 +105,7 @@ abstract class Mailer
     /**
      * Sets the subject of the message
      *
-     * @param string the subject of the message
+     * @param string $subject The subject of the message
      *
      * @return $this
      */

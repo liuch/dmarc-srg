@@ -42,7 +42,7 @@ class DatabaseController
     public const REQUIRED_VERSION = '4.0';
 
     private $conf_data = null;
-    /** @var DatabaseConnector */
+    /** @var DatabaseConnector|null */
     private $connector = null;
 
     /**

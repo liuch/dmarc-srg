@@ -95,7 +95,7 @@ class Core
     /**
      * Returns an instance of the current user
      *
-     * @return User
+     * @return User|null
      */
     public function getCurrentUser()
     {

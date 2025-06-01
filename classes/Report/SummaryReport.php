@@ -150,7 +150,7 @@ class SummaryReport
     /**
      * Binds a report section
      *
-     * @param mixed Report section
+     * @param mixed $section Report section
      *
      * @return self
      */

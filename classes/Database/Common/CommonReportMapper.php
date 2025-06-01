@@ -645,7 +645,7 @@ class CommonReportMapper implements ReportMapperInterface
      *
      * @param \PDOStatement $st   DB statement object
      * @param int           $idx  Bind position
-     * @param array         $data JSON data or null
+     * @param array|null    $data JSON data or null
      *
      * @return void
      */
