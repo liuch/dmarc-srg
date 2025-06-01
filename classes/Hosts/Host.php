@@ -59,7 +59,7 @@ class Host
     public function __construct(string $ip, $db = null)
     {
         $this->db = $db ?? Core::instance()->database();
-        if (gettype($ip) != 'string' || empty($ip)) {
+        if (empty($ip)) {
             throw new LogicException('Incorrect host data');
         }
         if (!filter_var(

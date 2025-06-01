@@ -45,7 +45,6 @@ class RemoteFilesystem
     private $name    = null;
     private $type    = null;
     private $params  = null;
-    private $adapter = null;
 
     /**
      * It's the constructor of the class
@@ -150,13 +149,12 @@ class RemoteFilesystem
             foreach ($ls as $it) {
                 break;
             }
-            return true;
         } catch (\Aws\S3\Exception\S3Exception) {
             return false;
         } catch (\Exception $e) {
             throw new RuntimeException($e->getMessage());
         }
-        return false;
+        return true;
     }
 
     /**

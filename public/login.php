@@ -32,7 +32,7 @@ if (Core::requestMethod() == 'POST' && Core::isJson()) {
     if ($jdata && isset($jdata['password'])) {
         try {
             Core::sendJson(
-                Core::instance()->auth()->login(strval($jdata['username'] ?? ''), strval($jdata['password'] ?? ''))
+                Core::instance()->auth()->login(strval($jdata['username'] ?? ''), strval($jdata['password']))
             );
         } catch (RuntimeException $e) {
             Core::sendJson(ErrorHandler::exceptionResult($e));

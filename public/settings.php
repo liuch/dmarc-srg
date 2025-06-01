@@ -83,7 +83,7 @@ if (Core::isJson()) {
             return;
         }
 
-        if (Core::requestMethod() == 'POST' && Core::isJson()) {
+        if (Core::requestMethod() == 'POST') {
             $data = Core::getJsonData();
             if ($data) {
                 $sett = SettingsList::getSettingByName($data['name'] ?? '');

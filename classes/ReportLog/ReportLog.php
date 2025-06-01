@@ -35,7 +35,6 @@ class ReportLog
             'direction' => 'ascent'
     ];
     private $rec_limit = 0;
-    private $position  = 0;
 
     public function __construct($db = null)
     {
@@ -82,7 +81,6 @@ class ReportLog
 
     public function getList(int $pos): array
     {
-        $this->position = $pos;
         $max_rec = $this->rec_limit > 0 ? $this->rec_limit : 25;
 
         $limit  = [ 'offset' => $pos, 'count' => $max_rec + 1 ];
