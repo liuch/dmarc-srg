@@ -60,7 +60,8 @@ abstract class Mailer
      */
     public static function get(array $params)
     {
-        switch ($params['library'] ?? 'internal') {
+        $library = $params['library'] ?? 'internal';
+        switch ($library) {
             case 'internal':
                 return new MailerInternal($params);
             case 'phpmailer':
