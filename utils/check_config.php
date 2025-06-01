@@ -166,7 +166,7 @@ try {
     }
     if ($db_s) {
         $startChecking('Checking for integrity');
-        if ($db_s) {
+        if ($db_s['correct']) {
             $endChecking();
         } else {
             $endChecking($db_s['message'], ($db_s['needs_upgrade'] ?? false) ? RESULT_WARNING : RESULT_ERROR);
