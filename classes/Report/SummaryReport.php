@@ -89,24 +89,24 @@ class SummaryReport
                             break;
                         case 'range':
                             $range = explode('-', $av[1]);
-                            if (count($range) === 2) {
-                                foreach ($range as &$r) {
-                                    $cnt = 0;
-                                    $sd = preg_replace('/^(\d{4})(\d{2})(\d{2})$/', '\1-\2-\3', $r, -1, $cnt);
-                                    if (!$cnt) {
-                                        throw new SoftException('The parameter "range" has an incorrect value');
-                                    }
-                                    $r = new DateTime($sd);
-                                }
-                                unset($r);
-                                if ($range[0] > $range[1]) {
-                                    throw new SoftException('Incorrect date range');
-                                }
-                                $period  = self::DATE_RANGE;
-                                $subject = ' report ' . Common::rangeToString($range);
-                                $range[1]->modify('next day');
-                                $this->range = $range;
+                            if (count($range) !== 2) {
+                                throw new SoftException('The parameter "range" must contain two dates');
                             }
+                            $range = array_map(function ($r) {
+                                $cnt = 0;
+                                $sd = preg_replace('/^(\d{4})(\d{2})(\d{2})$/', '\1-\2-\3', $r, -1, $cnt);
+                                if (!$cnt) {
+                                    throw new SoftException('The parameter "range" has an incorrect value');
+                                }
+                                return new DateTime($sd);
+                            }, $range);
+                            if ($range[0] > $range[1]) {
+                                throw new SoftException('Incorrect date range');
+                            }
+                            $period  = self::DATE_RANGE;
+                            $subject = ' report ' . Common::rangeToString($range);
+                            $range[1]->modify('next day');
+                            $this->range = $range;
                             break;
                     }
                 }
