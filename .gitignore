@@ -1,3 +1,4 @@
 .phpunit*
 config/conf.php
 /vendor
+composer.lock

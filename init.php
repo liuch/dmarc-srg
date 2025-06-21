@@ -30,6 +30,10 @@ if (!is_array($vc) || !isset($vc['autoload_file'], $vc['config_file'], $vc['vers
     exit;
 }
 
+if (defined('PHP_UNIT_TEST')) { /* stop warnings about headers having already been sent */
+    ob_start();
+}
+
 define('APP_VERSION', '2.3' . strval($vc['version_suffix']));
 define('CONFIG_FILE', strval($vc['config_file']));
 

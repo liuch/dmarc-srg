@@ -20,6 +20,9 @@ class CommonTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals('none', Common::$disposition[2]);
     }
 
+    /**
+     * @requires PHP >= 8.1
+     */
     public function testCsvConverting(): void
     {
         $this->assertEquals(
@@ -27,7 +30,7 @@ class CommonTest extends \PHPUnit\Framework\TestCase
             Common::arrayToCSV([
                 'qwe',
                 '',
-                [ 1, 'qwe', 'q w e', '"q"w"' ],
+                [1, 'qwe', 'q w e', '"q"w"'],
             ])
         );
     }

@@ -149,7 +149,7 @@ class RemoteFilesystem
             foreach ($ls as $it) {
                 break;
             }
-        } catch (\Aws\S3\Exception\S3Exception) {
+        } catch (\Aws\S3\Exception\S3Exception $e) {
             return false;
         } catch (\Exception $e) {
             throw new RuntimeException($e->getMessage());
