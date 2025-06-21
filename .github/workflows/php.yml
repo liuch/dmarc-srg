@@ -1,13 +1,31 @@
 name: build-lint-etc
 on: [ push ]
 
+permissions:
+  contents: read
+
+
 jobs:
   testsuite:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
         php-versions: [ '7.3', '7.4', '8.0', '8.1', '8.2', '8.3' ]
-
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: topSecret
+          MYSQL_DATABASE: dmarc
+          MYSQL_USER: dmarc_user
+          MYSQL_PASSWORD: password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
     steps:
       - uses: actions/checkout@v4
 
@@ -16,7 +34,7 @@ jobs:
         with:
           php-version: ${{ matrix.php-versions }}
           tools: composer
-          extensions: sqlite3, gd, mbstring
+          extensions: sqlite3, mbstring, xml
 
       - name: Get composer cache directory
         if: ${{ !env.ACT }}
@@ -39,3 +57,12 @@ jobs:
 
       - name: static analysis
         run: composer phpstan
+
+      - name: copy test config into place
+        run: cp config/conf.sample.php config/conf.php
+
+      - name: init database
+        run: php -f utils/database_admin.php init
+
+      - name: run unit tests
+        run: composer test

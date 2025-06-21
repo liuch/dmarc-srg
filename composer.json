@@ -28,11 +28,13 @@
     },
     "require-dev": {
         "php-parallel-lint/php-parallel-lint": "*",
-        "phpstan/phpstan": "^2.0"
+        "phpstan/phpstan": "^2.0",
+        "phpunit/phpunit": "^9"
     },
     "scripts": {
         "phpstan" : "@php vendor/bin/phpstan analyse -- classes utils public config ",
-        "lint": "@php vendor/bin/parallel-lint --exclude vendor/ ."
+        "lint": "@php vendor/bin/parallel-lint --exclude vendor/ .",
+        "test": "@php vendor/bin/phpunit "
     },
     "suggest": {
         "ext-imap": "Needed to process incoming DMARC reports stored in a mailbox"
