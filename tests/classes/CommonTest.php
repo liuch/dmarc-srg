@@ -22,12 +22,16 @@ class CommonTest extends \PHPUnit\Framework\TestCase
 
     public function testCsvConverting(): void
     {
+        if (phpversion() < '8.1') {
+            $this->markTestSkipped("Test depends on PHP8.1 functionality");
+        }
+        
         $this->assertEquals(
             'qwe' . "\n\r" . '' . "\n\r" . '1,qwe,"q w e","""q""w"""' . "\n\r",
             Common::arrayToCSV([
                 'qwe',
                 '',
-                [ 1, 'qwe', 'q w e', '"q"w"' ],
+                [1, 'qwe', 'q w e', '"q"w"'],
             ])
         );
     }
