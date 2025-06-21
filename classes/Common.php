@@ -151,7 +151,7 @@ class Common
     {
         $tfd = fopen('php://temp/maxmemory:' . (10 * 1024 * 1024), 'r+');
         foreach ($data as &$row) {
-            if (!fputcsv($tfd, is_array($row) ? $row : [ $row ], ',', '"', "\\", "\n\r")) {
+            if (!fputcsv($tfd, is_array($row) ? $row : [ $row ], ',', '"', "\\")) {
                 throw new RuntimeException('fputcsv failed');
             }
         }
