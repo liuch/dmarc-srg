@@ -2,7 +2,12 @@
     "name": "liuch/dmarc-srg",
     "type": "project",
     "description": "A php parser, viewer and summary report generator for incoming DMARC reports.",
-    "keywords": [ "mailserver", "dmarc", "dmarc-reports", "dmarc-parser" ],
+    "keywords": [
+        "mailserver",
+        "dmarc",
+        "dmarc-reports",
+        "dmarc-parser"
+    ],
     "license": "GPL-3.0-only",
     "authors": [
         {
@@ -22,7 +27,12 @@
         "league/flysystem-aws-s3-v3": "^2.5 || ^3.25.1"
     },
     "require-dev": {
+        "php-parallel-lint/php-parallel-lint": "*",
         "phpstan/phpstan": "^2.0"
+    },
+    "scripts": {
+        "phpstan" : "@php vendor/bin/phpstan analyse -- classes utils public config ",
+        "lint": "@php vendor/bin/parallel-lint --exclude vendor/ ."
     },
     "suggest": {
         "ext-imap": "Needed to process incoming DMARC reports stored in a mailbox"

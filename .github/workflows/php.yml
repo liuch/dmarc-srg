@@ -1,0 +1,41 @@
+name: build-lint-etc
+on: [ push ]
+
+jobs:
+  testsuite:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        php-versions: [ '7.3', '7.4', '8.0', '8.1', '8.2', '8.3' ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-versions }}
+          tools: composer
+          extensions: sqlite3, gd, mbstring
+
+      - name: Get composer cache directory
+        if: ${{ !env.ACT }}
+        id: composer-cache
+        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+
+      - name: Cache dependencies
+        if: ${{ !env.ACT }}
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ matrix.php-versions}}-${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist -n
+
+      - name: lint
+        run: composer lint
+
+      - name: static analysis
+        run: composer phpstan
