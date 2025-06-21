@@ -20,12 +20,11 @@ class CommonTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals('none', Common::$disposition[2]);
     }
 
+    /**
+     * @requires PHP >= 8.1
+     */
     public function testCsvConverting(): void
     {
-        if (phpversion() < '8.1') {
-            $this->markTestSkipped("Test depends on PHP8.1 functionality");
-        }
-        
         $this->assertEquals(
             'qwe' . "\n\r" . '' . "\n\r" . '1,qwe,"q w e","""q""w"""' . "\n\r",
             Common::arrayToCSV([
