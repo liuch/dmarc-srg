@@ -309,6 +309,6 @@ $cleaner = [
 
 /**
  * Path to a custom CSS file to add it to the HTML header in order to use custom styles.
- * The file must be a regular CSS file and end with ".css".
+ * The file must be a regular CSS file and its name must end with ".css".
  */
 //$custom_css = 'css/custom.css';
