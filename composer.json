@@ -28,7 +28,7 @@
     },
     "require-dev": {
         "php-parallel-lint/php-parallel-lint": "*",
-        "phpstan/phpstan": "^2.0",
+        "phpstan/phpstan": "*",
         "phpunit/phpunit": "^9"
     },
     "scripts": {
