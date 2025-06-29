@@ -108,7 +108,7 @@ try {
             echo '  init       Creates all the required the database tables.', PHP_EOL;
             echo '  upgrade    Upgrages the database structure if it is necessary.', PHP_EOL;
             echo '  drop       Deletes all tables from the database taking into account the table prefix.', PHP_EOL;
-            exit(1);
+            exit(2);
     }
 } catch (RuntimeException $e) {
     $res = ErrorHandler::exceptionResult($e);
@@ -126,4 +126,4 @@ if (isset($res['debug_info'])) {
     echo "{$debug_info['content']}", PHP_EOL;
 }
 
-exit(0);
+exit(empty($error) ? 0 : 3);
