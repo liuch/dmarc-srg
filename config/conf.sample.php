@@ -4,7 +4,7 @@ $debug = 0;
 
 // Settings for assessing the database in which reports will be saved
 $database = [
-    'host'         => 'localhost',
+    'host'         => '127.0.0.1', // You can use a domain name here
     'type'         => 'mysql',
     'name'         => 'dmarc',
     'user'         => 'dmarc_user',
