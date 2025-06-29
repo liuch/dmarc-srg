@@ -30,7 +30,7 @@ class CommonTest extends \PHPUnit\Framework\TestCase
             Common::arrayToCSV([
                 'qwe',
                 '',
-                [1, 'qwe', 'q w e', '"q"w"'],
+                [ 1, 'qwe', 'q w e', '"q"w"' ],
             ])
         );
     }
