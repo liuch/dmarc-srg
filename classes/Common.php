@@ -156,7 +156,7 @@ class Common
                     throw new RuntimeException('fputcsv failed');
                 }
             }
-            if(phpversion() >= '8.1') {
+            if (phpversion() >= '8.1') {
                 if (!fputcsv($tfd, is_array($row) ? $row : [$row], ',', '"', "\\", "\n\r")) {
                     throw new RuntimeException('fputcsv failed');
                 }
