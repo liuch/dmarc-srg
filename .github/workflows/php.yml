@@ -34,7 +34,7 @@ jobs:
         with:
           php-version: ${{ matrix.php-versions }}
           tools: composer
-          extensions: sqlite3, mbstring, xml
+          extensions: mbstring, xml
 
       - name: Get composer cache directory
         if: ${{ !env.ACT }}
