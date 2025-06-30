@@ -64,7 +64,7 @@ jobs:
       - name: init database
         # Connecting an old version of PHP to a new version of MySQL results in error
         # SQLSTATE[HY000] [2054] The server requested authentication method unknown to the client
-        if: ${{ matrix.php-version != '7.3' }}
+        if: ${{ matrix.php-versions != '7.3' }}
         run: php -f utils/database_admin.php init
 
       - name: run unit tests
