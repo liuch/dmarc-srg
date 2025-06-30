@@ -237,7 +237,7 @@ class CommonUserMapper implements UserMapperInterface
             $st->bindValue(1, $id, \PDO::PARAM_INT);
             $st->execute();
             $st->closeCursor();
-            $st = $db->prepare('DELETE FROM ' . $this->connector->tablePrefix('system') . ' WHERE user_id = ?');
+            $st = $db->prepare('DELETE FROM "' . $this->connector->tablePrefix('system') . '" WHERE user_id = ?');
             $st->bindValue(1, $id, \PDO::PARAM_INT);
             $st->execute();
             $st->closeCursor();

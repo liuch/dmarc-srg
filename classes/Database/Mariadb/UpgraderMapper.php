@@ -92,8 +92,8 @@ class UpgraderMapper implements UpgraderMapperInterface
         try {
             $this->connector->setANSIMode(false);
             $db->query(
-                'INSERT INTO ' . $this->connector->tablePrefix('system')
-                . ' (`key`, value) VALUES ("version", "0.1")'
+                'INSERT INTO `' . $this->connector->tablePrefix('system')
+                . '` (`key`, value) VALUES ("version", "0.1")'
             );
             $db->commit();
         } catch (\PDOException $e) {
@@ -139,7 +139,7 @@ class UpgraderMapper implements UpgraderMapperInterface
                 'UPDATE ' . $dom_tn . ' SET active = TRUE, created_time = NOW(), updated_time = NOW()'
             );
             $db->query(
-                'UPDATE ' . $this->connector->tablePrefix('system') . ' SET value = "1.0" WHERE `key` = "version"'
+                'UPDATE `' . $this->connector->tablePrefix('system') . '` SET value = "1.0" WHERE `key` = "version"'
             );
         } catch (\PDOException $e) {
             throw $this->dbFatalException($e);
@@ -162,10 +162,10 @@ class UpgraderMapper implements UpgraderMapperInterface
             $this->connector->setANSIMode(false);
             $sys_tn = $this->connector->tablePrefix('system');
             $db->query(
-                'ALTER TABLE ' . $sys_tn . ' MODIFY COLUMN `key` varchar(64) NOT NULL'
+                'ALTER TABLE `' . $sys_tn . '` MODIFY COLUMN `key` varchar(64) NOT NULL'
             );
             $db->query(
-                'UPDATE ' . $sys_tn . ' SET value = "2.0" WHERE `key` = "version"'
+                'UPDATE `' . $sys_tn . '` SET value = "2.0" WHERE `key` = "version"'
             );
         } catch (\PDOException $e) {
             throw $this->dbFatalException($e);
@@ -194,7 +194,7 @@ class UpgraderMapper implements UpgraderMapperInterface
             }
             $sys_tn = $this->connector->tablePrefix('system');
             $db->query(
-                'UPDATE ' . $sys_tn . ' SET value = "3.0" WHERE `key` = "version"'
+                'UPDATE `' . $sys_tn . '` SET value = "3.0" WHERE `key` = "version"'
             );
         } catch (\PDOException $e) {
             throw $this->dbFatalException($e);
@@ -227,7 +227,7 @@ class UpgraderMapper implements UpgraderMapperInterface
             }
             $sys_tn = $this->connector->tablePrefix('system');
             $db->query(
-                'UPDATE ' . $sys_tn . ' SET value = "3.1" WHERE `key` = "version"'
+                'UPDATE `' . $sys_tn . '` SET value = "3.1" WHERE `key` = "version"'
             );
         } catch (\PDOException $e) {
             throw $this->dbFatalException($e);
@@ -270,7 +270,7 @@ class UpgraderMapper implements UpgraderMapperInterface
             // Update version
             $sys_tn = $this->connector->tablePrefix('system');
             $db->query(
-                'UPDATE ' . $sys_tn . ' SET value = "3.2" WHERE `key` = "version"'
+                'UPDATE `' . $sys_tn . '` SET value = "3.2" WHERE `key` = "version"'
             );
         } catch (\PDOException $e) {
             throw $this->dbFatalException($e);
@@ -311,10 +311,10 @@ class UpgraderMapper implements UpgraderMapperInterface
             $sys_tn = $this->connector->tablePrefix('system');
             if (!$this->columnExists($db, $sys_tn, 'user_id')) {
                 $db->query(
-                    'ALTER TABLE ' . $sys_tn . ' ADD COLUMN user_id int(10) NOT NULL DEFAULT 0 AFTER `key`'
+                    'ALTER TABLE `' . $sys_tn . '` ADD COLUMN user_id int(10) NOT NULL DEFAULT 0 AFTER `key`'
                 );
             }
-            $db->query('UPDATE ' . $sys_tn . ' SET user_id = 0');
+            $db->query('UPDATE `' . $sys_tn . '` SET user_id = 0');
             if ($this->indexExists($db, $sys_tn, 'PRIMARY')) {
                 $db->query('ALTER TABLE ' . $sys_tn . ' DROP PRIMARY KEY');
             }

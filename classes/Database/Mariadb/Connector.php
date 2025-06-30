@@ -197,8 +197,8 @@ class Connector extends DatabaseConnector
                 $st->closeCursor();
             }
             $st = $this->dbh->prepare(
-                'INSERT INTO ' . $this->tablePrefix('system')
-                . ' (`key`, user_id, value) VALUES ("version", 0, ?)'
+                'INSERT INTO `' . $this->tablePrefix('system')
+                . '` (`key`, user_id, value) VALUES ("version", 0, ?)'
             );
             $st->bindValue(1, $version, \PDO::PARAM_STR);
             $st->execute();

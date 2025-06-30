@@ -71,11 +71,11 @@ class CommonSettingMapper implements SettingMapperInterface
         $sn = $this->connector->tablePrefix('system');
         $tr = [
             [
-                "SELECT value FROM {$sn} WHERE user_id = ? AND \"key\" = ?",
+                "SELECT value FROM \"{$sn}\" WHERE user_id = ? AND \"key\" = ?",
                 [ [ 1, $user_id, \PDO::PARAM_INT ], [ 2, $key, \PDO::PARAM_STR ] ],
             ],
             [
-                "SELECT value FROM {$sn} WHERE \"key\" = ?",
+                "SELECT value FROM \"{$sn}\" WHERE \"key\" = ?",
                 [ [ 1, $key, \PDO::PARAM_STR ] ],
             ]
         ];
@@ -118,8 +118,8 @@ class CommonSettingMapper implements SettingMapperInterface
         $res = [];
         try {
             $st = $this->connector->dbh()->prepare(
-                'SELECT "key", value FROM ' . $this->connector->tablePrefix('system')
-                . ' WHERE user_id = ? ORDER BY "key"'
+                'SELECT "key", value FROM "' . $this->connector->tablePrefix('system')
+                . '" WHERE user_id = ? ORDER BY "key"'
             );
             $st->bindValue(1, $user_id, \PDO::PARAM_INT);
             $st->execute();
@@ -149,8 +149,8 @@ class CommonSettingMapper implements SettingMapperInterface
         $db = $this->connector->dbh();
         try {
             $st = $db->prepare(
-                'INSERT INTO ' . $this->connector->tablePrefix('system') .
-                ' ("key", user_id, value) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE value = ?'
+                'INSERT INTO "' . $this->connector->tablePrefix('system') .
+                '" ("key", user_id, value) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE value = ?'
             );
             $st->bindValue(1, $name, \PDO::PARAM_STR);
             $st->bindValue(2, $user_id, \PDO::PARAM_INT);
