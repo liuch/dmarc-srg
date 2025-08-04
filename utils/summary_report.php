@@ -99,7 +99,7 @@ $subject = '';
 if ($acount <= 1) {
     echo "Usage: {$argv[0]} domain=<domains>|all", PHP_EOL;
     echo '           period=lastmonth|lastweek|lastndays:<days>', PHP_EOL;
-    echo '           [offset=<days>] [format=text|html|text+html]', PHP_EOL;
+    echo '           [offset=<days>] [format=text|html|text+html|markdown]', PHP_EOL;
     echo '           [emailto=<email address>] [user=<username>]', PHP_EOL;
     exit(1);
 }
@@ -144,7 +144,7 @@ try {
     if (filter_var($offset, FILTER_VALIDATE_INT, [ 'options' => [ 'min_range' => 0 ] ]) === false) {
         throw new SoftException('Parameter "offset" must be a positive integer');
     }
-    if (!in_array($format, [ 'text', 'html', 'text+html' ], true)) {
+    if (!in_array($format, [ 'text', 'html', 'text+html', 'markdown' ], true)) {
         throw new SoftException('Unknown email message format: ' . $format);
     }
     if (!$emailto) {
@@ -169,6 +169,10 @@ try {
         case 'html':
             $text = null;
             $html = [];
+            break;
+        case 'markdown':
+            $text = [];
+            $html = null;
             break;
         default:
             $text = [];
@@ -204,8 +208,14 @@ try {
                     $add_sep();
                 }
                 if (!is_null($text)) {
-                    foreach ($rep->text() as &$row) {
-                        $text[] = $row;
+                    if ($format === 'markdown') {
+                        foreach ($rep->markdown() as &$row) {
+                            $text[] = $row;
+                        }
+                    } else {
+                        foreach ($rep->text() as &$row) {
+                            $text[] = $row;
+                        }
                     }
                     unset($row);
                 }
