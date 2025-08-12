@@ -154,7 +154,17 @@ $fetcher = [
          * The same actions are available as for the when_done.
          * The default value is 'move_to:failed'.
          */
-        'when_failed' => 'move_to:failed'
+        'when_failed' => 'move_to:failed',
+
+        /**
+         * Library for connecting to a mailbox via IMAP.
+         * The following values are available:
+         * 'imap-engine'   - use the PHP library ImapEngine. You can install it with composer.
+         * 'php-extension' - use the built-in PHP IMAP extension. Warning! This extension is DEPRECATED.
+         * 'auto'          - use ImapEngine, if it is not installed then try to use the PHP IMAP extension.
+         * The default value is 'auto'.
+         */
+        'library' => 'auto'
     ],
     'directories' => [
         // How many report files will be processed at once maximum. 0 to disable any limiting.

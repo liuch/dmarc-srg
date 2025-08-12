@@ -35,6 +35,7 @@
 
 namespace Liuch\DmarcSrg;
 
+use Liuch\DmarcSrg\Mail\MailBox;
 use Liuch\DmarcSrg\Mail\MailBoxes;
 use Liuch\DmarcSrg\Sources\SourceAction;
 use Liuch\DmarcSrg\Exception\RuntimeException;
@@ -120,37 +121,31 @@ try {
     for ($mb_idx = 1; $mb_idx <= $mb_cnt; ++$mb_idx) {
         foreach ($dirs as $dir_name => $i_criteria) {
             if ($i_criteria > 0) {
-                $criteria = $i_criteria === 2 ? 'ALL' : 'SEEN';
+                $criteria = $i_criteria === 2 ? MailBox::SEARCH_ALL : MailBox::SEARCH_SEEN;
                 $mbox = $mb_list->mailbox($mb_idx);
                 if (!empty($dir_name)) {
                     if (!($mbox = $mbox->childMailbox($dir_name))) {
                         continue;
                     }
                 }
-                $s_res = $mbox->sort(SORTDATE, $criteria, false);
+                $s_res = $mbox->messages($criteria, MailBox::ORDER_ASCENT);
                 $max = $maximum > 0 ? $maximum : -1;
                 $lv = $leave === 0 ? count($s_res) : count($s_res) - $leave;
-                $i = 0;
-                while ($lv-- > 0) {
-                    $m_num = $s_res[$i++];
-                    $msg = $mbox->message($m_num);
+                foreach ($s_res as $msg) {
+                    if ($lv-- <= 0) {
+                        break;
+                    }
                     $mo = $msg->overview();
-                    if (isset($mo->date)) {
-                        try {
-                            $md = new DateTime($mo->date);
-                        } catch (\Exception $e) {
-                            $md = false;
+                    if (isset($mo['date'])) {
+                        if ($mo['date'] > $days_date) {
+                            break;
                         }
-                        if ($md !== false) {
-                            if ($md > $days_date) {
-                                break;
-                            }
-                            $mbox->deleteMessage($m_num);
-                            if ($max > 0) {
-                                if (--$max === 0) {
-                                    break;
-                                }
-                            }
+                        $msg->delete();
+                        if ($max === 1) {
+                            break;
+                        }
+                        if ($max > 0) {
+                            --$max;
                         }
                     }
                 }

@@ -33,6 +33,7 @@ class MailBoxes implements \Iterator
     public function __construct()
     {
         $mailboxes = Core::instance()->config('mailboxes');
+        $library = Core::instance()->config('fetcher/mailboxes/library', '');
 
         $this->box_list = [];
         if (is_array($mailboxes)) {
@@ -40,10 +41,10 @@ class MailBoxes implements \Iterator
             if ($cnt > 0) {
                 if (isset($mailboxes[0])) {
                     for ($i = 0; $i < $cnt; ++$i) {
-                        $this->box_list[] = new MailBox($mailboxes[$i]);
+                        $this->box_list[] = $this->getMailbox($mailboxes[$i], $library);
                     }
                 } else {
-                    $this->box_list[] = new MailBox($mailboxes);
+                    $this->box_list[] = $this->getMailbox($mailboxes, $library);
                 }
             }
         }
@@ -64,7 +65,7 @@ class MailBoxes implements \Iterator
                 'id'      => $id,
                 'name'    => $mbox->name(),
                 'host'    => $mbox->host(),
-                'mailbox' => $mbox->mailbox()
+                'mailbox' => $mbox->folder()
             ];
         }
         unset($mbox);
@@ -130,5 +131,30 @@ class MailBoxes implements \Iterator
     public function valid(): bool
     {
         return isset($this->box_list[$this->index]);
+    }
+
+    private function getMailbox(array $params, string $library)
+    {
+        switch ($library) {
+            case 'php-extension':
+                $dir_name = 'PhpExtension';
+                break;
+            case 'imap-engine':
+                $dir_name = 'ImapEngine';
+                break;
+            case '':
+            case 'auto':
+                if (class_exists('\DirectoryTree\ImapEngine\Mailbox')) {
+                    $dir_name = 'ImapEngine';
+                } else {
+                    $dir_name = 'PhpExtension';
+                }
+                break;
+            default:
+                throw new LogicException("Mailbox: wrong library name '$library'");
+        }
+        $reflection = new \ReflectionClass($this);
+        $class_name = $reflection->getNamespaceName() . '\\' . $dir_name . '\\MailBox';
+        return new $class_name($params);
     }
 }

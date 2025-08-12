@@ -40,7 +40,7 @@ Ensure that all the files are in their own sub-folder.
 * PHP 7.3 or higher
 * Installed `php-mbstring`, `php-mysql`, `php-xml`, `php-zip`, and `php-json`
 * A working webserver (not necessary)
-* To process incoming reports in your mailbox, you need the `php-imap` extension
+* To process incoming reports in your mailbox, you need to install the `ImapEngine` library. Use composer for that. Note that the PHP IMAP extension is deprecated, however, it is still possible to use it here. See comments in the conf.sample.php file for details.
 * To process incoming reports on the S3 filesystem, you need the `flysystem` package. Use composer for this.
 
 ### Create the database

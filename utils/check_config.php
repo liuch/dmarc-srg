@@ -182,9 +182,39 @@ try {
             $endChecking('No mailboxes found', RESULT_SUCCESS);
         } else {
             $endChecking("{$mb_lcnt} mailbox" . ($mb_lcnt > 1 ? 'ex' : '') . ' found', RESULT_SUCCESS);
-            $startChecking('Imap extension');
+            $startChecking('Imap library');
             try {
-                $core->checkDependencies('imap');
+                $lib = $core->config('fetcher/mailboxes/library', 'auto');
+                switch ($lib) {
+                    case 'imap-engine':
+                        try {
+                            $core->checkDependencies('imap-engine');
+                        } catch (SoftException $e) {
+                            throw new SoftException('ImapEngine is not installed');
+                        }
+                        break;
+                    case 'php-extension':
+                        try {
+                            $core->checkDependencies('imap');
+                        } catch (SoftException $e) {
+                            throw new SoftException('PHP IMAP extension is not installed');
+                        }
+                        $core->checkDependencies('imap');
+                        break;
+                    case 'auto':
+                        try {
+                            $core->checkDependencies('imap-engine');
+                        } catch (SoftException $e) {
+                            try {
+                                $core->checkDependencies('imap');
+                            } catch (SoftException $e) {
+                                throw new SoftException('Neither ImapEngine nor PHP IMAP extension is installed');
+                            }
+                        }
+                        break;
+                    default:
+                        throw new SoftException('Unknown library name: ' . $lib);
+                }
                 $endChecking();
                 echo "  * Checking mailboxes ({$mb_lcnt})", PHP_EOL;
                 for ($mb_num = 1; $mb_num <= $mb_lcnt; ++$mb_num) {
@@ -199,7 +229,7 @@ try {
                     }
                 }
             } catch (SoftException $e) {
-                $endChecking('The extension is not loaded');
+                $endChecking($e->getMessage());
             }
         }
     } catch (RuntimeException $e) {

@@ -89,7 +89,7 @@ class ReportFile
         }
     }
 
-    public static function getMimeType($filename, $fd = null, $filepath = null)
+    public static function getMimeType($filename, $fd = null, $filepath = null): string
     {
         if (function_exists('mime_content_type')) {
             if ($fd && (stream_get_meta_data($fd)['seekable'] ?? false)) {

@@ -31,6 +31,7 @@
 
 namespace Liuch\DmarcSrg\Sources;
 
+use Liuch\DmarcSrg\Mail\MailBox;
 use Liuch\DmarcSrg\ReportFile\ReportFile;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\RuntimeException;
@@ -78,7 +79,7 @@ class MailboxSource extends Source
      */
     public function current(): object
     {
-        $this->msg = $this->data->message($this->list[$this->index]);
+        $this->msg = $this->list[$this->index];
         try {
             $this->msg->validate();
         } catch (SoftException $e) {
@@ -119,7 +120,7 @@ class MailboxSource extends Source
     public function rewind(): void
     {
         $this->msg   = null;
-        $this->list  = $this->data->sort(SORTDATE, 'UNSEEN', false);
+        $this->list  = $this->data->messages(MailBox::SEARCH_UNSEEN, MailBox::ORDER_ASCENT);
         $this->index = 0;
         if (is_null($this->params)) {
             $this->setParams([]);
@@ -209,21 +210,21 @@ class MailboxSource extends Source
      */
     public function markMessageSeen(): void
     {
-        $this->msg->setSeen();
+        $this->msg->markSeen();
     }
 
     /**
      * Moves the current report message
      *
-     * @param string $mbox_name Child mailbox name where to move the current message to.
-     *                          If the target mailbox does not exists, it will be created.
+     * @param string $folder Child mailbox name where to move the current message to.
+     *                       If the target mailbox does not exists, it will be created.
      *
      * @return void
      */
-    private function moveMessage(string $mbox_name): void
+    private function moveMessage(string $folder): void
     {
-        $this->data->ensureMailbox($mbox_name);
-        $this->data->moveMessage($this->list[$this->index], $mbox_name);
+        $this->data->ensureMailbox($folder);
+        $this->msg->move($folder);
     }
 
     /**
@@ -233,6 +234,6 @@ class MailboxSource extends Source
      */
     private function deleteMessage(): void
     {
-        $this->data->deleteMessage($this->list[$this->index]);
+        $this->msg->delete();
     }
 }

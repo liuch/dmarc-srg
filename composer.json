@@ -24,7 +24,8 @@
         "ext-xml": "*",
         "ext-zip": "*",
         "phpmailer/phpmailer": "^6.8.0",
-        "league/flysystem-aws-s3-v3": "^2.5 || ^3.25.1"
+        "league/flysystem-aws-s3-v3": "^2.5 || ^3.25.1",
+        "directorytree/imapengine": "^1.15"
     },
     "require-dev": {
         "php-parallel-lint/php-parallel-lint": "*",

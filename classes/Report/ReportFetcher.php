@@ -149,13 +149,11 @@ class ReportFetcher
                 if ($this->source->type() === Source::SOURCE_MAILBOX) {
                     $msg = $this->source->mailMessage();
                     $ov = $msg->overview();
-                    if ($ov) {
-                        if (property_exists($ov, 'from')) {
-                            $result['emailed_from'] = $ov->from;
-                        }
-                        if (property_exists($ov, 'date')) {
-                            $result['emailed_date'] = $ov->date;
-                        }
+                    if (isset($ov['from'])) {
+                        $result['emailed_from'] = $ov['from'];
+                    }
+                    if (isset($ov['date'])) {
+                        $result['emailed_date'] = $ov['date']->format(\DateTime::RFC1123);
                     }
                 }
                 if ($report) {

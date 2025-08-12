@@ -288,6 +288,11 @@ class Core
                         $no_dep = 'Flysystem';
                     }
                     break;
+                case 'imap-engine':
+                    if (!class_exists('DirectoryTree\ImapEngine\Mailbox')) {
+                        $no_dep = 'ImapEngine';
+                    }
+                    break;
                 default:
                     if (!extension_loaded($ext)) {
                         $no_dep = 'ext-' . $ext;

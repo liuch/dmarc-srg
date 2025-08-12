@@ -22,91 +22,15 @@
 
 namespace Liuch\DmarcSrg\Mail;
 
-use Liuch\DmarcSrg\ReportFile\ReportFile;
-use Liuch\DmarcSrg\Exception\SoftException;
-
-class MailAttachment
+abstract class MailAttachment
 {
-    private $conn;
-    private $filename;
-    private $bytes;
-    private $number;
-    private $mnumber;
-    private $encoding;
-    private $stream;
-    private $mime_type;
+    abstract public function __construct($data);
 
-    public function __construct($conn, $params)
-    {
-        $this->conn     = $conn;
-        $this->filename = $params['filename'];
-        $this->bytes    = $params['bytes'];
-        $this->number   = $params['number'];
-        $this->mnumber  = $params['mnumber'];
-        $this->encoding = $params['encoding'];
-        $this->stream    = null;
-        $this->mime_type = null;
-    }
+    abstract public function mimeType(): string;
 
-    public function __destruct()
-    {
-        if (!is_null($this->stream) && get_resource_type($this->stream) == 'stream') {
-            fclose($this->stream);
-        }
-    }
+    abstract public function size(): int;
 
-    public function mimeType()
-    {
-        if (is_null($this->mime_type)) {
-            $this->mime_type = ReportFile::getMimeType($this->filename, $this->datastream());
-        }
-        return $this->mime_type;
-    }
+    abstract public function filename();
 
-    public function size()
-    {
-        return $this->bytes;
-    }
-
-    public function filename()
-    {
-        return $this->filename;
-    }
-
-    public function extension()
-    {
-        return pathinfo($this->filename, PATHINFO_EXTENSION);
-    }
-
-    public function datastream()
-    {
-        if (is_null($this->stream)) {
-            $this->stream = fopen('php://temp', 'r+');
-            fwrite($this->stream, $this->toString());
-        }
-        if (stream_get_meta_data($this->stream)['seekable'] ?? false) {
-            rewind($this->stream);
-        }
-        return $this->stream;
-    }
-
-    private function fetchBody()
-    {
-        return imap_fetchbody($this->conn, $this->mnumber, strval($this->number), FT_PEEK | FT_UID);
-    }
-
-    private function toString()
-    {
-        switch ($this->encoding) {
-            case ENC7BIT:
-            case ENC8BIT:
-            case ENCBINARY:
-                return $this->fetchBody();
-            case ENCBASE64:
-                return base64_decode($this->fetchBody());
-            case ENCQUOTEDPRINTABLE:
-                return imap_qprint($this->fetchBody());
-        }
-        throw new SoftException('Encoding failed: Unknown encoding');
-    }
+    abstract public function datastream();
 }

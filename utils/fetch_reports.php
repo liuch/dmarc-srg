@@ -207,7 +207,7 @@ try {
                 }
                 if ($source->type() === Source::SOURCE_MAILBOX) {
                     $cont = $source->container();
-                    $pr['mailbox'] = $cont->mailbox() . ' (' . $cont->name() . ')';
+                    $pr['mailbox'] = $cont->folder() . ' (' . $cont->name() . ')';
                 }
                 if (isset($res['debug_info']['content'])) {
                     $pr['debug_info'] = $res['debug_info']['content'];
