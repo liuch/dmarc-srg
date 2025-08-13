@@ -270,6 +270,25 @@ class SummaryReport
     }
 
     /**
+     * Escapes special characters for Markdown output
+     *
+     * @param string $text The text to escape
+     *
+     * @return string
+     */
+    private function escapeMarkdown(string $text): string
+    {
+        // Escape special Markdown characters that could break table formatting
+        $text = str_replace('\\', '\\\\', $text); // Backslash first
+        $text = str_replace('|', '\\|', $text);   // Pipe (critical for tables)
+
+        // Only escape formatting characters if they appear in contexts that could be problematic
+        // For table cells, we mainly need to escape pipes
+
+        return $text;
+    }
+
+    /**
      * Returns the report as an array of markdown strings with proper table formatting
      *
      * @return array
@@ -317,12 +336,12 @@ class SummaryReport
                 }
 
                 $res[] = sprintf('| %s | %s | %s | %s | %s | %s |',
-                    $it['ip'],
+                    $this->escapeMarkdown($it['ip']),
                     $total,
                     $s_aln,
                     $d_aln,
-                    Common::num2percent($n_aln, $total, true),
-                    $s_dis
+                    $this->escapeMarkdown(Common::num2percent($n_aln, $total, true)),
+                    $this->escapeMarkdown($s_dis)
                 );
             }
             unset($it);
@@ -352,13 +371,13 @@ class SummaryReport
                 }
 
                 $res[] = sprintf('| %s | %s | %s | %s | %s | %s | %s |',
-                    trim($it['name']),
+                    $this->escapeMarkdown(trim($it['name'])),
                     $it['reports'],
                     $total,
                     $s_aln,
                     $d_aln,
-                    Common::num2percent($n_aln, $total, true),
-                    $s_dis
+                    $this->escapeMarkdown(Common::num2percent($n_aln, $total, true)),
+                    $this->escapeMarkdown($s_dis)
                 );
             }
             unset($it);
