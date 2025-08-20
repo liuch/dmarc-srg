@@ -189,6 +189,64 @@ class OverallReport
     }
 
     /**
+     * Returns the report as an array of markdown strings with proper table formatting
+     *
+     * @return array
+     */
+    public function markdown(): array
+    {
+        $res = [ '# Overall by domains' ];
+        $res[] = '';
+
+        // Generate Markdown table
+        $res[] = '| Domain | Emails | SPF only | DKIM only | Not aligned | Quar+Rej |';
+        $res[] = '|--------|--------|----------|-----------|-------------|----------|';
+
+        foreach ($this->rows as &$row) {
+            $total = $row['total'];
+            $d_aln = $row['dkim_aligned'];
+            $s_aln = $row['spf_aligned'];
+            $q_dis = $row['quarantined'];
+            $r_dis = $row['rejected'];
+            $n_aln = $total - $row['dkim_spf_aligned'] - $d_aln - $s_aln;
+            if ($q_dis || $r_dis) {
+                $s_dis = Common::num2percent($q_dis + $r_dis, $total, false) . "({$q_dis}+{$r_dis})";
+            } else {
+                $s_dis = '0';
+            }
+
+            $res[] = sprintf('| %s | %s | %s | %s | %s | %s |',
+                $this->escapeMarkdown(trim($row['fqdn'])),
+                $total,
+                $s_aln,
+                $d_aln,
+                $this->escapeMarkdown(Common::num2percent($n_aln, $total, true)),
+                $this->escapeMarkdown($s_dis)
+            );
+        }
+        unset($row);
+        $res[] = '';
+
+        return $res;
+    }
+
+    /**
+     * Escapes special Markdown characters that could break table formatting
+     *
+     * @param string $text Text to escape
+     *
+     * @return string
+     */
+    private function escapeMarkdown(string $text): string
+    {
+        // Escape special Markdown characters that could break table formatting
+        $text = str_replace('\\', '\\\\', $text); // Backslash first
+        $text = str_replace('|', '\\|', $text);   // Pipe (critical for tables)
+
+        return $text;
+    }
+
+    /**
      * Returns the report data in CSV format
      *
      * @return string

@@ -35,7 +35,7 @@
  *   for `lastNDays`, `lastWeek` and `lastMonth` respectively. The default value is 0.
  * The `emailto` parameter is optional. Set it if you want to use a different email address to sent the report to.
  * The `format` parameter is optional. It provides the ability to specify the email message format.
- *   Possible values are: `text`, `html`, `text+html`. The default value is `text`.
+ *   Possible values are: `text`, `html`, `text+html`, `markdown`. The default value is `text`.
  * The `user` parameter is optional. It can be useful for specifying a list of assigned domains for a single user
  *   when the `domain` options is set to `all`. Only makes sense if the user_management mode is active.
  *   The default value is `admin`.
@@ -163,16 +163,13 @@ try {
     $rep = new SummaryReport($period, intval($offset));
     switch ($format) {
         case 'text':
+        case 'markdown':
             $text = [];
             $html = null;
             break;
         case 'html':
             $text = null;
             $html = [];
-            break;
-        case 'markdown':
-            $text = [];
-            $html = null;
             break;
         default:
             $text = [];
@@ -251,7 +248,11 @@ try {
         if (!$rep_cnt && !$err_cnt) {
             $text[] = 'There are no active domains';
         } elseif ($overall) {
-            $text = array_merge($overall->text(), [ '-----------------------------------', '' ], $text);
+            if ($format === 'markdown') {
+                $text = array_merge($overall->markdown(), [ '---', '' ], $text);
+            } else {
+                $text = array_merge($overall->text(), [ '-----------------------------------', '' ], $text);
+            }
         }
     }
     if (!is_null($html)) {
