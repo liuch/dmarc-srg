@@ -270,6 +270,124 @@ class SummaryReport
     }
 
     /**
+     * Escapes special characters for Markdown output
+     *
+     * @param string $text The text to escape
+     *
+     * @return string
+     */
+    private function escapeMarkdown(string $text): string
+    {
+        // Escape special Markdown characters that could break table formatting
+        $text = str_replace('\\', '\\\\', $text); // Backslash first
+        $text = str_replace('|', '\\|', $text);   // Pipe (critical for tables)
+
+        // Only escape formatting characters if they appear in contexts that could be problematic
+        // For table cells, we mainly need to escape pipes
+
+        return $text;
+    }
+
+    /**
+     * Returns the report as an array of markdown strings with proper table formatting
+     *
+     * @return array
+     */
+    public function markdown(): array
+    {
+        $rdata = $this->reportData();
+
+        $res = [ '# Domain: ' . $this->domain->fqdn() ];
+        $res[] = '';
+        $res[] = '**Range:** ' . $rdata['range'];
+        $res[] = '';
+
+        $res[] = '## Summary';
+        $res[] = '';
+        $total = $rdata['summary']['total'];
+        $res[] = sprintf('- **Total:** %d', $total);
+        $res[] = sprintf('- **Fully aligned:** %s', Common::num2percent($rdata['summary']['f_aligned'], $total, true));
+        $res[] = sprintf('- **Partial aligned:** %s', Common::num2percent($rdata['summary']['p_aligned'], $total, true));
+        $res[] = sprintf('- **Not aligned:** %s', Common::num2percent($rdata['summary']['n_aligned'], $total, true));
+        $res[] = sprintf('- **Quarantined:** %s', Common::num2percent($rdata['summary']['quarantined'], $total, true));
+        $res[] = sprintf('- **Rejected:** %s', Common::num2percent($rdata['summary']['rejected'], $total, true));
+        $res[] = '';
+
+        if (count($rdata['sources']) > 0) {
+            $res[] = '## Sources';
+            $res[] = '';
+
+            // Generate Markdown table
+            $res[] = '| IP Address | Total | SPF only | DKIM only | Not aligned | Quar+Rej |';
+            $res[] = '|------------|-------|----------|-----------|-------------|----------|';
+
+            foreach ($rdata['sources'] as &$it) {
+                $total = $it['emails'];
+                $f_aln = $it['dkim_spf_aligned'];
+                $d_aln = $it['dkim_aligned'];
+                $s_aln = $it['spf_aligned'];
+                $n_aln = $total - $f_aln - $d_aln - $s_aln;
+                $q_dis = $it['quarantined'];
+                $r_dis = $it['rejected'];
+                if ($q_dis || $r_dis) {
+                    $s_dis = Common::num2percent($q_dis + $r_dis, $total, false) . "({$q_dis}+{$r_dis})";
+                } else {
+                    $s_dis = '0';
+                }
+
+                $res[] = sprintf('| %s | %s | %s | %s | %s | %s |',
+                    $this->escapeMarkdown($it['ip']),
+                    $total,
+                    $s_aln,
+                    $d_aln,
+                    $this->escapeMarkdown(Common::num2percent($n_aln, $total, true)),
+                    $this->escapeMarkdown($s_dis)
+                );
+            }
+            unset($it);
+            $res[] = '';
+        }
+
+        if (count($rdata['organizations']) > 0) {
+            $res[] = '## Reporting organizations';
+            $res[] = '';
+
+            // Generate Markdown table
+            $res[] = '| Organization | Reports | Emails | SPF only | DKIM only | Not aligned | Quar+Rej |';
+            $res[] = '|--------------|---------|--------|----------|-----------|-------------|----------|';
+
+            foreach ($rdata['organizations'] as &$it) {
+                $total = $it['emails'];
+                $f_aln = $it['dkim_spf_aligned'];
+                $d_aln = $it['dkim_aligned'];
+                $s_aln = $it['spf_aligned'];
+                $n_aln = $total - $f_aln - $d_aln - $s_aln;
+                $q_dis = $it['quarantined'];
+                $r_dis = $it['rejected'];
+                if ($q_dis || $r_dis) {
+                    $s_dis = Common::num2percent($q_dis + $r_dis, $total, false) . "({$q_dis}+{$r_dis})";
+                } else {
+                    $s_dis = '0';
+                }
+
+                $res[] = sprintf('| %s | %s | %s | %s | %s | %s | %s |',
+                    $this->escapeMarkdown(trim($it['name'])),
+                    $it['reports'],
+                    $total,
+                    $s_aln,
+                    $d_aln,
+                    $this->escapeMarkdown(Common::num2percent($n_aln, $total, true)),
+                    $this->escapeMarkdown($s_dis)
+                );
+            }
+            unset($it);
+            $res[] = '';
+        }
+
+        return $res;
+    }
+
+    /**
      * Returns the report as an array of html strings
      *
      * @return array

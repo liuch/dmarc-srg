@@ -35,7 +35,7 @@
  *   for `lastNDays`, `lastWeek` and `lastMonth` respectively. The default value is 0.
  * The `emailto` parameter is optional. Set it if you want to use a different email address to sent the report to.
  * The `format` parameter is optional. It provides the ability to specify the email message format.
- *   Possible values are: `text`, `html`, `text+html`. The default value is `text`.
+ *   Possible values are: `text`, `html`, `text+html`, `markdown`. The default value is `text`.
  * The `user` parameter is optional. It can be useful for specifying a list of assigned domains for a single user
  *   when the `domain` options is set to `all`. Only makes sense if the user_management mode is active.
  *   The default value is `admin`.
@@ -99,7 +99,7 @@ $subject = '';
 if ($acount <= 1) {
     echo "Usage: {$argv[0]} domain=<domains>|all", PHP_EOL;
     echo '           period=lastmonth|lastweek|lastndays:<days>', PHP_EOL;
-    echo '           [offset=<days>] [format=text|html|text+html]', PHP_EOL;
+    echo '           [offset=<days>] [format=text|html|text+html|markdown]', PHP_EOL;
     echo '           [emailto=<email address>] [user=<username>]', PHP_EOL;
     exit(1);
 }
@@ -144,7 +144,7 @@ try {
     if (filter_var($offset, FILTER_VALIDATE_INT, [ 'options' => [ 'min_range' => 0 ] ]) === false) {
         throw new SoftException('Parameter "offset" must be a positive integer');
     }
-    if (!in_array($format, [ 'text', 'html', 'text+html' ], true)) {
+    if (!in_array($format, [ 'text', 'html', 'text+html', 'markdown' ], true)) {
         throw new SoftException('Unknown email message format: ' . $format);
     }
     if (!$emailto) {
@@ -163,6 +163,7 @@ try {
     $rep = new SummaryReport($period, intval($offset));
     switch ($format) {
         case 'text':
+        case 'markdown':
             $text = [];
             $html = null;
             break;
@@ -204,8 +205,14 @@ try {
                     $add_sep();
                 }
                 if (!is_null($text)) {
-                    foreach ($rep->text() as &$row) {
-                        $text[] = $row;
+                    if ($format === 'markdown') {
+                        foreach ($rep->markdown() as &$row) {
+                            $text[] = $row;
+                        }
+                    } else {
+                        foreach ($rep->text() as &$row) {
+                            $text[] = $row;
+                        }
                     }
                     unset($row);
                 }
@@ -241,7 +248,11 @@ try {
         if (!$rep_cnt && !$err_cnt) {
             $text[] = 'There are no active domains';
         } elseif ($overall) {
-            $text = array_merge($overall->text(), [ '-----------------------------------', '' ], $text);
+            if ($format === 'markdown') {
+                $text = array_merge($overall->markdown(), [ '---', '' ], $text);
+            } else {
+                $text = array_merge($overall->text(), [ '-----------------------------------', '' ], $text);
+            }
         }
     }
     if (!is_null($html)) {
