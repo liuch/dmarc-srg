@@ -40,7 +40,7 @@
  *   when the `domain` options is set to `all`. Only makes sense if the user_management mode is active.
  *   The default value is `admin`.
  * The `subject` parameter is optional. It allows you to specify the subject line of the summary report message
- *   instead of the default subject line. Remember to escape spaces and special characters!
+ *   instead of the default subject line. Remember to escape spaces and special characters using HTML entities!
  *
  * Some examples:
  *
@@ -50,7 +50,7 @@
  * $ php utils/summary_report.php domain=example.com period=lastweek offset=1
  * will send a summary report for the week before last week for the domain example.com via email
  *
- * $ php utils/summary_report.php domain=example.com period=lastndays:10 "subject:My cool summary report"
+ * $ php utils/summary_report.php domain=example.com period=lastndays:10 subject="My cool summary report"
  * will send a summary report for last 10 days for the domain example.com via email with the specified subject line
  *
  * $ php utils/summary_report.php domain=all user=frederick1 period=lastmonth emailto=frederick@example.com
@@ -101,6 +101,7 @@ if ($acount <= 1) {
     echo '           period=lastmonth|lastweek|lastndays:<days>', PHP_EOL;
     echo '           [offset=<days>] [format=text|html|text+html|markdown]', PHP_EOL;
     echo '           [emailto=<email address>] [user=<username>]', PHP_EOL;
+    echo '           [subject="<subject line>"]', PHP_EOL;
     exit(1);
 }
 for ($i = 1; $i < $acount; ++$i) {
