@@ -204,9 +204,11 @@ try {
                     case 'auto':
                         try {
                             $core->checkDependencies('imap-engine');
+                            $lib = 'imap-engine (auto)';
                         } catch (SoftException $e) {
                             try {
                                 $core->checkDependencies('imap');
+                                $lib = 'php-extension (auto)';
                             } catch (SoftException $e) {
                                 throw new SoftException('Neither ImapEngine nor PHP IMAP extension is installed');
                             }
@@ -215,7 +217,7 @@ try {
                     default:
                         throw new SoftException('Unknown library name: ' . $lib);
                 }
-                $endChecking();
+                $endChecking('using ' . $lib, RESULT_SUCCESS);
                 echo "  * Checking mailboxes ({$mb_lcnt})", PHP_EOL;
                 for ($mb_num = 1; $mb_num <= $mb_lcnt; ++$mb_num) {
                     $mb = $mb_list->mailbox($mb_num);
