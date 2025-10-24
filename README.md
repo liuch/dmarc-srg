@@ -37,7 +37,7 @@ Ensure that all the files are in their own sub-folder.
 
 ### Requirements
 * MariaDB or MySQL
-* PHP 7.3 or higher
+* PHP 8.1 or higher
 * Installed `php-mbstring`, `php-mysql`, `php-xml`, `php-zip`, and `php-json`
 * A working webserver (not necessary)
 * To process incoming reports in your mailbox, you need to install the `ImapEngine` library. Use composer for that. Note that the PHP IMAP extension is deprecated, however, it is still possible to use it here. See comments in the conf.sample.php file for details.
