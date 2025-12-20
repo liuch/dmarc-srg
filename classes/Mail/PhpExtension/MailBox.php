@@ -311,6 +311,9 @@ class MailBox extends \Liuch\DmarcSrg\Mail\MailBox
     private function ensureConnection()
     {
         if (is_null($this->conn)) {
+            if (isset($this->authm) && $this->authm !== 'plain') {
+                throw new LogicException('Unknown authentication method');
+            }
             $error_message = null;
             $srv = self::utf8ToMutf7($this->server);
             try {

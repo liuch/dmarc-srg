@@ -185,6 +185,7 @@ try {
             $startChecking('Imap library');
             try {
                 $lib = $core->config('fetcher/mailboxes/library', 'auto');
+                $authm = [];
                 switch ($lib) {
                     case 'imap-engine':
                         try {
@@ -192,6 +193,7 @@ try {
                         } catch (SoftException $e) {
                             throw new SoftException('ImapEngine is not installed');
                         }
+                        $authm = [ 'plain', 'oauth' ];
                         break;
                     case 'php-extension':
                         try {
@@ -199,16 +201,18 @@ try {
                         } catch (SoftException $e) {
                             throw new SoftException('PHP IMAP extension is not installed');
                         }
-                        $core->checkDependencies('imap');
+                        $authm = [ 'plain' ];
                         break;
                     case 'auto':
                         try {
                             $core->checkDependencies('imap-engine');
                             $lib = 'imap-engine (auto)';
+                            $authm = [ 'plain', 'oauth' ];
                         } catch (SoftException $e) {
                             try {
                                 $core->checkDependencies('imap');
                                 $lib = 'php-extension (auto)';
+                                $authm = [ 'plain' ];
                             } catch (SoftException $e) {
                                 throw new SoftException('Neither ImapEngine nor PHP IMAP extension is installed');
                             }
@@ -223,11 +227,15 @@ try {
                     $mb = $mb_list->mailbox($mb_num);
                     echo "    - {$mb->name()}", PHP_EOL;
                     $startChecking('Accessibility', 2);
-                    $res = $mb->check();
-                    if (!$res['error_code']) {
-                        $endChecking();
+                    if (in_array($mb->authMethod(), $authm)) {
+                        $res = $mb->check();
+                        if (!$res['error_code']) {
+                            $endChecking();
+                        } else {
+                            $endChecking($res['message'] ?? null);
+                        }
                     } else {
-                        $endChecking($res['message'] ?? null);
+                        $endChecking('Unsupported authentication method');
                     }
                 }
             } catch (SoftException $e) {

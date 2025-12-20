@@ -41,8 +41,13 @@ $mailboxes = [
     'novalidate-cert' => false,
     // Mailbox user name.
     'username'        => 'dmarc-rua@yourdomain.net',
-    // Mailbox password.
+    // Mailbox password or OAuth token when the authentication method is 'oauth'.
     'password'        => 'password',
+    // Authentication method. The valid values are:
+    // 'plain' - authentication with username and password. Default value.
+    // 'oauth' - OAuth authentication. Pass the token as the password.
+    //           Only available with the imap-engine library (see the fetcher->library setting).
+    'authentication'  => 'plain',
     // Mailbox name
     'mailbox'         => 'INBOX',
     // IMAP authentication methods to be excluded.

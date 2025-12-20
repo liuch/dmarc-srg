@@ -197,6 +197,15 @@ class MailBox extends \Liuch\DmarcSrg\Mail\MailBox
                 'encryption'    => $this->encrypt == 'none' ? null : $this->encrypt,
                 'validate_cert' => !$this->nocert
             ];
+            switch ($this->authm) {
+                case 'plain':
+                    break;
+                case 'oauth':
+                    $params['authentication'] = $this->authm;
+                    break;
+                default:
+                    throw new LogicException('Unknown authentication method');
+            }
             if ($port) {
                 $params['port'] = $port;
             }

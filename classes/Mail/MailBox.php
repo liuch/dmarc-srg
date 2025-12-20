@@ -35,6 +35,7 @@ abstract class MailBox
     protected $name;
     protected $uname;
     protected $passw;
+    protected $authm;
     protected $encrypt;
     protected $nocert;
     protected $a_excl;
@@ -45,6 +46,7 @@ abstract class MailBox
     {
         $this->uname = $params['username'];
         $this->passw = $params['password'];
+        $this->authm = $params['authentication'] ?? 'plain';
         $this->name  = $params['name'] ?? '';
         if (strlen($this->name) === 0) {
             $name = $this->uname;
@@ -103,6 +105,11 @@ abstract class MailBox
     public function name(): string
     {
         return $this->name;
+    }
+
+    public function authMethod(): string
+    {
+        return $this->authm;
     }
 
     public function host(): string
