@@ -82,7 +82,6 @@ class ReportData
                 }
             }
         } finally {
-            xml_parser_free($parser);
             unset($parser);
         }
         return $rdata;
