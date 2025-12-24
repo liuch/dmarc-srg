@@ -34,7 +34,7 @@ if (defined('PHP_UNIT_TEST')) { /* stop warnings about headers having already be
     ob_start();
 }
 
-define('APP_VERSION', '2.3' . strval($vc['version_suffix']));
+define('APP_VERSION', '3.0-pre' . strval($vc['version_suffix']));
 define('CONFIG_FILE', strval($vc['config_file']));
 
 $va = strval($vc['autoload_file']);
