@@ -33,7 +33,6 @@ class MarkdownEscapingTest extends \PHPUnit\Framework\TestCase
     {
         $reflection = new \ReflectionClass(SummaryReport::class);
         $method = $reflection->getMethod('escapeMarkdown');
-        $method->setAccessible(true);
 
         $report = new SummaryReport('lastweek');
 
@@ -58,7 +57,6 @@ class MarkdownEscapingTest extends \PHPUnit\Framework\TestCase
     {
         $reflection = new \ReflectionClass(SummaryReport::class);
         $method = $reflection->getMethod('escapeMarkdown');
-        $method->setAccessible(true);
 
         $report = new SummaryReport('lastweek');
 
@@ -74,7 +72,6 @@ class MarkdownEscapingTest extends \PHPUnit\Framework\TestCase
     {
         $reflection = new \ReflectionClass(SummaryReport::class);
         $method = $reflection->getMethod('escapeMarkdown');
-        $method->setAccessible(true);
 
         $report = new SummaryReport('lastweek');
 
@@ -91,7 +88,6 @@ class MarkdownEscapingTest extends \PHPUnit\Framework\TestCase
     {
         $reflection = new \ReflectionClass(SummaryReport::class);
         $method = $reflection->getMethod('escapeMarkdown');
-        $method->setAccessible(true);
 
         $report = new SummaryReport('lastweek');
 
@@ -114,7 +110,6 @@ class MarkdownEscapingTest extends \PHPUnit\Framework\TestCase
     {
         $reflection = new \ReflectionClass(SummaryReport::class);
         $method = $reflection->getMethod('escapeMarkdown');
-        $method->setAccessible(true);
 
         $report = new SummaryReport('lastweek');
 
@@ -136,7 +131,6 @@ class MarkdownEscapingTest extends \PHPUnit\Framework\TestCase
     {
         $reflection = new \ReflectionClass(SummaryReport::class);
         $method = $reflection->getMethod('escapeMarkdown');
-        $method->setAccessible(true);
 
         $report = new SummaryReport('lastweek');
 
@@ -157,7 +151,6 @@ class MarkdownEscapingTest extends \PHPUnit\Framework\TestCase
     {
         $reflection = new \ReflectionClass(SummaryReport::class);
         $method = $reflection->getMethod('escapeMarkdown');
-        $method->setAccessible(true);
 
         $report = new SummaryReport('lastweek');
 
@@ -173,7 +166,6 @@ class MarkdownEscapingTest extends \PHPUnit\Framework\TestCase
     {
         $reflection = new \ReflectionClass(SummaryReport::class);
         $method = $reflection->getMethod('escapeMarkdown');
-        $method->setAccessible(true);
 
         $report = new SummaryReport('lastweek');
 
