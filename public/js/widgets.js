@@ -1477,6 +1477,7 @@ class Multiselect extends HTMLElement {
 		this._search.type = "text";
 		this._search.role = "textbox";
 		this._search.tabIndex = 0;
+		this._search.autocomplete = "off";
 		this._search.ariaHasPopup = "listbox";
 		this._search.ariaExpanded = false;
 		this._search.disabled = this._disabled;
