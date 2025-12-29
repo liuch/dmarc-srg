@@ -126,7 +126,7 @@ if (Core::requestMethod() == 'POST') {
                         $slst = [];
                         switch ($cmd_id) {
                             case 0:
-                                $core->checkDependencies('imap,xml,zip');
+                                $core->checkDependencies('imap-engine|imap,xml,zip');
                                 $list = new MailBoxes();
                                 break;
                             case 1:

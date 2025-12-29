@@ -278,34 +278,40 @@ class Core
      */
     public function checkDependencies(string $deps): void
     {
-        $adeps = explode(',', $deps);
-        $no_deps = [];
-        foreach ($adeps as $ext) {
-            $no_dep = null;
-            switch ($ext) {
-                case 'flyfs':
-                    if (!class_exists('League\Flysystem\Filesystem')) {
-                        $no_dep = 'Flysystem';
-                    }
-                    break;
-                case 'imap-engine':
-                    if (!class_exists('DirectoryTree\ImapEngine\Mailbox')) {
-                        $no_dep = 'ImapEngine';
-                    }
-                    break;
-                default:
-                    if (!extension_loaded($ext)) {
-                        $no_dep = 'ext-' . $ext;
-                    }
-                    break;
-            }
-            if ($no_dep) {
-                $no_deps[] = $no_dep;
+        $final_no_list = [];
+        $and_item_list = explode(',', $deps);
+        foreach ($and_item_list as $and_item) {
+            $no_list = [];
+            $or_item_list = explode('|', $and_item);
+            foreach ($or_item_list as $ext) {
                 $no_dep = null;
+                switch ($ext) {
+                    case 'flyfs':
+                        if (!class_exists('League\Flysystem\Filesystem')) {
+                            $no_dep = 'Flysystem';
+                        }
+                        break;
+                    case 'imap-engine':
+                        if (!class_exists('DirectoryTree\ImapEngine\Mailbox')) {
+                            $no_dep = 'ImapEngine';
+                        }
+                        break;
+                    default:
+                        if (!extension_loaded($ext)) {
+                            $no_dep = 'ext-' . $ext;
+                        }
+                        break;
+                }
+                if ($no_dep) {
+                    $no_list[] = $no_dep;
+                }
+            }
+            if (count($or_item_list) === count($no_list)) {
+                $final_no_list[] = implode(' or ', $no_list);
             }
         }
-        if (count($no_deps)) {
-            if (count($no_deps) === 1) {
+        if (count($final_no_list)) {
+            if (count($final_no_list) === 1) {
                 $s1 = 'y';
                 $s2 = 'is';
             } else {
@@ -315,7 +321,7 @@ class Core
             $msg = "Required dependenc$s1 $s2 missing";
             $usr = $this->getCurrentUser();
             if ($usr && $usr->level() === User::LEVEL_ADMIN) {
-                $msg .= ': ' . implode(', ', $no_deps) . '.';
+                $msg .= ': ' . implode(', ', $final_no_list) . '.';
             } else {
                 $msg .= '. Contact the administrator.';
             }

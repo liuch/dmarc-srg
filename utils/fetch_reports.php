@@ -131,7 +131,7 @@ if (!$source || $source === 'email') {
     if ($mb_cnt > 0) {
         $errors  = [ 'messages' => [], 'debug_info' => null ];
         try {
-            $core->checkDependencies('imap,xml,zip');
+            $core->checkDependencies('imap-engine|imap,xml,zip');
             for ($mb_num = 1; $mb_num <= $mb_cnt; ++$mb_num) {
                 try {
                     $sou_list[] = new MailboxSource($mb_list->mailbox($mb_num));

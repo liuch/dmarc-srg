@@ -95,7 +95,7 @@ class Admin
     {
         switch ($type) {
             case 'mailbox':
-                $this->core->checkDependencies('imap,xml,zip');
+                $this->core->checkDependencies('imap-engine|imap,xml,zip');
                 return (new MailBoxes())->check($id);
             case 'directory':
                 $this->core->checkDependencies('xml,zip');
