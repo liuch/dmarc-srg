@@ -280,11 +280,16 @@ class CoreTest extends \PHPUnit\Framework\TestCase
         $sess->expects($this->never())->method('getData');
         $sess->expects($this->never())->method('setData');
 
+        $db = $this->getMockBuilder(DatabaseController::class)
+                   ->disableOriginalConstructor()
+                   ->getMock();
+
         $core = new Core([
-            'session' => $sess
+            'session' => $sess,
+            'database' => $db
         ]);
 
-        $core->setCurrentUser(new DbUser([ 'id' => 1, 'name' => 'User' ]));
+        $core->setCurrentUser(new DbUser([ 'id' => 1, 'name' => 'User' ], $db));
     }
 
     public function testSendHtml(): void
