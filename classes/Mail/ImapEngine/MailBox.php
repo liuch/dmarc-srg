@@ -99,7 +99,7 @@ class MailBox extends \Liuch\DmarcSrg\Mail\MailBox
             try {
                 $res = $this->folder->status();
                 $attrs = $this->folder->flags();
-                if (!in_array('\HasChildren', $attrs)) {
+                if (in_array('\NoInferiors', $attrs)) {
                     throw new MailboxException('The mailbox may not have any children mailboxes');
                 }
                 if (in_array('\Noselect', $attrs)) {
