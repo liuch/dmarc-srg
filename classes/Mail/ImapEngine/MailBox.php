@@ -225,6 +225,9 @@ class MailBox extends \Liuch\DmarcSrg\Mail\MailBox
         }
         try {
             $this->folder = $this->conn->folders()->find($this->mbox);
+            if ($this->folder === null) {
+                throw new MailboxException("IMAP: Mailbox `{$this->mbox}` not found");
+            }
             $this->folder->select();
         } catch (IException $e) {
             Core::instance()->logger()->error("IMAP error: {$e->getMessage()}");
