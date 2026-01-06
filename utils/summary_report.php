@@ -44,16 +44,16 @@
  *
  * Some examples:
  *
- * $ php utils/summary_report.php domain=example.com period=lastweek
+ * $ php -f utils/summary_report.php domain=example.com period=lastweek
  * will send a summary report for the last week for the domain example.com via email
  *
- * $ php utils/summary_report.php domain=example.com period=lastweek offset=1
+ * $ php -f utils/summary_report.php domain=example.com period=lastweek offset=1
  * will send a summary report for the week before last week for the domain example.com via email
  *
- * $ php utils/summary_report.php domain=example.com period=lastndays:10 "subject:My cool summary report"
+ * $ php -f utils/summary_report.php domain=example.com period=lastndays:10 "subject=My cool summary report"
  * will send a summary report for last 10 days for the domain example.com via email with the specified subject line
  *
- * $ php utils/summary_report.php domain=all user=frederick1 period=lastmonth emailto=frederick@example.com
+ * $ php -f utils/summary_report.php domain=all user=frederick1 period=lastmonth emailto=frederick@example.com
  * will send a summary report for the last month for all domains assigned to user frederick1 to frederick@example.com.
  *
  * The best place to use it is cron.
@@ -101,6 +101,7 @@ if ($acount <= 1) {
     echo '           period=lastmonth|lastweek|lastndays:<days>', PHP_EOL;
     echo '           [offset=<days>] [format=text|html|text+html|markdown]', PHP_EOL;
     echo '           [emailto=<email address>] [user=<username>]', PHP_EOL;
+    echo '           [subject=<subject text>]', PHP_EOL;
     exit(1);
 }
 for ($i = 1; $i < $acount; ++$i) {
