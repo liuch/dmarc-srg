@@ -43,6 +43,9 @@ Ensure that all the files are in their own sub-folder.
 * To process incoming reports in your mailbox, you need to install the `ImapEngine` library. Use composer for that. Note that the PHP IMAP extension is deprecated, however, it is still possible to use it here. See comments in the conf.sample.php file for details.
 * To process incoming reports on the S3 filesystem, you need the `flysystem` package. Use composer for this.
 
+See [Setup](docs/setup-and-configuration.md) for setup / configuration instructions.
+
+
 ### Create the database
 Login as mysql root user to the MariaDB/MySQL server using the shell, run:
 
