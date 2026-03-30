@@ -177,6 +177,9 @@ v=DMARC1; p=reject; rua=mailto:dmarc-rua@example.com
 
 Where dmarc-rua@example.com is an IMAP mailbox you've already created, and configured as a mailbox within dmarc-srg in `config/conf.php`
 
+If the domain the notification(s) are going to does NOT match the domain the DMARC record is for, you'll need to read https://dmarc.org/2015/08/receiving-dmarc-reports-outside-your-domain/
+
+
 # Enable automated collection of dmarc reports from your imap folder
 
 This will retrieve reports from the imap folder every hour.
