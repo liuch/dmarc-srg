@@ -2,10 +2,32 @@
 
 This was written assuming a Debian like system, using Apache. The web server was already configured to run PHP 8.2.
 
+It's left as an exercise to the end user to decide where exactly they wish to install this. `/var/www/html/` probably won't work for everyone.
+
 ```shell
 cd /var/www/html
+```
+
+## Downloading dmarc-srg
+Either :
+```shell
 git clone git@github.com:liuch/dmarc-srg.git
 cd dmarc-srg
+```
+
+OR ... download a release from : https://github.com/liuch/dmarc-srg/releases, e.g.
+
+```shell
+wget -O dmarc.tgz https://github.com/liuch/dmarc-srg/archive/refs/tags/v3.0-pre2.tar.gz
+tar -zvxf dmarc.tgz
+cd dmarc-srg-3.0-pre2
+```
+
+## Installing libraries etc
+
+Using 'composer'
+
+```shell
 curl -o composer https://getcomposer.org/download/2.9.5/composer.phar
 php composer selfupdate
 php composer install -n
@@ -18,13 +40,11 @@ apt install php8.2-xml php8.2-mysql php8.2-dom
 service apache2 restart
 ```
 
-Then perhaps point your browser at http://localhost/dmarc-srg/public
-
-It's left as an exercise to the end user to decide where exactly they wish to install this. `/var/www/html/` is probably not the best place.
+# Configure the webserver (Apache)
 
 A simple configuration for a webserver is below, it just needs to have the dmarc-srg/**public** folder as the DocumentRoot.
 
-If you're using Apache, an appropriate VirtualHost configuration in /etc/apache2/sites-available/dmsarc.conf might look like :
+If you're using Apache, an appropriate VirtualHost configuration in /etc/apache2/sites-available/dmarc.conf might look like :
 
 You may also wish to apply other security restrictions on the above - e.g. to only allow access from specific IP addresses.
 
@@ -42,6 +62,7 @@ You may also wish to apply other security restrictions on the above - e.g. to on
 then perhaps :
 
 ```shell
+apache2ctl configtest
 a2ensite dmarc
 service apache2 restart
 ```
@@ -58,7 +79,7 @@ GRANT ALL ON dmarc.* TO dmarc_user@localhost identified by 'SomeComplexPasswordH
 FLUSH PRIVILEGES;
 ```
 
-# Configuration - config/conf.php
+# dmarc-srg configuration - config/conf.php
 
 ```shell
 cd config
