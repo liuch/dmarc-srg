@@ -28,7 +28,7 @@ cd dmarc-srg-3.0-pre2
 Using 'composer'
 
 ```shell
-curl -o composer https://getcomposer.org/download/2.9.5/composer.phar
+curl -o composer https://getcomposer.org/download/latest-stable/composer.phar
 php composer selfupdate
 php composer install -n
 ```
