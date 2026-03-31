@@ -186,9 +186,8 @@ This will retrieve reports from the imap folder every hour.
 
 ```shell
 cat <<EOF > /etc/cron.hourly/dmarc-fetch
-#!/bin/sh
-cd /path/to/dmarc-srg
-php -f utils/fetch_reports.php
+#!/bin/sh -eu
+php -f /path/to/dmarc-srg/utils/fetch_reports.php
 EOF
 
 chmod 750 /etc/cron.hourly/dmarc-fetch
@@ -202,15 +201,14 @@ For example, adding a /etc/cron.daily job like the below to trigger a daily repo
 
 ```shell
 cat <<EOF > /etc/cron.daily/dmarc-srg-summary
-#!/bin/sh
-cd /path/to/dmarc-srg
-php -f utils/summary_report.php domain=all period=lastweek
+#!/bin/sh -eu
+php -f /path/to/dmarc-srg/utils/summary_report.php domain=all period=lastweek
 EOF
 
 chmod 750 /etc/cron.daily/dmarc-srg-summary
 ```
 
-(run: `php -f utils/summary_report.php` for a full list of options and how to override the configuration to send a report to someone else for specific domains)
+(run: `php -f /path/to/utils/summary_report.php` for a full list of options and how to override the configuration to send a report to someone else for specific domains)
 
 # Tips if things don't behave ...
 
