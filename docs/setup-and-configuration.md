@@ -46,7 +46,7 @@ A simple configuration for a webserver is below, it just needs to have the dmarc
 
 If you're using Apache, an appropriate VirtualHost configuration in /etc/apache2/sites-available/dmarc.conf might look like :
 
-You may also wish to apply other security restrictions on the above - e.g. to only allow access from specific IP addresses.
+You may also wish to apply other security restrictions in this - e.g. to only allow access from specific IP addresses, or to apply a PHP open_basedir restriction.
 
 ```apacheconf
 <VirtualHost *:80>
