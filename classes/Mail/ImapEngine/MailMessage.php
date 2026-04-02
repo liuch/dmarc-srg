@@ -45,7 +45,12 @@ class MailMessage extends \Liuch\DmarcSrg\Mail\MailMessage
     {
         $res = [];
         if (($from = $this->message->from())) {
-            $res['from'] = $from->name();
+            $name = trim($from->name());
+            if (!empty($name)) {
+                $res['from'] = "\"{$name}\" <{$from->email()}>";
+            } else {
+                $res['from'] = $from->email();
+            }
         }
         if (($date = $this->message->date())) {
             $res['date'] = $date;
