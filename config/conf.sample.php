@@ -201,6 +201,7 @@ $fetcher = [
         // See directories/when_failed
         'when_failed'      => 'move_to:failed'
     ],
+
     /**
      * Domains matching this regular expression will be automatically added to the database from processed
      * reports. This option does not affect domains that have already been added to the database.
@@ -211,7 +212,31 @@ $fetcher = [
      *   '.+\\.example\\.net$'  - Matches any subdomain of the domain example.net
      *   '^mymail[0-9]+\\.net$' - Matches the domains mymail01.net, mymail02.net, mymail99999.net, etc.
      */
-    'allowed_domains' => ''
+    'allowed_domains' => '',
+
+    /**
+     * An access token used to run the process of fetching reports via HTTP requests to the endpoint.
+     * This can be useful when for some reason you cannot automate report fetching using cron on the server.
+     *
+     * Endpoint path: /files.php
+     * Parameters: token=<thistoken>, type=<mailbox|directory|removefs>, ids=<comma-separeted one-based ids, optional>
+     * Example: https://example.net/files.php?token=grGg85bg39&type=mailbox
+     *          Fetchs reports from all cofigurated mailboxes
+     * Example: https://example.net/files.php?token=grGg85bg39&type=directory&ids=1,2
+     *          Fetchs reports from the first and the second server directories
+     *
+     * Note:
+     *  - The token must be 20 or more characters length
+     *  - All the requests to the endpoint sent more frequently than every 5 minutes will be rejected
+     *    This is a protection against configuration errors.
+     *
+     *
+     * Run the following php code to get random HTTP-safe 256-bit token:
+     *   echo rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
+     * The same for Linux shell:
+     *   echo $(head -c 32 /dev/urandom | base64 | tr '+/' '-_' | tr -d '=')
+     */
+    'access_token' => ''
 ];
 
 // Settings for sending summary reports if it is necessary.

@@ -2,7 +2,7 @@
 
 /**
  * dmarc-srg - A php parser, viewer and summary report generator for incoming DMARC reports.
- * Copyright (C) 2020-2025 Aleksey Andreev (liuch)
+ * Copyright (C) 2020-2026 Aleksey Andreev (liuch)
  *
  * Available at:
  * https://github.com/liuch/dmarc-srg
@@ -156,5 +156,35 @@ class Auth
             return $this->core->config('users/user_management', false) ? 'base' : 'password-only';
         }
         return 'none';
+    }
+
+    /**
+     * Checks a token for the passed action
+     *
+     * @param string $action Action to check the token for
+     * @param string $token  Token to check
+     *
+     * @throws AuthException
+     *
+     * @return void
+     */
+    public function isTokenValid(string $action, string $token): void
+    {
+        switch ($action) {
+            case 'fetcher':
+                $realToken = $this->core->config('fetcher/access_token', '');
+                break;
+            default:
+                $realToken = null;
+                break;
+        }
+
+        if ($token !== $realToken) {
+            throw new AuthException('Invalid token');
+        }
+
+        if (strlen($token) < 20) {
+            throw new AuthException('Token is too short');
+        }
     }
 }

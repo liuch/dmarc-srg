@@ -438,6 +438,24 @@ class CoreTest extends \PHPUnit\Framework\TestCase
         $this->assertIsString($core->config('some_unknown_parameter', ''));
     }
 
+    public function testCheckAccessFrequency(): void
+    {
+        $resourceName = "testresource";
+        $lockFilePath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . "dmarcsrg-{$resourceName}.lock";
+
+        if (file_exists($lockFilePath)) {
+            unlink($lockFilePath);
+        }
+
+        $core = new Core([]);
+        $this->assertTrue($core->checkAccessFrequency($resourceName, 100));
+        $this->assertFalse($core->checkAccessFrequency($resourceName, 100));
+        $this->assertFalse($core->checkAccessFrequency($resourceName, 100));
+        $this->assertTrue($core->checkAccessFrequency($resourceName, 0));
+
+        unlink($lockFilePath);
+    }
+
     private function getAuthEnabledMock()
     {
         $auth = $this->getMockBuilder(Auth::class)

@@ -2,7 +2,7 @@
 
 /**
  * dmarc-srg - A php parser, viewer and summary report generator for incoming DMARC reports.
- * Copyright (C) 2020-2024 Aleksey Andreev (liuch)
+ * Copyright (C) 2020-2026 Aleksey Andreev (liuch)
  *
  * Available at:
  * https://github.com/liuch/dmarc-srg
@@ -24,11 +24,11 @@ namespace Liuch\DmarcSrg\Mail;
 
 use Liuch\DmarcSrg\Core;
 use Liuch\DmarcSrg\Exception\LogicException;
+use Liuch\DmarcSrg\Collections\ReportSourceCollection;
 
-class MailBoxes implements \Iterator
+class MailBoxes extends ReportSourceCollection
 {
     private $box_list;
-    private $index = 0;
 
     public function __construct()
     {
@@ -50,11 +50,6 @@ class MailBoxes implements \Iterator
         }
     }
 
-    public function count()
-    {
-        return count($this->box_list);
-    }
-
     public function list()
     {
         $id = 0;
@@ -72,18 +67,39 @@ class MailBoxes implements \Iterator
         return $res;
     }
 
-    public function mailbox($id)
+    /**
+     * Returns the number of the configured mailboxes
+     *
+     * @return int
+     */
+    public function count(): int
     {
-        if (!is_int($id) || $id <= 0 || $id > count($this->box_list)) {
-            throw new LogicException("Incorrect mailbox Id: {$id}");
+        return count($this->box_list);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function has(int $index): bool
+    {
+        return array_key_exists($index, $this->box_list);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function get(int $index): object
+    {
+        if (!array_key_exists($index, $this->box_list)) {
+            throw new LogicException('Incorrect mailbox index');
         }
-        return $this->box_list[$id - 1];
+        return $this->box_list[$index];
     }
 
     public function check($id)
     {
         if ($id !== 0) {
-            return $this->mailbox($id)->check();
+            return $this->get($id - 1)->check();
         }
 
         $results = [];
@@ -106,31 +122,6 @@ class MailBoxes implements \Iterator
         }
         $res['results'] = $results;
         return $res;
-    }
-
-    public function current(): object
-    {
-        return $this->box_list[$this->index];
-    }
-
-    public function key(): int
-    {
-        return $this->index;
-    }
-
-    public function next(): void
-    {
-        ++$this->index;
-    }
-
-    public function rewind(): void
-    {
-        $this->index = 0;
-    }
-
-    public function valid(): bool
-    {
-        return isset($this->box_list[$this->index]);
     }
 
     private function getMailbox(array $params, string $library)

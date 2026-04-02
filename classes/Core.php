@@ -2,7 +2,7 @@
 
 /**
  * dmarc-srg - A php parser, viewer and summary report generator for incoming DMARC reports.
- * Copyright (C) 2020-2025 Aleksey Andreev (liuch)
+ * Copyright (C) 2020-2026 Aleksey Andreev (liuch)
  *
  * Available at:
  * https://github.com/liuch/dmarc-srg
@@ -37,6 +37,7 @@ use Liuch\DmarcSrg\Users\UserList;
 use Liuch\DmarcSrg\Users\AdminUser;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\LogicException;
+use Liuch\DmarcSrg\Exception\RuntimeException;
 use Liuch\DmarcSrg\Exception\ForbiddenException;
 
 /**
@@ -421,6 +422,57 @@ class Core
     public function config(string $name, $default = null)
     {
         return $this->getModule('config', false)->get($name, $default);
+    }
+
+    /**
+     * Checks whether the specified number of seconds has passed since the previous method call
+     * with the same resource name
+     *
+     * @param string $runId   Resource name to check. Must be safe for file name
+     * @param int    $seconds Duration in seconds
+     *
+     * @return bool
+     */
+    public function checkAccessFrequency(string $runId, int $seconds): bool
+    {
+        $result = false;
+        $lockFilePath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . "dmarcsrg-{$runId}.lock";
+
+        $fd = null;
+        try {
+            $fd = fopen($lockFilePath, 'c');
+            if ($fd === false) {
+                throw new RuntimeException("Core: Сannot open or create lock file {$lockFilePath}");
+            }
+
+            if (flock($fd, LOCK_EX | LOCK_NB)) {
+                clearstatcache(true, $lockFilePath);
+
+                $fileStat = fstat($fd);
+                if ($fileStat === false) {
+                    throw new RuntimeException("Core: Cannot get lock file state {$lockFilePath}");
+                }
+
+                if ($fileStat['size'] === 0) {
+                    $result = true;
+                } elseif (time() - $fileStat['mtime'] >= $seconds) {
+                    $result = true;
+                }
+
+                fwrite($fd, '.');
+                fflush($fd);
+            }
+        } catch (RuntimeException $e) {
+            $this->errorHandler()->logger()->error($e->getMessage());
+        } catch (\ErrorException $e) {
+            $this->errorHandler()->logger()->error($e->getMessage());
+        } finally {
+            if ($fd) {
+                fclose($fd);
+            }
+        }
+
+        return $result;
     }
 
     /**

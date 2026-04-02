@@ -2,7 +2,7 @@
 
 /**
  * dmarc-srg - A php parser, viewer and summary report generator for incoming DMARC reports.
- * Copyright (C) 2023-2025 Aleksey Andreev (liuch)
+ * Copyright (C) 2023-2026 Aleksey Andreev (liuch)
  *
  * Available at:
  * https://github.com/liuch/dmarc-srg
@@ -223,8 +223,7 @@ try {
                 }
                 $endChecking('using ' . $lib, RESULT_SUCCESS);
                 echo "  * Checking mailboxes ({$mb_lcnt})", PHP_EOL;
-                for ($mb_num = 1; $mb_num <= $mb_lcnt; ++$mb_num) {
-                    $mb = $mb_list->mailbox($mb_num);
+                foreach ($mb_list as $mb) {
                     echo "    - {$mb->name()}", PHP_EOL;
                     $startChecking('Accessibility', 2);
                     if (in_array($mb->authMethod(), $authm)) {

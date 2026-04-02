@@ -2,7 +2,7 @@
 
 /**
  * dmarc-srg - A php parser, viewer and summary report generator for incoming DMARC reports.
- * Copyright (C) 2020-2025 Aleksey Andreev (liuch)
+ * Copyright (C) 2020-2026 Aleksey Andreev (liuch)
  *
  * Available at:
  * https://github.com/liuch/dmarc-srg
@@ -24,27 +24,51 @@ namespace Liuch\DmarcSrg;
 
 use Liuch\DmarcSrg\Users\User;
 use Liuch\DmarcSrg\Mail\MailBoxes;
+use Liuch\DmarcSrg\Requests\HttpRequest;
 use Liuch\DmarcSrg\Report\ReportFetcher;
-use Liuch\DmarcSrg\Sources\MailboxSource;
-use Liuch\DmarcSrg\Sources\DirectorySource;
-use Liuch\DmarcSrg\Sources\UploadedFilesSource;
-use Liuch\DmarcSrg\Sources\RemoteFilesystemSource;
+use Liuch\DmarcSrg\Views\JsonViewComponent;
 use Liuch\DmarcSrg\Directories\DirectoryList;
-use Liuch\DmarcSrg\Exception\AuthException;
+use Liuch\DmarcSrg\Sources\UploadedFilesSource;
 use Liuch\DmarcSrg\Exception\RuntimeException;
 use Liuch\DmarcSrg\Exception\ForbiddenException;
+use Liuch\DmarcSrg\Exception\ValidationException;
+use Liuch\DmarcSrg\Commands\FetchReportsCommand;
 use Liuch\DmarcSrg\RemoteFilesystems\RemoteFilesystemList;
 
 require realpath(__DIR__ . '/..') . '/init.php';
 
-if (Core::requestMethod() == 'GET') {
-    if (!Core::isJson()) {
-        Core::instance()->sendHtml();
-        return;
-    }
+$request = new HttpRequest();
+
+if ($request->getMethod() === 'GET') {
+    $core = Core::instance();
+    $auth = $core->auth();
 
     try {
-        $auth = Core::instance()->auth();
+        if ($request->hasProperty('token')) {
+            $auth->isTokenValid('fetcher', $request->getProperty('token'));
+
+            if (!$request->emptyProperty('type')) {
+                if ($core->checkAccessFrequency('fetcher', 5*60)) {
+                    $command = new FetchReportsCommand();
+                    $command->execute($request);
+                } else {
+                    throw new ValidationException('Too many requests');
+                }
+            } else {
+                $request->setErrorCode(-1);
+                $request->setMessage('The `type` parameter must be specified');
+            }
+
+            $view = new JsonViewComponent();
+            $view->render($request);
+
+            return;
+        }
+
+        if (!Core::isJson()) {
+            $core->sendHtml();
+            return;
+        }
 
         $auth->isAllowed(User::LEVEL_MANAGER);
         $res = [];
@@ -84,7 +108,7 @@ if (Core::requestMethod() == 'GET') {
                 [ 'directories', (new DirectoryList())->list() ]
             ];
             try {
-                Core::instance()->checkDependencies('flyfs');
+                $core->checkDependencies('flyfs');
                 $dmap[] = [ 'remotefs', (new RemoteFilesystemList(true))->list() ];
             } catch (RuntimeException $e) {
             }
@@ -107,64 +131,36 @@ if (Core::requestMethod() == 'GET') {
         Core::sendJson($res);
     } catch (RuntimeException $e) {
         Core::sendJson(ErrorHandler::exceptionResult($e));
+    } catch (ValidationException $e) {
+        $errorCode = $e->getCode();
+        Core::sendJson([
+            'error_code' => $errorCode ? $errorCode : -1,
+            'message'    => $e->getMessage()
+        ]);
     }
     return;
 }
 
-if (Core::requestMethod() == 'POST') {
+if ($request->getMethod() === 'POST') {
     try {
         $core = Core::instance();
-        $data = Core::getJsonData();
-        if ($data) {
+        if ($request->hasJsonData()) {
             $core->auth()->isAllowed(User::LEVEL_ADMIN);
 
+            $data = $request->getData();
             if (isset($data['cmd'])) {
-                $cmd_id = array_search($data['cmd'], [ 'load-mailbox', 'load-directory', 'load-remotefs' ]);
-                if ($cmd_id !== false) {
+                if (str_starts_with($data['cmd'], 'load-')) {
                     if (isset($data['ids']) && gettype($data['ids']) === 'array' && count($data['ids']) > 0) {
-                        $done = [];
-                        $slst = [];
-                        switch ($cmd_id) {
-                            case 0:
-                                $core->checkDependencies('imap-engine|imap,xml,zip');
-                                $list = new MailBoxes();
-                                break;
-                            case 1:
-                                $core->checkDependencies('xml,zip');
-                                $list = new DirectoryList();
-                                break;
-                            case 2:
-                                $core->checkDependencies('flyfs,xml,zip');
-                                $list = new RemoteFilesystemList(true);
-                                break;
-                            default:
-                                $list = [];
-                        }
-                        foreach ($data['ids'] as $id) {
-                            $dir_id = gettype($id) === 'integer' ? $id : -1;
-                            if (!in_array($id, $done, true)) {
-                                $done[] = $id;
-                                if ($cmd_id === 0) {
-                                    $slst[] = new MailboxSource($list->mailbox($dir_id));
-                                } elseif ($cmd_id === 1) {
-                                    $slst[] = new DirectorySource($list->directory($dir_id));
-                                } elseif ($cmd_id === 2) {
-                                    $slst[] = new RemoteFilesystemSource($list->filesystem($dir_id));
-                                }
-                            }
-                        }
-                        if (count($slst) > 0) {
-                            $results = [];
-                            foreach ($slst as $sou) {
-                                $sres = (new ReportFetcher($sou))->fetch();
-                                foreach ($sres as &$r) {
-                                    $results[] = $r;
-                                }
-                                unset($r);
-                            }
-                            Core::sendJson(ReportFetcher::makeSummaryResult($results));
-                            return;
-                        }
+                        $data['type'] = substr($data['cmd'], 5);
+                        $request->setData($data);
+
+                        $command = new FetchReportsCommand();
+                        $command->execute($request);
+
+                        $view = new JsonViewComponent();
+                        $view->render($request);
+
+                        return;
                     }
                 }
             }

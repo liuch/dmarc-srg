@@ -2,7 +2,7 @@
 
 /**
  * dmarc-srg - A php parser, viewer and summary report generator for incoming DMARC reports.
- * Copyright (C) 2023 Aleksey Andreev (liuch)
+ * Copyright (C) 2023-2026 Aleksey Andreev (liuch)
  *
  * Available at:
  * https://github.com/liuch/dmarc-srg
@@ -33,11 +33,12 @@ namespace Liuch\DmarcSrg\RemoteFilesystems;
 
 use Liuch\DmarcSrg\Core;
 use Liuch\DmarcSrg\Exception\LogicException;
+use Liuch\DmarcSrg\Collections\ReportSourceCollection;
 
 /**
  * This class is designed to work with the list of remote filesystems which are listed in the configuration file.
  */
-class RemoteFilesystemList
+class RemoteFilesystemList extends ReportSourceCollection
 {
     private $list   = null;
     private $silent = false;
@@ -64,19 +65,35 @@ class RemoteFilesystemList
     }
 
     /**
-     * Returns an instance of the RemoteFilesystem class by its Id
+     * Returns the number of the configured remote file systems
      *
-     * @param int $id Id of the required filesystem
-     *
-     * @return RemoteFilesystem
+     * @return int
      */
-    public function filesystem(int $id)
+    public function count(): int
     {
         $this->ensureList();
-        if ($id <= 0 || $id > count($this->list)) {
-            throw new LogicException('Incorrect filesystem Id');
+        return count($this->list);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function has(int $index): bool
+    {
+        $this->ensureList();
+        return array_key_exists($index, $this->list);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function get(int $index): object
+    {
+        $this->ensureList();
+        if (!array_key_exists($index, $this->list)) {
+            throw new LogicException('Incorrect filesystem index');
         }
-        return $this->list[$id - 1];
+        return $this->list[$index];
     }
 
     /**
@@ -90,7 +107,7 @@ class RemoteFilesystemList
     public function check(int $id): array
     {
         if ($id !== 0) {
-            $fs = $this->filesystem($id);
+            $fs = $this->get($id - 1);
             return $fs->check();
         }
 

@@ -2,7 +2,7 @@
 
 /**
  * dmarc-srg - A php parser, viewer and summary report generator for incoming DMARC reports.
- * Copyright (C) 2020-2024 Aleksey Andreev (liuch)
+ * Copyright (C) 2020-2026 Aleksey Andreev (liuch)
  *
  * Available at:
  * https://github.com/liuch/dmarc-srg
@@ -132,9 +132,9 @@ if (!$source || $source === 'email') {
         $errors  = [ 'messages' => [], 'debug_info' => null ];
         try {
             $core->checkDependencies('imap-engine|imap,xml,zip');
-            for ($mb_num = 1; $mb_num <= $mb_cnt; ++$mb_num) {
+            foreach ($mb_list as $mbox) {
                 try {
-                    $sou_list[] = new MailboxSource($mb_list->mailbox($mb_num));
+                    $sou_list[] = new MailboxSource($mbox);
                 } catch (RuntimeException $e) {
                     $addError($e, $errors);
                 }

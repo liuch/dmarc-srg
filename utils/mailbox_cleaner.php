@@ -2,7 +2,7 @@
 
 /**
  * dmarc-srg - A php parser, viewer and summary report generator for incoming DMARC reports.
- * Copyright (C) 2020-2024 Aleksey Andreev (liuch)
+ * Copyright (C) 2020-2026 Aleksey Andreev (liuch)
  *
  * Available at:
  * https://github.com/liuch/dmarc-srg
@@ -118,11 +118,10 @@ foreach ([ [ 'done', '', 1 ], [ 'failed', 'failed', 0 ] ] as $it) {
 }
 
 try {
-    for ($mb_idx = 1; $mb_idx <= $mb_cnt; ++$mb_idx) {
+    foreach ($mb_list as $mbox) {
         foreach ($dirs as $dir_name => $i_criteria) {
             if ($i_criteria > 0) {
                 $criteria = $i_criteria === 2 ? MailBox::SEARCH_ALL : MailBox::SEARCH_SEEN;
-                $mbox = $mb_list->mailbox($mb_idx);
                 if (!empty($dir_name)) {
                     if (!($mbox = $mbox->childMailbox($dir_name))) {
                         continue;

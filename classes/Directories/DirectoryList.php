@@ -2,7 +2,7 @@
 
 /**
  * dmarc-srg - A php parser, viewer and summary report generator for incoming DMARC reports.
- * Copyright (C) 2021-2022 Aleksey Andreev (liuch)
+ * Copyright (C) 2021-2026 Aleksey Andreev (liuch)
  *
  * Available at:
  * https://github.com/liuch/dmarc-srg
@@ -33,11 +33,12 @@ namespace Liuch\DmarcSrg\Directories;
 
 use Liuch\DmarcSrg\Core;
 use Liuch\DmarcSrg\Exception\LogicException;
+use Liuch\DmarcSrg\Collections\ReportSourceCollection;
 
 /**
  * This class is designed to work with the list of report directories which are listed in the configuration file.
  */
-class DirectoryList
+class DirectoryList extends ReportSourceCollection
 {
     private $list = null;
 
@@ -53,19 +54,35 @@ class DirectoryList
     }
 
     /**
-     * Returns an instance of the Directory class by its Id
+     * Returns the number of the configured directories
      *
-     * @param int $id Id of the required directory
-     *
-     * @return Directory
+     * @return int
      */
-    public function directory(int $id)
+    public function count(): int
     {
         $this->ensureList();
-        if ($id <= 0 || $id > count($this->list)) {
-            throw new LogicException('Incorrect directory Id');
+        return count($this->list);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function has(int $index): bool
+    {
+        $this->ensureList();
+        return array_key_exists($index, $this->list);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function get(int $index): object
+    {
+        $this->ensureList();
+        if (!array_key_exists($index, $this->list)) {
+            throw new LogicException('Incorrect directory index');
         }
-        return $this->list[$id - 1];
+        return $this->list[$index];
     }
 
     /**
@@ -79,7 +96,7 @@ class DirectoryList
     public function check(int $id): array
     {
         if ($id !== 0) {
-            $dir = $this->directory($id);
+            $dir = $this->get($id - 1);
             return $dir->check();
         }
 
