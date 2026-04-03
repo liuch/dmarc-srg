@@ -121,7 +121,7 @@ Edit the config.php file.
 php -f utils/check_config.php
 ```
 
-(Debian package users run: php -f /usr/share/dmarc-srg/utils/check_config.php )
+(Debian package users run: `php -f /usr/share/dmarc-srg/utils/check_config.php` )
 
 which might output something like :
 
