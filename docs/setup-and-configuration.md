@@ -1,14 +1,31 @@
-# Install code
+# Install and basic setup
 
 This was written assuming a Debian like system, using Apache. The web server was already configured to run PHP 8.2.
 
-It's left as an exercise to the end user to decide where exactly they wish to install this. `/var/www/html/` probably won't work for everyone.
+## Requirements
+
+ * Webserver (E.g. Apache), configured to run PHP (v8.1 up to 8.5+)
+ * MySQL or MariaDB database
+ * PHP 8.1+ with PDO and XML support.
+
+## Debian Users
+
+You can `apt install dmarc-srg`
+
+This puts the code in **/usr/share/dmarc-srg**. You'll need to follow the steps from "Configure the webserver" onwards below.
+
+Your configuration file is in /etc/dmarc-srg - so update the below references to ./config as appropriate.
+
+## Manual install
+
+It's left as an exercise to the end user to decide where exactly they wish to install this. `/var/www/html/` probably won't work for everyone. Other versions of PHP should work.
 
 ```shell
 cd /var/www/html
 ```
 
-## Downloading dmarc-srg
+### Downloading dmarc-srg
+
 Either :
 ```shell
 git clone git@github.com:liuch/dmarc-srg.git
@@ -24,9 +41,11 @@ mv dmarc-srg-3.0-pre2 dmarc-srg
 cd dmarc-srg
 ```
 
-## Installing libraries etc
+#### Installing libraries etc
 
-Using 'composer'
+My intention was to collect reports from an imap mailbox, so I needed to install the directorytree/imapengine library.
+
+You can do this using the **composer** package manager for PHP.
 
 ```shell
 curl -o composer https://getcomposer.org/download/latest-stable/composer.phar
@@ -37,15 +56,17 @@ php composer install -n
 At this point, *composer* should warn if you are missing any required extensions (like PDO or XML support). You may have to do something like :
 
 ```shell
-apt install php8.2-xml php8.2-mysql 
+apt install php8.2-xml php8.2-mysql
 service apache2 restart
 ```
 
-# Configure the webserver (Apache)
+## Configure the webserver (Apache)
 
 A simple configuration for a webserver is below, it just needs to have the dmarc-srg/**public** folder as the DocumentRoot.
 
-If you're using Apache, an appropriate VirtualHost configuration in /etc/apache2/sites-available/dmarc.conf might look like :
+If you're using Apache, an appropriate VirtualHost configuration in /etc/apache2/sites-available/dmarc.conf might look like the below.
+
+Debian package users: reference **/usr/share/dmarc-srg/public** instead.
 
 You may also wish to apply other security restrictions in this - e.g. to only allow access from specific IP addresses, or to apply a PHP open_basedir restriction.
 
@@ -70,9 +91,9 @@ service apache2 restart
 
 # Create MySQL/MariaDB database
 
-Connect to your MySQL compatible database and run the below as the MySQL 'root' (or similar) user.  You need to access to create a database and user account.
+Connect to your MySQL compatible database and run the below as the MySQL 'root' (or similar) user with privileges to create databases and a user
 
-Change the database or user name to suit your requirements.
+Change the database or username to suit your requirements.
 
 ```SQL
 CREATE DATABASE dmarc;
@@ -80,10 +101,12 @@ GRANT ALL ON dmarc.* TO dmarc_user@localhost identified by 'SomeComplexPasswordH
 FLUSH PRIVILEGES;
 ```
 
-# dmarc-srg configuration - config/conf.php
+# Configuring dmarg-srg
+
+For Debian package users, see /etc/dmarc-srg/  instead
 
 ```shell
-cd config
+cd /path/to/dmarc-srg/config
 cp config.sample.php config.php
 ```
 
@@ -97,6 +120,8 @@ Edit the config.php file.
 ```shell
 php -f utils/check_config.php
 ```
+
+(Debian package users run: php -f /usr/share/dmarc-srg/utils/check_config.php )
 
 which might output something like :
 
@@ -159,20 +184,20 @@ Your equivalent of http://dmarc.example.com
 
 Login with the admin password you defined in conf/conf.php.
 
-Note: If you have only one domain, it will be added automatically and you can skip this step.
+Note: If you have only one domain, it will be added automatically and you can skip adding a domain.
 
-Once there, add your domain - menu -> settings -> domains -> "New domain"
+Add your domain(s) by going : menu -> settings -> domains -> "New domain"
 
 ![Add domain](_img/add-domain.gif)
 
-Alternatively you can do it on the command line using :
+Alternatively, you can do it on the command line using :
 ```shell
 php -f utils/domains_admin.php add_domain name=example.com active=1
 ```
 
-# Enable DMARC reports for your domain(s)
+# Enable DMARC reports for your domain(s) (DNS)
 
-Your domain's _dmarc.example.com TXT record should look something like :
+Your domain's **_dmarc.example.com** TXT record should look something like :
 
 ```txt
 v=DMARC1; p=reject; rua=mailto:dmarc-rua@example.com
@@ -197,10 +222,9 @@ chmod 750 /etc/cron.hourly/dmarc-fetch
 ```
 
 
-# Enable automated summary report
+# Enable automated summary reports
 
-For example, adding a /etc/cron.weekly job like the below to trigger a weekly report covering the last week. 
-
+For example, add a /etc/cron.weekly job like the below to trigger a weekly report:
 
 ```shell
 cat <<EOF > /etc/cron.weekly/dmarc-srg-summary
@@ -222,5 +246,3 @@ Then inspecting traffic to the server with your web browser - e.g. in Firefox yo
 ![Firefox - network inspector](_img/browser-network-inspection-error.png)
 
 (In this specific instance, Apache hadn't been restarted since the PHP PDO + MySQL extension was installed).
-
-
