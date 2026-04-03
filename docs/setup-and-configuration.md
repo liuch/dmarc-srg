@@ -20,7 +20,8 @@ OR ... download a release from : https://github.com/liuch/dmarc-srg/releases, e.
 ```shell
 wget -O dmarc.tgz https://github.com/liuch/dmarc-srg/archive/refs/tags/v3.0-pre2.tar.gz
 tar -zvxf dmarc.tgz
-cd dmarc-srg-3.0-pre2
+mv dmarc-srg-3.0-pre2 dmarc-srg
+cd dmarc-srg
 ```
 
 ## Installing libraries etc
@@ -36,7 +37,7 @@ php composer install -n
 At this point, *composer* should warn if you are missing any required extensions (like PDO or XML support). You may have to do something like :
 
 ```shell
-apt install php8.2-xml php8.2-mysql php8.2-dom
+apt install php8.2-xml php8.2-mysql 
 service apache2 restart
 ```
 
@@ -71,7 +72,7 @@ service apache2 restart
 
 Connect to your MySQL compatible database and run the below as the MySQL 'root' (or similar) user.  You need to access to create a database and user account.
 
-Change the database or user name to to suit your requirements.
+Change the database or user name to suit your requirements.
 
 ```SQL
 CREATE DATABASE dmarc;
@@ -154,9 +155,11 @@ php -f utils/database_admin.php init
 
 # Browse to the web ui
 
-https://dmarc.example.com
+Your equivalent of http://dmarc.example.com
 
 Login with the admin password you defined in conf/conf.php.
+
+Note: If you have only one domain, it will be added automatically and you can skip this step.
 
 Once there, add your domain - menu -> settings -> domains -> "New domain"
 
@@ -196,11 +199,11 @@ chmod 750 /etc/cron.hourly/dmarc-fetch
 
 # Enable automated summary report
 
-For example, adding a /etc/cron.daily job like the below to trigger a daily report covering the last week
+For example, adding a /etc/cron.weekly job like the below to trigger a weekly report covering the last week. 
 
 
 ```shell
-cat <<EOF > /etc/cron.daily/dmarc-srg-summary
+cat <<EOF > /etc/cron.weekly/dmarc-srg-summary
 #!/bin/sh -eu
 php -f /path/to/dmarc-srg/utils/summary_report.php domain=all period=lastweek
 EOF
