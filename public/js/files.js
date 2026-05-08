@@ -232,7 +232,7 @@ class Files {
 		this._fcount_info.classList.add("state-gray");
 		let dv = this._fcount_info.appendChild(document.createElement("div"));
 		dv.classList.add("state-text");
-		dv.append("You can upload not more than " + this._limits.upload_max_file_count + " files.");
+		dv.append(`You can upload not more than ${this._limits.upload_max_file_count || 0} files.`);
 
 		this._fsize_info = document.createElement("div");
 		this._fsize_info.classList.add("state-gray");
