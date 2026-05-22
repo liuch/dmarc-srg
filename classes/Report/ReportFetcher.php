@@ -97,6 +97,7 @@ class ReportFetcher
             default:
                 throw new RuntimeException('Unknown source type');
         }
+        $maxSize = $core->config('fetcher/max_report_size', 10485760);
         $limit = intval($limit);
         if ($stype === Source::SOURCE_MAILBOX ||
             $stype === Source::SOURCE_DIRECTORY ||
@@ -120,7 +121,7 @@ class ReportFetcher
             try {
                 $rfile   = $this->source->current();
                 $fname   = $rfile->filename();
-                $report  = Report::fromXmlFile($rfile->datastream());
+                $report  = Report::fromXmlFile($rfile->datastream($maxSize), $maxSize);
                 $result  = $report->save($fname);
                 $success = true;
             } catch (RuntimeException $e) {
