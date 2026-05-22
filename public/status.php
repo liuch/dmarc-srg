@@ -31,13 +31,12 @@ require realpath(__DIR__ . '/..') . '/init.php';
 
 if (Core::isJson()) {
     if (Core::requestMethod() == 'GET') {
+        $core = Core::instance();
+        $csrf_token = $core->session()->csrfToken();
         try {
-            $core = Core::instance();
-            $result = [
-                'csrf_token' => $core->session()->csrfToken()
-            ];
             $core->auth()->isAllowed(User::LEVEL_USER);
 
+            $result = [ 'csrf_token' => $csrf_token ];
             $fields = explode(',', $_GET['fields'] ?? '');
             if (in_array('state', $fields)) {
                 $result = array_merge($result, $core->status()->get());
@@ -89,6 +88,7 @@ if (Core::isJson()) {
             Core::sendJson($result);
         } catch (RuntimeException $e) {
             $r = ErrorHandler::exceptionResult($e);
+            $r['csrf_token'] = $csrf_token;
             Core::sendJson($r);
         }
         return;
