@@ -24,6 +24,7 @@ namespace Liuch\DmarcSrg\Report;
 
 use Liuch\DmarcSrg\DateTime;
 use Liuch\DmarcSrg\Exception\RuntimeException;
+use Liuch\DmarcSrg\Exception\SoftException;
 
 class ReportData
 {
@@ -175,7 +176,7 @@ class ReportData
         switch ($this->tag_id) {
             case 'rec':
                 if ($this->records_maximum > 0 && ++$this->record_count > $this->records_maximum) {
-                    throw new RuntimeException('Too many records in the XML report');
+                    throw new SoftException('Too many records in the XML report');
                 }
                 $this->rep_data['records'][] = [];
                 break;
