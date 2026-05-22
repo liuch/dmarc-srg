@@ -49,7 +49,8 @@ class Report
 
     public static function fromXmlFile($fd)
     {
-        $data = ReportData::fromXmlFile($fd);
+        $records_maximum = Core::instance()->config('parser/records_maximum', 50000);
+        $data = ReportData::fromXmlFile($fd, false, $records_maximum);
         if (!$data->isValid()) {
             throw new SoftException('Incorrect or incomplete report data');
         }

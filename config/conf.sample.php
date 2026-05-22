@@ -135,6 +135,12 @@ $users = [
     'domain_verification' => 'none'
 ];
 
+$parser = [
+    // Maximum number of <RECORD> elements allowed in a single XML report.
+    // 0 to disable any limiting.
+    'records_maximum' => 50000
+];
+
 //
 $fetcher = [
     'mailboxes' => [
