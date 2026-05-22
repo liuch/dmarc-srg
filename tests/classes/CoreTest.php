@@ -456,6 +456,63 @@ class CoreTest extends \PHPUnit\Framework\TestCase
         unlink($lockFilePath);
     }
 
+    public function testValidateCsrfWithValidToken(): void
+    {
+        $sess = $this->getSessionMock([ 'validateCsrfToken' ]);
+        $sess->expects($this->once())
+             ->method('validateCsrfToken')
+             ->with('valid-token')
+             ->willReturn(true);
+
+        $this->resetCoreInstance();
+        new Core([ 'session' => $sess ]);
+
+        $_SERVER['HTTP_X_CSRF_TOKEN'] = 'valid-token';
+        Core::validateCsrf();
+        $this->assertTrue(true);
+    }
+
+    public function testValidateCsrfWithInvalidToken(): void
+    {
+        $sess = $this->getSessionMock([ 'validateCsrfToken' ]);
+        $sess->expects($this->once())
+             ->method('validateCsrfToken')
+             ->with('invalid-token')
+             ->willReturn(false);
+
+        $this->resetCoreInstance();
+        new Core([ 'session' => $sess ]);
+
+        $_SERVER['HTTP_X_CSRF_TOKEN'] = 'invalid-token';
+        $this->expectException(SoftException::class);
+        $this->expectExceptionMessage('CSRF token invalid');
+        Core::validateCsrf();
+    }
+
+    public function testValidateCsrfWithMissingHeader(): void
+    {
+        $sess = $this->getSessionMock([ 'validateCsrfToken' ]);
+        $sess->expects($this->once())
+             ->method('validateCsrfToken')
+             ->with('')
+             ->willReturn(false);
+
+        $this->resetCoreInstance();
+        new Core([ 'session' => $sess ]);
+
+        unset($_SERVER['HTTP_X_CSRF_TOKEN']);
+        $this->expectException(SoftException::class);
+        $this->expectExceptionMessage('CSRF token invalid');
+        Core::validateCsrf();
+    }
+
+    private function resetCoreInstance(): void
+    {
+        $ref = new \ReflectionProperty(Core::class, 'instance');
+        $ref->setAccessible(true);
+        $ref->setValue(null, null);
+    }
+
     private function getAuthEnabledMock()
     {
         $auth = $this->getMockBuilder(Auth::class)
