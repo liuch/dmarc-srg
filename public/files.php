@@ -143,6 +143,7 @@ if ($request->getMethod() === 'GET') {
 
 if ($request->getMethod() === 'POST') {
     try {
+        Core::validateCsrf();
         $core = Core::instance();
         if ($request->hasJsonData()) {
             $core->auth()->isAllowed(User::LEVEL_ADMIN);
@@ -169,7 +170,9 @@ if ($request->getMethod() === 'POST') {
             $core->checkDependencies('xml,zip');
 
             $results = (new ReportFetcher(new UploadedFilesSource($_FILES['report_file'])))->fetch();
-            Core::sendJson(ReportFetcher::makeSummaryResult($results));
+            $res = ReportFetcher::makeSummaryResult($results);
+            $res['csrf_token'] = Core::instance()->session()->csrfToken();
+            Core::sendJson($res);
             return;
         }
     } catch (RuntimeException $e) {

@@ -64,6 +64,9 @@ class Status {
 			if (!resp.ok) throw new Error("Failed to fetch the status");
 			return resp.json();
 		}).then(function(data) {
+			if (data.csrf_token !== undefined) {
+				CsrfToken.set(data.csrf_token);
+			}
 			User.name  = data.user && data.user.name || null;
 			User.level = data.user && data.user.level || null;
 			User.auth_type = data.auth_type;

@@ -119,6 +119,7 @@ if (Core::isJson()) {
             Core::sendJson($res);
             return;
         } elseif (Core::requestMethod() == 'POST') {
+            Core::validateCsrf();
             $data = Core::getJsonData();
             if ($data) {
                 $uname = $data['name'] ?? null;
@@ -144,7 +145,8 @@ if (Core::isJson()) {
                     $user->setPassword($data['new_password']);
                     Core::sendJson([
                         'error_code' => 0,
-                        'message'    => 'The password has been successfully updated'
+                        'message'    => 'The password has been successfully updated',
+                        'csrf_token' => Core::instance()->session()->csrfToken()
                     ]);
                     return;
                 }
@@ -196,7 +198,8 @@ if (Core::isJson()) {
 
                 $res = [
                     'error_code' => 0,
-                    'message'    => 'Successfully'
+                    'message'    => 'Successfully',
+                    'csrf_token' => Core::instance()->session()->csrfToken()
                 ];
                 if (isset($user)) {
                     $ua = $user->toArray();

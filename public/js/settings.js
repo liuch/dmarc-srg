@@ -324,6 +324,9 @@ class SettingEditDialog extends VerticalDialog {
 			return resp.json();
 		}).then(data => {
 			Common.checkResult(data);
+			if (data.csrf_token !== undefined) {
+				CsrfToken.set(data.csrf_token);
+			}
 			this._data.value = this._val_el.value;
 			this._result = body;
 			this.hide();

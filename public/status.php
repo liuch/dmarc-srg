@@ -33,13 +33,14 @@ if (Core::isJson()) {
     if (Core::requestMethod() == 'GET') {
         try {
             $core = Core::instance();
+            $result = [
+                'csrf_token' => $core->session()->csrfToken()
+            ];
             $core->auth()->isAllowed(User::LEVEL_USER);
 
             $fields = explode(',', $_GET['fields'] ?? '');
             if (in_array('state', $fields)) {
-                $result = $core->status()->get();
-            } else {
-                $result = [];
+                $result = array_merge($result, $core->status()->get());
             }
 
             if (!($result['error_code'] ?? 0)) {
