@@ -130,7 +130,7 @@ class Common
      */
     public static function num2percent(int $per, int $cent, bool $with_num): string
     {
-        if (!$per) {
+        if (!$per || !$cent) {
             return '0';
         }
         $res = sprintf('%.0f%%', $per / $cent * 100);
