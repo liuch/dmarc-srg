@@ -509,7 +509,6 @@ class CoreTest extends \PHPUnit\Framework\TestCase
     private function resetCoreInstance(): void
     {
         $ref = new \ReflectionProperty(Core::class, 'instance');
-        $ref->setAccessible(true);
         $ref->setValue(null, null);
     }
 
