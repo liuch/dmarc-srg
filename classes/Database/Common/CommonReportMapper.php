@@ -99,7 +99,7 @@ class CommonReportMapper implements ReportMapperInterface
             $data->loaded_time  = new DateTime($res[2]);
             $data->email        = $res[3];
             $data->extra_contact_info = $res[4];
-            $data->error_string = json_decode($res[5] ?? '', true);
+            $data->error_string = $this->jsonDecode($res[5] ?? '');
             $data->policy       = [
                 'adkim' => $res[6],
                 'aspf'  => $res[7],
@@ -124,9 +124,9 @@ class CommonReportMapper implements ReportMapperInterface
                     'ip'            => inet_ntop($res[1]),
                     'count'         => intval($res[2]),
                     'disposition'   => Common::$disposition[$res[3]],
-                    'reason'        => json_decode($res[4] ?? '', true),
-                    'dkim_auth'     => json_decode($res[5] ?? '', true),
-                    'spf_auth'      => json_decode($res[6] ?? '', true),
+                    'reason'        => $this->jsonDecode($res[4] ?? ''),
+                    'dkim_auth'     => $this->jsonDecode($res[5] ?? ''),
+                    'spf_auth'      => $this->jsonDecode($res[6] ?? ''),
                     'dkim_align'    => Common::$align_res[$res[7]],
                     'spf_align'     => Common::$align_res[$res[8]],
                     'envelope_to'   => $res[9],
@@ -894,5 +894,23 @@ class CommonReportMapper implements ReportMapperInterface
         foreach ($f_data[$filter_idx]['bindings'] as &$bv) {
             $st->bindValue(++$bind_pos, $bv[0], $bv[1]);
         }
+    }
+
+    /**
+     * Decodes a JSON string and throws on error
+     *
+     * @param string $json JSON string to decode
+     *
+     * @throws DatabaseFatalException
+     *
+     * @return mixed Decoded value
+     */
+    private function jsonDecode(string $json)
+    {
+        $res = json_decode($json, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new DatabaseFatalException('Failed to decode JSON data: ' . json_last_error_msg());
+        }
+        return $res;
     }
 }
