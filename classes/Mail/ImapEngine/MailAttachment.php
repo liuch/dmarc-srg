@@ -46,10 +46,7 @@ class MailAttachment extends \Liuch\DmarcSrg\Mail\MailAttachment
     public function mimeType(): string
     {
         if (is_null($this->mime_type)) {
-            $this->mime_type = $this->attachment->contentType();
-            if ($this->mime_type === 'application/octet-stream') {
-                $this->mime_type = ReportFile::getMimeType($this->attachment->filename(), $this->datastream());
-            }
+            $this->mime_type = ReportFile::getMimeType($this->attachment->filename(), $this->datastream());
         }
         return $this->mime_type;
     }
