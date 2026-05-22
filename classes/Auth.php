@@ -179,12 +179,12 @@ class Auth
                 break;
         }
 
-        if ($token !== $realToken) {
-            throw new AuthException('Invalid token');
-        }
-
         if (strlen($token) < 20) {
             throw new AuthException('Token is too short');
+        }
+
+        if ($token !== $realToken) {
+            throw new AuthException('Invalid token');
         }
     }
 }
