@@ -155,13 +155,6 @@ class Session
         } elseif (isset($_SESSION['_expired'])) {
             // Session is outdated
             \session_abort();
-            if ($_SESSION['_expired'] > \time() - self::MIGRATE_DURATION && isset($_SESSION['_new_session_id'])) {
-                $s_id = $_SESSION['_new_session_id'];
-            } else {
-                $s_id = session_create_id();
-                \ini_set('session.use_strict_mode', '0');
-            }
-            \session_id($s_id);
             $this->strictStart();
         } elseif ($_SESSION['_started'] <= \time() - self::LIFETIME_DURATION) {
             $this->migrate();
@@ -196,16 +189,8 @@ class Session
     {
         $udata = $this->userData();
         $ct = \time();
-        if (!isset($_SESSION['_expired'])) {
-            $_SESSION['_expired'] = $ct;
-        }
-        $new_id = \session_create_id();
-        $_SESSION['_new_session_id'] = $new_id;
-        \session_write_close();
 
-        \ini_set('session.use_strict_mode', '0');
-        \session_id($new_id);
-        $this->strictStart();
+        \session_regenerate_id(true);
 
         $_SESSION = $udata;
         $_SESSION['_started'] = $ct;
