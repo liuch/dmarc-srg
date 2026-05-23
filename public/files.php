@@ -44,8 +44,18 @@ if ($request->getMethod() === 'GET') {
     $auth = $core->auth();
 
     try {
-        if ($request->hasProperty('token')) {
-            $auth->isTokenValid('fetcher', $request->getProperty('token'));
+        $token = null;
+        $token_method = $core->config('fetcher/token_method', 'header');
+        if ($token_method === 'query') {
+            if ($request->hasProperty('token')) {
+                $token = $request->getProperty('token');
+            }
+        } else {
+            $token = $request->getBearerToken();
+        }
+
+        if (!is_null($token)) {
+            $auth->isTokenValid('fetcher', $token);
 
             if (!$request->emptyProperty('type')) {
                 if ($core->checkAccessFrequency('fetcher', 5*60)) {

@@ -219,24 +219,38 @@ $fetcher = [
      * This can be useful when for some reason you cannot automate report fetching using cron on the server.
      *
      * Endpoint path: /files.php
-     * Parameters: token=<thistoken>, type=<mailbox|directory|removefs>, ids=<comma-separeted one-based ids, optional>
-     * Example: https://example.net/files.php?token=grGg85bg39&type=mailbox
-     *          Fetchs reports from all cofigurated mailboxes
-     * Example: https://example.net/files.php?token=grGg85bg39&type=directory&ids=1,2
-     *          Fetchs reports from the first and the second server directories
+     * Parameters: type=<mailbox|directory|remotefs>, ids=<comma-separated one-based ids, optional>
+     *
+     * The token is sent via the Authorization header (recommended):
+     *   curl -H "Authorization: Bearer <token>" \
+     *        "https://example.net/files.php?type=mailbox"
+     *     Fetchs reports from all configured mailboxes
+     *   curl -H "Authorization: Bearer <token>" \
+     *        "https://example.net/files.php?type=directory&ids=1,2"
+     *     Fetchs reports from the first and the second server directories
+     *
+     * Alternatively, you can set token_method to 'query' to send the token as a URL parameter
+     * (less secure — the token will appear in access logs and browser history):
+     *   https://example.net/files.php?token=<token>&type=mailbox
      *
      * Note:
      *  - The token must be 20 or more characters length
      *  - All the requests to the endpoint sent more frequently than every 5 minutes will be rejected
      *    This is a protection against configuration errors.
      *
-     *
      * Run the following php code to get random HTTP-safe 256-bit token:
      *   echo rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
      * The same for Linux shell:
      *   echo $(head -c 32 /dev/urandom | base64 | tr '+/' '-_' | tr -d '=')
      */
-    'access_token' => ''
+    'access_token' => '',
+
+    /**
+     * How the fetcher token is passed to the endpoint.
+     * 'header' (default) — via Authorization: Bearer <token> header. Safer, token stays out of logs.
+     * 'query'              — via ?token=<token> URL parameter. Less secure, kept for backward compatibility.
+     */
+    'token_method' => 'header'
 ];
 
 // Settings for sending summary reports if it is necessary.

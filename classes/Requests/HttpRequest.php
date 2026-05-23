@@ -50,6 +50,20 @@ class HttpRequest extends Request
     }
 
     /**
+     * Returns the Bearer token from the Authorization header or null if not present
+     *
+     * @return ?string
+     */
+    final public function getBearerToken(): ?string
+    {
+        $header = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
+        if (str_starts_with($header, 'Bearer ')) {
+            return substr($header, 7);
+        }
+        return null;
+    }
+
+    /**
      * {@inheritDoc}
      *
      * @throws ValidationException
