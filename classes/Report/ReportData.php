@@ -24,17 +24,21 @@ namespace Liuch\DmarcSrg\Report;
 
 use Liuch\DmarcSrg\DateTime;
 use Liuch\DmarcSrg\Exception\RuntimeException;
+use Liuch\DmarcSrg\Exception\SoftException;
 
 class ReportData
 {
-    private $rep_data    = null;
-    private $tag_id      = null;
-    private $skip_depth  = 0;
-    private $strict_mode = false;
+    private $rep_data       = null;
+    private $tag_id         = null;
+    private $skip_depth      = 0;
+    private $strict_mode     = false;
+    private $record_count    = 0;
+    private $records_maximum = 50000;
 
-    private function __construct(bool $strict = false)
+    private function __construct(bool $strict = false, int $records_maximum = 50000)
     {
-        $this->strict_mode = $strict;
+        $this->strict_mode     = $strict;
+        $this->records_maximum = $records_maximum;
     }
 
     public static function fromArray(array $data, bool $strict = false)
@@ -57,9 +61,9 @@ class ReportData
         return $rdata;
     }
 
-    public static function fromXmlFile($fd, $strict = false)
+    public static function fromXmlFile($fd, $strict = false, int $records_maximum = 50000)
     {
-        $rdata = new self($strict);
+        $rdata = new self($strict, $records_maximum);
         $rdata->tag_id = '<root>';
         $rdata->rep_data = [ 'date' => [], 'policy' => [], 'records' => [] ];
 
@@ -171,6 +175,9 @@ class ReportData
 
         switch ($this->tag_id) {
             case 'rec':
+                if ($this->records_maximum > 0 && ++$this->record_count > $this->records_maximum) {
+                    throw new SoftException('Too many records in the XML report');
+                }
                 $this->rep_data['records'][] = [];
                 break;
             case 'error_string':
