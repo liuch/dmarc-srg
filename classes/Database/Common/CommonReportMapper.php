@@ -907,6 +907,11 @@ class CommonReportMapper implements ReportMapperInterface
      */
     private function jsonDecode(string $json)
     {
+        // empty string is not valid JSON, return null
+        if ($json == "") {
+            return null;
+        }
+
         $res = json_decode($json, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw new DatabaseFatalException('Failed to decode JSON data: ' . json_last_error_msg());
