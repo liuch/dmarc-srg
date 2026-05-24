@@ -342,6 +342,40 @@ class UpgraderMapper implements UpgraderMapperInterface
     }
 
     /**
+     * Upgrades the database structure from v4.0 to v4.1
+     *
+     * @return string New version of the database structure
+     */
+    private function up40(): string
+    {
+        $db = $this->connector->dbh();
+        try {
+            $this->connector->setANSIMode(false);
+            $rr_tn = $this->connector->tablePrefix('rptrecords');
+            if (!$this->indexExists($db, $rr_tn, 'covering_agg')) {
+                $db->query(
+                    'ALTER TABLE ' . $rr_tn
+                    . ' ADD KEY covering_agg (report_id, dkim_align, spf_align, disposition, rcount)'
+                );
+            }
+            if (!$this->indexExists($db, $rr_tn, 'ip_report')) {
+                $db->query(
+                    'ALTER TABLE ' . $rr_tn . ' ADD KEY ip_report (ip, report_id, rcount)'
+                );
+            }
+            $sys_tn = $this->connector->tablePrefix('system');
+            $db->query(
+                'UPDATE `' . $sys_tn . '` SET value = "4.1" WHERE user_id = 0 AND `key` = "version"'
+            );
+        } catch (\PDOException $e) {
+            throw $this->dbFatalException($e);
+        } finally {
+            $this->connector->setANSIMode(true);
+        }
+        return '4.1';
+    }
+
+    /**
      * Checks if the specified column exists in the specified table of the database
      *
      * @param object $db     Connection handle of the database
@@ -406,6 +440,7 @@ class UpgraderMapper implements UpgraderMapperInterface
         'ver_2.0'  => 'up20',
         'ver_3.0'  => 'up30',
         'ver_3.1'  => 'up31',
-        'ver_3.2'  => 'up32'
+        'ver_3.2'  => 'up32',
+        'ver_4.0'  => 'up40'
     ];
 }
