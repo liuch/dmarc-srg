@@ -897,13 +897,11 @@ class CommonReportMapper implements ReportMapperInterface
     }
 
     /**
-     * Decodes a JSON string and throws on error
+     * Decodes a JSON string and returns null on error
      *
      * @param string $json JSON string to decode
      *
-     * @throws DatabaseFatalException
-     *
-     * @return mixed Decoded value
+     * @return mixed Decoded value or null on failure
      */
     private function jsonDecode(string $json)
     {
@@ -914,7 +912,10 @@ class CommonReportMapper implements ReportMapperInterface
 
         $res = json_decode($json, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new DatabaseFatalException('Failed to decode JSON data: ' . json_last_error_msg());
+            if (Core::instance()->config('debug', 0)) {
+                Core::instance()->logger()->warning('Failed to decode JSON data: ' . json_last_error_msg());
+            }
+            return null;
         }
         return $res;
     }
