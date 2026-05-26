@@ -28,8 +28,7 @@ RUN apk add --no-cache \
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Copy runtime configurations
-COPY docker/php.ini /usr/local/etc/php/conf.d/99-dmarc-srg.ini
+# Copy runtime configurations (except php.ini — applied after build to avoid open_basedir issues)
 COPY docker/php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
 COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
@@ -43,6 +42,9 @@ COPY --chown=www-data:www-data . .
 RUN composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader \
     && rm -rf /root/.composer/cache
 
+# Apply production PHP settings only after build steps are complete
+COPY docker/php.ini /usr/local/etc/php/conf.d/99-dmarc-srg.ini
+
 # Ensure correct permissions
 RUN chown -R www-data:www-data /var/www/dmarc-srg \
     && chmod -R u=rwX,g=rX,o=rX /var/www/dmarc-srg
@@ -53,6 +55,8 @@ RUN mkdir -p /run/php /run/nginx /var/lib/nginx/tmp /var/cache/nginx /var/log/ng
     && chown -R www-data:www-data /run/php /run/nginx /var/lib/nginx /var/cache/nginx /var/log/nginx
 
 EXPOSE 8080
+
+USER www-data
 
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["/usr/local/bin/entrypoint.sh"]
