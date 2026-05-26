@@ -269,4 +269,4 @@ cat dmarc-backup.sql | docker compose exec -T db mariadb -u root -p dmarc
 
 - **Application container:** PHP 8.4-FPM + nginx on Alpine Linux. FastCGI communicates via a Unix socket at `/run/php/php-fpm.sock`. Only port 8080 is exposed.
 - **Database container:** MariaDB with a persistent Docker volume.
-- Non-public directories (`config/`, `classes/`, `utils/`, `vendor/`) are blocked at the nginx level.
+- The web root is restricted to `public/`; non-public directories (`config/`, `classes/`, `utils/`, `vendor/`) are outside the web root and unreachable.
