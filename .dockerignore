@@ -1,0 +1,35 @@
+# Git
+.git
+.gitattributes
+.gitignore
+
+# GitHub
+.github
+
+# Docker
+Dockerfile
+docker-compose.yml
+
+# Documentation and tests
+docs
+tests
+screenshots
+*.md
+
+# Editor / IDE
+.editorconfig
+.vscode
+.idea
+
+# PHP
+vendor
+.phpunit.result.cache
+phpunit.xml
+composer.phar
+
+# Misc
+*.log
+*.swp
+*.swo
+*~
+.env
