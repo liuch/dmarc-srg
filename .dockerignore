@@ -6,6 +6,7 @@
 !/config/
 !/public/
 !/utils/
+!/init.php
 !/template.html
 !/composer.json
 !/composer.lock
