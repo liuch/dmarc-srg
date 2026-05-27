@@ -1,5 +1,9 @@
 FROM php:8.4-fpm-alpine
 
+ARG VERSION="dev"
+ARG BUILD_DATE
+ARG VCS_REF
+
 # Install system dependencies and PHP extensions
 RUN apk add --no-cache \
     nginx \
@@ -39,7 +43,7 @@ WORKDIR /var/www/dmarc-srg
 COPY --chown=www-data:www-data . .
 
 # Install PHP dependencies
-RUN composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader \
+RUN composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader --no-cache \
     && rm -rf /root/.composer/cache
 
 # Apply production PHP settings only after build steps are complete
@@ -53,6 +57,15 @@ RUN chown -R www-data:www-data /var/www/dmarc-srg \
 # Alpine's nginx package defaults to the 'nginx' user, but we run as www-data.
 RUN mkdir -p /run/php /run/nginx /var/lib/nginx/tmp /var/cache/nginx /var/log/nginx \
     && chown -R www-data:www-data /run/php /run/nginx /var/lib/nginx /var/cache/nginx /var/log/nginx
+
+LABEL org.opencontainers.image.title="dmarc-srg" \
+      org.opencontainers.image.description="A php parser, viewer and summary report generator for incoming DMARC reports." \
+      org.opencontainers.image.source="https://github.com/liuch/dmarc-srg" \
+      org.opencontainers.image.url="https://github.com/liuch/dmarc-srg#readme" \
+      org.opencontainers.image.licenses="GPL-3.0" \
+      org.opencontainers.image.version=${VERSION} \
+      org.opencontainers.image.created=${BUILD_DATE} \
+      org.opencontainers.image.revision=${VCS_REF}
 
 EXPOSE 8080
 

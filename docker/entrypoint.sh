@@ -9,9 +9,21 @@ php_fpm_pid="$!"
 nginx -g 'daemon off;' &
 nginx_pid="$!"
 
-trap 'kill "$php_fpm_pid" "$nginx_pid" 2>/dev/null || true' TERM INT
+cron_pid=""
+if [ "${ENABLE_FETCH_CRON:-true}" = "true" ]; then
+    interval="${FETCH_INTERVAL_SECONDS:-3600}"
+    (
+        while true; do
+            sleep "$interval"
+            php -f /var/www/dmarc-srg/utils/fetch_reports.php || true
+        done
+    ) &
+    cron_pid="$!"
+fi
 
-wait -n "$php_fpm_pid" "$nginx_pid"
+trap 'kill "$php_fpm_pid" "$nginx_pid" ${cron_pid:+"$cron_pid"} 2>/dev/null || true' TERM INT
 
-kill "$php_fpm_pid" "$nginx_pid" 2>/dev/null || true
+wait -n "$php_fpm_pid" "$nginx_pid" ${cron_pid:+"$cron_pid"}
+
+kill "$php_fpm_pid" "$nginx_pid" ${cron_pid:+"$cron_pid"} 2>/dev/null || true
 wait
