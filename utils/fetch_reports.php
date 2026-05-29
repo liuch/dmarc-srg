@@ -29,7 +29,7 @@
  *
  * Some examples:
  * $ utils/fetch_reports
- * will fetch reports from both the mailboxes and the local server directories.
+ * will fetch reports from the mailboxes, local server directories and remove file systems.
  *
  * $ utils/fetch_reports source=email
  * will only fetch reports from the mailboxes.
