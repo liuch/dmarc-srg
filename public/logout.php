@@ -29,7 +29,10 @@ require realpath(__DIR__ . '/..') . '/init.php';
 
 if (Core::requestMethod() == 'POST' && Core::isJson()) {
     try {
-        Core::sendJson(Core::instance()->auth()->logout());
+        Core::validateCsrf();
+        $res = Core::instance()->auth()->logout();
+        $res['csrf_token'] = Core::instance()->session()->csrfToken();
+        Core::sendJson($res);
     } catch (RuntimeException $e) {
         Core::sendJson(ErrorHandler::exceptionResult($e));
     }

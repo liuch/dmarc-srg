@@ -476,6 +476,9 @@ class UserEditDialog extends VerticalDialog {
 			return resp.json();
 		}).then(data => {
 			Common.checkResult(data);
+			if (data.csrf_token !== undefined) {
+				CsrfToken.set(data.csrf_token);
+			}
 			this._result = body;
 			this.hide();
 			Notification.add({
@@ -510,6 +513,9 @@ class UserEditDialog extends VerticalDialog {
 			return resp.json();
 		}).then(data => {
 			Common.checkResult(data);
+			if (data.csrf_token !== undefined) {
+				CsrfToken.set(data.csrf_token);
+			}
 			this._result = data;
 			this.hide();
 			Notification.add({ text: `The user ${body.name} successfully removed` });
@@ -613,6 +619,9 @@ class PasswordDialog extends VerticalDialog {
 			return resp.json();
 		}).then(data => {
 			Common.checkResult(data);
+			if (data.csrf_token !== undefined) {
+				CsrfToken.set(data.csrf_token);
+			}
 			this._result = true;
 			this.hide();
 			Notification.add({ text: "The password has been successfully updated" });

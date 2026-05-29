@@ -31,9 +31,10 @@ if (Core::requestMethod() == 'POST' && Core::isJson()) {
     $jdata = Core::getJsonData();
     if ($jdata && isset($jdata['password'])) {
         try {
-            Core::sendJson(
-                Core::instance()->auth()->login(strval($jdata['username'] ?? ''), strval($jdata['password']))
-            );
+            Core::validateCsrf();
+            $res = Core::instance()->auth()->login(strval($jdata['username'] ?? ''), strval($jdata['password']));
+            $res['csrf_token'] = Core::instance()->session()->csrfToken();
+            Core::sendJson($res);
         } catch (RuntimeException $e) {
             Core::sendJson(ErrorHandler::exceptionResult($e));
         }

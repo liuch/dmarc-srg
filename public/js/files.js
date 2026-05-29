@@ -116,6 +116,7 @@ class Files {
 			window.fetch("files.php", {
 				method: "POST",
 				credentials: "same-origin",
+				headers: { "X-CSRF-Token": CsrfToken.get() },
 				body: new FormData(fm)
 			}).then(function(resp) {
 				if (!resp.ok)
@@ -123,6 +124,9 @@ class Files {
 				return resp.json();
 			}).then(function(data) {
 				Common.checkResult(data);
+				if (data.csrf_token !== undefined) {
+					CsrfToken.set(data.csrf_token);
+				}
 				Notification.add({ text: (data.message || "Uploaded successfully!"), type: "info" });
 				Status.instance().update().catch(() => {});
 			}).catch(function(err) {
@@ -207,6 +211,9 @@ class Files {
 					throw new Error("Failed to load report files");
 				return resp.json();
 			}).then(function(data) {
+				if (data.csrf_token !== undefined) {
+					CsrfToken.set(data.csrf_token);
+				}
 				if (!data.error_code) {
 					Notification.add({ text: (data.message || "Loaded successfully!"), type: "info" });
 				}

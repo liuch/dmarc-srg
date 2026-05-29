@@ -86,6 +86,9 @@ class LoginDialog extends VerticalDialog {
 			return resp.json();
 		}).then(data => {
 			Common.checkResult(data);
+			if (data.csrf_token !== undefined) {
+				CsrfToken.set(data.csrf_token);
+			}
 			this._result = data;
 			Notification.add({ type: "info", text: data.message || "Successfully!", name: "auth" });
 			hide = true;

@@ -23,8 +23,20 @@ const HTTP_HEADERS = {
 };
 
 const HTTP_HEADERS_POST = {
-	"Content-Type": "application/json"
+	"Content-Type": "application/json",
+	"X-CSRF-Token": ""
 };
+
+class CsrfToken {
+	static get() {
+		return this._value || "";
+	}
+
+	static set(value) {
+		this._value = value;
+		HTTP_HEADERS_POST["X-CSRF-Token"] = value;
+	}
+}
 
 function set_wait_status(el, text) {
 	const wait = document.createElement("div");
