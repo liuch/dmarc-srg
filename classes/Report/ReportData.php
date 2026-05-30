@@ -24,6 +24,7 @@ namespace Liuch\DmarcSrg\Report;
 
 use Liuch\DmarcSrg\DateTime;
 use Liuch\DmarcSrg\Exception\RuntimeException;
+use Liuch\DmarcSrg\Exception\SoftException;
 
 class ReportData
 {
@@ -57,7 +58,7 @@ class ReportData
         return $rdata;
     }
 
-    public static function fromXmlFile($fd, $strict = false)
+    public static function fromXmlFile($fd, $strict = false, int $maxSize = PHP_INT_MAX)
     {
         $rdata = new self($strict);
         $rdata->tag_id = '<root>';
@@ -69,8 +70,13 @@ class ReportData
         xml_set_external_entity_ref_handler($parser, function () {
             throw new RuntimeException('The XML document has an external entity!');
         });
+        $total = 0;
         try {
             while ($file_data = fread($fd, 4096)) {
+                $total += strlen($file_data);
+                if ($total > $maxSize) {
+                    throw new SoftException('Report file is too large after decompression');
+                }
                 if (!xml_parse($parser, $file_data, feof($fd))) {
                     $pc = xml_get_error_code($parser);
                     $error_str  = 'XML error!' . PHP_EOL;
