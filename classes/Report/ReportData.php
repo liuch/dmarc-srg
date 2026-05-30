@@ -58,7 +58,7 @@ class ReportData
         return $rdata;
     }
 
-    public static function fromXmlFile($fd, $strict = false, ?int $maxSize = null)
+    public static function fromXmlFile($fd, $strict = false, int $maxSize = PHP_INT_MAX)
     {
         $rdata = new self($strict);
         $rdata->tag_id = '<root>';
@@ -74,7 +74,7 @@ class ReportData
         try {
             while ($file_data = fread($fd, 4096)) {
                 $total += strlen($file_data);
-                if ($maxSize !== null && $total > $maxSize) {
+                if ($total > $maxSize) {
                     throw new SoftException('Report file is too large after decompression');
                 }
                 if (!xml_parse($parser, $file_data, feof($fd))) {

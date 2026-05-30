@@ -47,7 +47,7 @@ class Report
         $this->db   = $db ?? Core::instance()->database();
     }
 
-    public static function fromXmlFile($fd, ?int $maxSize = null)
+    public static function fromXmlFile($fd, int $maxSize = PHP_INT_MAX)
     {
         $data = ReportData::fromXmlFile($fd, false, $maxSize);
         if (!$data->isValid()) {

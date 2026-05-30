@@ -45,12 +45,18 @@ class ReportDataTest extends \PHPUnit\Framework\TestCase
             . '</feedback>';
     }
 
-    public function testFromXmlFileValid(): void
+    private static function xmlToStream(string $xml)
     {
-        $xml = self::minimalValidXml();
         $fd = fopen('php://memory', 'r+');
         fwrite($fd, $xml);
         rewind($fd);
+        return $fd;
+    }
+
+    public function testFromXmlFileValid(): void
+    {
+        $xml = self::minimalValidXml();
+        $fd = self::xmlToStream($xml);
 
         $data = ReportData::fromXmlFile($fd);
         fclose($fd);
@@ -61,9 +67,7 @@ class ReportDataTest extends \PHPUnit\Framework\TestCase
     public function testFromXmlFileUnderLimit(): void
     {
         $xml = self::minimalValidXml();
-        $fd = fopen('php://memory', 'r+');
-        fwrite($fd, $xml);
-        rewind($fd);
+        $fd = self::xmlToStream($xml);
 
         $data = ReportData::fromXmlFile($fd, false, 1024 * 1024);
         fclose($fd);
@@ -74,9 +78,7 @@ class ReportDataTest extends \PHPUnit\Framework\TestCase
     public function testFromXmlFileExceedsLimit(): void
     {
         $xml = self::minimalValidXml();
-        $fd = fopen('php://memory', 'r+');
-        fwrite($fd, $xml);
-        rewind($fd);
+        $fd = self::xmlToStream($xml);
 
         $this->expectException(SoftException::class);
         $this->expectExceptionMessage('Report file is too large after decompression');
@@ -87,11 +89,9 @@ class ReportDataTest extends \PHPUnit\Framework\TestCase
     public function testFromXmlFileNoLimit(): void
     {
         $xml = self::minimalValidXml();
-        $fd = fopen('php://memory', 'r+');
-        fwrite($fd, $xml);
-        rewind($fd);
+        $fd = self::xmlToStream($xml);
 
-        $data = ReportData::fromXmlFile($fd, false, null);
+        $data = ReportData::fromXmlFile($fd);
         fclose($fd);
 
         $this->assertTrue($data->isValid());
