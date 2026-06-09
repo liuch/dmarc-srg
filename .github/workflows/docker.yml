@@ -49,6 +49,21 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Extract version parts
+        id: version
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+            VERSION="${VERSION#v}"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          MINOR=$(echo "$VERSION" | cut -d. -f1,2)
+          MAJOR=$(echo "$VERSION" | cut -d. -f1)
+          echo "minor=$MINOR" >> "$GITHUB_OUTPUT"
+          echo "major=$MAJOR" >> "$GITHUB_OUTPUT"
+
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -58,7 +73,9 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            type=raw,value=${{ inputs.version }},enable=${{ inputs.version != '' }}
+            type=raw,value=${{ steps.version.outputs.version }},enable=${{ steps.version.outputs.version != '' }}
+            type=raw,value=${{ steps.version.outputs.minor }},enable=${{ steps.version.outputs.version != '' }}
+            type=raw,value=${{ steps.version.outputs.major }},enable=${{ steps.version.outputs.version != '' }}
             type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/') || inputs.latest }}
 
       - name: Build and push
