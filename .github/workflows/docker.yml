@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version tag for the image (e.g., v2.5.1, dev-20240526)'
+        description: 'Version tag for the image (e.g., 2.5.1, dev-20240526)'
         required: false
         default: ''
       latest:
@@ -58,7 +58,6 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            type=ref,event=tag
             type=raw,value=${{ inputs.version }},enable=${{ inputs.version != '' }}
             type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/') || inputs.latest }}
 
