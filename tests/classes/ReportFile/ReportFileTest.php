@@ -96,7 +96,7 @@ class ReportFileTest extends \PHPUnit\Framework\TestCase
         $zipPath = self::createTempZip($xml);
         $reportFile = ReportFile::fromFile($zipPath, 'report.zip', true);
 
-        $fd = $reportFile->datastream(null);
+        $fd = $reportFile->datastream();
         $this->assertIsResource($fd);
 
         unset($reportFile);

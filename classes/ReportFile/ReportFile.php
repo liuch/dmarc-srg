@@ -131,7 +131,7 @@ class ReportFile
         return $this->filename;
     }
 
-    public function datastream(?int $maxSize = null)
+    public function datastream(int $maxSize = PHP_INT_MAX)
     {
         if (!$this->fd) {
             $fd = null;
@@ -146,11 +146,9 @@ class ReportFile
                     if ($zfn !== pathinfo($zfn, PATHINFO_BASENAME)) {
                         throw new SoftException('There must not be any directories in the archive');
                     }
-                    if ($maxSize !== null) {
-                        $zstat = $this->zip->statIndex(0);
-                        if ($zstat !== false && $zstat['size'] > $maxSize) {
-                            throw new SoftException('Uncompressed ZIP entry exceeds size limit');
-                        }
+                    $zstat = $this->zip->statIndex(0);
+                    if ($zstat !== false && $zstat['size'] > $maxSize) {
+                        throw new SoftException('Uncompressed ZIP entry exceeds size limit');
                     }
                     $fd = $this->zip->getStream($zfn);
                     break;
