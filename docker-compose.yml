@@ -7,11 +7,14 @@ services:
       - "8080:8080"
     volumes:
       - ./config/conf.php:/var/www/dmarc-srg/config/conf.php:ro
+      # To add custom CA certificates, mount them and set SSL_CERT_FILE:
+      # - ./my-ca.pem:/certs/my-ca.pem:ro
     depends_on:
       db:
         condition: service_healthy
     restart: unless-stopped
     environment:
+      # SSL_CERT_FILE: /certs/my-ca.pem
       DB_HOST: db
       DB_NAME: dmarc
       DB_USER: dmarc_user
