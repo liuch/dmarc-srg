@@ -212,6 +212,13 @@ $fetcher = [
      *   '.+\\.example\\.net$'  - Matches any subdomain of the domain example.net
      *   '^mymail[0-9]+\\.net$' - Matches the domains mymail01.net, mymail02.net, mymail99999.net, etc.
      */
+    /**
+     * Maximum size of a decompressed DMARC report file in bytes.
+     * Reports that exceed this limit after decompression will be rejected.
+     * The default value is 10 MB (10485760 bytes).
+     */
+    'max_report_size' => 10485760,
+
     'allowed_domains' => '',
 
     /**
