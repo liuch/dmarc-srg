@@ -88,6 +88,11 @@ class Report
         return $this->data->$name;
     }
 
+    public function __isset(string $name): bool
+    {
+        return isset($this->data->$name);
+    }
+
     public function toArray(): array
     {
         return $this->data->toArray();
