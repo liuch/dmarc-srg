@@ -280,6 +280,11 @@ class Report {
 			if (!resp.ok)
 				throw new Error("Failed to set report value");
 			return resp.json();
+		}).then(function(data) {
+			if (data && data.csrf_token !== undefined) {
+				CsrfToken.set(data.csrf_token);
+			}
+			return data;
 		}).catch(function(err) {
 			Common.displayError(err);
 		});

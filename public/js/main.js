@@ -206,6 +206,9 @@ Router._update_menu = function(authenticated) {
 					return resp.json();
 				}).then(data => {
 					Common.checkResult(data);
+					if (data.csrf_token !== undefined) {
+						CsrfToken.set(data.csrf_token);
+					}
 					User.name = null;
 					User.level = null;
 					Status.instance().reset();

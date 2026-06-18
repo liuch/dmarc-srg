@@ -52,6 +52,11 @@ class ErrorCodes
     public const DB_NOT_EMPTY = -4;
 
     /*
+     * CSRF token validation failed.
+     */
+    public const CSRF_INVALID = -5;
+
+    /*
      * Domain deletion error: there are incoming reports for the domain.
      */
     public const DOMAIN_HAS_REPORTS = -10;
