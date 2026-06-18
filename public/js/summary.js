@@ -595,7 +595,8 @@ class SummaryReport {
 	}
 
 	static num2percent(per, cent, with_num) {
-		if (!per) return 0;
+		if (!cent) return "-";
+		if (!per) return "0";
 		let res = "" + Math.round(per / cent * 100) + "%";
 		if (with_num) res += " (" + per + ")";
 		return res;

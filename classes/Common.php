@@ -120,7 +120,8 @@ class Common
     }
 
     /**
-     * Returns the percentage with the original number. If $per is 0 then '0' is returned.
+     * Returns the percentage with the original number.
+     * Returns '0' if $per is 0, '-' if $cent is 0.
      *
      * @param int  $per      Value
      * @param int  $cent     Divisor for percentage calculation
@@ -130,7 +131,10 @@ class Common
      */
     public static function num2percent(int $per, int $cent, bool $with_num): string
     {
-        if (!$per || !$cent) {
+        if (!$cent) {
+            return '-';
+        }
+        if (!$per) {
             return '0';
         }
         $res = sprintf('%.0f%%', $per / $cent * 100);

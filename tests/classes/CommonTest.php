@@ -38,4 +38,15 @@ class CommonTest extends \PHPUnit\Framework\TestCase
         $this->assertNotEquals(Common::randomString(4), Common::randomString(4));
         $this->assertMatchesRegularExpression('/^[0-9a-zA-Z]+$/', Common::randomString(64));
     }
+
+    public function testNum2Percent(): void
+    {
+        $this->assertEquals('50%', Common::num2percent(1, 2, false));
+        $this->assertEquals('50%(1)', Common::num2percent(1, 2, true));
+        $this->assertEquals('0', Common::num2percent(0, 2, false));
+        $this->assertEquals('0', Common::num2percent(0, 2, true));
+        $this->assertEquals('-', Common::num2percent(1, 0, false));
+        $this->assertEquals('-', Common::num2percent(1, 0, true));
+        $this->assertEquals('-', Common::num2percent(0, 0, false));
+    }
 }
