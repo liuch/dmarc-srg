@@ -188,12 +188,26 @@ class MailMessage extends \Liuch\DmarcSrg\Mail\MailMessage
             return null;
         }
 
+        $type_map = [
+            TYPETEXT        => 'text',
+            TYPEMULTIPART   => 'multipart',
+            TYPEMESSAGE     => 'message',
+            TYPEAPPLICATION => 'application',
+            TYPEAUDIO       => 'audio',
+            TYPEIMAGE       => 'image',
+            TYPEVIDEO       => 'video',
+            TYPEOTHER       => 'other',
+        ];
+        $type_str = $type_map[$part->type] ?? 'application';
+        $subtype  = strtolower((string) ($part->subtype ?? 'octet-stream'));
+
         return [
-            'filename' => imap_utf8($filename),
-            'bytes'    => isset($part->bytes) ? $part->bytes : -1,
-            'number'   => $parNbr,
-            'mnumber'  => $this->number,
-            'encoding' => $part->encoding
+            'filename'         => imap_utf8($filename),
+            'bytes'            => isset($part->bytes) ? $part->bytes : -1,
+            'number'           => $parNbr,
+            'mnumber'          => $this->number,
+            'encoding'         => $part->encoding,
+            'header_mime_type' => $type_str . '/' . $subtype,
         ];
     }
 

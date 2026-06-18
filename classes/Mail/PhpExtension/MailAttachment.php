@@ -36,17 +36,19 @@ class MailAttachment extends \Liuch\DmarcSrg\Mail\MailAttachment
     private $encoding;
     private $stream;
     private $mime_type;
+    private $header_mime_type;
 
     public function __construct($data)
     {
-        $this->mailbox  = $data['mailbox'];
-        $this->filename = $data['filename'];
-        $this->bytes    = $data['bytes'];
-        $this->number   = $data['number'];
-        $this->mnumber  = $data['mnumber'];
-        $this->encoding = $data['encoding'];
-        $this->stream    = null;
-        $this->mime_type = null;
+        $this->mailbox          = $data['mailbox'];
+        $this->filename         = $data['filename'];
+        $this->bytes            = $data['bytes'];
+        $this->number           = $data['number'];
+        $this->mnumber          = $data['mnumber'];
+        $this->encoding         = $data['encoding'];
+        $this->header_mime_type = $data['header_mime_type'];
+        $this->stream           = null;
+        $this->mime_type        = null;
     }
 
     public function __destruct()
@@ -59,7 +61,18 @@ class MailAttachment extends \Liuch\DmarcSrg\Mail\MailAttachment
     public function mimeType(): string
     {
         if (is_null($this->mime_type)) {
-            $this->mime_type = ReportFile::getMimeType($this->filename, $this->datastream());
+            $actual_type = ReportFile::getMimeType($this->filename, $this->datastream());
+
+            $header_type = $this->header_mime_type === 'application/x-gzip' ? 'application/gzip' : $this->header_mime_type;
+            $actual_type = $actual_type === 'application/x-gzip' ? 'application/gzip' : $actual_type;
+
+            if ($header_type === 'application/octet-stream') {
+                $this->mime_type = $actual_type;
+            } elseif ($header_type === $actual_type) {
+                $this->mime_type = $actual_type;
+            } else {
+                throw new SoftException("Attachment MIME type mismatch: header says '{$header_type}' but actual content is '{$actual_type}'");
+            }
         }
         return $this->mime_type;
     }
