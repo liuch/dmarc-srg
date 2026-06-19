@@ -38,7 +38,8 @@
         "test": "@php vendor/bin/phpunit "
     },
     "suggest": {
-        "ext-imap": "Needed to process incoming DMARC reports stored in a mailbox"
+        "ext-imap": "Needed to process incoming DMARC reports stored in a mailbox",
+        "ext-pdo_pgsql": "Needed to use Postgresql"
     },
     "config": {
         "platform": {
