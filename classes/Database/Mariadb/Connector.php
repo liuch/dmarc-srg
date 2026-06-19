@@ -569,7 +569,9 @@ class Connector extends DatabaseConnector
                     'definition' => 'varchar(255) NULL'
                 ]
             ],
-            'additional' => 'PRIMARY KEY (id), KEY (report_id), KEY (ip)',
+            'additional' => 'PRIMARY KEY (id), KEY (report_id), KEY (ip),'
+                            . ' KEY covering_agg (report_id, dkim_align, spf_align, disposition, rcount),'
+                            . ' KEY ip_report (ip, report_id, rcount)',
             'table_options' => 'ENGINE=InnoDB DEFAULT CHARSET=utf8'
         ],
         'reportlog' => [

@@ -64,27 +64,15 @@ if (Core::requestMethod() == 'GET') {
                         }
                         ++$tc;
                     }
+                    $res['count'] = [ 'total' => $tc, 'unread' => $uc ];
                 } else {
                     $list = new ReportList($core->getCurrentUser());
                     $filter = Common::getFilter();
                     if ($filter) {
                         $list->setFilter($filter);
                     }
-                    $tc = $list->count();
-                    if (!$filter) {
-                        $filter = [];
-                    }
-                    $status = $filter['status'] ?? '';
-                    if ($status === 'unread') {
-                        $uc = $tc;
-                    } elseif ($status === 'read') {
-                        $uc = 0;
-                    } else {
-                        $filter['status'] = 'unread';
-                        $uc = $list->setFilter($filter)->count();
-                    }
+                    $res['count'] = $list->counts();
                 }
-                $res['count'] = [ 'total' => $tc, 'unread' => $uc ];
             }
             if (array_search('filters', $lst) !== false) {
                 $res['filters'] = (new ReportList($core->getCurrentUser()))->getFilterList();
