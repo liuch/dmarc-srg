@@ -1,0 +1,21 @@
+# Ignore everything at root level
+/*
+
+# Application code
+!/classes/
+!/config/
+!/public/
+!/utils/
+!/init.php
+!/template.html
+!/composer.json
+!/composer.lock
+
+# Docker build files
+!/docker/
+!/Dockerfile
+!/docker-compose.yml
+!/.dockerignore
+
+# Re-ignore local sensitive config
+config/conf.php
