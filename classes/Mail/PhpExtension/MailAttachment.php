@@ -99,9 +99,17 @@ class MailAttachment extends \Liuch\DmarcSrg\Mail\MailAttachment
             case ENCBINARY:
                 return $this->fetchBody();
             case ENCBASE64:
-                return base64_decode($this->fetchBody());
+                $decoded = base64_decode($this->fetchBody(), true);
+                if ($decoded === false) {
+                    throw new SoftException('Failed to decode base64 attachment');
+                }
+                return $decoded;
             case ENCQUOTEDPRINTABLE:
-                return imap_qprint($this->fetchBody());
+                $decoded = imap_qprint($this->fetchBody());
+                if ($decoded === false) {
+                    throw new SoftException('Failed to decode quoted-printable attachment');
+                }
+                return $decoded;
         }
         throw new SoftException('Encoding failed: Unknown encoding');
     }
