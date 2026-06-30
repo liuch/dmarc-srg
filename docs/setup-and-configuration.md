@@ -115,6 +115,14 @@ Edit the config.php file.
  * Add database connection details.
  * Configure an 'admin' password (needed for the web ui)
 
+# Initialise MySQL database
+
+Run this :
+
+```shell
+php -f utils/database_admin.php init
+```
+
 # Check we're ready to go
 
 ```shell
@@ -169,14 +177,6 @@ Fix the above issues as appropriate e.g. to fix the IMAP related warning you cou
  * install the 'php-imap' package `apt install php-imap`
  * or run `php composer require directorytree/imapengine`
 
-
-# Initialise MySQL database
-
-Run this :
-
-```shell
-php -f utils/database_admin.php init
-```
 
 # Browse to the web ui
 
