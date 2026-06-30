@@ -134,6 +134,7 @@ class Connector extends DatabaseConnector
                 $res['correct'] = true;
                 $res['message'] = 'Ok';
             } else {
+                $res['correct'] = false;
                 if ($exist_cnt == 0) {
                     $res['error_code'] = -1;
                     $res['message'] = 'The database schema is not initiated';
