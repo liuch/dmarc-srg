@@ -158,3 +158,115 @@ Each directory specified in the configuration file is scanned for presence of fi
 
 ## Uploaded report files from the web interface
 Uploading report files via the web interface is pretty standard. The upload result can be seen in a popup message and in the internal log. The number of simultaneously uploaded files and their size are limited only by the settings of your server (See `upload_max_filesize` and `post_max_size` in your `php.ini` file).
+
+# Docker
+
+A production-ready Docker image is available. It runs PHP 8.4-FPM and nginx in a single container, using a Unix socket for FastCGI.
+
+## Quick Start with Docker Compose
+
+1. Copy the sample configuration and edit it:
+
+```sh
+cp config/conf.sample.php config/conf.php
+```
+
+2. Edit `config/conf.php` and set at least the database credentials and admin password.
+
+3. Start the stack:
+
+```sh
+docker compose up -d
+```
+
+4. Initialize the database:
+
+```sh
+docker compose exec app php -f utils/database_admin.php init
+```
+
+5. Open http://localhost:8080 in your browser.
+
+## Using the pre-built image
+
+Images are published to GitHub Container Registry on every release:
+
+```sh
+docker pull ghcr.io/smeinecke/dmarc-srg:latest
+```
+
+To use it in `docker-compose.yml`, replace the `build` section with:
+
+```yaml
+  app:
+    image: ghcr.io/smeinecke/dmarc-srg:latest
+```
+
+## Building the image locally
+
+```sh
+docker build -t dmarc-srg .
+```
+
+## Configuration
+
+Mount your `config/conf.php` into the container as a read-only file:
+
+```yaml
+volumes:
+  - ./config/conf.php:/var/www/dmarc-srg/config/conf.php:ro
+```
+
+Database and other settings should be configured in this file. The default `docker-compose.yml` includes a MariaDB service with the credentials:
+
+- Host: `db`
+- Database: `dmarc`
+- User: `dmarc_user`
+- Password: `changeme` (change via `DB_PASSWORD` environment variable)
+
+## Running utility scripts
+
+Console utilities in `utils/` can be run inside the container:
+
+```sh
+# Fetch reports from mailboxes
+docker compose exec app php -f utils/fetch_reports.php
+
+# Generate a summary report
+docker compose exec app php -f utils/summary_report.php domain=all period=lastweek
+
+# Check configuration
+docker compose exec app php -f utils/check_config.php
+```
+
+## Periodic jobs
+
+You can run periodic jobs using host cron with `docker compose exec`. For example, add the following to your host's crontab:
+
+```cron
+# Fetch reports every hour
+0 * * * * cd /path/to/dmarc-srg && docker compose exec -T app php -f utils/fetch_reports.php
+
+# Weekly summary report
+0 9 * * 1 cd /path/to/dmarc-srg && docker compose exec -T app php -f utils/summary_report.php domain=all period=lastweek
+```
+
+## Backups
+
+The MariaDB data is stored in a Docker named volume (`db_data`). To back up the database:
+
+```sh
+docker compose exec db mariadb-dump -u root -p dmarc > dmarc-backup.sql
+```
+
+To restore:
+
+```sh
+cat dmarc-backup.sql | docker compose exec -T db mariadb -u root -p dmarc
+```
+
+## Architecture
+
+- **Application container:** PHP 8.4-FPM + nginx on Alpine Linux. FastCGI communicates via a Unix socket at `/run/php/php-fpm.sock`. Only port 8080 is exposed.
+- **Database container:** MariaDB with a persistent Docker volume.
+- The web root is restricted to `public/`; non-public directories (`config/`, `classes/`, `utils/`, `vendor/`) are outside the web root and unreachable.
