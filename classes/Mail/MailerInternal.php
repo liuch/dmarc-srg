@@ -60,11 +60,15 @@ class MailerInternal extends Mailer
         $ex = null;
         $res = null;
         try {
+            $extra = !empty($this->params['set_envelope_from'])
+                ? '-f' . escapeshellarg($this->from)
+                : '';
             $res = mail(
                 implode(',', $this->addr),
                 mb_encode_mimeheader($this->subj, 'UTF-8'),
                 implode("\r\n", $this->body->content()),
-                $headers
+                $headers,
+                $extra
             );
         } catch (\Exception $e) {
             $ex = $e;
