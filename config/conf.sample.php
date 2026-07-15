@@ -273,6 +273,15 @@ $mailer = [
      */
     'default' => 'user@yourdomain.net',
 
+    /**
+     * Set the SMTP envelope sender (Return-Path) to the 'from' address by passing
+     * the '-f' option to sendmail. This makes outgoing mail pass SPF and DKIM
+     * alignment for DMARC. Only applies to library='internal', method='mail'.
+     * Note: on MTAs where the web/cron user is not a trusted sendmail user, enabling
+     * this may add an 'X-Warning' header. Default: false (unchanged behavior).
+     */
+    'set_envelope_from' => false,
+
     /*
      * For method 'smtp' the following parameters must be specified:
      */
