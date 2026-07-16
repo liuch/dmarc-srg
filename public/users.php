@@ -64,6 +64,9 @@ require realpath(__DIR__ . '/..') . '/init.php';
 if (Core::isJson()) {
     try {
         $core = Core::instance();
+        if (!$core->config('users/user_management', false)) {
+            throw new ForbiddenException('Forbidden');
+        }
 
         if (Core::requestMethod() == 'GET') {
             if (!isset($_GET['user'])) {
@@ -212,8 +215,10 @@ if (Core::isJson()) {
         return;
     }
 } elseif (Core::requestMethod() == 'GET') {
-    Core::instance()->sendHtml();
-    return;
+    if ($core->config('users/user_management', false)) {
+        Core::instance()->sendHtml();
+        return;
+    }
 }
 
 Core::sendBad();
