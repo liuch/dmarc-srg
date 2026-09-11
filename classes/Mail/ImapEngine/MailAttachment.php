@@ -22,6 +22,7 @@
 
 namespace Liuch\DmarcSrg\Mail\ImapEngine;
 
+use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\ReportFile\ReportFile;
 
 class MailAttachment extends \Liuch\DmarcSrg\Mail\MailAttachment
@@ -46,9 +47,18 @@ class MailAttachment extends \Liuch\DmarcSrg\Mail\MailAttachment
     public function mimeType(): string
     {
         if (is_null($this->mime_type)) {
-            $this->mime_type = $this->attachment->contentType();
-            if ($this->mime_type === 'application/octet-stream') {
-                $this->mime_type = ReportFile::getMimeType($this->attachment->filename(), $this->datastream());
+            $header_type = $this->attachment->contentType();
+            $actual_type = ReportFile::getMimeType($this->attachment->filename(), $this->datastream());
+
+            $header_type = $header_type === 'application/x-gzip' ? 'application/gzip' : $header_type;
+            $actual_type = $actual_type === 'application/x-gzip' ? 'application/gzip' : $actual_type;
+
+            if ($header_type === 'application/octet-stream') {
+                $this->mime_type = $actual_type;
+            } elseif ($header_type === $actual_type) {
+                $this->mime_type = $actual_type;
+            } else {
+                throw new SoftException("Attachment MIME type mismatch: header says '{$header_type}' but actual content is '{$actual_type}'");
             }
         }
         return $this->mime_type;
