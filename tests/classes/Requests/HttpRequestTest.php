@@ -94,6 +94,34 @@ class HttpRequestTest extends \PHPUnit\Framework\TestCase
         $this->assertTrue($req->hasJsonData());
     }
 
+    public function testGetBearerToken(): void
+    {
+        $_SERVER = [ 'HTTP_AUTHORIZATION' => 'Bearer abc123' ];
+        $req = new HttpRequest();
+        $this->assertSame('abc123', $req->getBearerToken());
+    }
+
+    public function testGetBearerTokenMissing(): void
+    {
+        $_SERVER = [];
+        $req = new HttpRequest();
+        $this->assertNull($req->getBearerToken());
+    }
+
+    public function testGetBearerTokenMalformed(): void
+    {
+        $_SERVER = [ 'HTTP_AUTHORIZATION' => 'Basic abc123' ];
+        $req = new HttpRequest();
+        $this->assertNull($req->getBearerToken());
+    }
+
+    public function testGetBearerTokenRedirectFallback(): void
+    {
+        $_SERVER = [ 'REDIRECT_HTTP_AUTHORIZATION' => 'Bearer xyz789' ];
+        $req = new HttpRequest();
+        $this->assertSame('xyz789', $req->getBearerToken());
+    }
+
     public function testSetAndGetErrorCode(): void
     {
         $req = new HttpRequest();
