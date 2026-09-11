@@ -38,6 +38,7 @@ if (Core::isJson()) {
             Core::sendJson($core->admin()->state());
             return;
         } elseif (Core::requestMethod() == 'POST') {
+            Core::validateCsrf();
             $data = Core::getJsonData();
             if ($data) {
                 $cmd = $data['cmd'];
@@ -49,20 +50,25 @@ if (Core::isJson()) {
                         }
                     }
                 }
+                $csrf_token = Core::instance()->session()->csrfToken();
                 if ($cmd === 'initdb') {
-                    Core::sendJson($core->database()->initDb());
+                    $res = $core->database()->initDb();
+                    $res['csrf_token'] = $csrf_token;
+                    Core::sendJson($res);
                     return;
                 } elseif ($cmd === 'cleandb') {
-                    Core::sendJson($core->database()->cleanDb());
+                    $res = $core->database()->cleanDb();
+                    $res['csrf_token'] = $csrf_token;
+                    Core::sendJson($res);
                     return;
                 } elseif ($cmd === 'checksource') {
                     if (isset($data['id']) && isset($data['type'])) {
                         $id = $data['id'];
                         $type = $data['type'];
                         if (gettype($id) === 'integer' && gettype($type) === 'string') {
-                            Core::sendJson(
-                                $core->admin()->checkSource($id, $type)
-                            );
+                            $res = $core->admin()->checkSource($id, $type);
+                            $res['csrf_token'] = $csrf_token;
+                            Core::sendJson($res);
                             return;
                         }
                     }
@@ -72,7 +78,8 @@ if (Core::isJson()) {
                     Core::sendJson(
                         [
                             'error_code' => 0,
-                            'message'    => 'Upgraded successfully'
+                            'message'    => 'Upgraded successfully',
+                            'csrf_token' => $csrf_token
                         ]
                     );
                     return;

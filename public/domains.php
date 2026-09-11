@@ -94,6 +94,7 @@ if (Core::isJson()) {
             ]);
             return;
         } elseif (Core::requestMethod() == 'POST') {
+            Core::validateCsrf();
             $core = Core::instance();
             Core::instance()->auth()->isAllowed(User::LEVEL_MANAGER);
 
@@ -140,7 +141,8 @@ if (Core::isJson()) {
 
                 $res = [
                     'error_code' => 0,
-                    'message'    => 'Successfully'
+                    'message'    => 'Successfully',
+                    'csrf_token' => Core::instance()->session()->csrfToken()
                 ];
                 if (isset($domain)) {
                     $res['domain'] = $domain->toArray();

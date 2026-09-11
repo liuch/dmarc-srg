@@ -84,6 +84,7 @@ if (Core::isJson()) {
         }
 
         if (Core::requestMethod() == 'POST') {
+            Core::validateCsrf();
             $data = Core::getJsonData();
             if ($data) {
                 $sett = SettingsList::getSettingByName($data['name'] ?? '');
@@ -94,7 +95,8 @@ if (Core::isJson()) {
                         $sett->save();
                         Core::sendJson([
                             'error_code' => 0,
-                            'message'    => 'Successfully updated'
+                            'message'    => 'Successfully updated',
+                            'csrf_token' => Core::instance()->session()->csrfToken()
                         ]);
                         break;
                     default:

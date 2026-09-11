@@ -109,4 +109,61 @@ class SessionTest extends \PHPUnit\Framework\TestCase
         $this->sess->getData();
         $this->assertNotSame($fake_id, \session_id());
     }
+
+    public function testCsrfTokenGeneratesToken(): void
+    {
+        $token = $this->sess->csrfToken();
+        $this->assertNotEmpty($token);
+        $this->assertIsString($token);
+    }
+
+    public function testCsrfTokenReturnsSameToken(): void
+    {
+        $token1 = $this->sess->csrfToken();
+        $token2 = $this->sess->csrfToken();
+        $this->assertSame($token1, $token2);
+    }
+
+    public function testValidateCsrfTokenWithInvalidToken(): void
+    {
+        $this->sess->csrfToken();
+        $this->assertFalse($this->sess->validateCsrfToken('invalid-token'));
+    }
+
+    public function testValidateCsrfTokenWithValidToken(): void
+    {
+        $token = $this->sess->csrfToken();
+        $this->assertTrue($this->sess->validateCsrfToken($token));
+    }
+
+    public function testValidateCsrfTokenRotatesPool(): void
+    {
+        $token = $this->sess->csrfToken();
+        $this->assertTrue($this->sess->validateCsrfToken($token));
+        $new_token = $this->sess->csrfToken();
+        $this->assertNotSame($token, $new_token);
+    }
+
+    public function testCsrfTokenPoolSizeTwo(): void
+    {
+        $token1 = $this->sess->csrfToken();
+        // First validation rotates: pool now has 2 tokens
+        $this->assertTrue($this->sess->validateCsrfToken($token1));
+        // Old token is still valid because pool size is 2
+        $this->assertTrue($this->sess->validateCsrfToken($token1));
+    }
+
+    public function testCsrfTokenPoolRotationEvictsOldToken(): void
+    {
+        $token1 = $this->sess->csrfToken();
+        $this->assertTrue($this->sess->validateCsrfToken($token1));
+        $token2 = $this->sess->csrfToken();
+        $this->assertTrue($this->sess->validateCsrfToken($token2));
+        $token3 = $this->sess->csrfToken();
+        // token1 should now be evicted from pool (size 2)
+        $this->assertFalse($this->sess->validateCsrfToken($token1));
+        // token2 and token3 should still be valid
+        $this->assertTrue($this->sess->validateCsrfToken($token2));
+        $this->assertTrue($this->sess->validateCsrfToken($token3));
+    }
 }

@@ -64,6 +64,7 @@ if (!empty($_GET['org']) && !empty($_GET['time']) && !empty($_GET['domain']) && 
                 Core::sendJson([ 'report' => $rep->toArray() ]);
                 return;
             } elseif (Core::requestMethod() == 'POST') {
+                Core::validateCsrf();
                 if ($_GET['action'] === 'set') {
                     $jdata = Core::getJsonData();
                     if ($jdata && isset($jdata['name']) && isset($jdata['value'])) {
@@ -80,7 +81,9 @@ if (!empty($_GET['org']) && !empty($_GET['time']) && !empty($_GET['domain']) && 
                                 'report_id'  => $_GET['report_id']
                             ]
                         );
-                        Core::sendJson($rep->set($jdata['name'], $jdata['value']));
+                        $res = $rep->set($jdata['name'], $jdata['value']);
+                        $res['csrf_token'] = Core::instance()->session()->csrfToken();
+                        Core::sendJson($res);
                         return;
                     }
                 }

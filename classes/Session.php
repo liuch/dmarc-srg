@@ -44,6 +44,8 @@ class Session
     private const LIFETIME_DURATION = 900;
     private const MIGRATE_DURATION  = 120;
     private const DATA_KEYS         = [ 'user', 's_id', 's_time' ];
+    private const CSRF_POOL_SIZE    = 2;
+    private const CSRF_KEY          = 'csrf_tokens';
 
     /**
      * Returns data of the session
@@ -225,5 +227,60 @@ class Session
             }
         }
         return $res;
+    }
+
+    /**
+     * Returns the current CSRF token, generating one if necessary.
+     *
+     * @return string
+     */
+    public function csrfToken(): string
+    {
+        if (!$this->isStarted()) {
+            $this->start();
+        }
+        if (empty($_SESSION[self::CSRF_KEY])) {
+            $_SESSION[self::CSRF_KEY] = [ $this->generateToken() ];
+        }
+        return $_SESSION[self::CSRF_KEY][0];
+    }
+
+    /**
+     * Validates a CSRF token against the pool and rotates on success.
+     *
+     * @param string $token Token to validate
+     *
+     * @return bool
+     */
+    public function validateCsrfToken(string $token): bool
+    {
+        if (!$this->isStarted()) {
+            $this->start();
+        }
+        if (empty($_SESSION[self::CSRF_KEY])) {
+            return false;
+        }
+        $pool = $_SESSION[self::CSRF_KEY];
+        if (!\in_array($token, $pool, true)) {
+            return false;
+        }
+        // Rotate: push new token, keep last N
+        $new_token = $this->generateToken();
+        array_unshift($pool, $new_token);
+        if (count($pool) > self::CSRF_POOL_SIZE) {
+            array_pop($pool);
+        }
+        $_SESSION[self::CSRF_KEY] = $pool;
+        return true;
+    }
+
+    /**
+     * Generates a cryptographically secure random token.
+     *
+     * @return string
+     */
+    private function generateToken(): string
+    {
+        return \bin2hex(\random_bytes(16));
     }
 }

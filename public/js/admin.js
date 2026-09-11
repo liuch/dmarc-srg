@@ -106,6 +106,11 @@ class Admin {
 			if (!resp.ok)
 				throw new Error(`Failed to send command (${resp.status})`);
 			return resp.json();
+		}).then(function(data) {
+			if (data.csrf_token !== undefined) {
+				CsrfToken.set(data.csrf_token);
+			}
+			return data;
 		}).finally(function() {
 			t._get_admin_state();
 			Status.instance().update().catch(function(){});
@@ -405,6 +410,9 @@ class SourceListBox extends DropdownListBox {
 			return resp.json();
 		}).then(function(data) {
 			Common.checkResult(data);
+			if (data.csrf_token !== undefined) {
+				CsrfToken.set(data.csrf_token);
+			}
 			let msg = [ data.message ];
 			if (data.status) {
 				if (type === "mailbox") {

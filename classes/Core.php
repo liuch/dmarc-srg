@@ -271,6 +271,22 @@ class Core
     }
 
     /**
+     * Validates the X-CSRF-Token header against the session token pool.
+     *
+     * @throws SoftException
+     *
+     * @return void
+     */
+    public static function validateCsrf(): void
+    {
+        $token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+        $session = self::instance()->session();
+        if (!$session->validateCsrfToken($token)) {
+            throw new SoftException('CSRF token invalid', ErrorCodes::CSRF_INVALID);
+        }
+    }
+
+    /**
      * Checks if the dependencies passed in the parameter are installed
      *
      * @param string $deps Comma-separated string of dependency names to be checked
