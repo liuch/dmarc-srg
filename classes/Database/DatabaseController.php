@@ -176,6 +176,9 @@ class DatabaseController
                 case 'mariadb':
                     $type = 'mariadb';
                     break;
+				case 'sqlite':
+                    $type = 'sqlite';
+                    break;
                 default:
                     throw new RuntimeException('Unknown database type: ' . $this->conf_data['type']);
             }
