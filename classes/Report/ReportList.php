@@ -178,6 +178,16 @@ class ReportList
     }
 
     /**
+     * Returns total and unread counts matching the current filter
+     *
+     * @return array Key-value array with `total` and `unread` keys
+     */
+    public function counts(): array
+    {
+        return $this->db->getMapper('report')->counts($this->filter, $this->user->id());
+    }
+
+    /**
      * Deletes reports from the database
      *
      * It deletes repors form the database. The filter items `dkim`, `spf` and `disposition` do not affect this.

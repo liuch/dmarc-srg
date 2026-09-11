@@ -306,10 +306,10 @@ class CommonReportMapper implements ReportMapperInterface
                 . ' SUM(IF(disposition = 0, rcount, 0)) AS rejected,'
                 . ' SUM(IF(disposition = 1, rcount, 0)) AS quarantined'
                 . ' FROM ' . $this->connector->tablePrefix('rptrecords')
-                . ' AS rr RIGHT JOIN (SELECT rp.id, org, begin_time, end_time, external_id,'
+                . ' AS rr INNER JOIN (SELECT rp.id, org, begin_time, end_time, external_id,'
                 . ' fqdn, seen FROM ' . $this->connector->tablePrefix('reports')
                 . ' AS rp INNER JOIN ' . $this->connector->tablePrefix('domains')
-                . ' AS d ON d.id = rp.domain_id' . $user_doms . $cond_str0 . $order_str
+                . ' AS d ON d.id = rp.domain_id' . $user_doms . $cond_str0
                 . ') AS rp ON rp.id = rr.report_id GROUP BY rp.id'
                 . $cond_str1 . $order_str . $limit_str
             );
@@ -376,7 +376,7 @@ class CommonReportMapper implements ReportMapperInterface
                     . ' SUM(IF(disposition = 0, rcount, 0)) AS rejected,'
                     . ' SUM(IF(disposition = 1, rcount, 0)) AS quarantined'
                     . ' FROM ' . $this->connector->tablePrefix('rptrecords')
-                    . ' AS rr RIGHT JOIN (SELECT rp.id FROM ' . $this->connector->tablePrefix('reports')
+                    . ' AS rr INNER JOIN (SELECT rp.id FROM ' . $this->connector->tablePrefix('reports')
                     . ' AS rp INNER JOIN ' . $this->connector->tablePrefix('domains')
                     . ' AS d ON d.id = rp.domain_id' . $this->sqlUserRestriction($user_id, 'd.id')
                     . $this->sqlConditionList($f_data, ' AND ', 0)
@@ -418,6 +418,66 @@ class CommonReportMapper implements ReportMapperInterface
             throw new DatabaseFatalException('Failed to get the number of reports', -1, $e);
         }
         return $cnt;
+    }
+
+    /**
+     * Returns total and unread counts matching the specified filter
+     *
+     * @param array $filter  Key-value array with filtering parameters
+     * @param int   $user_id User ID to count reports for
+     *
+     * @return array Key-value array with `total` and `unread` keys
+     */
+    public function counts(array &$filter, int $user_id): array
+    {
+        $res = [ 'total' => 0, 'unread' => 0 ];
+        $f_data = $this->prepareFilterData($filter, 'rp');
+        try {
+            if (isset($filter['dkim']) || isset($filter['spf']) || isset($filter['disposition'])) {
+                $st = $this->connector->dbh()->prepare(
+                    'SELECT COUNT(*) AS total, SUM(IF(seen = 0, 1, 0)) AS unread FROM ('
+                    . 'SELECT seen,'
+                    . ' SUM(IF(dkim_align = 0, rcount, 0)) AS dkim_align_fail,'
+                    . ' SUM(IF(dkim_align = 1, rcount, 0)) AS dkim_align_unknown,'
+                    . ' SUM(IF(spf_align = 0, rcount, 0)) AS spf_align_fail,'
+                    . ' SUM(IF(spf_align = 1, rcount, 0)) AS spf_align_unknown,'
+                    . ' SUM(IF(disposition = 0, rcount, 0)) AS rejected,'
+                    . ' SUM(IF(disposition = 1, rcount, 0)) AS quarantined'
+                    . ' FROM ' . $this->connector->tablePrefix('rptrecords')
+                    . ' AS rr INNER JOIN (SELECT rp.id, seen FROM ' . $this->connector->tablePrefix('reports')
+                    . ' AS rp INNER JOIN ' . $this->connector->tablePrefix('domains')
+                    . ' AS d ON d.id = rp.domain_id' . $this->sqlUserRestriction($user_id, 'd.id')
+                    . $this->sqlConditionList($f_data, ' AND ', 0)
+                    . ') AS rp ON rp.id = rr.report_id GROUP BY rp.id'
+                    . $this->sqlConditionList($f_data, ' HAVING ', 1)
+                    . ') AS ct'
+                );
+            } elseif ($user_id) {
+                $st = $this->connector->dbh()->prepare(
+                    'SELECT COUNT(*) AS total, SUM(IF(seen = 0, 1, 0)) AS unread'
+                    . ' FROM ' . $this->connector->tablePrefix('reports') . ' AS rp'
+                    . ' INNER JOIN ' . $this->connector->tablePrefix('domains')
+                    . ' AS d ON d.id = rp.domain_id' . $this->sqlUserRestriction($user_id, 'd.id')
+                    . $this->sqlConditionList($f_data, ' AND ', 0)
+                );
+            } else {
+                $st = $this->connector->dbh()->prepare(
+                    'SELECT COUNT(*) AS total, SUM(IF(seen = 0, 1, 0)) AS unread'
+                    . ' FROM ' . $this->connector->tablePrefix('reports') . ' AS rp'
+                    . $this->sqlConditionList($f_data, ' WHERE ', 0)
+                );
+            }
+            $l_empty = [ 'offset' => 0, 'count' => 0 ];
+            $this->sqlBindValues($st, $f_data, $l_empty);
+            $st->execute();
+            $row = $st->fetch(\PDO::FETCH_NUM);
+            $res['total'] = intval($row[0]);
+            $res['unread'] = intval($row[1]);
+            $st->closeCursor();
+        } catch (\PDOException $e) {
+            throw new DatabaseFatalException('Failed to get the number of reports', -1, $e);
+        }
+        return $res;
     }
 
     /**

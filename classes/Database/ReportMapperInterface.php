@@ -99,6 +99,16 @@ interface ReportMapperInterface
     public function count(array &$filter, array &$limit, int $user_id): int;
 
     /**
+     * Returns total and unread counts matching the specified filter
+     *
+     * @param array $filter  Key-value array with filtering parameters
+     * @param int   $user_id User ID to count reports for
+     *
+     * @return array Key-value array with `total` and `unread` keys
+     */
+    public function counts(array &$filter, int $user_id): array;
+
+    /**
      * Deletes reports from the database
      *
      * It deletes repors form the database. The filter options `dkim` and `spf` do not affect this.
