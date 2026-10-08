@@ -13,12 +13,28 @@ class UserTest extends \PHPUnit\Framework\TestCase
         $this->assertIsInt(User::LEVEL_ADMIN);
         $this->assertIsInt(User::LEVEL_MANAGER);
         $this->assertIsInt(User::LEVEL_USER);
+
+        $this->assertIsInt(User::PERM_DOMAIN_REGISTER_FIRST);
+        $this->assertIsInt(User::PERM_REPORTS_IMPORT_ANY_OWNER);
+        $this->assertIsInt(User::PERM_ALL);
+    }
+
+    public function testPermissionContants(): void
+    {
+        $this->assertNotSame(User::PERM_DOMAIN_REGISTER_FIRST, User::PERM_REPORTS_IMPORT_ANY_OWNER);
+        $this->assertNotSame(User::PERM_REPORTS_IMPORT_ANY_OWNER, User::PERM_ALL);
+
+        $this->assertSame(
+            User::PERM_DOMAIN_REGISTER_FIRST | User::PERM_REPORTS_IMPORT_ANY_OWNER,
+            User::PERM_DOMAIN_REGISTER_FIRST + User::PERM_REPORTS_IMPORT_ANY_OWNER
+        );
     }
 
     public function testLevelValue(): void
     {
         $this->assertGreaterThan(User::LEVEL_MANAGER, User::LEVEL_ADMIN);
         $this->assertGreaterThan(User::LEVEL_USER, User::LEVEL_MANAGER);
+        $this->assertGreaterThan(User::LEVEL_SERVICE, User::LEVEL_USER);
     }
 
     /**

@@ -34,6 +34,7 @@ namespace Liuch\DmarcSrg\Database\Common;
 use Liuch\DmarcSrg\Core;
 use Liuch\DmarcSrg\Common;
 use Liuch\DmarcSrg\DateTime;
+use Liuch\DmarcSrg\Users\User;
 use Liuch\DmarcSrg\Report\ReportData;
 use Liuch\DmarcSrg\Settings\SettingsList;
 use Liuch\DmarcSrg\Database\ReportMapperInterface;
@@ -159,14 +160,17 @@ class CommonReportMapper implements ReportMapperInterface
                 if (!$domain_data['active']) {
                     throw new SoftException('Failed to add an incoming report: the domain is inactive');
                 }
-                $user_id = Core::instance()->getCurrentUser()->id();
-                if ($user_id !== 0 && !$domain_mapper->isAssigned($domain_data, $user_id)) {
+                $user = Core::instance()->getCurrentUser();
+                if (!$user->hasPermission(User::PERM_REPORTS_IMPORT_ANY_OWNER) &&
+                    !$domain_mapper->isAssigned($domain_data, $user->id())
+                ) {
                     // The domain exists but is not assigned to the current user
                     $this->unknownDomain($domain_data);
                 }
             } catch (DatabaseNotFoundException $e) {
                 // The domain is not found. Let's try to add it automatically.
-                if (Core::instance()->getCurrentUser()->id() !== 0) {
+                $user = Core::instance()->getCurrentUser();
+                if (!$user->hasPermission(User::PERM_DOMAIN_REGISTER_FIRST)) {
                     $this->unknownDomain($domain_data);
                 }
                 $this->insertDomain($domain_data, $domain_mapper);

@@ -23,6 +23,7 @@
 namespace Liuch\DmarcSrg;
 
 use Liuch\DmarcSrg\Users\User;
+use Liuch\DmarcSrg\Users\AdHocUser;
 use Liuch\DmarcSrg\Mail\MailBoxes;
 use Liuch\DmarcSrg\Requests\HttpRequest;
 use Liuch\DmarcSrg\Report\ReportFetcher;
@@ -46,6 +47,8 @@ if ($request->getMethod() === 'GET') {
     try {
         if ($request->hasProperty('token')) {
             $auth->isTokenValid('fetcher', $request->getProperty('token'));
+            $user = new AdHocUser(User::PERM_DOMAIN_REGISTER_FIRST + User::PERM_REPORTS_IMPORT_ANY_OWNER);
+            $core->setCurrentUser($user);
 
             if (!$request->emptyProperty('type')) {
                 if ($core->checkAccessFrequency('fetcher', 5*60)) {

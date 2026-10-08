@@ -100,12 +100,16 @@ class Core
      */
     public function getCurrentUser()
     {
-        $session = $this->session();
+        if ($this->user?->level() === User::LEVEL_SERVICE) {
+            return $this->user;
+        }
+
         if (!$this->auth()->isEnabled()) {
             return $this->user = new AdminUser($this);
         }
 
         if (!$this->user) {
+            $session = $this->session();
             $data = $session->getData();
             if (isset($data['user']) && gettype($data['user']) == 'array') {
                 if ($data['user']['name'] === 'admin') {
@@ -164,7 +168,7 @@ class Core
             throw new LogicException('Wrong user object was passed');
         }
         $this->user = $user;
-        if (self::isWEB()) {
+        if (self::isWEB() && $user?->level() !== User::LEVEL_SERVICE) {
             $session = $this->session();
             $session->destroy();
             if ($user) {

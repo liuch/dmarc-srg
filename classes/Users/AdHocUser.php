@@ -21,7 +21,7 @@
  *
  * =========================
  *
- * This file contains the class AdminUser
+ * This file contains the class AdHocUser
  *
  * @category API
  * @package  DmarcSrg
@@ -32,46 +32,43 @@
 namespace Liuch\DmarcSrg\Users;
 
 use Liuch\DmarcSrg\Core;
+use Liuch\DmarcSrg\Exception\LogicException;
 
 /**
- * The class implements the built-in admin user
+ * The class implements a temporary user with the specified permissions.
  */
-class AdminUser extends User
+class AdHocUser extends User
 {
-    /** @var Core */
-    private $core = null;
-
     /**
      * Constructor
      *
-     * @param Core|null $core Instance of the Core class
+     * @param array Array of permissions
      *
      * @return void
      */
-    public function __construct($core = null)
+    public function __construct(int $permissions = 0)
     {
-        $this->core = $core ?? Core::instance();
-        $this->permissions = static::PERM_ALL;
+        $this->permissions = $permissions;
     }
 
     /**
-     * Returns the admin Id
+     * Returns the user Id
      *
      * @return int
      */
     public function id():int
     {
-        return 0;
+        return -1;
     }
 
     /**
-     * Returns the admin name
+     * Returns the user name
      *
      * @return string
      */
     public function name(): string
     {
-        return 'admin';
+        $this->throwUnsupportedMethod(__METHOD__);
     }
 
     /**
@@ -81,7 +78,7 @@ class AdminUser extends User
      */
     public function level(): int
     {
-        return static::LEVEL_ADMIN;
+        return static::LEVEL_SERVICE;
     }
 
     /**
@@ -101,12 +98,7 @@ class AdminUser extends User
      */
     public function toArray(): array
     {
-        return [
-            'id'      => $this->id(),
-            'name'    => $this->name(),
-            'level'   => $this->level(),
-            'enabled' => true
-        ];
+        $this->throwUnsupportedMethod(__METHOD__);
     }
 
     /**
@@ -118,7 +110,20 @@ class AdminUser extends User
      */
     public function verifyPassword(string $password): bool
     {
-        $r_password = $this->core->config('admin/password');
-        return $r_password === null || ($r_password !== '' && $r_password === $password);
+        $this->throwUnsupportedMethod(__METHOD__);
+    }
+
+    /**
+     * Throws an exception for unsupported methods
+     *
+     * @param string $method Method name
+     *
+     * @return never
+     *
+     * @throws LogicException
+     */
+    private function throwUnsupportedMethod(string $method): never
+    {
+        throw new LogicException("Method \"$method\" is strictly prohibited for service-level users");
     }
 }

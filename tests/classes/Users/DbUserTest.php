@@ -6,6 +6,7 @@ use Liuch\DmarcSrg\Users\User;
 use Liuch\DmarcSrg\Users\DbUser;
 use Liuch\DmarcSrg\Exception\SoftException;
 use Liuch\DmarcSrg\Exception\LogicException;
+use Liuch\DmarcSrg\Exception\ForbiddenException;
 use Liuch\DmarcSrg\Exception\DatabaseNotFoundException;
 use Liuch\DmarcSrg\Database\DatabaseController;
 use Liuch\DmarcSrg\Database\UserMapperInterface;
@@ -99,6 +100,29 @@ class DbUserTest extends \PHPUnit\Framework\TestCase
         $this->expectExceptionMessage('User not found');
         $user = new DbUser('user3', $this->getDatabaseMapperNotFound('fetch'));
         $user->level();
+    }
+
+    public function testPermissons(): void
+    {
+        $user = new DbUser(
+            [ 'name' => 'user', 'level' => User::LEVEL_USER ],
+            $this->getDatabaseNever()
+        );
+        $this->assertFalse($user->hasPermission(User::PERM_DOMAIN_REGISTER_FIRST));
+        $this->assertFalse($user->hasPermission(User::PERM_REPORTS_IMPORT_ANY_OWNER));
+        $this->assertFalse(
+            $user->hasPermission(User::PERM_DOMAIN_REGISTER_FIRST + User::PERM_REPORTS_IMPORT_ANY_OWNER)
+        );
+    }
+
+    public function testPermissionsStrict(): void
+    {
+        $user = new DbUser(
+            [ 'name' => 'user', 'level' => User::LEVEL_MANAGER ],
+            $this->getDatabaseNever()
+        );
+        $this->expectException(ForbiddenException::class);
+        $user->hasPermission(User::PERM_DOMAIN_REGISTER_FIRST, true);
     }
 
     public function testIsEnabled(): void

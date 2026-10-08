@@ -79,6 +79,7 @@ class DbUser extends User
     public function __construct($data, $db = null)
     {
         $this->db = $db ?? Core::instance()->database();
+        $this->permissions = 0;
         switch (gettype($data)) {
             case 'string':
                 $this->data['name'] = strtolower(trim($data));

@@ -33,6 +33,7 @@ namespace Liuch\DmarcSrg\Users;
 
 use Liuch\DmarcSrg\Core;
 use Liuch\DmarcSrg\Exception\SoftException;
+use Liuch\DmarcSrg\Exception\ForbiddenException;
 
 /**
  * It's an abstract class for accessing to stored user data
@@ -42,6 +43,13 @@ abstract class User
     public const LEVEL_ADMIN   = 99;
     public const LEVEL_MANAGER = 50;
     public const LEVEL_USER    = 10;
+    public const LEVEL_SERVICE = 0;
+
+    public const PERM_DOMAIN_REGISTER_FIRST    = 1;
+    public const PERM_REPORTS_IMPORT_ANY_OWNER = 2;
+    public const PERM_ALL                      = 255;
+
+    protected int $permissions = 0;
 
     /**
      * Returns true if the user exists in the database or false otherwise
@@ -146,4 +154,23 @@ abstract class User
      * @return bool
      */
     abstract public function verifyPassword(string $password): bool;
+
+    /**
+     * Checks whether the user has the specified permissions
+     *
+     * @param int  $permissions Required permissions
+     * @param bool $strict      If true the method throws an exception instead of returning false
+     *
+     * @return bool
+     */
+    public function hasPermission(int $permissions, bool $strict = false): bool
+    {
+        if (($this->permissions & $permissions) === $permissions) {
+            return true;
+        }
+        if ($strict) {
+            throw new ForbiddenException('Forbidden');
+        }
+        return false;
+    }
 }

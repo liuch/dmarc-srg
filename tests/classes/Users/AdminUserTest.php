@@ -34,6 +34,15 @@ class AdminUserTest extends \PHPUnit\Framework\TestCase
         $this->assertSame($this->user->level(), User::LEVEL_ADMIN);
     }
 
+    public function testPermissons(): void
+    {
+        $this->assertTrue($this->user->hasPermission(User::PERM_DOMAIN_REGISTER_FIRST));
+        $this->assertTrue($this->user->hasPermission(User::PERM_REPORTS_IMPORT_ANY_OWNER));
+        $this->assertTrue(
+            $this->user->hasPermission(User::PERM_DOMAIN_REGISTER_FIRST + User::PERM_REPORTS_IMPORT_ANY_OWNER)
+        );
+    }
+
     public function testIsEnabled(): void
     {
         $this->assertTrue($this->user->isEnabled());
